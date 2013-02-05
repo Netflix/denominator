@@ -42,7 +42,9 @@ Thumbs.db
 
 # Build output directies
 /target
+*/test-output
 */target
+*/bin
 /build
 */build
 
