@@ -1,2 +1,3 @@
 rootProject.name='denominator'
-include 'denominator-core'
+include 'denominator-model', \
+'denominator-core'
