@@ -11,9 +11,3 @@ eclipse {
   }
 }
 
-dependencies {
-  compile      project(':denominator-model')
-  compile     'com.squareup:dagger:0.9.1'
-  provided    'com.squareup:dagger-compiler:0.9.1'
-}
-

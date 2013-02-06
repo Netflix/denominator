@@ -21,8 +21,6 @@ subprojects {
     group = "com.netflix.${githubProjectName}"
 
     dependencies {
-        compile     'com.squareup:dagger:0.9.1'
-        provided    'com.squareup:dagger-compiler:0.9.1'
         compile     'com.google.guava:guava:14.0-rc2'
         testCompile 'org.testng:testng:6.8'
     }
