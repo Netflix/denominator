@@ -10,43 +10,44 @@ import java.util.ServiceLoader;
 import com.google.common.base.Function;
 
 import dagger.ObjectGraph;
-import denominator.stub.StubBackend;
+import denominator.mock.MockProvider;
 
 public final class Denominator {
 
     /**
-     * returns the currently configured backends
+     * returns the currently configured providers
      */
-    public static Iterable<Backend> listBackends() {
-        return ServiceLoader.load(Backend.class);
+    public static Iterable<Provider> listProviders() {
+        return ServiceLoader.load(Provider.class);
     }
 
     /**
-     * creates a connection to the backend, such as {@link StubBackend}
+     * creates a new manager for a provider using its type, such as
+     * {@link MockProvider}
      * 
-     * @see #listBackends
+     * @see #listProviders
      */
-    public static Connection connectToBackend(Backend in) {
-        return ObjectGraph.create(in).get(Connection.class);
+    public static DNSApiManager create(Provider in) {
+        return ObjectGraph.create(in).get(DNSApiManager.class);
     }
 
     /**
-     * creates a connection to the backend, based on key look up. Ex.
-     * {@code stub}
+     * creates a new manager for a provider, based on key look up. Ex.
+     * {@code mock}
      * 
-     * @see Backend#getName()
+     * @see Provider#getName()
      * @throws IllegalArgumentException
-     *             if the backendName is not configured
+     *             if the providerName is not configured
      */
-    public static Connection connectToBackend(String backendName) throws IllegalArgumentException {
-        checkNotNull(backendName, "backendName");
-        Map<String, Backend> allBackendsByName = uniqueIndex(listBackends(), new Function<Backend, String>() {
-            public String apply(Backend input) {
+    public static DNSApiManager create(String providerName) throws IllegalArgumentException {
+        checkNotNull(providerName, "providerName");
+        Map<String, Provider> allProvidersByName = uniqueIndex(listProviders(), new Function<Provider, String>() {
+            public String apply(Provider input) {
                 return input.getName();
             }
         });
-        checkArgument(allBackendsByName.containsKey(backendName), "backend %s not in set of configured backends: %s",
-                backendName, allBackendsByName.keySet());
-        return ObjectGraph.create(allBackendsByName.get(backendName)).get(Connection.class);
+        checkArgument(allProvidersByName.containsKey(providerName),
+                "provider %s not in set of configured providers: %s", providerName, allProvidersByName.keySet());
+        return ObjectGraph.create(allProvidersByName.get(providerName)).get(DNSApiManager.class);
     }
 }
