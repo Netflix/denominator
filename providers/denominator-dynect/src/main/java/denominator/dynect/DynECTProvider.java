@@ -1,5 +1,7 @@
 package denominator.dynect;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.io.Closeable;
 
 import javax.inject.Singleton;
@@ -14,6 +16,7 @@ import com.google.common.base.Supplier;
 
 import dagger.Module;
 import dagger.Provides;
+import denominator.Credentials.ThreePartCredentials;
 import denominator.DNSApi;
 import denominator.DNSApiManager;
 import denominator.Provider;
@@ -22,6 +25,7 @@ import denominator.Provider;
 public class DynECTProvider extends Provider {
 
     @Override
+    @Provides
     public String getName() {
         return "dynect";
     }
@@ -34,10 +38,15 @@ public class DynECTProvider extends Provider {
 
     @Provides
     @Singleton
-    Supplier<Credentials> supplyCredentials() {
+    Supplier<Credentials> supplyJCloudsCredentials(final Supplier<denominator.Credentials> denominatorCredentials) {
         return new Supplier<Credentials>() {
             public Credentials get() {
-                throw new UnsupportedOperationException("TODO: configuration");
+                denominator.Credentials input = denominatorCredentials.get();
+                checkState(input != null && input instanceof ThreePartCredentials,
+                        "%s requires credentials with three parts: customer, username, password", getName());
+                ThreePartCredentials<?, ?, ?> threeParts = ThreePartCredentials.class.cast(input);
+                return new Credentials(threeParts.getFirstPart() + ":" + threeParts.getSecondPart(), threeParts
+                        .getThirdPart().toString());
             }
         };
     }

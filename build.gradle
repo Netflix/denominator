@@ -20,6 +20,10 @@ apply from: file('gradle/release.gradle')
 subprojects {
     group = "com.netflix.${githubProjectName}"
 
+    test {
+        useTestNG()
+    }
+
     dependencies {
         compile     'com.google.guava:guava:14.0-rc2'
         testCompile 'org.testng:testng:6.8'

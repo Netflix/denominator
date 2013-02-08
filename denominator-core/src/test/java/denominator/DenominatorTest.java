@@ -6,7 +6,7 @@ import denominator.Denominator;
 
 public class DenominatorTest {
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "provider foo not in set of configured providers: [mock]")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "provider foo not in set of configured providers: \\[mock\\]")
     public void testNiceMessageWhenProviderNotFound() {
         Denominator.create("foo");
     }

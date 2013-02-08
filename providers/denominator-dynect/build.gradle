@@ -11,8 +11,15 @@ eclipse {
   }
 }
 
+test {
+  systemProperty 'dynect.customer', System.getProperty('dynect.customer', '')
+  systemProperty 'dynect.username', System.getProperty('dynect.username', '')
+  systemProperty 'dynect.password', System.getProperty('dynect.password', '')
+}
+
 dependencies {
   compile      project(':denominator-core')
+  testCompile  project(':denominator-core').sourceSets.test.output
   compile     'org.jclouds.labs:dynect:1.6.0-alpha.2'
 }
 
