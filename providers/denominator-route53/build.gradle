@@ -11,8 +11,14 @@ eclipse {
   }
 }
 
+test {
+  systemProperty 'route53.accesskey', System.getProperty('route53.accesskey', '')
+  systemProperty 'route53.secretkey', System.getProperty('route53.secretkey', '')
+}
+
 dependencies {
   compile      project(':denominator-core')
+  testCompile  project(':denominator-core').sourceSets.test.output
   compile     'org.jclouds.provider:aws-route53:1.6.0-alpha.2'
 }
 

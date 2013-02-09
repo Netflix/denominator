@@ -11,8 +11,14 @@ eclipse {
   }
 }
 
+test {
+  systemProperty 'ultradns.username', System.getProperty('ultradns.username', '')
+  systemProperty 'ultradns.password', System.getProperty('ultradns.password', '')
+}
+
 dependencies {
   compile      project(':denominator-core')
+  testCompile  project(':denominator-core').sourceSets.test.output
   compile     'org.jclouds.labs:ultradns-ws:1.6.0-alpha.2'
 }
 

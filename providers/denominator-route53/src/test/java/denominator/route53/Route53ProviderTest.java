@@ -1,5 +1,6 @@
 package denominator.route53;
 
+import static denominator.CredentialsConfiguration.staticCredentials;
 import static denominator.Denominator.create;
 import static denominator.Denominator.listProviders;
 import static org.testng.Assert.assertEquals;
@@ -11,6 +12,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableSet;
 
+import denominator.DNSApiManager;
 import denominator.Provider;
 
 public class Route53ProviderTest {
@@ -23,7 +25,14 @@ public class Route53ProviderTest {
 
     @Test
     public void testProviderWiresRoute53ZoneApi() {
-        assertEquals(create(new Route53Provider()).getApi().getZoneApi().getClass(), Route53ZoneApi.class);
-        assertEquals(create("route53").getApi().getZoneApi().getClass(), Route53ZoneApi.class);
+        DNSApiManager manager = create(new Route53Provider(), staticCredentials("accesskey", "secretkey"));
+        assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
+        manager = create("route53", staticCredentials("accesskey", "secretkey"));
+        assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "route53 requires credentials with two parts: accessKey and secretKey")
+    public void testCredentialsRequired() {
+        create(new Route53Provider()).getApi().getZoneApi().list();
     }
 }

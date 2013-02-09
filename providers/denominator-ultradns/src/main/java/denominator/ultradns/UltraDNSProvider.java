@@ -1,5 +1,7 @@
 package denominator.ultradns;
 
+import static com.google.common.base.Preconditions.checkState;
+
 import java.io.Closeable;
 
 import javax.inject.Singleton;
@@ -14,6 +16,7 @@ import com.google.common.base.Supplier;
 
 import dagger.Module;
 import dagger.Provides;
+import denominator.Credentials.TwoPartCredentials;
 import denominator.DNSApi;
 import denominator.DNSApiManager;
 import denominator.Provider;
@@ -22,6 +25,7 @@ import denominator.Provider;
 public class UltraDNSProvider extends Provider {
 
     @Override
+    @Provides
     public String getName() {
         return "ultradns";
     }
@@ -34,10 +38,14 @@ public class UltraDNSProvider extends Provider {
 
     @Provides
     @Singleton
-    Supplier<Credentials> supplyCredentials() {
+    Supplier<Credentials> supplyJCloudsCredentials(final Supplier<denominator.Credentials> denominatorCredentials) {
         return new Supplier<Credentials>() {
             public Credentials get() {
-                throw new UnsupportedOperationException("TODO: configuration");
+                denominator.Credentials input = denominatorCredentials.get();
+                checkState(input != null && input instanceof TwoPartCredentials,
+                        "%s requires credentials with two parts: username and password", getName());
+                TwoPartCredentials<?, ?> twoParts = TwoPartCredentials.class.cast(input);
+                return new Credentials(twoParts.getFirstPart().toString(), twoParts.getSecondPart().toString());
             }
         };
     }

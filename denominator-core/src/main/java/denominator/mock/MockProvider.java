@@ -6,14 +6,15 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-import denominator.Provider;
-import denominator.DNSApiManager;
 import denominator.DNSApi;
+import denominator.DNSApiManager;
+import denominator.Provider;
 
 @Module(entryPoints = DNSApiManager.class)
 public class MockProvider extends Provider implements Closeable {
 
     @Override
+    @Provides
     public String getName() {
         return "mock";
     }
@@ -21,7 +22,7 @@ public class MockProvider extends Provider implements Closeable {
     @Provides
     @Singleton
     DNSApi provideNetworkServices() {
-        return new MockNetworkServices(new MockZoneApi());
+        return new MockDNSApi(new MockZoneApi());
     }
 
     /**
