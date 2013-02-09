@@ -1,5 +1,6 @@
 package denominator.ultradns;
 
+import static denominator.CredentialsConfiguration.staticCredentials;
 import static denominator.Denominator.create;
 import static denominator.Denominator.listProviders;
 import static org.testng.Assert.assertEquals;
@@ -11,6 +12,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableSet;
 
+import denominator.DNSApiManager;
 import denominator.Provider;
 
 public class UltraDNSProviderTest {
@@ -23,7 +25,14 @@ public class UltraDNSProviderTest {
 
     @Test
     public void testProviderWiresUltraDNSZoneApi() {
-        assertEquals(create(new UltraDNSProvider()).getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
-        assertEquals(create("ultradns").getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
+        DNSApiManager manager = create(new UltraDNSProvider(), staticCredentials("username", "password"));
+        assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
+        manager = create("ultradns", staticCredentials("username", "password"));
+        assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ultradns requires credentials with two parts: username and password")
+    public void testCredentialsRequired() {
+        create(new UltraDNSProvider()).getApi().getZoneApi().list();
     }
 }

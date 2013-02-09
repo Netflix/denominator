@@ -4,11 +4,11 @@ import javax.inject.Inject;
 
 import denominator.DNSApi;
 
-public class MockNetworkServices implements DNSApi {
+public class MockDNSApi implements DNSApi {
     private final MockZoneApi zoneApi;
 
     @Inject
-    MockNetworkServices(MockZoneApi zoneApi) {
+    MockDNSApi(MockZoneApi zoneApi) {
         this.zoneApi = zoneApi;
     }
 

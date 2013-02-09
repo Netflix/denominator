@@ -1,5 +1,7 @@
 package denominator;
 
+import static com.google.common.base.Objects.toStringHelper;
+
 import java.io.Closeable;
 import java.io.IOException;
 
@@ -10,11 +12,13 @@ import javax.inject.Inject;
  * {@link Provider} that implements it.
  */
 public class DNSApiManager implements Closeable {
+    private final String providerKey;
     private final DNSApi api;
     private final Closeable closer;
 
     @Inject
-    DNSApiManager(DNSApi api, Closeable closer) {
+    DNSApiManager(String providerKey, DNSApi api, Closeable closer) {
+        this.providerKey = providerKey;
         this.api = api;
         this.closer = closer;
     }
@@ -33,5 +37,10 @@ public class DNSApiManager implements Closeable {
     @Override
     public void close() throws IOException {
         closer.close();
+    }
+
+    @Override
+    public String toString() {
+        return toStringHelper(this).add("provider", providerKey).toString();
     }
 }
