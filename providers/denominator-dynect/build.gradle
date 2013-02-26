@@ -20,6 +20,6 @@ test {
 dependencies {
   compile      project(':denominator-core')
   testCompile  project(':denominator-core').sourceSets.test.output
-  compile     'org.jclouds.labs:dynect:1.6.0-alpha.2'
+  compile     'org.jclouds.labs:dynect:1.6.0-alpha.3'
 }
 
