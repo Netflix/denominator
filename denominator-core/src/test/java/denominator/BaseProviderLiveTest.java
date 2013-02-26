@@ -1,9 +1,10 @@
 package denominator;
 
-import static com.google.common.io.Closeables.closeQuietly;
+import static com.google.common.io.Closeables.close;
 import static java.lang.String.format;
 import static java.util.logging.Logger.getAnonymousLogger;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.testng.SkipException;
@@ -31,7 +32,7 @@ public abstract class BaseProviderLiveTest {
     }
 
     @AfterClass
-    private void tearDown() {
-        closeQuietly(manager);
+    private void tearDown() throws IOException {
+       close(manager, true);
     }
 }
