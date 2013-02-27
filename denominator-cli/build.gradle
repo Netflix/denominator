@@ -1,0 +1,81 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+
+eclipse {
+  classpath {
+    downloadSources = true
+    downloadJavadoc = true
+  }
+}
+
+dependencies {
+  compile      project(':denominator-core')
+  compile      project(':providers:denominator-dynect')
+  compile      project(':providers:denominator-ultradns')
+  compile      project(':providers:denominator-route53')
+  compile     'io.airlift:airline:0.5'
+}
+
+// create a self-contained jar that is executable
+// the file output name is "build/denominator"
+task fat(dependsOn: classes, type: Jar) { 
+  classifier = "fat"
+  destinationDir = buildDir
+  archiveName = "denominator"  
+
+  // merge provider files together
+  // http://java.dzone.com/articles/jar-deps-dont-meta
+  def providerFile = "META-INF/services/denominator.Provider"
+
+  def mergeDir = "${buildDir}/merge"
+
+  def runtimeDeps = configurations.runtime.collect {
+    it.isDirectory() ? it : zipTree(it)
+  }
+
+  doFirst {
+    new File(mergeDir).delete()
+    def mergedFile = new File(mergeDir, providerFile)
+    new File(mergedFile.parent).mkdirs()
+    runtimeDeps*.matching({ include "**/${providerFile}" })*.each {
+      mergedFile << it.bytes
+    }
+  }
+
+  from (sourceSets*.output.classesDir) {
+    exclude providerFile
+  }
+
+  from {
+    configurations.compile.collect {
+      it.isDirectory() ? it : zipTree(it)
+    }    
+  }
+
+  from(mergeDir)  
+
+  // really executable jar
+  // http://skife.org/java/unix/2011/06/20/really_executable_jars.html
+
+  manifest {
+    attributes 'Main-Class': 'denominator.cli.Denominator'
+  }
+
+  doLast {
+    def srcFile = new File("${destinationDir}/${archiveName}")
+    def tmpFile = new File(srcFile.getAbsolutePath() + ".tmp")
+    tmpFile.delete()
+    tmpFile << "#!/usr/bin/env sh\n"
+    tmpFile << 'exec java -jar $0 "$@"' + "\n"
+    tmpFile << srcFile.bytes
+    tmpFile.setExecutable(true, true)
+    tmpFile.renameTo(srcFile)
+  }
+}
+
+artifacts {
+    archives fat
+}
