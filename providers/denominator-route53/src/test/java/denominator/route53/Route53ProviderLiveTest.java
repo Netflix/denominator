@@ -1,7 +1,7 @@
 package denominator.route53;
 
 import static com.google.common.base.Strings.emptyToNull;
-import static denominator.CredentialsConfiguration.staticCredentials;
+import static denominator.CredentialsConfiguration.credentials;
 import static java.lang.System.getProperty;
 
 import org.testng.annotations.BeforeClass;
@@ -17,7 +17,7 @@ public class Route53ProviderLiveTest extends BaseProviderLiveTest {
         String accesskey = emptyToNull(getProperty("route53.accesskey"));
         String secretkey = emptyToNull(getProperty("route53.secretkey"));
         if (accesskey != null && secretkey != null) {
-            manager = Denominator.create(new Route53Provider(), staticCredentials(accesskey, secretkey));
+            manager = Denominator.create(new Route53Provider(), credentials(accesskey, secretkey));
         }
     }
 }

@@ -1,7 +1,7 @@
 package denominator.dynect;
 
 import static com.google.common.base.Strings.emptyToNull;
-import static denominator.CredentialsConfiguration.staticCredentials;
+import static denominator.CredentialsConfiguration.credentials;
 import static java.lang.System.getProperty;
 
 import org.testng.annotations.BeforeClass;
@@ -18,7 +18,7 @@ public class DynECTProviderLiveTest extends BaseProviderLiveTest {
         String username = emptyToNull(getProperty("dynect.username"));
         String password = emptyToNull(getProperty("dynect.password"));
         if (customer != null && username != null && password != null) {
-            manager = Denominator.create(new DynECTProvider(), staticCredentials(customer, username, password));
+            manager = Denominator.create(new DynECTProvider(), credentials(customer, username, password));
         }
     }
 }

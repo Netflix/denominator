@@ -1,8 +1,9 @@
 package denominator.ultradns;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Suppliers.compose;
 
 import java.io.Closeable;
+import java.util.List;
 
 import javax.inject.Singleton;
 
@@ -12,42 +13,42 @@ import org.jclouds.rest.RestContext;
 import org.jclouds.ultradns.ws.UltraDNSWSAsyncApi;
 import org.jclouds.ultradns.ws.UltraDNSWSProviderMetadata;
 
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 
 import dagger.Module;
 import dagger.Provides;
-import denominator.Credentials.TwoPartCredentials;
-import denominator.DNSApi;
+import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.ZoneApi;
 
 @Module(entryPoints = DNSApiManager.class)
 public class UltraDNSProvider extends Provider {
 
+    @Provides
+    protected Provider provideThis() {
+        return this;
+    }
+
+    @Provides
+    @Singleton
+    Supplier<Credentials> toJcloudsCredentials(CredentialsAsList supplier) {
+        return compose(new ToJcloudsCredentials(), supplier);
+    }
+
     @Override
-    @Provides
-    public String getName() {
-        return "ultradns";
+    public Multimap<String, String> getCredentialTypeToParameterNames() {
+        return ImmutableMultimap.<String, String> builder()
+                .putAll("password", "username", "password").build();
     }
 
-    @Provides
-    @Singleton
-    DNSApi provideNetworkServices(RestContext<org.jclouds.ultradns.ws.UltraDNSWSApi, UltraDNSWSAsyncApi> context) {
-        return new UltraDNSApi(new UltraDNSZoneApi(context.getApi()));
-    }
-
-    @Provides
-    @Singleton
-    Supplier<Credentials> supplyJCloudsCredentials(final Supplier<denominator.Credentials> denominatorCredentials) {
-        return new Supplier<Credentials>() {
-            public Credentials get() {
-                denominator.Credentials input = denominatorCredentials.get();
-                checkState(input != null && input instanceof TwoPartCredentials,
-                        "%s requires credentials with two parts: username and password", getName());
-                TwoPartCredentials<?, ?> twoParts = TwoPartCredentials.class.cast(input);
-                return new Credentials(twoParts.getFirstPart().toString(), twoParts.getSecondPart().toString());
-            }
-        };
+    private static class ToJcloudsCredentials implements Function<List<Object>, Credentials> {
+        public Credentials apply(List<Object> creds) {
+            return new Credentials(creds.get(0).toString(), creds.get(1).toString());
+        }
     }
 
     @Provides
@@ -55,6 +56,12 @@ public class UltraDNSProvider extends Provider {
     RestContext<org.jclouds.ultradns.ws.UltraDNSWSApi, UltraDNSWSAsyncApi> provideContext(
             Supplier<Credentials> credentials) {
         return ContextBuilder.newBuilder(new UltraDNSWSProviderMetadata()).credentialsSupplier(credentials).build();
+    }
+
+    @Provides
+    @Singleton
+    ZoneApi provideZoneApi(RestContext<org.jclouds.ultradns.ws.UltraDNSWSApi, UltraDNSWSAsyncApi> context) {
+        return new UltraDNSZoneApi(context.getApi());
     }
 
     @Provides

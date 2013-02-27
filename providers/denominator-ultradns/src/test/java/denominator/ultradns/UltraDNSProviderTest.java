@@ -1,6 +1,6 @@
 package denominator.ultradns;
 
-import static denominator.CredentialsConfiguration.staticCredentials;
+import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
 import static denominator.Denominator.listProviders;
 import static org.testng.Assert.assertEquals;
@@ -10,29 +10,43 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
 import denominator.DNSApiManager;
 import denominator.Provider;
 
 public class UltraDNSProviderTest {
+    private static final Provider PROVIDER = new UltraDNSProvider();
+
+    @Test
+    public void testMockMetadata() {
+        assertEquals(PROVIDER.getName(), "ultradns");
+        assertEquals(PROVIDER.getCredentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
+                .putAll("password", "username", "password").build());
+    }
 
     @Test
     public void testUltraDNSRegistered() {
         Set<Provider> allProviders = ImmutableSet.copyOf(listProviders());
-        assertTrue(allProviders.contains(new UltraDNSProvider()));
+        assertTrue(allProviders.contains(PROVIDER));
     }
 
     @Test
     public void testProviderWiresUltraDNSZoneApi() {
-        DNSApiManager manager = create(new UltraDNSProvider(), staticCredentials("username", "password"));
+        DNSApiManager manager = create(PROVIDER, credentials("username", "password"));
         assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
-        manager = create("ultradns", staticCredentials("username", "password"));
+        manager = create("ultradns", credentials("username", "password"));
         assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
     }
 
-    @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "ultradns requires credentials with two parts: username and password")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. ultradns requires username, password")
     public void testCredentialsRequired() {
-        create(new UltraDNSProvider()).getApi().getZoneApi().list();
+        create(PROVIDER).getApi().getZoneApi().list();
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. ultradns requires username, password")
+    public void testTwoPartCredentialsRequired() {
+        create(PROVIDER, credentials("customer", "username", "password")).getApi().getZoneApi().list();
     }
 }
