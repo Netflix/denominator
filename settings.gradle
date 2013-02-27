@@ -3,4 +3,5 @@ include 'denominator-model', \
 'denominator-core', \
 'providers:denominator-route53', \
 'providers:denominator-ultradns', \
-'providers:denominator-dynect'
+'providers:denominator-dynect', \
+'denominator-cli'
