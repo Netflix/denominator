@@ -22,15 +22,14 @@ import com.google.common.collect.ImmutableMap;
  * @see <a href="http://tools.ietf.org/html/rfc4408#section-3.1.1">RFC 4408</a>
  */
 public class SPFData extends ForwardingMap<String, Object> {
-    private final ImmutableMap<String, Object> delegate;
+
+    public static SPFData create(String spfdata) {
+        return new SPFData(spfdata);
+    }
 
     @ConstructorProperties("spfdata")
     private SPFData(String spfdata) {
         this.delegate = ImmutableMap.<String, Object> of("spfdata", checkNotNull(spfdata, "spfdata"));
-    }
-
-    protected Map<String, Object> delegate() {
-        return delegate;
     }
 
     /**
@@ -40,35 +39,10 @@ public class SPFData extends ForwardingMap<String, Object> {
         return get("spfdata").toString();
     }
 
-    public static SPFData spf(String spfdata) {
-        return builder().spfdata(spfdata).build();
-    }
-
-    public static SPFData.Builder builder() {
-        return new Builder();
-    }
-
-    public SPFData.Builder toBuilder() {
-        return builder().from(this);
-    }
-
-    public final static class Builder {
-        private String spfdata;
-
-        /**
-         * @see SPFData#getSpfdata()
-         */
-        public SPFData.Builder spfdata(String spfdata) {
-            this.spfdata = spfdata;
-            return this;
-        }
-
-        public SPFData build() {
-            return new SPFData(spfdata);
-        }
-
-        public SPFData.Builder from(SPFData in) {
-            return this.spfdata(in.getSpfdata());
-        }
+    private final ImmutableMap<String, Object> delegate;
+    
+    @Override
+    protected Map<String, Object> delegate() {
+        return delegate;
     }
 }

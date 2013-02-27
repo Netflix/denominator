@@ -15,19 +15,31 @@ import com.google.common.primitives.UnsignedInteger;
  * <h4>Example</h4>
  * 
  * <pre>
- * import static denominator.model.rdata.SSHFPData.sshfpDSA;
- * ...
  * SSHFPData rdata = SSHFPData.builder()
  *                            .algorithm(2)
  *                            .type(1)
  *                            .fingerprint(&quot;123456789abcdef67890123456789abcdef67890&quot;).build();
  *  // or shortcut
- * SSHFPData rdata = sshfpDSA(&quot;123456789abcdef67890123456789abcdef67890&quot;);
+ * SSHFPData rdata = SSHFPData.createDSA(&quot;123456789abcdef67890123456789abcdef67890&quot;);
  * </pre>
  * 
  * @see <a href="http://www.rfc-editor.org/rfc/rfc4255.txt">RFC 4255</a>
  */
 public class SSHFPData extends ForwardingMap<String, Object> {
+
+    /**
+     * @param fingerprint {@code DSA} {@code SHA-1} fingerprint 
+     */
+    public static SSHFPData createDSA(String fingerprint) {
+        return builder().algorithm(1).type(2).fingerprint(fingerprint).build();
+    }
+
+    /**
+     * @param fingerprint {@code RSA} {@code SHA-1} fingerprint 
+     */
+    public static SSHFPData createRSA(String fingerprint) {
+        return builder().algorithm(1).type(1).fingerprint(fingerprint).build();
+    }
 
     @ConstructorProperties({ "algorithm", "type", "fingerprint" })
     private SSHFPData(UnsignedInteger algorithm, UnsignedInteger type, String fingerprint) {
@@ -36,12 +48,6 @@ public class SSHFPData extends ForwardingMap<String, Object> {
                 .put("type", checkNotNull(type, "type of %s", fingerprint))
                 .put("fingerprint", checkNotNull(fingerprint, "fingerprint"))
                 .build();
-    }
-
-    private final ImmutableMap<String, Object> delegate;
-
-    protected Map<String, Object> delegate() {
-        return delegate;
     }
 
     /**
@@ -67,28 +73,6 @@ public class SSHFPData extends ForwardingMap<String, Object> {
      */
     public String getFingerprint() {
         return String.class.cast(get("fingerprint"));
-    }
-
-    public static SSHFPData.Builder builder() {
-        return new Builder();
-    }
-
-    public SSHFPData.Builder toBuilder() {
-        return builder().from(this);
-    }
-
-    /**
-     * @param fingerprint {@code DSA} {@code SHA-1} fingerprint 
-     */
-    public static SSHFPData sshfpDSA(String fingerprint) {
-        return builder().algorithm(1).type(2).fingerprint(fingerprint).build();
-    }
-
-    /**
-     * @param fingerprint {@code RSA} {@code SHA-1} fingerprint 
-     */
-    public static SSHFPData sshfpRSA(String fingerprint) {
-        return builder().algorithm(1).type(1).fingerprint(fingerprint).build();
     }
 
     public final static class Builder {
@@ -137,9 +121,16 @@ public class SSHFPData extends ForwardingMap<String, Object> {
         public SSHFPData build() {
             return new SSHFPData(algorithm, type, fingerprint);
         }
+    }
 
-        public SSHFPData.Builder from(SSHFPData in) {
-            return this.algorithm(in.getAlgorithm()).type(in.getType()).fingerprint(in.getFingerprint());
-        }
+    public static SSHFPData.Builder builder() {
+        return new Builder();
+    }
+
+    private final ImmutableMap<String, Object> delegate;
+    
+    @Override
+    protected Map<String, Object> delegate() {
+        return delegate;
     }
 }
