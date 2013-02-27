@@ -3,6 +3,8 @@ package denominator;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.instanceOf;
+import static denominator.CredentialsConfiguration.*;
+
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Maps.uniqueIndex;
 
@@ -15,6 +17,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 import dagger.ObjectGraph;
+import denominator.Credentials.AnonymousCredentials;
 import denominator.CredentialsConfiguration.CredentialsSupplier;
 import denominator.mock.MockProvider;
 
@@ -34,7 +37,7 @@ public final class Denominator {
      * ex.
      * 
      * <pre>
-     * route53 = Denominator.create(new Route53Provider(), staticCredentials(accesskey, secretkey));
+     * ultraDns = Denominator.create(new UltraDNSProvider(), credentials(username, password));
      * </pre>
      * 
      * @see CredentialsConfiguration
@@ -48,8 +51,14 @@ public final class Denominator {
         } else {
             inputModules = ImmutableList.copyOf(modules);
         }
-        if (!any(inputModules, instanceOf(CredentialsSupplier.class)))
-            modulesForGraph.add(CredentialsConfiguration.none());
+        if (!any(inputModules, instanceOf(CredentialsSupplier.class))) {
+            if (in.defaultCredentialSupplier().isPresent()) {
+                modulesForGraph.add(credentials(in.defaultCredentialSupplier().get()));
+            } else {
+                checkValidForProvider(AnonymousCredentials.INSTANCE, in);
+                modulesForGraph.add(anonymous());
+            }
+        }
         modulesForGraph.addAll(inputModules);
         return ObjectGraph.create(modulesForGraph.build().toArray()).get(DNSApiManager.class);
     }
@@ -61,7 +70,7 @@ public final class Denominator {
      * ex.
      * 
      * <pre>
-     * route53 = Denominator.create(&quot;route53&quot;, staticCredentials(accesskey, secretkey));
+     * route53 = Denominator.create(&quot;route53&quot;, credentials(accesskey, secretkey));
      * </pre>
      * 
      * @see Provider#getName()
