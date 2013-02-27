@@ -1,8 +1,9 @@
 package denominator.dynect;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Suppliers.compose;
 
 import java.io.Closeable;
+import java.util.List;
 
 import javax.inject.Singleton;
 
@@ -12,43 +13,48 @@ import org.jclouds.dynect.v3.DynECTAsyncApi;
 import org.jclouds.dynect.v3.DynECTProviderMetadata;
 import org.jclouds.rest.RestContext;
 
+import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
 
 import dagger.Module;
 import dagger.Provides;
-import denominator.Credentials.ThreePartCredentials;
-import denominator.DNSApi;
+import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.ZoneApi;
 
 @Module(entryPoints = DNSApiManager.class)
 public class DynECTProvider extends Provider {
 
+    @Provides
+    protected Provider provideThis() {
+        return this;
+    }
+
+    @Provides
+    @Singleton
+    Supplier<Credentials> toJcloudsCredentials(CredentialsAsList supplier) {
+        return compose(new ToJcloudsCredentials(), supplier);
+    }
+
     @Override
-    @Provides
-    public String getName() {
-        return "dynect";
+    public Multimap<String, String> getCredentialTypeToParameterNames() {
+        return ImmutableMultimap.<String, String> builder()
+                .putAll("password", "customer", "username", "password").build();
+    }
+
+    private static class ToJcloudsCredentials implements Function<List<Object>, Credentials> {
+        public Credentials apply(List<Object> creds) {
+            return new Credentials(creds.get(0) + ":" + creds.get(1), creds.get(2).toString());
+        }
     }
 
     @Provides
     @Singleton
-    DNSApi provideNetworkServices(RestContext<org.jclouds.dynect.v3.DynECTApi, DynECTAsyncApi> context) {
-        return new DynECTApi(new DynECTZoneApi(context.getApi()));
-    }
-
-    @Provides
-    @Singleton
-    Supplier<Credentials> supplyJCloudsCredentials(final Supplier<denominator.Credentials> denominatorCredentials) {
-        return new Supplier<Credentials>() {
-            public Credentials get() {
-                denominator.Credentials input = denominatorCredentials.get();
-                checkState(input != null && input instanceof ThreePartCredentials,
-                        "%s requires credentials with three parts: customer, username, password", getName());
-                ThreePartCredentials<?, ?, ?> threeParts = ThreePartCredentials.class.cast(input);
-                return new Credentials(threeParts.getFirstPart() + ":" + threeParts.getSecondPart(), threeParts
-                        .getThirdPart().toString());
-            }
-        };
+    ZoneApi provideZoneApi(RestContext<org.jclouds.dynect.v3.DynECTApi, DynECTAsyncApi> context) {
+        return new DynECTZoneApi(context.getApi());
     }
 
     @Provides

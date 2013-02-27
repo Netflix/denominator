@@ -12,13 +12,13 @@ import javax.inject.Inject;
  * {@link Provider} that implements it.
  */
 public class DNSApiManager implements Closeable {
-    private final String providerKey;
+    private final Provider provider;
     private final DNSApi api;
     private final Closeable closer;
 
     @Inject
-    DNSApiManager(String providerKey, DNSApi api, Closeable closer) {
-        this.providerKey = providerKey;
+    DNSApiManager(Provider provider, DNSApi api, Closeable closer) {
+        this.provider = provider;
         this.api = api;
         this.closer = closer;
     }
@@ -41,6 +41,6 @@ public class DNSApiManager implements Closeable {
 
     @Override
     public String toString() {
-        return toStringHelper(this).add("provider", providerKey).toString();
+        return toStringHelper(this).add("provider", provider).toString();
     }
 }

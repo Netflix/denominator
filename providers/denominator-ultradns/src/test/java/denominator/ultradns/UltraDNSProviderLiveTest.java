@@ -1,7 +1,7 @@
 package denominator.ultradns;
 
 import static com.google.common.base.Strings.emptyToNull;
-import static denominator.CredentialsConfiguration.staticCredentials;
+import static denominator.CredentialsConfiguration.credentials;
 import static java.lang.System.getProperty;
 
 import org.testng.annotations.BeforeClass;
@@ -18,7 +18,7 @@ public class UltraDNSProviderLiveTest extends BaseProviderLiveTest {
         String username = emptyToNull(getProperty("ultradns.username"));
         String password = emptyToNull(getProperty("ultradns.password"));
         if (username != null && password != null) {
-            manager = Denominator.create(new UltraDNSProvider(), staticCredentials(username, password));
+            manager = Denominator.create(new UltraDNSProvider(), credentials(username, password));
         }
     }
 }
