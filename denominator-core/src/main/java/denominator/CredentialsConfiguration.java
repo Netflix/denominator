@@ -142,7 +142,8 @@ public class CredentialsConfiguration {
     public static Credentials firstValidCredentialsForProvider(Set<Supplier<Credentials>> allSuppliers,
             Provider provider) {
         for (Supplier<Credentials> supplier : allSuppliers) {
-            return checkValidForProvider(supplier.get(), provider);
+            Credentials credentials = supplier.get();
+            return checkValidForProvider(credentials, provider);
         }
         return checkValidForProvider(AnonymousCredentials.INSTANCE, provider);
     }
@@ -217,7 +218,7 @@ public class CredentialsConfiguration {
 
     private static boolean credentialConfigurationHasKeys(Provider provider, Set<?> keys) {
         for (String credentialType : provider.getCredentialTypeToParameterNames().keySet())
-            if (keys.equals(provider.getCredentialTypeToParameterNames().get(credentialType)))
+            if (keys.containsAll(provider.getCredentialTypeToParameterNames().get(credentialType)))
                 return true;
         return false;
     }
