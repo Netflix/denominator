@@ -15,6 +15,7 @@ import org.jclouds.rest.RestContext;
 import org.jclouds.route53.Route53AsyncApi;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
@@ -32,6 +33,11 @@ public class Route53Provider extends Provider {
     @Provides
     protected Provider provideThis() {
         return this;
+    }
+
+    @Override
+    public Optional<Supplier<denominator.Credentials>> defaultCredentialSupplier() {
+        return Optional.<Supplier<denominator.Credentials>> of(new InstanceProfileCredentialsSupplier());
     }
 
     @Provides

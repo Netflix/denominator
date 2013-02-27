@@ -20,5 +20,6 @@ dependencies {
   compile      project(':denominator-core')
   testCompile  project(':denominator-core').sourceSets.test.output
   compile     'org.jclouds.provider:aws-route53:1.6.0-alpha.3'
+  testCompile     'com.google.mockwebserver:mockwebserver:20130201'
 }
 
