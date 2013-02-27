@@ -36,12 +36,6 @@ public class SRVData extends ForwardingMap<String, Object> {
                 .build();
     }
 
-    private final ImmutableMap<String, Object> delegate;
-
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
-
     /**
      * The priority of this target host. A client MUST attempt to contact the
      * target host with the lowest-numbered priority it can reach; target hosts
@@ -74,10 +68,6 @@ public class SRVData extends ForwardingMap<String, Object> {
      */
     public String getTarget() {
         return String.class.cast(get("target"));
-    }
-
-    public static SRVData.Builder builder() {
-        return new Builder();
     }
 
     public SRVData.Builder toBuilder() {
@@ -150,5 +140,16 @@ public class SRVData extends ForwardingMap<String, Object> {
         public SRVData.Builder from(SRVData in) {
             return this.priority(in.getPriority()).weight(in.getWeight()).port(in.getPort()).target(in.getTarget());
         }
+    }
+
+    public static SRVData.Builder builder() {
+        return new Builder();
+    }
+
+    private final ImmutableMap<String, Object> delegate;
+    
+    @Override
+    protected Map<String, Object> delegate() {
+        return delegate;
     }
 }

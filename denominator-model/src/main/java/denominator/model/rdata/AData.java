@@ -14,23 +14,20 @@ import com.google.common.collect.ImmutableMap;
  * <h4>Example</h4>
  * 
  * <pre>
- * import static denominator.model.rdata.AData.a;
- * ...
- * AData rdata = a("ptr.foo.com.");
+ * AData rdata = AData.create("1.1.1.1");
  * </pre>
  * 
  * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class AData extends ForwardingMap<String, Object> {
-    private final ImmutableMap<String, Object> delegate;
+
+    public static AData create(String address) {
+        return new AData(address);
+    }
 
     @ConstructorProperties("address")
     private AData(String address) {
         this.delegate = ImmutableMap.<String, Object> of("address", checkNotNull(address, "address"));
-    }
-
-    protected Map<String, Object> delegate() {
-        return delegate;
     }
 
     /**
@@ -40,35 +37,10 @@ public class AData extends ForwardingMap<String, Object> {
         return get("address").toString();
     }
 
-    public static AData a(String address) {
-        return builder().address(address).build();
-    }
-
-    public static AData.Builder builder() {
-        return new Builder();
-    }
-
-    public AData.Builder toBuilder() {
-        return builder().from(this);
-    }
-
-    public final static class Builder {
-        private String address;
-
-        /**
-         * @see AData#getAddress()
-         */
-        public AData.Builder address(String address) {
-            this.address = address;
-            return this;
-        }
-
-        public AData build() {
-            return new AData(address);
-        }
-
-        public AData.Builder from(AData in) {
-            return this.address(in.getAddress());
-        }
+    private final ImmutableMap<String, Object> delegate;
+    
+    @Override
+    protected Map<String, Object> delegate() {
+        return delegate;
     }
 }

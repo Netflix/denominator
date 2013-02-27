@@ -43,12 +43,6 @@ public class SOAData extends ForwardingMap<String, Object> {
                 .put("minimum", checkNotNull(minimum, "minimum of %s", mname)).build();
     }
 
-    private final ImmutableMap<String, Object> delegate;
-
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
-
     /**
      * domain-name of the name server that was the original or primary source of
      * data for this zone
@@ -100,10 +94,6 @@ public class SOAData extends ForwardingMap<String, Object> {
      */
     public UnsignedInteger getMinimum() {
         return UnsignedInteger.class.cast(get("minimum"));
-    }
-
-    public static SOAData.Builder builder() {
-        return new Builder();
     }
 
     public SOAData.Builder toBuilder() {
@@ -218,5 +208,16 @@ public class SOAData extends ForwardingMap<String, Object> {
             return this.mname(in.getMname()).rname(in.getRname()).serial(in.getSerial()).refresh(in.getRefresh())
                     .expire(in.getExpire()).minimum(in.getMinimum());
         }
+    }
+
+    public static SOAData.Builder builder() {
+        return new Builder();
+    }
+
+    private final ImmutableMap<String, Object> delegate;
+    
+    @Override
+    protected Map<String, Object> delegate() {
+        return delegate;
     }
 }
