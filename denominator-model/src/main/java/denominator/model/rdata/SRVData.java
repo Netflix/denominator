@@ -1,5 +1,6 @@
 package denominator.model.rdata;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
@@ -28,18 +29,16 @@ public class SRVData extends ForwardingMap<String, Object> {
 
     @ConstructorProperties({ "priority", "weight", "port", "target" })
     private SRVData(UnsignedInteger priority, UnsignedInteger weight, UnsignedInteger port, String target) {
+        checkArgument(checkNotNull(priority, "priority of %s", target).intValue() <= 0xFFFF, "priority must be 0-65535");
+        checkArgument(checkNotNull(weight, "weight of %s", target).intValue() <= 0xFFFF, "weight must be 0-65535");
+        checkArgument(checkNotNull(port, "port of %s", target).intValue() <= 0xFFFF, "port must be 0-65535");
+        
         this.delegate = ImmutableMap.<String, Object> builder()
-                .put("priority", checkNotNull(priority, "priority of %s", target))
-                .put("weight", checkNotNull(weight, "weight of %s", target))
-                .put("port", checkNotNull(port, "port of %s", target))
+                .put("priority", priority)
+                .put("weight", weight)
+                .put("port", port)
                 .put("target", checkNotNull(target, "target"))
                 .build();
-    }
-
-    private final ImmutableMap<String, Object> delegate;
-
-    protected Map<String, Object> delegate() {
-        return delegate;
     }
 
     /**
@@ -74,10 +73,6 @@ public class SRVData extends ForwardingMap<String, Object> {
      */
     public String getTarget() {
         return String.class.cast(get("target"));
-    }
-
-    public static SRVData.Builder builder() {
-        return new Builder();
     }
 
     public SRVData.Builder toBuilder() {
@@ -150,5 +145,16 @@ public class SRVData extends ForwardingMap<String, Object> {
         public SRVData.Builder from(SRVData in) {
             return this.priority(in.getPriority()).weight(in.getWeight()).port(in.getPort()).target(in.getTarget());
         }
+    }
+
+    public static SRVData.Builder builder() {
+        return new Builder();
+    }
+
+    private final ImmutableMap<String, Object> delegate;
+    
+    @Override
+    protected Map<String, Object> delegate() {
+        return delegate;
     }
 }
