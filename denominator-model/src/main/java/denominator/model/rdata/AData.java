@@ -1,12 +1,16 @@
 package denominator.model.rdata;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.util.Map;
 
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.net.InetAddresses;
 
 /**
  * Corresponds to the binary representation of the {@code A} (Address) RData
@@ -14,61 +18,39 @@ import com.google.common.collect.ImmutableMap;
  * <h4>Example</h4>
  * 
  * <pre>
- * import static denominator.model.rdata.AData.a;
- * ...
- * AData rdata = a("ptr.foo.com.");
+ * AData rdata = AData.create("1.1.1.1");
  * </pre>
  * 
  * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class AData extends ForwardingMap<String, Object> {
-    private final ImmutableMap<String, Object> delegate;
 
-    @ConstructorProperties("address")
-    private AData(String address) {
-        this.delegate = ImmutableMap.<String, Object> of("address", checkNotNull(address, "address"));
+    public static AData create(String ipv4address) {
+        InetAddress address = InetAddresses.forString(checkNotNull(ipv4address, "ipv4address"));
+        checkArgument(address instanceof Inet4Address, "%s should be a ipv4 address for A record", address);
+        return new AData(Inet4Address.class.cast(address));
     }
 
-    protected Map<String, Object> delegate() {
-        return delegate;
+    public static AData create(Inet4Address address) {
+        return new AData(address);
+    }
+
+    @ConstructorProperties("address")
+    private AData(Inet4Address address) {
+        this.delegate = ImmutableMap.<String, Object> of("address", checkNotNull(address, "address"));
     }
 
     /**
      * a 32-bit internet address
      */
-    public String getAddress() {
-        return get("address").toString();
+    public Inet4Address getAddress() {
+        return Inet4Address.class.cast(get("address"));
     }
 
-    public static AData a(String address) {
-        return builder().address(address).build();
-    }
-
-    public static AData.Builder builder() {
-        return new Builder();
-    }
-
-    public AData.Builder toBuilder() {
-        return builder().from(this);
-    }
-
-    public final static class Builder {
-        private String address;
-
-        /**
-         * @see AData#getAddress()
-         */
-        public AData.Builder address(String address) {
-            this.address = address;
-            return this;
-        }
-
-        public AData build() {
-            return new AData(address);
-        }
-
-        public AData.Builder from(AData in) {
-            return this.address(in.getAddress());
-        }
+    private final ImmutableMap<String, Object> delegate;
+    
+    @Override
+    protected Map<String, Object> delegate() {
+        return delegate;
     }
 }

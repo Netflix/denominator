@@ -15,23 +15,20 @@ import com.google.common.collect.ImmutableMap;
  * <h4>Example</h4>
  * 
  * <pre>
- * import static denominator.model.rdata.NSData.ns;
- * ...
- * NSData rdata = ns("ns.foo.com.");
+ * NSData rdata = NSData.create("ns.foo.com.");
  * </pre>
  * 
  * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class NSData extends ForwardingMap<String, Object> {
-    private final ImmutableMap<String, Object> delegate;
+
+    public static NSData create(String nsdname) {
+        return new NSData(nsdname);
+    }
 
     @ConstructorProperties("nsdname")
     private NSData(String nsdname) {
         this.delegate = ImmutableMap.<String, Object> of("nsdname", checkNotNull(nsdname, "nsdname"));
-    }
-
-    protected Map<String, Object> delegate() {
-        return delegate;
     }
 
     /**
@@ -42,35 +39,10 @@ public class NSData extends ForwardingMap<String, Object> {
         return get("nsdname").toString();
     }
 
-    public static NSData ns(String nsdname) {
-        return builder().nsdname(nsdname).build();
-    }
-
-    public static NSData.Builder builder() {
-        return new Builder();
-    }
-
-    public NSData.Builder toBuilder() {
-        return builder().from(this);
-    }
-
-    public final static class Builder {
-        private String nsdname;
-
-        /**
-         * @see NSData#getNsdname()
-         */
-        public NSData.Builder nsdname(String nsdname) {
-            this.nsdname = nsdname;
-            return this;
-        }
-
-        public NSData build() {
-            return new NSData(nsdname);
-        }
-
-        public NSData.Builder from(NSData in) {
-            return this.nsdname(in.getNsdname());
-        }
+    private final ImmutableMap<String, Object> delegate;
+    
+    @Override
+    protected Map<String, Object> delegate() {
+        return delegate;
     }
 }

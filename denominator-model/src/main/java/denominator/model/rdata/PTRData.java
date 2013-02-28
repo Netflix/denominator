@@ -14,23 +14,20 @@ import com.google.common.collect.ImmutableMap;
  * <h4>Example</h4>
  * 
  * <pre>
- * import static denominator.model.rdata.PTRData.ptr;
- * ...
- * PTRData rdata = ptr("ptr.foo.com.");
+ * PTRData rdata = PTRData.create("ptr.foo.com.");
  * </pre>
  * 
  * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class PTRData extends ForwardingMap<String, Object> {
-    private final ImmutableMap<String, Object> delegate;
+
+    public static PTRData create(String ptrdname) {
+        return new PTRData(ptrdname);
+    }
 
     @ConstructorProperties("ptrdname")
     private PTRData(String ptrdname) {
         this.delegate = ImmutableMap.<String, Object> of("ptrdname", checkNotNull(ptrdname, "ptrdname"));
-    }
-
-    protected Map<String, Object> delegate() {
-        return delegate;
     }
 
     /**
@@ -40,35 +37,10 @@ public class PTRData extends ForwardingMap<String, Object> {
         return get("ptrdname").toString();
     }
 
-    public static PTRData ptr(String ptrdname) {
-        return builder().ptrdname(ptrdname).build();
-    }
-
-    public static PTRData.Builder builder() {
-        return new Builder();
-    }
-
-    public PTRData.Builder toBuilder() {
-        return builder().from(this);
-    }
-
-    public final static class Builder {
-        private String ptrdname;
-
-        /**
-         * @see PTRData#getPtrdname()
-         */
-        public PTRData.Builder ptrdname(String ptrdname) {
-            this.ptrdname = ptrdname;
-            return this;
-        }
-
-        public PTRData build() {
-            return new PTRData(ptrdname);
-        }
-
-        public PTRData.Builder from(PTRData in) {
-            return this.ptrdname(in.getPtrdname());
-        }
+    private final ImmutableMap<String, Object> delegate;
+    
+    @Override
+    protected Map<String, Object> delegate() {
+        return delegate;
     }
 }
