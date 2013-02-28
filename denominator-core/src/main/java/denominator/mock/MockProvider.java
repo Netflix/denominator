@@ -4,6 +4,7 @@ import dagger.Module;
 import dagger.Provides;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.NothingToClose;
 
@@ -19,7 +20,12 @@ public class MockProvider extends Provider {
     }
 
     @Provides
-    ZoneApi provideZoneApi(MockZoneApi zoneApi) {
-        return zoneApi;
+    ZoneApi provideZoneApi(MockZoneApi in) {
+        return in;
+    }
+
+    @Provides
+    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+        return in;
     }
 }

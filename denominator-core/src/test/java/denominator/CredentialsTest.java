@@ -13,6 +13,7 @@ import dagger.Provides;
 import denominator.Credentials.AnonymousCredentials;
 import denominator.Credentials.ListCredentials;
 import denominator.config.NothingToClose;
+import denominator.mock.MockResourceRecordSetApi;
 import denominator.mock.MockZoneApi;
 
 @Test
@@ -38,6 +39,11 @@ public class CredentialsTest {
         ZoneApi provideZoneApi(MockZoneApi zoneApi) {
             return zoneApi;
         }
+
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
+        }
     }
 
     @Module(entryPoints = DNSApiManager.class, includes = NothingToClose.class)
@@ -55,7 +61,12 @@ public class CredentialsTest {
         @Provides
         ZoneApi provideZoneApi(MockZoneApi zoneApi) {
             return zoneApi;
-        }        
+        }
+
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
+        }
     }
 
     @Module(entryPoints = DNSApiManager.class, includes = NothingToClose.class)
@@ -73,6 +84,11 @@ public class CredentialsTest {
         @Provides
         ZoneApi provideZoneApi(MockZoneApi zoneApi) {
             return zoneApi;
+        }
+
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
         }
     }
 
@@ -92,6 +108,11 @@ public class CredentialsTest {
         @Provides
         ZoneApi provideZoneApi(MockZoneApi zoneApi) {
             return zoneApi;
+        }
+
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
         }
     }
 
