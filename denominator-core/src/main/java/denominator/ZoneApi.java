@@ -1,11 +1,11 @@
 package denominator;
 
-import com.google.common.collect.FluentIterable;
+import java.util.Iterator;
 
 public interface ZoneApi {
     /**
      * a listing of all zone names, including trailing dot. ex.
-     * {@code netflix.com.}
+     * {@code netflix.com.}. Implementations are lazy when possible.
      */
-    FluentIterable<String> list();
+    Iterator<String> list();
 }

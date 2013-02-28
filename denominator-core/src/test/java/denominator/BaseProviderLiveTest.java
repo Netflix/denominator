@@ -1,11 +1,11 @@
 package denominator;
 
+import static com.google.common.collect.Iterators.size;
 import static com.google.common.io.Closeables.close;
 import static java.lang.String.format;
 import static java.util.logging.Logger.getAnonymousLogger;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -22,8 +22,8 @@ public abstract class BaseProviderLiveTest {
     @Test
     public void testListZones() {
         skipIfNoCredentials();
-        List<String> zoneNames = manager.getApi().getZoneApi().list().toList();
-        getAnonymousLogger().info(format("%s has %s zones", manager, zoneNames.size()));
+        int zoneCount = size(manager.getApi().getZoneApi().list());
+        getAnonymousLogger().info(format("%s has %s zones", manager, zoneCount));
     }
 
     protected void skipIfNoCredentials() {

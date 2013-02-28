@@ -1,12 +1,13 @@
 package denominator.ultradns;
 
+import java.util.Iterator;
+
 import javax.inject.Inject;
 
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.domain.Zone;
 
 import com.google.common.base.Function;
-import com.google.common.collect.FluentIterable;
 
 public final class UltraDNSZoneApi implements denominator.ZoneApi {
     private final UltraDNSWSApi api;
@@ -24,10 +25,10 @@ public final class UltraDNSZoneApi implements denominator.ZoneApi {
     }
 
     /**
-     * in UltraDNS, zones are scoped to an account. This list
+     * in UltraDNS, zones are scoped to an account.
      */
     @Override
-    public FluentIterable<String> list() {
-        return api.getZoneApi().listByAccount(api.getCurrentAccount().getId()).transform(ZoneName.INSTANCE);
+    public Iterator<String> list() {
+        return api.getZoneApi().listByAccount(api.getCurrentAccount().getId()).transform(ZoneName.INSTANCE).iterator();
     }
 }

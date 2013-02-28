@@ -13,6 +13,7 @@ import io.airlift.command.Option;
 import io.airlift.command.OptionType;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -75,22 +76,22 @@ public class Denominator {
                     mgr = create(providerName);
                 else
                     mgr = create(providerName, credentials(from(credentialArgs)));
-                for (String line : doRun(mgr))
-                    System.out.println(line);
+                for (Iterator<String> i = doRun(mgr); i.hasNext();)
+                    System.out.println(i.next());
             } finally {
                 closeQuietly(mgr);
             }
         }
 
         /**
-         * return a lazy iterable where possible to improve the perceived responsiveness of the cli
+         * return a lazy iterator where possible to improve the perceived responsiveness of the cli
          */
-        protected abstract Iterable<String> doRun(DNSApiManager mgr);
+        protected abstract Iterator<String> doRun(DNSApiManager mgr);
     }
 
     @Command(name = "list", description = "Lists the zone names present in this provider")
     public static class ZoneList extends DenominatorCommand {
-        public Iterable<String> doRun(DNSApiManager mgr) {
+        public Iterator<String> doRun(DNSApiManager mgr) {
             return mgr.getApi().getZoneApi().list();
         }
     }
