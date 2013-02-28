@@ -25,6 +25,7 @@ import dagger.Provides;
 import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 
 @Module(entryPoints = DNSApiManager.class)
@@ -75,6 +76,13 @@ public class Route53Provider extends Provider {
     @Singleton
     ZoneApi provideZoneApi(RestContext<org.jclouds.route53.Route53Api, Route53AsyncApi> context) {
         return new Route53ZoneApi(context.getApi());
+    }
+
+    @Provides
+    @Singleton
+    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(
+            RestContext<org.jclouds.route53.Route53Api, Route53AsyncApi> context) {
+        return new Route53ResourceRecordSetApi.Factory(context.getApi());
     }
 
     @Provides

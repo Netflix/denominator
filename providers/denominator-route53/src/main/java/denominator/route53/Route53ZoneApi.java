@@ -17,15 +17,15 @@ public final class Route53ZoneApi implements denominator.ZoneApi {
         this.api = api;
     }
 
+    @Override
+    public Iterator<String> list() {
+        return api.getHostedZoneApi().list().concat().transform(ZoneName.INSTANCE).iterator();
+    }
+
     private static enum ZoneName implements Function<HostedZone, String> {
         INSTANCE;
         public String apply(HostedZone input) {
             return input.getName();
         }
-    }
-
-    @Override
-    public Iterator<String> list() {
-        return api.getHostedZoneApi().list().concat().transform(ZoneName.INSTANCE).iterator();
     }
 }
