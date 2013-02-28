@@ -3,6 +3,7 @@ package denominator.model;
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Objects.toStringHelper;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import java.beans.ConstructorProperties;
 import java.util.Map;
@@ -37,6 +38,12 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
         this.type = checkNotNull(type, "type of %s", name);
         this.ttl = checkNotNull(ttl, "ttl of %s", name);
         this.rdata = checkNotNull(rdata, "rdata of %s", name);
+        
+        checkArgument(name.length() <= 255, "Name must be limited to 255 characters"); 
+        if (ttl.isPresent()) {
+            checkArgument(ttl.get().longValue() <= 0x7FFFFFFFL, // Per RFC 2181 
+                "Invalid ttl value: %s, must be 0-2147483647", ttl.get());
+        }
     }
 
     /**

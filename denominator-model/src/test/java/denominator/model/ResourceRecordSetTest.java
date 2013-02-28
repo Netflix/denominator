@@ -28,4 +28,13 @@ public class ResourceRecordSetTest {
     public void testNullRdataNPE() {
         ResourceRecordSet.<AData> builder().add(null);
     }
+    
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testInvalidTTL() {
+        ResourceRecordSet.<AData> builder()
+            .name("www.denominator.io.")
+            .type("A")
+            .ttl(0xFFFFFFFF)
+            .add(AData.create("1.1.1.1")).build();
+    }
 }
