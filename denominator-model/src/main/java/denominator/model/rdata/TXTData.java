@@ -1,5 +1,6 @@
 package denominator.model.rdata;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
@@ -27,7 +28,8 @@ public class TXTData extends ForwardingMap<String, Object> {
 
     @ConstructorProperties("txtdata")
     private TXTData(String txtdata) {
-        this.delegate = ImmutableMap.<String, Object> of("txtdata", checkNotNull(txtdata, "txtdata"));
+        checkArgument(checkNotNull(txtdata, "txtdata").length() <= 65535 , "txt data is limited to 65535");
+        this.delegate = ImmutableMap.<String, Object> of("txtdata", txtdata);
     }
 
     /**

@@ -1,12 +1,15 @@
 package denominator.model.rdata;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
+import java.net.Inet6Address;
 import java.util.Map;
 
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.net.InetAddresses;
 
 /**
  * Corresponds to the binary representation of the {@code AAAA} (Address) RData
@@ -27,7 +30,9 @@ public class AAAAData extends ForwardingMap<String, Object> {
 
     @ConstructorProperties("address")
     private AAAAData(String address) {
-        this.delegate = ImmutableMap.<String, Object> of("address", checkNotNull(address, "address"));
+        checkArgument(InetAddresses.forString(checkNotNull(address, "address")) instanceof Inet6Address, 
+                "Must be an IPV6 Address: %s", address);
+        this.delegate = ImmutableMap.<String, Object> of("address", address);
     }
 
     /**
