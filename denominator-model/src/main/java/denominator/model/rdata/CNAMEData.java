@@ -15,23 +15,20 @@ import com.google.common.collect.ImmutableMap;
  * <h4>Example</h4>
  * 
  * <pre>
- * import static denominator.model.rdata.CNAMEData.cname;
- * ...
- * CNAMEData rdata = cname("cname.foo.com.");
+ * CNAMEData rdata = CNAMEData.create("cname.foo.com.");
  * </pre>
  * 
  * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class CNAMEData extends ForwardingMap<String, Object> {
-    private final ImmutableMap<String, Object> delegate;
+
+    public static CNAMEData create(String cname) {
+        return new CNAMEData(cname);
+    }
 
     @ConstructorProperties("cname")
     private CNAMEData(String cname) {
         this.delegate = ImmutableMap.<String, Object> of("cname", checkNotNull(cname, "cname"));
-    }
-
-    protected Map<String, Object> delegate() {
-        return delegate;
     }
 
     /**
@@ -42,35 +39,10 @@ public class CNAMEData extends ForwardingMap<String, Object> {
         return get("cname").toString();
     }
 
-    public static CNAMEData cname(String cname) {
-        return builder().cname(cname).build();
-    }
-
-    public static CNAMEData.Builder builder() {
-        return new Builder();
-    }
-
-    public CNAMEData.Builder toBuilder() {
-        return builder().from(this);
-    }
-
-    public final static class Builder {
-        private String cname;
-
-        /**
-         * @see CNAMEData#getCname()
-         */
-        public CNAMEData.Builder cname(String cname) {
-            this.cname = cname;
-            return this;
-        }
-
-        public CNAMEData build() {
-            return new CNAMEData(cname);
-        }
-
-        public CNAMEData.Builder from(CNAMEData in) {
-            return this.cname(in.getCname());
-        }
+    private final ImmutableMap<String, Object> delegate;
+    
+    @Override
+    protected Map<String, Object> delegate() {
+        return delegate;
     }
 }
