@@ -1,8 +1,9 @@
 package denominator.mock;
 
+import java.util.Iterator;
+
 import javax.inject.Inject;
 
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 
 public final class MockZoneApi implements denominator.ZoneApi {
@@ -11,7 +12,7 @@ public final class MockZoneApi implements denominator.ZoneApi {
     }
 
     @Override
-    public FluentIterable<String> list() {
-        return FluentIterable.from(ImmutableList.of("denominator.io."));
+    public Iterator<String> list() {
+        return ImmutableList.of("denominator.io.").iterator();
     }
 }

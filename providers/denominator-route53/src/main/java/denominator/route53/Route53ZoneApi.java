@@ -1,12 +1,13 @@
 package denominator.route53;
 
+import java.util.Iterator;
+
 import javax.inject.Inject;
 
 import org.jclouds.route53.Route53Api;
 import org.jclouds.route53.domain.HostedZone;
 
 import com.google.common.base.Function;
-import com.google.common.collect.FluentIterable;
 
 public final class Route53ZoneApi implements denominator.ZoneApi {
     private final Route53Api api;
@@ -24,7 +25,7 @@ public final class Route53ZoneApi implements denominator.ZoneApi {
     }
 
     @Override
-    public FluentIterable<String> list() {
-        return api.getHostedZoneApi().list().concat().transform(ZoneName.INSTANCE);
+    public Iterator<String> list() {
+        return api.getHostedZoneApi().list().concat().transform(ZoneName.INSTANCE).iterator();
     }
 }
