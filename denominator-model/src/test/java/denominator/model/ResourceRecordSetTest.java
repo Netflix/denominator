@@ -29,7 +29,7 @@ public class ResourceRecordSetTest {
         ResourceRecordSet.<AData> builder().add(null);
     }
     
-    @Test(expectedExceptions = IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Invalid ttl.*")
     public void testInvalidTTL() {
         ResourceRecordSet.<AData> builder()
             .name("www.denominator.io.")

@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 @Test
 public class CNAMEDataTest {
 
-    @Test(expectedExceptions=NullPointerException.class)
+    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "rdata")
     public void testNullTarget() {
         cname("www.denominator.io.", (String) null);
     }

@@ -34,7 +34,7 @@ public class MXData extends ForwardingMap<String, Object> {
 
     @ConstructorProperties({ "preference", "exchange" })
     private MXData(UnsignedInteger preference, String exchange) {
-        checkArgument(checkNotNull(preference).intValue() <= 0xFFFF, "preference must be 65535 or less");
+        checkArgument(checkNotNull(preference, "preference").intValue() <= 0xFFFF, "preference must be 65535 or less");
         this.delegate = ImmutableMap.<String, Object> builder()
                 .put("preference", preference)
                 .put("exchange", checkNotNull(exchange, "exchange")).build();

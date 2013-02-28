@@ -7,12 +7,12 @@ import org.testng.annotations.Test;
 @Test
 public class ADataTest {
 
-    @Test(expectedExceptions=IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*should be a ipv4 address.*")
     public void testBadIPv6() {
         a("www.denominator.io.", "2620:0:1cfe:face:b00c::3");
-    }
+    }    
     
-    @Test(expectedExceptions=IllegalArgumentException.class)
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*not an IP.*")
     public void testNoIP() {
         a("www.denominator.io.", "");
     }
