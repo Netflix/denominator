@@ -1,5 +1,6 @@
 package denominator.model.rdata;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
@@ -33,8 +34,9 @@ public class MXData extends ForwardingMap<String, Object> {
 
     @ConstructorProperties({ "preference", "exchange" })
     private MXData(UnsignedInteger preference, String exchange) {
+        checkArgument(checkNotNull(preference, "preference").intValue() <= 0xFFFF, "preference must be 65535 or less");
         this.delegate = ImmutableMap.<String, Object> builder()
-                .put("preference", checkNotNull(preference, "preference"))
+                .put("preference", preference)
                 .put("exchange", checkNotNull(exchange, "exchange")).build();
     }
 
