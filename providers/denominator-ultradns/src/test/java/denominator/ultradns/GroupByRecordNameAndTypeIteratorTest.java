@@ -65,19 +65,6 @@ public class GroupByRecordNameAndTypeIteratorTest {
         return rrsetList.iterator();
     }
     
-    /*
-    
-    protected void assertARecords(ResourceRecordSet<?> rrset) {
-        assertTrue(rrset.getTTL().isPresent());
-        
-        if (rrset.getName().equals())
-        
-        assertEquals(3600, rrset.getTTL().get());
-        
-        //rrset.getName()
-        rrset.i
-    }
-    */
     
     public ImmutableList<ResourceRecordMetadata> createMetadataList() throws Exception {
           Builder builder = ResourceRecordMetadata.builder().zoneId("0000000000000001").zoneName("jclouds.org.");
