@@ -52,7 +52,7 @@ email.netflix.com.                                 A     3600   69.53.237.168
 
 ## Code
 
-Denominator exposes a portable [model](https://github.com/Netflix/denominator/wiki/Models) implemented by pluggable `Provider`s such as `route53`, `ultradns`, `dynect`, or `mock`.  Under the covers, providers are [Dagger|http://square.github.com/dagger/] modules.  Except for the mock, all current providers bind to [jclouds](https://github.com/jclouds/jclouds) libraries.  That said, denominator has no core dependencies outside guava and dagger, so developers are free to implement providers however they choose.
+Denominator exposes a portable [model](https://github.com/Netflix/denominator/wiki/Models) implemented by pluggable `Provider`s such as `route53`, `ultradns`, `dynect`, or `mock`.  Under the covers, providers are [Dagger](http://square.github.com/dagger/) modules.  Except for the mock, all current providers bind to [jclouds](https://github.com/jclouds/jclouds) libraries.  That said, denominator has no core dependencies outside guava and dagger, so developers are free to implement providers however they choose.
 
 ### Binaries
 
@@ -102,7 +102,7 @@ If you are running unit tests, or don't have a cloud account yet, you can use mo
 DNSApiManager manager = Denominator.create("mock");
 ```
 
-The Denominator [model|https://github.com/Netflix/denominator/wiki/Model] is based on the `ResourceRecordSet` concept.  A `ResourceRecordSet` is simply a group of records who share the same name and type.  For example all address (`A`) records for the name `www.netflix.com.` are aggregated into the same `ResourceRecordSet`.  The values of each record in a set are type-specific.  These data types are implemented as map-backed interfaces.  This affords both the strong typing of java and extensibility and versatility of maps.
+The Denominator [model](https://github.com/Netflix/denominator/wiki/Model) is based on the `ResourceRecordSet` concept.  A `ResourceRecordSet` is simply a group of records who share the same name and type.  For example all address (`A`) records for the name `www.netflix.com.` are aggregated into the same `ResourceRecordSet`.  The values of each record in a set are type-specific.  These data types are implemented as map-backed interfaces.  This affords both the strong typing of java and extensibility and versatility of maps.
 
 For example, the following are identical:
 ```java
