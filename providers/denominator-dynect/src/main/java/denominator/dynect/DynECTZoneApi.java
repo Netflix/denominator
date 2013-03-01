@@ -1,10 +1,10 @@
 package denominator.dynect;
 
+import java.util.Iterator;
+
 import javax.inject.Inject;
 
 import org.jclouds.dynect.v3.DynECTApi;
-
-import com.google.common.collect.FluentIterable;
 
 public final class DynECTZoneApi implements denominator.ZoneApi {
     private final DynECTApi api;
@@ -15,7 +15,7 @@ public final class DynECTZoneApi implements denominator.ZoneApi {
     }
 
     @Override
-    public FluentIterable<String> list() {
-        return api.getZoneApi().list();
+    public Iterator<String> list() {
+        return api.getZoneApi().list().iterator();
     }
 }

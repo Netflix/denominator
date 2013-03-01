@@ -23,6 +23,7 @@ import dagger.Provides;
 import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 
 @Module(entryPoints = DNSApiManager.class)
@@ -55,6 +56,13 @@ public class DynECTProvider extends Provider {
     @Singleton
     ZoneApi provideZoneApi(RestContext<org.jclouds.dynect.v3.DynECTApi, DynECTAsyncApi> context) {
         return new DynECTZoneApi(context.getApi());
+    }
+
+    @Provides
+    @Singleton
+    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(
+            RestContext<org.jclouds.dynect.v3.DynECTApi, DynECTAsyncApi> context) {
+        return new DynECTResourceRecordSetApi.Factory(context.getApi());
     }
 
     @Provides

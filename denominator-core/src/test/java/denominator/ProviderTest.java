@@ -13,6 +13,7 @@ import dagger.Module;
 import dagger.ObjectGraph;
 import dagger.Provides;
 import denominator.config.NothingToClose;
+import denominator.mock.MockResourceRecordSetApi;
 import denominator.mock.MockZoneApi;
 
 @Test
@@ -74,7 +75,12 @@ public class ProviderTest {
         @Provides
         ZoneApi provideZoneApi(MockZoneApi zoneApi) {
             return zoneApi;
-        }        
+        }
+
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
+        }
     }
 
     public void testDefaultProviderNameIsLowercase() {
@@ -117,6 +123,11 @@ public class ProviderTest {
         ZoneApi provideZoneApi(MockZoneApi zoneApi) {
             return zoneApi;
         }
+
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
+        }
     }
 
     public void testLowerCamelCredentialTypesAndValuesAreValid() {
@@ -140,6 +151,11 @@ public class ProviderTest {
         @Provides
         ZoneApi provideZoneApi(MockZoneApi zoneApi) {
             return zoneApi;
+        }
+
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
         }
     }
 
@@ -165,6 +181,11 @@ public class ProviderTest {
         @Provides
         ZoneApi provideZoneApi(MockZoneApi zoneApi) {
             return zoneApi;
+        }
+
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
         }
     }
 

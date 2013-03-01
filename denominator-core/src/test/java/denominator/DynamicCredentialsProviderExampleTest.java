@@ -8,6 +8,7 @@ import static denominator.Denominator.create;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -20,7 +21,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
@@ -30,6 +30,7 @@ import dagger.Provides;
 import denominator.Credentials.ListCredentials;
 import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.config.NothingToClose;
+import denominator.mock.MockResourceRecordSetApi;
 
 @Test
 public class DynamicCredentialsProviderExampleTest {
@@ -68,12 +69,12 @@ public class DynamicCredentialsProviderExampleTest {
          * arise when the user supplies the incorrect form of credentials.
          */
         @Override
-        public FluentIterable<String> list() {
+        public Iterator<String> list() {
             // IllegalArgumentException is possible on lazy get
             CustomerUsernamePassword cup = creds.get();
             // normally, the credentials object would be used to invoke a remote
             // command. in this case, we don't and say we did :)
-            return FluentIterable.from(ImmutableList.of(cup.customer, cup.username, cup.password));
+            return ImmutableList.of(cup.customer, cup.username, cup.password).iterator();
         }
     }
 
@@ -124,6 +125,14 @@ public class DynamicCredentialsProviderExampleTest {
         @Singleton
         ZoneApi provideZoneApi(Supplier<CustomerUsernamePassword> creds) {
             return new DynamicCredentialsZoneApi(creds);
+        }
+
+        /**
+         * using mock as example case is made already with the zone api
+         */
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
         }
 
         /**
@@ -180,12 +189,12 @@ public class DynamicCredentialsProviderExampleTest {
     public void testImplicitDynamicCredentialsUpdate() {
         DNSApiManager mgr = create(new DynamicCredentialsProvider());
         ZoneApi zoneApi = mgr.getApi().getZoneApi();
-        assertEquals(zoneApi.list().toList(), ImmutableList.of("acme", "wily", "coyote"));
-        assertEquals(zoneApi.list().toList(), ImmutableList.of("acme", "road", "runner"));
+        assertEquals(ImmutableList.copyOf(zoneApi.list()), ImmutableList.of("acme", "wily", "coyote"));
+        assertEquals(ImmutableList.copyOf(zoneApi.list()), ImmutableList.of("acme", "road", "runner"));
         // now, if the supplier doesn't supply a set of credentials, we should
         // get a correct message
         try {
-            zoneApi.list().toList();
+            ImmutableList.copyOf(zoneApi.list());
             fail();
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "no credentials supplied. dynamic requires customer, username, password");
