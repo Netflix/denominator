@@ -10,6 +10,7 @@ import javax.inject.Singleton;
 import org.jclouds.ContextBuilder;
 import org.jclouds.domain.Credentials;
 import org.jclouds.rest.RestContext;
+import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.UltraDNSWSAsyncApi;
 import org.jclouds.ultradns.ws.UltraDNSWSProviderMetadata;
 
@@ -23,6 +24,7 @@ import dagger.Provides;
 import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 
 @Module(entryPoints = DNSApiManager.class)
@@ -41,8 +43,7 @@ public class UltraDNSProvider extends Provider {
 
     @Override
     public Multimap<String, String> getCredentialTypeToParameterNames() {
-        return ImmutableMultimap.<String, String> builder()
-                .putAll("password", "username", "password").build();
+        return ImmutableMultimap.<String, String> builder().putAll("password", "username", "password").build();
     }
 
     private static class ToJcloudsCredentials implements Function<List<Object>, Credentials> {
@@ -53,15 +54,21 @@ public class UltraDNSProvider extends Provider {
 
     @Provides
     @Singleton
-    RestContext<org.jclouds.ultradns.ws.UltraDNSWSApi, UltraDNSWSAsyncApi> provideContext(
-            Supplier<Credentials> credentials) {
+    RestContext<UltraDNSWSApi, UltraDNSWSAsyncApi> provideContext(Supplier<Credentials> credentials) {
         return ContextBuilder.newBuilder(new UltraDNSWSProviderMetadata()).credentialsSupplier(credentials).build();
     }
 
     @Provides
     @Singleton
-    ZoneApi provideZoneApi(RestContext<org.jclouds.ultradns.ws.UltraDNSWSApi, UltraDNSWSAsyncApi> context) {
+    ZoneApi provideZoneApi(RestContext<UltraDNSWSApi, UltraDNSWSAsyncApi> context) {
         return new UltraDNSZoneApi(context.getApi());
+    }
+
+    @Provides
+    @Singleton
+    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(
+            RestContext<UltraDNSWSApi, UltraDNSWSAsyncApi> context) {
+        return new UltraDNSResourceRecordSetApi.Factory(context.getApi());
     }
 
     @Provides

@@ -30,6 +30,7 @@ import dagger.Provides;
 import denominator.Credentials.ListCredentials;
 import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.config.NothingToClose;
+import denominator.mock.MockResourceRecordSetApi;
 
 @Test
 public class DynamicCredentialsProviderExampleTest {
@@ -124,6 +125,14 @@ public class DynamicCredentialsProviderExampleTest {
         @Singleton
         ZoneApi provideZoneApi(Supplier<CustomerUsernamePassword> creds) {
             return new DynamicCredentialsZoneApi(creds);
+        }
+
+        /**
+         * using mock as example case is made already with the zone api
+         */
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
         }
 
         /**
