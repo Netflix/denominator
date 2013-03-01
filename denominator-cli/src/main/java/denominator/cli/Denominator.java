@@ -62,7 +62,7 @@ public class Denominator {
         public static String providerAndCredentialsTable() {
             StringBuilder builder = new StringBuilder();
             
-            builder.append(format(table, "provider", "credential type", "credential parameters"));
+            builder.append(format(table, "provider", "credential type", "credential arguments"));
             for (Provider provider : listProviders()) {
                 if (provider.getCredentialTypeToParameterNames().isEmpty())
                     builder.append(format("%-20s%n", provider.getName()));
@@ -79,7 +79,7 @@ public class Denominator {
         @Option(type = OptionType.GLOBAL, required = true, name = { "-p", "--provider" }, description = "provider to affect")
         public String providerName;
 
-        @Option(type = OptionType.GLOBAL, name = { "-c", "--credential" }, description = "adds a credential argument")
+        @Option(type = OptionType.GLOBAL, name = { "-c", "--credential" }, description = "adds a credential argument (execute denominator providers for what these are)")
         public List<String> credentialArgs;
 
         public void run() {
@@ -114,7 +114,7 @@ public class Denominator {
         public String zoneName;
     }
 
-    @Command(name = "list", description = "Lists the record record sets present in this zone")
+    @Command(name = "list", description = "Lists the normal record record sets present in this zone")
     public static class ResourceRecordSetList extends ResourceRecordSetCommand {
         public Iterator<String> doRun(DNSApiManager mgr) {
             Iterator<ResourceRecordSet<?>> list = mgr.getApi().getResourceRecordSetApiForZone(zoneName).list();
