@@ -7,10 +7,12 @@ import javax.inject.Inject;
  */
 public class DNSApi {
     private final ZoneApi zoneApi;
+    private final ResourceRecordSetApi.Factory rrsetApiFactory;
 
     @Inject
-    DNSApi(ZoneApi zoneApi) {
+    DNSApi(ZoneApi zoneApi, ResourceRecordSetApi.Factory rrsetApiFactory) {
         this.zoneApi = zoneApi;
+        this.rrsetApiFactory = rrsetApiFactory;
     }
 
     /**
@@ -19,5 +21,12 @@ public class DNSApi {
      */
     public ZoneApi getZoneApi() {
         return zoneApi;
+    }
+
+    /**
+     * controls DNS records as a set,
+     */
+    public ResourceRecordSetApi getResourceRecordSetApiForZone(String zoneName) {
+        return rrsetApiFactory.create(zoneName);
     }
 }
