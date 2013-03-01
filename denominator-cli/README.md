@@ -2,22 +2,39 @@
 
 The denominator CLI is a git-like-cli based on the [airline](https://github.com/airlift/airline) project.  It is packaged as a [really executable jar](http://skife.org/java/unix/2011/06/20/really_executable_jars.html) which means you can do `./denominator` without any of the `java -jar` stuff.
 
+### Binaries
+While still incubating, the denominator cli [download](http://dl.bintray.com/content/netflixoss/denominator/denominator?direct) will be updated frequently.  Once stable, we'll look into homebrew, debian, rpm packages.  In the mean time, here's how to get it.
+
+1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator?direct)
+2. Place it on your `$PATH`. (ex. `~/bin`)
+3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
+
 ## Building
 To build the cli, execute `./gradlew clean test install` from the root of your denominator clone.  The binary will end up at `/denominator-cli/build/denominator`
 
 ## Running
 denominator will print out a help statement, but here's the gist.
 
-### Providers
-Execute `./denominator providers`  The output will tell you what credentials are needed for the provider.  Here's an example.
-
+If you just want to fool around, you can use the `mock` provider.
+```bash
+$ denominator -p mock zone list
+denominator.io.
+$ denominator -p mock -z denominator.io. record list
+denominator.io.                                    SOA   3600   ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 60
+denominator.io.                                    NS    86400  ns1.denominator.io.
 ```
-provider	credential type	credential parameters
-mock	
-dynect	password	customer username password
-ultradns	password	username password
-route53	accessKey	accessKey secretKey
-route53	session	accessKey secretKey sessionToken
+
+### Providers
+Different providers need different credentials.  First step is to run `./denominator providers` to see how many `-c` args you need and what values they should have:
+
+```bash
+$ denominator providers
+provider             credential type  credential arguments
+mock
+dynect               password         customer username password
+ultradns             password         username password
+route53              accessKey        accessKey secretKey
+route53              session          accessKey secretKey sessionToken
 ```
 
 The first field says the type, if any.  If there's no type listed, it needs no credentials.  If there is a type listed, the following fields are credential args.  Say for example, you were using `ultradns`.  
@@ -29,14 +46,29 @@ This says the provider `ultradns` supports `password` authentication, which need
 ```
 ./denominator -p ultradns -c myusername -c mypassword zone list
 ```
-### Zones
-The only command yet implemented is zone list, and this returns the zones in your account.  Ex.
+### Zone
+`zone list` returns the zones names in your account.  Ex.
+```bash
+$ denominator -p ultradns -c my_user -c my_password zone list
+--snip--
+netflix.com.
+--snip--
 ```
-./denominator -p route53 -c access -c secret zone list
+
+### Record
+`-z zone. record list` returns the record details of that zone.  Ex.
+```bash
+$ denominator -p ultradns -c my_user -c my_password --zone netflix.com. record list
+--snip--
+email.netflix.com.                                 A     3600   69.53.237.168
+--snip--
 ```
+
 ## Hooks
 ### IAM Instance Profile
-If you are using the `route53` provider on an ec2 instance with a profile associated with it, you don't need to pass credentials.  The syntax would end up like this.
+If you are using the `route53` provider on an ec2 instance with a profile associated with it, you don't need to pass credentials. 
+
+Ex.
 ```
 ./denominator -p route53 zone list
 ```
