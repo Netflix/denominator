@@ -31,7 +31,7 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
 
     @Override
     public ResourceRecordSet<?> next() {
-        Record<?> record = api.get(peekingIterator.next());
+        Record<?> record = getRecord(peekingIterator.next());
         // it is possible that the record was deleted between the list and the get
         if (record == null)
             return null;
@@ -41,17 +41,40 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
                                                                 .ttl(record.getTTL())
                                                                 .add(record.getRData());
         while (hasNext()) {
-            Record<? extends Map<String, Object>> next = api.get(peekingIterator.peek());
+            RecordId next = peekingIterator.peek();
             if (next == null)
                 continue;
             if (fqdnAndTypeEquals(next, record)) {
-                peekingIterator.next();
-                builder.add(next.getRData());
+                builder.add(getRecord(peekingIterator.next()).getRData());
             } else {
                 break;
             }
         }
         return builder.build();
+    }
+
+    Record<? extends Map<String, Object>> getRecord(RecordId recordId) {
+        if ("A".equals(recordId.getType())) {
+            return api.getA(recordId.getFQDN(), recordId.getId());
+        } else if ("AAAA".equals(recordId.getType())) {
+            return api.getAAAA(recordId.getFQDN(), recordId.getId());
+        } else if ("CNAME".equals(recordId.getType())) {
+            return api.getCNAME(recordId.getFQDN(), recordId.getId());
+        } else if ("MX".equals(recordId.getType())) {
+            return api.getMX(recordId.getFQDN(), recordId.getId());
+        } else if ("NS".equals(recordId.getType())) {
+            return api.getNS(recordId.getFQDN(), recordId.getId());
+        } else if ("PTR".equals(recordId.getType())) {
+            return api.getPTR(recordId.getFQDN(), recordId.getId());
+        } else if ("SOA".equals(recordId.getType())) {
+            return api.getSOA(recordId.getFQDN(), recordId.getId());
+        } else if ("SRV".equals(recordId.getType())) {
+            return api.getSRV(recordId.getFQDN(), recordId.getId());
+        } else if ("TXT".equals(recordId.getType())) {
+            return api.getTXT(recordId.getFQDN(), recordId.getId());
+        } else {
+            return api.get(recordId);
+        }
     }
 
     @Override
