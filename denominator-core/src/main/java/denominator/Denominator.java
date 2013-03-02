@@ -3,10 +3,11 @@ package denominator;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.instanceOf;
-import static denominator.CredentialsConfiguration.*;
-
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Maps.uniqueIndex;
+import static denominator.CredentialsConfiguration.anonymous;
+import static denominator.CredentialsConfiguration.checkValidForProvider;
+import static denominator.CredentialsConfiguration.credentials;
 
 import java.util.List;
 import java.util.Map;
