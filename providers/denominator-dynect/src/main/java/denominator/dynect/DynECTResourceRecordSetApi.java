@@ -12,7 +12,6 @@ import org.jclouds.dynect.v3.DynECTApi;
 import org.jclouds.dynect.v3.domain.RecordId;
 import org.jclouds.dynect.v3.features.RecordApi;
 
-
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 
