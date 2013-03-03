@@ -1,3 +1,5 @@
+<img src="//raw.github.com/Netflix/denominator/master/denominator.png">
+
 # Denominator: portable control of DNS clouds
 
 Denominator is a portable Java library for manipulating DNS clouds.  Denominator has pluggable back-ends, initially including AWS Route53, Neustar Ultra, DynECT, and a mock for testing.  We also ship a command line version so it's easy for anyone to try it out.  Denominator currently supports basic zone and record features, but will soon include GEO (aka Directional) support and advanced usage.  See [Netflix Tech Blog](http://techblog.netflix.com/2013/03/denominator-multi-vendor-interface-for.html) for an introduction.
