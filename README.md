@@ -1,4 +1,4 @@
-<img src="//raw.github.com/Netflix/denominator/master/denominator.png">
+<img src="https://raw.github.com/Netflix/denominator/master/denominator.jpg">
 
 # Denominator: portable control of DNS clouds
 
