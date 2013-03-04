@@ -3,9 +3,7 @@ import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
 import static denominator.model.ResourceRecordSets.ns;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static org.jclouds.Constants.PROPERTY_CONNECTION_TIMEOUT;
 import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
-import static org.jclouds.Constants.PROPERTY_SO_TIMEOUT;
 import static org.jclouds.dynect.v3.domain.RecordId.recordIdBuilder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -37,8 +35,6 @@ public class GroupByRecordNameAndTypeIteratorMockTest {
 
     static DynECTApi mockDynectApi(String uri) {
         Properties overrides = new Properties();
-        overrides.setProperty(PROPERTY_CONNECTION_TIMEOUT, "1000");
-        overrides.setProperty(PROPERTY_SO_TIMEOUT, "0");
         overrides.setProperty(PROPERTY_MAX_RETRIES, "1");
         return ContextBuilder.newBuilder("dynect")
                              .credentials("jclouds:joe", "letmein")
