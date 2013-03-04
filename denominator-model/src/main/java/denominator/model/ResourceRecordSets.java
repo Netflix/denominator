@@ -1,5 +1,11 @@
 package denominator.model;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import java.util.Map;
+
+import com.google.common.base.Predicate;
+
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
@@ -12,6 +18,75 @@ import denominator.model.rdata.NSData;
 public class ResourceRecordSets {
 
     private ResourceRecordSets() {
+    }
+
+    /**
+     * evaluates to true if the input {@link ResourceRecordSet} exists with
+     * {@link ResourceRecordSet#getName() name} and
+     * {@link ResourceRecordSet#getName() type} corresponding to parameters.
+     * 
+     * @param name
+     *            the {@link ResourceRecordSet#getName() name} of the desired
+     *            record set
+     * @param type
+     *            the {@link ResourceRecordSet#getType() type} of the desired
+     *            record set
+     */
+    public static Predicate<ResourceRecordSet<?>> nameAndType(String name, String type) {
+        return new NameAndTypeEquals(name, type);
+    }
+
+    private static final class NameAndTypeEquals implements Predicate<ResourceRecordSet<?>> {
+        private final String name;
+        private final String type;
+
+        public NameAndTypeEquals(String name, String type) {
+            this.name = checkNotNull(name, "name");
+            this.type = checkNotNull(type, "type");
+        }
+
+        @Override
+        public boolean apply(ResourceRecordSet<?> input) {
+            if (input == null)
+                return false;
+            return name.equals(input.getName()) && type.equals(input.getType());
+        }
+
+        @Override
+        public String toString() {
+            return "nameAndTypeEquals(" + name + ", " + type + ")";
+        }
+    }
+
+    /**
+     * evaluates to true if the input {@link ResourceRecordSet} exists and
+     * contains the {@code rdata} specified.
+     * 
+     * @param rdata
+     *            the rdata in the desired record set
+     */
+    public static Predicate<ResourceRecordSet<?>> containsRData(Map<String, ?> rdata) {
+        return new ContainsRData(rdata);
+    }
+
+    private static final class ContainsRData implements Predicate<ResourceRecordSet<?>> {
+        private final Map<String, ?> rdata;
+
+        public ContainsRData(Map<String, ?> rdata) {
+            this.rdata = checkNotNull(rdata, "rdata");
+        }
+
+        @Override
+        public boolean apply(ResourceRecordSet<?> input) {
+            if (input == null)
+                return false;
+            return input.contains(rdata);
+        }
+
+        @Override
+        public String toString() {
+            return "containsRData(" + rdata + ")";
+        }
     }
 
     /**

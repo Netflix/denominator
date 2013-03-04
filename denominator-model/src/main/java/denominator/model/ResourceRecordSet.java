@@ -150,7 +150,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
          * builder.addAll(otherRecordSet);
          * </pre>
          */
-        public Builder<D> addAll(Iterable<D> rdata) {
+        public <R extends D> Builder<D> addAll(Iterable<R> rdata) {
             this.rdata = ImmutableList.<D> builder().addAll(checkNotNull(rdata, "rdata"));
             return this;
         }
