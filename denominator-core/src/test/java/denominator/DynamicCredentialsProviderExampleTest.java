@@ -31,6 +31,7 @@ import denominator.Credentials.ListCredentials;
 import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.config.NothingToClose;
 import denominator.mock.MockResourceRecordSetApi;
+import denominator.model.ResourceRecordSet;
 
 @Test
 public class DynamicCredentialsProviderExampleTest {
@@ -133,6 +134,14 @@ public class DynamicCredentialsProviderExampleTest {
         @Provides
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
             return in;
+        }
+
+        // wildcard types are not currently injectable in dagger
+        @SuppressWarnings("rawtypes")
+        @Provides
+        @Singleton
+        Multimap<String, ResourceRecordSet> provideData() {
+            return ImmutableMultimap.of();
         }
 
         /**

@@ -3,6 +3,7 @@ package denominator;
 import static org.testng.Assert.assertEquals;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.testng.annotations.Test;
 
@@ -15,6 +16,7 @@ import dagger.Provides;
 import denominator.config.NothingToClose;
 import denominator.mock.MockResourceRecordSetApi;
 import denominator.mock.MockZoneApi;
+import denominator.model.ResourceRecordSet;
 
 @Test
 public class ProviderTest {
@@ -81,6 +83,14 @@ public class ProviderTest {
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
             return in;
         }
+
+        // wildcard types are not currently injectable in dagger
+        @SuppressWarnings("rawtypes")
+        @Provides
+        @Singleton
+        Multimap<String, ResourceRecordSet> provideData() {
+            return ImmutableMultimap.of();
+        }
     }
 
     public void testDefaultProviderNameIsLowercase() {
@@ -128,6 +138,14 @@ public class ProviderTest {
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
             return in;
         }
+
+        // wildcard types are not currently injectable in dagger
+        @SuppressWarnings("rawtypes")
+        @Provides
+        @Singleton
+        Multimap<String, ResourceRecordSet> provideData() {
+            return ImmutableMultimap.of();
+        }
     }
 
     public void testLowerCamelCredentialTypesAndValuesAreValid() {
@@ -156,6 +174,14 @@ public class ProviderTest {
         @Provides
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
             return in;
+        }
+
+        // wildcard types are not currently injectable in dagger
+        @SuppressWarnings("rawtypes")
+        @Provides
+        @Singleton
+        Multimap<String, ResourceRecordSet> provideData() {
+            return ImmutableMultimap.of();
         }
     }
 
@@ -186,6 +212,14 @@ public class ProviderTest {
         @Provides
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
             return in;
+        }
+
+        // wildcard types are not currently injectable in dagger
+        @SuppressWarnings("rawtypes")
+        @Provides
+        @Singleton
+        Multimap<String, ResourceRecordSet> provideData() {
+            return ImmutableMultimap.of();
         }
     }
 

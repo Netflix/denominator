@@ -2,6 +2,8 @@ package denominator;
 
 import static org.testng.Assert.assertEquals;
 
+import javax.inject.Singleton;
+
 import org.testng.annotations.Test;
 
 import com.google.common.base.Supplier;
@@ -15,6 +17,7 @@ import denominator.Credentials.ListCredentials;
 import denominator.config.NothingToClose;
 import denominator.mock.MockResourceRecordSetApi;
 import denominator.mock.MockZoneApi;
+import denominator.model.ResourceRecordSet;
 
 @Test
 public class CredentialsTest {
@@ -44,6 +47,14 @@ public class CredentialsTest {
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
             return in;
         }
+
+        // wildcard types are not currently injectable in dagger
+        @SuppressWarnings("rawtypes")
+        @Provides
+        @Singleton
+        Multimap<String, ResourceRecordSet> provideData() {
+            return ImmutableMultimap.of();
+        }
     }
 
     @Module(entryPoints = DNSApiManager.class, includes = NothingToClose.class)
@@ -66,6 +77,14 @@ public class CredentialsTest {
         @Provides
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
             return in;
+        }
+
+        // wildcard types are not currently injectable in dagger
+        @SuppressWarnings("rawtypes")
+        @Provides
+        @Singleton
+        Multimap<String, ResourceRecordSet> provideData() {
+            return ImmutableMultimap.of();
         }
     }
 
@@ -90,6 +109,14 @@ public class CredentialsTest {
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
             return in;
         }
+
+        // wildcard types are not currently injectable in dagger
+        @SuppressWarnings("rawtypes")
+        @Provides
+        @Singleton
+        Multimap<String, ResourceRecordSet> provideData() {
+            return ImmutableMultimap.of();
+        }
     }
 
     @Module(entryPoints = DNSApiManager.class, includes = NothingToClose.class)
@@ -113,6 +140,14 @@ public class CredentialsTest {
         @Provides
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
             return in;
+        }
+
+        // wildcard types are not currently injectable in dagger
+        @SuppressWarnings("rawtypes")
+        @Provides
+        @Singleton
+        Multimap<String, ResourceRecordSet> provideData() {
+            return ImmutableMultimap.of();
         }
     }
 
