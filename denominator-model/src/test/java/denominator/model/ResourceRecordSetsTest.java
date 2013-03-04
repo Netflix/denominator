@@ -1,9 +1,12 @@
 package denominator.model;
 
+import static com.google.common.net.InetAddresses.forString;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.cname;
 import static denominator.model.ResourceRecordSets.ns;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Map;
 
@@ -11,6 +14,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import denominator.model.rdata.AData;
@@ -19,6 +23,44 @@ import denominator.model.rdata.NSData;
 
 @Test
 public class ResourceRecordSetsTest {
+
+    ResourceRecordSet<AData> aRRS = ResourceRecordSet.<AData> builder()
+                                                     .name("www.denominator.io.")
+                                                     .type("A")
+                                                     .ttl(3600)
+                                                     .add(AData.create("1.1.1.1")).build();
+
+    public void nameAndTypeReturnsFalseOnNull() {
+        assertFalse(ResourceRecordSets.nameAndType(aRRS.getName(), aRRS.getType()).apply(null));
+    }
+
+    public void nameAndTypeReturnsFalseOnSameNameDifferentType() {
+        assertFalse(ResourceRecordSets.nameAndType(aRRS.getName(), "TXT").apply(aRRS));
+    }
+
+    public void nameAndTypeReturnsFalseOnSameTypeDifferentName() {
+        assertFalse(ResourceRecordSets.nameAndType("www.foo.com", aRRS.getType()).apply(aRRS));
+    }
+
+    public void nameAndTypeReturnsTrueOnSameNameAndType() {
+        assertTrue(ResourceRecordSets.nameAndType(aRRS.getName(), aRRS.getType()).apply(aRRS));
+    }
+    
+    public void containsRDataReturnsFalseOnNull() {
+        assertFalse(ResourceRecordSets.containsRData(aRRS.get(0)).apply(null));
+    }
+
+    public void containsRDataReturnsFalseWhenRDataDifferent() {
+        assertFalse(ResourceRecordSets.containsRData(AData.create("2.2.2.2")).apply(aRRS));
+    }
+
+    public void containsRDataReturnsTrueWhenRDataEqual() {
+        assertTrue(ResourceRecordSets.containsRData(AData.create("1.1.1.1")).apply(aRRS));
+    }
+
+    public void containsRDataReturnsTrueWhenRDataEqualButDifferentType() {
+        assertTrue(ResourceRecordSets.containsRData(ImmutableMap.of("address", forString("1.1.1.1"))).apply(aRRS));
+    }
 
     @DataProvider(name = "a")
     public Object[][] createData() {
