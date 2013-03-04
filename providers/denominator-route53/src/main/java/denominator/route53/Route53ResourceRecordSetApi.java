@@ -5,6 +5,7 @@ import static com.google.common.base.Predicates.not;
 import static denominator.route53.ToDenominatorResourceRecordSet.isAlias;
 
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -13,6 +14,7 @@ import org.jclouds.route53.domain.HostedZone;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -62,5 +64,20 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
                 return input.getName().equals(zoneName);
             }
         };
+    }
+
+    @Override
+    public void add(String name, String type, UnsignedInteger ttl, Map<String, Object> rdata) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
+
+    @Override
+    public void add(String name, String type, Map<String, Object> rdata) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
+
+    @Override
+    public void remove(String name, String type, Map<String, Object> rdata) {
+        throw new UnsupportedOperationException("not yet implemented");
     }
 }
