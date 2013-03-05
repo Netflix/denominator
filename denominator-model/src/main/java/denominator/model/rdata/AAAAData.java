@@ -36,10 +36,13 @@ public class AAAAData extends ForwardingMap<String, Object> {
         return new AAAAData(ipv6address);
     }
 
+    private final String address;
+
     @ConstructorProperties("address")
     private AAAAData(String ipv6address) {
         checkArgument(InetAddresses.forString(checkNotNull(ipv6address, "address")) instanceof Inet6Address,
                 "%s should be a ipv6 address", ipv6address);
+        this.address = ipv6address;
         this.delegate = ImmutableMap.<String, Object> of("address", ipv6address);
     }
 
@@ -47,10 +50,11 @@ public class AAAAData extends ForwardingMap<String, Object> {
      * a 128 bit IPv6 address
      */
     public String getAddress() {
-        return delegate.get("address").toString();
+        return address;
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
 
     @Override
     protected Map<String, Object> delegate() {

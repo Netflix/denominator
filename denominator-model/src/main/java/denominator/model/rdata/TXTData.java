@@ -26,9 +26,12 @@ public class TXTData extends ForwardingMap<String, Object> {
         return new TXTData(txtdata);
     }
 
+    private final String txtdata;
+
     @ConstructorProperties("txtdata")
     private TXTData(String txtdata) {
         checkArgument(checkNotNull(txtdata, "txtdata").length() <= 65535 , "txt data is limited to 65535");
+        this.txtdata = txtdata;
         this.delegate = ImmutableMap.<String, Object> of("txtdata", txtdata);
     }
 
@@ -36,10 +39,11 @@ public class TXTData extends ForwardingMap<String, Object> {
      * One or more character-strings.
      */
     public String getTxtdata() {
-        return get("txtdata").toString();
+        return txtdata;
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
     
     @Override
     protected Map<String, Object> delegate() {

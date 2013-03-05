@@ -26,9 +26,12 @@ public class NSData extends ForwardingMap<String, Object> {
         return new NSData(nsdname);
     }
 
+    private final String nsdname;
+
     @ConstructorProperties("nsdname")
     private NSData(String nsdname) {
-        this.delegate = ImmutableMap.<String, Object> of("nsdname", checkNotNull(nsdname, "nsdname"));
+        this.nsdname = checkNotNull(nsdname, "nsdname");
+        this.delegate = ImmutableMap.<String, Object> of("nsdname", nsdname);
     }
 
     /**
@@ -36,10 +39,11 @@ public class NSData extends ForwardingMap<String, Object> {
      * specified class and domain.
      */
     public String getNsdname() {
-        return get("nsdname").toString();
+        return nsdname;
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
     
     @Override
     protected Map<String, Object> delegate() {
