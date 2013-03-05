@@ -91,7 +91,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
 
     @Override
     public String toString() {
-        return toStringHelper(this).omitNullValues().add("name", name).add("type", type).add("ttl", ttl)
+        return toStringHelper(this).omitNullValues().add("name", name).add("type", type).add("ttl", ttl.orNull())
                 .add("rdata", rdata).toString();
     }
 
