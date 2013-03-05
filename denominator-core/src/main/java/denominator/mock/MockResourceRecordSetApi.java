@@ -1,9 +1,12 @@
 package denominator.mock;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Predicates.and;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.in;
+import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.FluentIterable.from;
-import static denominator.model.ResourceRecordSets.containsRData;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static denominator.model.ResourceRecordSets.nameAndType;
 
 import java.util.Iterator;
@@ -12,10 +15,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import com.google.common.base.Optional;
-import static com.google.common.base.Predicates.*;
-import static com.google.common.collect.Iterables.*;
 import com.google.common.collect.Multimap;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -58,40 +58,37 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     }
 
     @Override
-    public void add(String name, String type, UnsignedInteger ttl, Map<String, Object> rdata) {
-        Optional<ResourceRecordSet<?>> rrsMatch = from(data.get(zoneName)).firstMatch(nameAndType(name, type));
+    public void add(ResourceRecordSet<?> rrset) {
+        checkNotNull(rrset, "rrset was null");
+        Optional<ResourceRecordSet<?>> rrsMatch = from(data.get(zoneName))
+                .firstMatch(nameAndType(rrset.getName(), rrset.getType()));
         Builder<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>>builder()
-                                                             .name(name)
-                                                             .type(type)
-                                                             .ttl(ttl);
+                                                             .name(rrset.getName())
+                                                             .type(rrset.getType())
+                                                             .ttl(rrset.getTTL().or(fromIntBits(3600)));
         if (rrsMatch.isPresent()) {
             rrs.addAll(rrsMatch.get());
-            if (!rrsMatch.get().contains(rdata))
-                rrs.add(rdata);
+            rrs.addAll(filter(rrset, not(in(rrsMatch.get()))));
             data.remove(zoneName, rrsMatch.get());
         } else {
-            rrs.add(rdata);
+            rrs.addAll(rrset);
         }
         data.put(zoneName, rrs.build());
     }
 
     @Override
-    public void add(String name, String type, Map<String, Object> rdata) {
-        add(name, type, UnsignedInteger.fromIntBits(3600), rdata);
-    }
-
-    @Override
-    public void remove(String name, String type, Map<String, Object> rdata) {
-        Optional<ResourceRecordSet<?>> rrsMatch = from(data.get(zoneName)).firstMatch(
-                and(nameAndType(name, type), containsRData(rdata)));
+    public void remove(ResourceRecordSet<?> rrset) {
+        checkNotNull(rrset, "rrset was null");
+        Optional<ResourceRecordSet<?>> rrsMatch = from(data.get(zoneName))
+                .firstMatch(nameAndType(rrset.getName(), rrset.getType()));
         if (rrsMatch.isPresent()) {
             data.remove(zoneName, rrsMatch.get());
             if (rrsMatch.get().size() > 1) {
                 data.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
-                                                    .name(name)
-                                                    .type(type)
-                                                    .ttl(rrsMatch.get().getTTL().orNull())
-                                                    .addAll(filter(rrsMatch.get(), not(equalTo(rdata))))
+                                                    .name(rrset.getName())
+                                                    .type(rrset.getType())
+                                                    .ttl(rrsMatch.get().getTTL().get())
+                                                    .addAll(filter(rrsMatch.get(), not(in(rrset))))
                                                     .build());
             }
         }

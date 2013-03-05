@@ -5,6 +5,7 @@ import static com.google.common.collect.Iterators.any;
 import static com.google.common.collect.Iterators.size;
 import static com.google.common.collect.Iterators.tryFind;
 import static com.google.common.io.Closeables.close;
+import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.nameAndType;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
@@ -85,9 +86,9 @@ public abstract class BaseProviderLiveTest {
 
         skipIfRRSetExists(zoneName, recordName, recordType);
 
-        UnsignedInteger ttl = UnsignedInteger.fromIntBits(0);
+        UnsignedInteger ttl = UnsignedInteger.fromIntBits(1800);
 
-        rrsApi(zoneName).add(recordName, recordType, ttl, rdata);
+        rrsApi(zoneName).add(a(recordName, ttl.intValue(), rdata.getAddress()));
 
         Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
 
@@ -108,7 +109,7 @@ public abstract class BaseProviderLiveTest {
         String zoneName = skipIfNoMutableZone();
         String recordName = recordPrefix + "." + zoneName;
 
-        rrsApi(zoneName).add(recordName, recordType, rdata2);
+        rrsApi(zoneName).add(a(recordName, rdata2.getAddress()));
 
         Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
 
@@ -127,7 +128,7 @@ public abstract class BaseProviderLiveTest {
         String zoneName = skipIfNoMutableZone();
         String recordName = recordPrefix + "." + zoneName;
 
-        rrsApi(zoneName).remove(recordName, recordType, rdata2);
+        rrsApi(zoneName).remove(a(recordName, rdata2.getAddress()));
 
         Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
 
@@ -145,7 +146,7 @@ public abstract class BaseProviderLiveTest {
         String zoneName = skipIfNoMutableZone();
         String recordName = recordPrefix + "." + zoneName;
 
-        rrsApi(zoneName).remove(recordName, recordType, rdata);
+        rrsApi(zoneName).remove(a(recordName, rdata.getAddress()));
 
         Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
 

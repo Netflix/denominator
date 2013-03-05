@@ -1,9 +1,6 @@
 package denominator;
 
 import java.util.Iterator;
-import java.util.Map;
-
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.model.ResourceRecordSet;
 
@@ -25,40 +22,46 @@ public interface ResourceRecordSetApi {
     /**
      * If a {@link ResourceRecordSet} exists with
      * {@link ResourceRecordSet#getName() name} and
-     * {@link ResourceRecordSet#getName() type} corresponding to parameters,
+     * {@link ResourceRecordSet#getName() type} corresponding to {@code rrset},
      * this adds the {@code rdata} to that set. Otherwise, it creates a
-     * {@link ResourceRecordSet} initially comprised of the specified arguments.
+     * {@link ResourceRecordSet} initially comprised of the specified
+     * {@code rrset}.
      * 
-     * @param name
-     *            the {@link ResourceRecordSet#getName() name} of the record set
-     * @param type
-     *            the {@link ResourceRecordSet#getType() type} of the record set
-     * @param ttl
-     *            the {@link ResourceRecordSet#getTTL() ttl} of the record set
-     * @param rdata
-     *            the rdata to add to the record set
+     * Example of adding "1.2.3.4" to the {@code A} record set for
+     * {@code www.denominator.io.}
+     * 
+     * <pre>
+     * import static denominator.model.ResourceRecordSets.a;
+     * ...
+     * rrsApi.add(a("www.denominator.io.", 3600, "1.2.3.4"));
+     * </pre>
+     * 
+     * @param rrset
+     *            contains the {@code rdata} elements to be added. If
+     *            {@link ResourceRecordSet#getTTL() ttl} is present, it will
+     *            replace the TTL on all records.
      */
-    void add(String name, String type, UnsignedInteger ttl, Map<String, Object> rdata);
-
-    /**
-     * like {@link #add(String, String, UnsignedInteger, Map)}, except using the
-     * default ttl for the zone.
-     */
-    void add(String name, String type, Map<String, Object> rdata);
+    void add(ResourceRecordSet<?> rrset);
 
     /**
      * If a {@link ResourceRecordSet} exists with
      * {@link ResourceRecordSet#getName() name} and
-     * {@link ResourceRecordSet#getName() type} corresponding to parameters,
-     * this either removes the value corresponding to the {@code rdata}, or
-     * removes the set entirely, if this is the only entry.
+     * {@link ResourceRecordSet#getName() type} corresponding to {@code rrset},
+     * remove values corresponding to input {@code rdata}, or removes the set
+     * entirely, if this is the only entry.
      * 
-     * @param name
-     *            the {@link ResourceRecordSet#getName() name} of the record set
-     * @param type
-     *            the {@link ResourceRecordSet#getType() type} of the record set
-     * @param rdata
-     *            the rdata to remove from the record set
+     * Example of removing "1.2.3.4" from the {@code A} record set for
+     * {@code www.denominator.io.}
+     * 
+     * <pre>
+     * import static denominator.model.ResourceRecordSets.a;
+     * ...
+     * rrsApi.remove(a("www.denominator.io.", "1.2.3.4"));
+     * </pre>
+     * 
+     * @param rrset
+     *            contains the {@code rdata} elements to be removed. The
+     *            {@link ResourceRecordSet#getTTL() ttl} is ignored.
      */
-    void remove(String name, String type, Map<String, Object> rdata);
+    void remove(ResourceRecordSet<?> rrset);
 }
