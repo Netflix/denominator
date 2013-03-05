@@ -66,7 +66,7 @@ public class MockProvider extends Provider {
         data.put(zoneName, ns(zoneName, 86400, "ns1." + zoneName));
         data.put(zoneName, a("www1." + zoneName, 3600, ImmutableSet.of("1.1.1.1", "1.1.1.2")));
         data.put(zoneName, a("www2." + zoneName, 3600, "2.2.2.2"));
-        data.put(zoneName, cname("www." + zoneName, 3600, ImmutableSet.of("www1." + zoneName, "www2." + zoneName)));
+        data.put(zoneName, cname("www." + zoneName, 3600, "www1." + zoneName));
         return Multimap.class.cast(data);
     }
 }
