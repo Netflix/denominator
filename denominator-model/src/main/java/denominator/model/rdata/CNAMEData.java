@@ -26,9 +26,12 @@ public class CNAMEData extends ForwardingMap<String, Object> {
         return new CNAMEData(cname);
     }
 
+    private final String cname;
+
     @ConstructorProperties("cname")
     private CNAMEData(String cname) {
-        this.delegate = ImmutableMap.<String, Object> of("cname", checkNotNull(cname, "cname"));
+        this.cname = checkNotNull(cname, "cname");
+        this.delegate = ImmutableMap.<String, Object> of("cname", cname);
     }
 
     /**
@@ -36,10 +39,11 @@ public class CNAMEData extends ForwardingMap<String, Object> {
      * The owner name is an alias.
      */
     public String getCname() {
-        return get("cname").toString();
+        return cname;
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
     
     @Override
     protected Map<String, Object> delegate() {

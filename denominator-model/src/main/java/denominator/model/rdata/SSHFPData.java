@@ -41,13 +41,19 @@ public class SSHFPData extends ForwardingMap<String, Object> {
         return builder().algorithm(1).type(1).fingerprint(fingerprint).build();
     }
 
+    private final UnsignedInteger algorithm;
+    private final UnsignedInteger type;
+    private final String fingerprint;
+
     @ConstructorProperties({ "algorithm", "type", "fingerprint" })
     private SSHFPData(UnsignedInteger algorithm, UnsignedInteger type, String fingerprint) {
+        this.algorithm = checkNotNull(algorithm, "algorithm of %s", fingerprint);
+        this.type = checkNotNull(type, "type of %s", fingerprint);
+        this.fingerprint = checkNotNull(fingerprint, "fingerprint");
         this.delegate = ImmutableMap.<String, Object> builder()
-                .put("algorithm", checkNotNull(algorithm, "algorithm of %s", fingerprint))
-                .put("type", checkNotNull(type, "type of %s", fingerprint))
-                .put("fingerprint", checkNotNull(fingerprint, "fingerprint"))
-                .build();
+                                    .put("algorithm", algorithm)
+                                    .put("type", type)
+                                    .put("fingerprint", fingerprint).build();
     }
 
     /**
@@ -55,7 +61,7 @@ public class SSHFPData extends ForwardingMap<String, Object> {
      * @return most often {@code 1} for {@code RSA} or {@code 2} for {@code DSA}. 
      */
     public UnsignedInteger getAlgorithm() {
-        return UnsignedInteger.class.cast(get("algorithm"));
+        return algorithm;
     }
 
     /**
@@ -65,14 +71,14 @@ public class SSHFPData extends ForwardingMap<String, Object> {
      * @return most often {@code 1} for {@code SHA-1}
      */
     public UnsignedInteger getType() {
-        return UnsignedInteger.class.cast(get("type"));
+        return type;
     }
 
     /**
      * The fingerprint calculated over the public key blob.
      */
     public String getFingerprint() {
-        return String.class.cast(get("fingerprint"));
+        return fingerprint;
     }
 
     public final static class Builder {
@@ -127,7 +133,8 @@ public class SSHFPData extends ForwardingMap<String, Object> {
         return new Builder();
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
     
     @Override
     protected Map<String, Object> delegate() {

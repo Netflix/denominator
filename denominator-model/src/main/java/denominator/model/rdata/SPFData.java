@@ -27,19 +27,23 @@ public class SPFData extends ForwardingMap<String, Object> {
         return new SPFData(spfdata);
     }
 
+    private final String spfdata;
+
     @ConstructorProperties("spfdata")
     private SPFData(String spfdata) {
-        this.delegate = ImmutableMap.<String, Object> of("spfdata", checkNotNull(spfdata, "spfdata"));
+        this.spfdata = checkNotNull(spfdata, "spfdata");
+        this.delegate = ImmutableMap.<String, Object> of("spfdata", spfdata);
     }
 
     /**
      * One or more character-strings.
      */
     public String getSpfdata() {
-        return get("spfdata").toString();
+        return spfdata;
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
     
     @Override
     protected Map<String, Object> delegate() {

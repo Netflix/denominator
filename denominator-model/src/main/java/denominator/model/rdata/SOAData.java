@@ -30,17 +30,32 @@ import com.google.common.primitives.UnsignedInteger;
  */
 public class SOAData extends ForwardingMap<String, Object> {
 
+    private final String mname;
+    private final String rname;
+    private final UnsignedInteger serial;
+    private final UnsignedInteger refresh;
+    private final UnsignedInteger retry;
+    private final UnsignedInteger expire;
+    private final UnsignedInteger minimum;
+
     @ConstructorProperties({ "mname", "rname", "serial", "refresh", "retry", "expire", "minimum" })
     private SOAData(String mname, String rname, UnsignedInteger serial, UnsignedInteger refresh, UnsignedInteger retry,
             UnsignedInteger expire, UnsignedInteger minimum) {
+        this.mname = checkNotNull(mname, "mname");
+        this.rname = checkNotNull(rname, "rname of %s", mname);
+        this.serial = checkNotNull(serial, "serial of %s", mname);
+        this.refresh = checkNotNull(refresh, "refresh of %s", mname);
+        this.retry = checkNotNull(retry, "retry of %s", mname);
+        this.expire = checkNotNull(expire, "expire of %s", mname);
+        this.minimum = checkNotNull(minimum, "minimum of %s", mname);
         this.delegate = ImmutableMap.<String, Object> builder()
-                .put("mname", checkNotNull(mname, "mname"))
-                .put("rname", checkNotNull(rname, "rname of %s", mname))
-                .put("serial", checkNotNull(serial, "serial of %s", mname))
-                .put("refresh", checkNotNull(refresh, "refresh of %s", mname))
-                .put("retry", checkNotNull(retry, "retry of %s", mname))
-                .put("expire", checkNotNull(expire, "expire of %s", mname))
-                .put("minimum", checkNotNull(minimum, "minimum of %s", mname)).build();
+                                    .put("mname", mname)
+                                    .put("rname", rname)
+                                    .put("serial", serial)
+                                    .put("refresh", refresh)
+                                    .put("retry", retry)
+                                    .put("expire", expire)
+                                    .put("minimum", minimum).build();
     }
 
     /**
@@ -48,7 +63,7 @@ public class SOAData extends ForwardingMap<String, Object> {
      * data for this zone
      */
     public String getMname() {
-        return String.class.cast(get("mname"));
+        return mname;
     }
 
     /**
@@ -56,21 +71,21 @@ public class SOAData extends ForwardingMap<String, Object> {
      * this zone.
      */
     public String getRname() {
-        return String.class.cast(get("rname"));
+        return rname;
     }
 
     /**
      * version number of the original copy of the zone.
      */
     public UnsignedInteger getSerial() {
-        return UnsignedInteger.class.cast(get("serial"));
+        return serial;
     }
 
     /**
      * time interval before the zone should be refreshed
      */
     public UnsignedInteger getRefresh() {
-        return UnsignedInteger.class.cast(get("refresh"));
+        return refresh;
     }
 
     /**
@@ -78,7 +93,7 @@ public class SOAData extends ForwardingMap<String, Object> {
      * retried
      */
     public UnsignedInteger getRetry() {
-        return UnsignedInteger.class.cast(get("retry"));
+        return retry;
     }
 
     /**
@@ -86,14 +101,14 @@ public class SOAData extends ForwardingMap<String, Object> {
      * elapse before the zone is no longer authoritative.
      */
     public UnsignedInteger getExpire() {
-        return UnsignedInteger.class.cast(get("expire"));
+        return expire;
     }
 
     /**
      * minimum TTL field that should be exported with any RR from this zone.
      */
     public UnsignedInteger getMinimum() {
-        return UnsignedInteger.class.cast(get("minimum"));
+        return minimum;
     }
 
     public SOAData.Builder toBuilder() {
@@ -214,7 +229,8 @@ public class SOAData extends ForwardingMap<String, Object> {
         return new Builder();
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
     
     @Override
     protected Map<String, Object> delegate() {
