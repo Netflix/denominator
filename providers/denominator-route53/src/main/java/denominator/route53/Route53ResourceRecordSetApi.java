@@ -1,18 +1,29 @@
 package denominator.route53;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
+import static com.google.common.collect.Iterables.filter;
+import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static denominator.route53.ToDenominatorResourceRecordSet.isAlias;
 
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
 import org.jclouds.route53.Route53Api;
+import org.jclouds.route53.domain.ChangeBatch;
 import org.jclouds.route53.domain.HostedZone;
+import org.jclouds.route53.domain.ResourceRecordSetIterable.NextRecord;
 
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -33,7 +44,91 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         return route53RRsetApi.list().concat().filter(not(isAlias()))
                 .transform(ToDenominatorResourceRecordSet.INSTANCE).iterator();
     }
-    
+
+    /**
+     * for efficiency, starts the list at the specified {@code name} and
+     * {@code type}.
+     */
+    Optional<org.jclouds.route53.domain.ResourceRecordSet> getByNameAndType(String name, String type) {
+        checkNotNull(name, "name");
+        checkNotNull(type, "type");
+        return route53RRsetApi.listAt(NextRecord.nameAndType(name, type)).filter(not(isAlias()))
+                .firstMatch(new Route53NameAndTypeEquals(name, type));
+    }
+
+    /**
+     * creates a record set, adding the {@code rdata} values in the
+     * {@code rrset}. If the record set already exists, the old copy is deleted
+     * first. If the {@code ttl} is not present on a new {@code rrset}, we use
+     * default ttl from the amazon console ({@code 300 seconds}).
+     */
+    @Override
+    public void add(ResourceRecordSet<?> rrset) {
+        Optional<UnsignedInteger> ttlToApply = rrset.getTTL();
+
+        ChangeBatch.Builder changes = ChangeBatch.builder();
+        Builder<String> values = ImmutableList.builder();
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = 
+                getByNameAndType(rrset.getName(), rrset.getType());
+        if (oldRRS.isPresent()) {
+            ttlToApply = ttlToApply.or(oldRRS.get().getTTL());
+            changes.delete(oldRRS.get());
+            values.addAll(oldRRS.get().getValues());
+            values.addAll(filter(toTextFormat(rrset), not(in(oldRRS.get().getValues()))));
+        } else {
+            values.addAll(toTextFormat(rrset));
+        }
+        
+        changes.create(org.jclouds.route53.domain.ResourceRecordSet.builder()
+                        .name(rrset.getName())
+                        .type(rrset.getType())
+                        .ttl(ttlToApply.or(fromIntBits(300)))
+                        .addAll(values.build()).build());
+
+        route53RRsetApi.apply(changes.build());
+    }
+
+    static List<String> toTextFormat(ResourceRecordSet<?> rrset) {
+        Builder<String> values = ImmutableList.builder();
+        for (Map<String, Object> rdata : rrset) {
+            values.add(Joiner.on(' ').join(rdata.values()));
+        }
+        return values.build();
+    }
+
+    /**
+     * if the {@code rdata} is present in an existing RRSet, that RRSet is
+     * either deleted, or replaced, depending on whether the parameter is the
+     * only value or not.
+     */
+    @Override
+    public void remove(ResourceRecordSet<?> rrset) {
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = 
+                getByNameAndType(rrset.getName(), rrset.getType());
+        if (!oldRRS.isPresent())
+            return;
+
+        List<String> valuesToRemove = ImmutableList.copyOf(filter(oldRRS.get().getValues(), in(toTextFormat(rrset))));
+        if (valuesToRemove.size() == 0)
+            return;
+
+        List<String> valuesToRetain = ImmutableList.copyOf(filter(oldRRS.get().getValues(), not(in(valuesToRemove))));
+        if (valuesToRetain.size() == 0) {
+            route53RRsetApi.delete(oldRRS.get());
+            return;
+        }
+
+        ChangeBatch.Builder changes = ChangeBatch.builder();
+        changes.delete(oldRRS.get());
+        changes.create(org.jclouds.route53.domain.ResourceRecordSet.builder()
+                        .name(rrset.getName())
+                        .type(rrset.getType())
+                        .ttl(oldRRS.get().getTTL().get())
+                        .addAll(valuesToRetain)
+                        .build());
+        route53RRsetApi.apply(changes.build());
+    }
+
     static final class Factory implements denominator.ResourceRecordSetApi.Factory {
 
         private final Route53Api api;
@@ -64,13 +159,23 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         };
     }
 
-    @Override
-    public void add(ResourceRecordSet<?> rrset) {
-        throw new UnsupportedOperationException("not yet implemented");
-    }
+    private static class Route53NameAndTypeEquals implements Predicate<org.jclouds.route53.domain.ResourceRecordSet> {
+        private final String name;
+        private final String type;
 
-    @Override
-    public void remove(ResourceRecordSet<?> rrset) {
-        throw new UnsupportedOperationException("not yet implemented");
+        private Route53NameAndTypeEquals(String name, String type) {
+            this.name = checkNotNull(name, "name");
+            this.type = checkNotNull(type, "type");
+        }
+
+        @Override
+        public boolean apply(org.jclouds.route53.domain.ResourceRecordSet input) {
+            return name.equals(input.getName()) && type.equals(input.getType());
+        }
+
+        @Override
+        public String toString() {
+            return "nameAndTypeEquals(" + name + ", " + type + ")";
+        }
     }
 }
