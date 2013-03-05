@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
 import java.net.Inet4Address;
-import java.net.InetAddress;
 import java.util.Map;
 
 import com.google.common.collect.ForwardingMap;
@@ -18,37 +17,41 @@ import com.google.common.net.InetAddresses;
  * <h4>Example</h4>
  * 
  * <pre>
- * AData rdata = AData.create("1.1.1.1");
+ * AData rdata = AData.create(&quot;1.1.1.1&quot;);
  * </pre>
  * 
  * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class AData extends ForwardingMap<String, Object> {
 
-    public static AData create(String ipv4address) {
-        InetAddress address = InetAddresses.forString(checkNotNull(ipv4address, "ipv4address"));
-        checkArgument(address instanceof Inet4Address, "%s should be a ipv4 address for A record", address);
-        return new AData(Inet4Address.class.cast(address));
-    }
-
-    public static AData create(Inet4Address address) {
-        return new AData(address);
+    /**
+     * 
+     * @param ipv4address
+     *            valid ipv4 address. ex. {@code 1.1.1.1}
+     * @throws IllegalArgumentException
+     *             if the address is malformed or not ipv4
+     * @see InetAddresses#forString(String)
+     */
+    public static AData create(String ipv4address) throws IllegalArgumentException {
+        return new AData(ipv4address);
     }
 
     @ConstructorProperties("address")
-    private AData(Inet4Address address) {
-        this.delegate = ImmutableMap.<String, Object> of("address", checkNotNull(address, "address"));
+    private AData(String ipv4address) {
+        checkArgument(InetAddresses.forString(checkNotNull(ipv4address, "address")) instanceof Inet4Address,
+                "%s should be a ipv4 address", ipv4address);
+        this.delegate = ImmutableMap.<String, Object> of("address", ipv4address);
     }
 
     /**
      * a 32-bit internet address
      */
-    public Inet4Address getAddress() {
-        return Inet4Address.class.cast(get("address"));
+    public String getAddress() {
+        return get("address").toString();
     }
 
     private final ImmutableMap<String, Object> delegate;
-    
+
     @Override
     protected Map<String, Object> delegate() {
         return delegate;
