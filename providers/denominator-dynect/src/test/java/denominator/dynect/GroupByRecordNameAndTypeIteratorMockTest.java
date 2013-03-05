@@ -11,6 +11,7 @@ import static org.testng.Assert.assertFalse;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.Set;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.concurrent.config.ExecutorServiceModule;
@@ -32,15 +33,17 @@ import denominator.model.rdata.SOAData;
 
 @Test(singleThreaded = true)
 public class GroupByRecordNameAndTypeIteratorMockTest {
+    static Set<Module> modules = ImmutableSet.<Module> of(new ExecutorServiceModule(sameThreadExecutor(),
+            sameThreadExecutor()));
 
-    static DynECTApi mockDynectApi(String uri) {
+    static DynECTApi mockDynECTApi(String uri) {
         Properties overrides = new Properties();
         overrides.setProperty(PROPERTY_MAX_RETRIES, "1");
         return ContextBuilder.newBuilder("dynect")
                              .credentials("jclouds:joe", "letmein")
                              .endpoint(uri)
                              .overrides(overrides)
-                             .modules(ImmutableSet.<Module> of(new ExecutorServiceModule(sameThreadExecutor(), sameThreadExecutor())))
+                             .modules(modules)
                              .build(DynECTApiMetadata.CONTEXT_TOKEN).getApi();
     }
 
@@ -69,7 +72,7 @@ public class GroupByRecordNameAndTypeIteratorMockTest {
         server.play();
         
         try {
-            RecordApi api = mockDynectApi(server.getUrl("/").toString()).getRecordApiForZone("denominator.io");
+            RecordApi api = mockDynECTApi(server.getUrl("/").toString()).getRecordApiForZone("denominator.io");
 
             Iterator<ResourceRecordSet<?>> iterator  = new GroupByRecordNameAndTypeIterator(api, recordIds.iterator());
             assertEquals(iterator.next(), ResourceRecordSet.<SOAData> builder()
