@@ -19,5 +19,6 @@ public class Route53ProviderLiveTest extends BaseProviderLiveTest {
         if (accesskey != null && secretkey != null) {
             manager = Denominator.create(new Route53Provider(), credentials(accesskey, secretkey));
         }
+        mutableZone = emptyToNull(getProperty("route53.zone"));
     }
 }
