@@ -32,12 +32,17 @@ public class MXData extends ForwardingMap<String, Object> {
         return new MXData(preference, exchange);
     }
 
+    private final UnsignedInteger preference;
+    private final String exchange;
+
     @ConstructorProperties({ "preference", "exchange" })
     private MXData(UnsignedInteger preference, String exchange) {
         checkArgument(checkNotNull(preference, "preference").intValue() <= 0xFFFF, "preference must be 65535 or less");
+        this.preference = preference;
+        this.exchange = checkNotNull(exchange, "exchange");
         this.delegate = ImmutableMap.<String, Object> builder()
-                .put("preference", preference)
-                .put("exchange", checkNotNull(exchange, "exchange")).build();
+                                    .put("preference", preference)
+                                    .put("exchange", exchange).build();
     }
 
     /**
@@ -45,7 +50,7 @@ public class MXData extends ForwardingMap<String, Object> {
      * Lower values are preferred.
      */
     public UnsignedInteger getPreference() {
-        return UnsignedInteger.class.cast(get("preference"));
+        return preference;
     }
 
     /**
@@ -53,10 +58,11 @@ public class MXData extends ForwardingMap<String, Object> {
      * the owner name.
      */
     public String getExchange() {
-        return String.class.cast(get("exchange"));
+        return exchange;
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
     
     @Override
     protected Map<String, Object> delegate() {

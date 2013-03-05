@@ -25,19 +25,23 @@ public class PTRData extends ForwardingMap<String, Object> {
         return new PTRData(ptrdname);
     }
 
+    private final String ptrdname;
+
     @ConstructorProperties("ptrdname")
     private PTRData(String ptrdname) {
-        this.delegate = ImmutableMap.<String, Object> of("ptrdname", checkNotNull(ptrdname, "ptrdname"));
+        this.ptrdname = checkNotNull(ptrdname, "ptrdname");
+        this.delegate = ImmutableMap.<String, Object> of("ptrdname", ptrdname);
     }
 
     /**
      * domain-name which points to some location in the domain name space.
      */
     public String getPtrdname() {
-        return get("ptrdname").toString();
+        return ptrdname;
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
     
     @Override
     protected Map<String, Object> delegate() {

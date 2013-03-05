@@ -36,10 +36,13 @@ public class AData extends ForwardingMap<String, Object> {
         return new AData(ipv4address);
     }
 
+    private final String address;
+
     @ConstructorProperties("address")
     private AData(String ipv4address) {
         checkArgument(InetAddresses.forString(checkNotNull(ipv4address, "address")) instanceof Inet4Address,
                 "%s should be a ipv4 address", ipv4address);
+        this.address = ipv4address;
         this.delegate = ImmutableMap.<String, Object> of("address", ipv4address);
     }
 
@@ -47,10 +50,11 @@ public class AData extends ForwardingMap<String, Object> {
      * a 32-bit internet address
      */
     public String getAddress() {
-        return get("address").toString();
+        return address;
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
 
     @Override
     protected Map<String, Object> delegate() {

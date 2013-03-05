@@ -27,18 +27,25 @@ import com.google.common.primitives.UnsignedInteger;
  */
 public class SRVData extends ForwardingMap<String, Object> {
 
+    private final UnsignedInteger priority;
+    private final UnsignedInteger weight;
+    private final UnsignedInteger port;
+    private final String target;
+
     @ConstructorProperties({ "priority", "weight", "port", "target" })
     private SRVData(UnsignedInteger priority, UnsignedInteger weight, UnsignedInteger port, String target) {
         checkArgument(checkNotNull(priority, "priority of %s", target).intValue() <= 0xFFFF, "priority must be 0-65535");
         checkArgument(checkNotNull(weight, "weight of %s", target).intValue() <= 0xFFFF, "weight must be 0-65535");
         checkArgument(checkNotNull(port, "port of %s", target).intValue() <= 0xFFFF, "port must be 0-65535");
-        
+        this.priority = priority;
+        this.weight = weight;
+        this.port = port;
+        this.target = checkNotNull(target, "target");
         this.delegate = ImmutableMap.<String, Object> builder()
-                .put("priority", priority)
-                .put("weight", weight)
-                .put("port", port)
-                .put("target", checkNotNull(target, "target"))
-                .build();
+                                    .put("priority", priority)
+                                    .put("weight", weight)
+                                    .put("port", port)
+                                    .put("target", target).build();
     }
 
     /**
@@ -48,7 +55,7 @@ public class SRVData extends ForwardingMap<String, Object> {
      * field.
      */
     public UnsignedInteger getPriority() {
-        return UnsignedInteger.class.cast(get("priority"));
+        return priority;
     }
 
     /**
@@ -57,14 +64,14 @@ public class SRVData extends ForwardingMap<String, Object> {
      * probability of being selected.
      */
     public UnsignedInteger getWeight() {
-        return UnsignedInteger.class.cast(get("weight"));
+        return weight;
     }
 
     /**
      * The port on this target host of this service.
      */
     public UnsignedInteger getPort() {
-        return UnsignedInteger.class.cast(get("port"));
+        return port;
     }
 
     /**
@@ -72,7 +79,7 @@ public class SRVData extends ForwardingMap<String, Object> {
      * records for this name, the name MUST NOT be an alias.
      */
     public String getTarget() {
-        return String.class.cast(get("target"));
+        return target;
     }
 
     public SRVData.Builder toBuilder() {
@@ -151,7 +158,8 @@ public class SRVData extends ForwardingMap<String, Object> {
         return new Builder();
     }
 
-    private final ImmutableMap<String, Object> delegate;
+    // transient to avoid serializing by default, for example in json
+    private final transient ImmutableMap<String, Object> delegate;
     
     @Override
     protected Map<String, Object> delegate() {
