@@ -6,6 +6,7 @@ import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.FluentIterable.from;
 import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Ordering.usingToString;
 import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static denominator.model.ResourceRecordSets.nameAndType;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Multimap;
 
 import denominator.ResourceRecordSetApi;
@@ -50,11 +52,11 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     }
 
     /**
-     * adds a bunch of fake records
+     * sorted to help tests from breaking
      */
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
-        return data.get(zoneName).iterator();
+        return FluentIterable.from(data.get(zoneName)).toSortedList(usingToString()).iterator();
     }
 
     @Override

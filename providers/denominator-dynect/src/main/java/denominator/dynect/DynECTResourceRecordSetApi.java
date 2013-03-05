@@ -88,7 +88,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
             CreateRecord.Builder<Map<String, Object>> builder = CreateRecord.builder()
                                                                             .fqdn(rrset.getName())
                                                                             .type(rrset.getType())
-                                                                            .ttl(ttlToApply.orNull());
+                                                                            .ttl(ttlToApply.or(UnsignedInteger.ZERO));
             for (Map<String, Object> record : recordsLeftToCreate) {
                 api.getRecordApiForZone(zoneFQDN).scheduleCreate(builder.rdata(record).build());
             }
