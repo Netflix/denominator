@@ -136,7 +136,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
          * </pre>
          */
         public Builder<D> addAll(D... rdata) {
-            this.rdata = ImmutableList.<D> builder().addAll(ImmutableList.copyOf(checkNotNull(rdata, "rdata")));
+            this.rdata.addAll(ImmutableList.copyOf(checkNotNull(rdata, "rdata")));
             return this;
         }
 
@@ -151,7 +151,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
          * </pre>
          */
         public <R extends D> Builder<D> addAll(Iterable<R> rdata) {
-            this.rdata = ImmutableList.<D> builder().addAll(checkNotNull(rdata, "rdata"));
+            this.rdata.addAll(checkNotNull(rdata, "rdata"));
             return this;
         }
 
