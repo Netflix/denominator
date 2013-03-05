@@ -20,5 +20,6 @@ public class DynECTProviderLiveTest extends BaseProviderLiveTest {
         if (customer != null && username != null && password != null) {
             manager = Denominator.create(new DynECTProvider(), credentials(customer, username, password));
         }
+        mutableZone = emptyToNull(getProperty("dynect.zone"));
     }
 }
