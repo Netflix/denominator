@@ -3,15 +3,12 @@ package denominator.ultradns;
 import static com.google.common.collect.Ordering.usingToString;
 
 import java.util.Iterator;
-import java.util.Map;
 
 import javax.inject.Inject;
 
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
 import org.jclouds.ultradns.ws.features.ResourceRecordApi;
-
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -45,17 +42,12 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     }
 
     @Override
-    public void add(String name, String type, UnsignedInteger ttl, Map<String, Object> rdata) {
+    public void add(ResourceRecordSet<?> rrset) {
         throw new UnsupportedOperationException("not yet implemented");
     }
 
     @Override
-    public void add(String name, String type, Map<String, Object> rdata) {
-        throw new UnsupportedOperationException("not yet implemented");
-    }
-
-    @Override
-    public void remove(String name, String type, Map<String, Object> rdata) {
+    public void remove(ResourceRecordSet<?> rrset) {
         throw new UnsupportedOperationException("not yet implemented");
     }
 }
