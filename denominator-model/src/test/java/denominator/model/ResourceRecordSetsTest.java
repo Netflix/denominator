@@ -1,6 +1,5 @@
 package denominator.model;
 
-import static com.google.common.net.InetAddresses.forString;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.cname;
 import static denominator.model.ResourceRecordSets.ns;
@@ -59,7 +58,7 @@ public class ResourceRecordSetsTest {
     }
 
     public void containsRDataReturnsTrueWhenRDataEqualButDifferentType() {
-        assertTrue(ResourceRecordSets.containsRData(ImmutableMap.of("address", forString("1.1.1.1"))).apply(aRRS));
+        assertTrue(ResourceRecordSets.containsRData(ImmutableMap.of("address", "1.1.1.1")).apply(aRRS));
     }
 
     @DataProvider(name = "a")

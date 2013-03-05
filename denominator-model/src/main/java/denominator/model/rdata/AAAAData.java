@@ -5,7 +5,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
 import java.net.Inet6Address;
-import java.net.InetAddress;
 import java.util.Map;
 
 import com.google.common.collect.ForwardingMap;
@@ -25,26 +24,30 @@ import com.google.common.net.InetAddresses;
  */
 public class AAAAData extends ForwardingMap<String, Object> {
 
-    public static AAAAData create(String ipv6address) {
-        InetAddress address = InetAddresses.forString(checkNotNull(ipv6address, "ipv6address"));
-        checkArgument(address instanceof Inet6Address, "%s should be a ipv6 address for AAAA record", address);
-        return new AAAAData(Inet6Address.class.cast(address));
-    }
-
-    public static AAAAData create(Inet6Address address) {
-        return new AAAAData(address);
+    /**
+     * 
+     * @param ipv6address
+     *            valid ipv6 address. ex. {@code 1234:ab00:ff00::6b14:abcd}
+     * @throws IllegalArgumentException
+     *             if the address is malformed or not ipv6
+     * @see InetAddresses#forString(String)
+     */
+    public static AAAAData create(String ipv6address) throws IllegalArgumentException {
+        return new AAAAData(ipv6address);
     }
 
     @ConstructorProperties("address")
-    private AAAAData(Inet6Address address) {
-        this.delegate = ImmutableMap.<String, Object> of("address", checkNotNull(address, "address"));
+    private AAAAData(String ipv6address) {
+        checkArgument(InetAddresses.forString(checkNotNull(ipv6address, "address")) instanceof Inet6Address,
+                "%s should be a ipv6 address", ipv6address);
+        this.delegate = ImmutableMap.<String, Object> of("address", ipv6address);
     }
 
     /**
      * a 128 bit IPv6 address
      */
-    public Inet6Address getAddress() {
-        return Inet6Address.class.cast(get("address"));
+    public String getAddress() {
+        return delegate.get("address").toString();
     }
 
     private final ImmutableMap<String, Object> delegate;
