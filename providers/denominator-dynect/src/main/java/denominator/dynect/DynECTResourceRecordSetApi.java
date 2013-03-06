@@ -165,4 +165,8 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
             api.getZoneApi().publish(zoneFQDN);
     }
 
+    @Override
+    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }

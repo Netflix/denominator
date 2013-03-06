@@ -60,10 +60,14 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     }
 
     @Override
+    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
+        return from(data.get(zoneName)).firstMatch(nameAndType(name, type));
+    }
+
+    @Override
     public void add(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        Optional<ResourceRecordSet<?>> rrsMatch = from(data.get(zoneName))
-                .firstMatch(nameAndType(rrset.getName(), rrset.getType()));
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.getName(), rrset.getType());
         Builder<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>>builder()
                                                              .name(rrset.getName())
                                                              .type(rrset.getType())
@@ -81,8 +85,7 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     @Override
     public void replace(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        Optional<ResourceRecordSet<?>> rrsMatch = from(data.get(zoneName))
-                .firstMatch(nameAndType(rrset.getName(), rrset.getType()));
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.getName(), rrset.getType());
         if (rrsMatch.isPresent()) {
             data.remove(zoneName, rrsMatch.get());
         }
@@ -92,8 +95,7 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     @Override
     public void remove(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        Optional<ResourceRecordSet<?>> rrsMatch = from(data.get(zoneName))
-                .firstMatch(nameAndType(rrset.getName(), rrset.getType()));
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.getName(), rrset.getType());
         if (rrsMatch.isPresent()) {
             data.remove(zoneName, rrsMatch.get());
             if (rrsMatch.get().size() > 1) {
