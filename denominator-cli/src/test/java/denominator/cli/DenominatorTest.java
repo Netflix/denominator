@@ -13,6 +13,7 @@ import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetApplyTTL;
+import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetDelete;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
@@ -148,6 +149,17 @@ public class DenominatorTest {
         command.values = ImmutableList.of("1.1.1.1", "1.1.1.2");
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. removing from rrset www1.denominator.io. A values: [{address=1.1.1.1},{address=1.1.1.2}]",
+                ";; ok"));
+    }
+
+    @Test(description = "denominator -p mock record -z denominator.io. delete -n www3.denominator.io. -t A ")
+    public void testResourceRecordSetDelete() {
+        ResourceRecordSetDelete command = new ResourceRecordSetDelete();
+        command.zoneName = "denominator.io.";
+        command.name = "www3.denominator.io.";
+        command.type = "A";
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                ";; in zone denominator.io. deleting rrset www3.denominator.io. A",
                 ";; ok"));
     }
 }

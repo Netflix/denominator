@@ -23,6 +23,7 @@ import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetApplyTTL;
+import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetDelete;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
@@ -49,11 +50,17 @@ public class Denominator {
                .withCommand(ResourceRecordSetAdd.class)
                .withCommand(ResourceRecordSetApplyTTL.class)
                .withCommand(ResourceRecordSetReplace.class)
-               .withCommand(ResourceRecordSetRemove.class);
+               .withCommand(ResourceRecordSetRemove.class)
+               .withCommand(ResourceRecordSetDelete.class);
 
         Cli<Runnable> denominatorParser = builder.build();
-
-        denominatorParser.parse(args).run();
+        try {
+            denominatorParser.parse(args).run();
+        } catch (RuntimeException e) {
+            System.err.println(";; error: "+ e.getMessage());
+            System.exit(1);
+        } 
+        System.exit(0);
     }
 
     @Command(name = "providers", description = "List the providers and their expected credentials")
@@ -100,8 +107,6 @@ public class Denominator {
                     mgr = create(providerName, credentials(from(credentialArgs)));
                 for (Iterator<String> i = doRun(mgr); i.hasNext();)
                     System.out.println(i.next());
-            } catch (RuntimeException e) {
-                System.err.println(";; error: "+ e.getMessage());
             } finally {
                 closeQuietly(mgr);
             }
