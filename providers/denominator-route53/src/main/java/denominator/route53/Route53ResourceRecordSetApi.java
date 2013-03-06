@@ -93,6 +93,21 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
     }
 
     @Override
+    public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
+        checkNotNull(ttl, "ttl");
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> existing = getRoute53RRSByNameAndType(name, type);
+        if (!existing.isPresent())
+            return;
+        org.jclouds.route53.domain.ResourceRecordSet rrset = existing.get();
+        if (rrset.getTTL().isPresent() && rrset.getTTL().get().equals(ttl))
+            return;
+        ChangeBatch.Builder changes = ChangeBatch.builder();
+        changes.delete(rrset);
+        changes.create(rrset.toBuilder().ttl(ttl).build());
+        route53RRsetApi.apply(changes.build());
+    }
+
+    @Override
     public void replace(ResourceRecordSet<?> rrset) {
         ChangeBatch.Builder changes = ChangeBatch.builder();
 
@@ -193,10 +208,5 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         public String toString() {
             return "nameAndTypeEquals(" + name + ", " + type + ")";
         }
-    }
-
-    @Override
-    public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
-        throw new UnsupportedOperationException("not yet implemented");
     }
 }
