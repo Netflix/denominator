@@ -196,7 +196,7 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
     }
 
     @Override
-    public void applyTTLToNameAndType(String name, String type, UnsignedInteger ttl) {
+    public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
         throw new UnsupportedOperationException("not yet implemented");
     }
 }
