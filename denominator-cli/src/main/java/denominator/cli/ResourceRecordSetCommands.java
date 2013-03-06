@@ -43,7 +43,7 @@ class ResourceRecordSetCommands {
         public String zoneName;
     }
 
-    @Command(name = "list", description = "Lists the normal record record sets present in this zone")
+    @Command(name = "list", description = "Lists the record record sets present in this zone")
     public static class ResourceRecordSetList extends ResourceRecordSetCommand {
 
         public Iterator<String> doRun(DNSApiManager mgr) {
@@ -52,7 +52,7 @@ class ResourceRecordSetCommands {
         }
     }
 
-    @Command(name = "get", description = "gets a normal record record set by name and type, if present in this zone")
+    @Command(name = "get", description = "gets a record record set by name and type, if present in this zone")
     public static class ResourceRecordSetGet extends ResourceRecordSetCommand {
         @Option(type = OptionType.COMMAND, required = true, name = { "-n", "--name" }, description = "name of the record set. ex. www.denominator.io.")
         public String name;
@@ -217,6 +217,39 @@ class ResourceRecordSetCommands {
                 @Override
                 public String next() {
                     mgr.getApi().getResourceRecordSetApiForZone(zoneName).remove(toRemove);
+                    done = true;
+                    return ";; ok";
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            });
+        }
+    }
+
+    @Command(name = "delete", description = "deletes a record record set by name and type, if present in this zone")
+    public static class ResourceRecordSetDelete extends ResourceRecordSetCommand {
+        @Option(type = OptionType.COMMAND, required = true, name = { "-n", "--name" }, description = "name of the record set. ex. www.denominator.io.")
+        public String name;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-t", "--type" }, description = "type of the record set. ex. CNAME")
+        public String type;
+
+        public Iterator<String> doRun(final DNSApiManager mgr) {
+            String cmd = format(";; in zone %s deleting rrset %s %s", zoneName, name, type);
+            return concat(forArray(cmd), new Iterator<String>() {
+                boolean done = false;
+
+                @Override
+                public boolean hasNext() {
+                    return !done;
+                }
+
+                @Override
+                public String next() {
+                    mgr.getApi().getResourceRecordSetApiForZone(zoneName).deleteByNameAndType(name, type);
                     done = true;
                     return ";; ok";
                 }
