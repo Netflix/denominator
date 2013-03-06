@@ -14,6 +14,7 @@ import denominator.cli.Denominator.ZoneList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
+import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.dynect.DynECTProvider;
 import denominator.mock.MockProvider;
 import denominator.route53.Route53Provider;
@@ -76,6 +77,31 @@ public class DenominatorTest {
         command.values = ImmutableList.of("1.1.1.1", "1.1.1.2");
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=1.1.1.1},{address=1.1.1.2}] applying ttl 3600",
+                ";; ok"));
+    }
+
+    @Test(description = "denominator -p mock record -z denominator.io. replace -n www1.denominator.io. -t A -d 1.1.1.1 -d 1.1.1.2")
+    public void testResourceRecordSetReplace() {
+        ResourceRecordSetReplace command = new ResourceRecordSetReplace();
+        command.zoneName = "denominator.io.";
+        command.name = "www1.denominator.io.";
+        command.type = "A";
+        command.values = ImmutableList.of("1.1.1.1", "1.1.1.2");
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                ";; in zone denominator.io. replacing rrset www1.denominator.io. A with values: [{address=1.1.1.1},{address=1.1.1.2}]",
+                ";; ok"));
+    }
+
+    @Test(description = "denominator -p mock record -z denominator.io. replace -n www1.denominator.io. -t A --ttl 3600 -d 1.1.1.1 -d 1.1.1.2")
+    public void testResourceRecordSetReplaceWithTTL() {
+        ResourceRecordSetReplace command = new ResourceRecordSetReplace();
+        command.zoneName = "denominator.io.";
+        command.name = "www1.denominator.io.";
+        command.type = "A";
+        command.ttl = 3600;
+        command.values = ImmutableList.of("1.1.1.1", "1.1.1.2");
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                ";; in zone denominator.io. replacing rrset www1.denominator.io. A with values: [{address=1.1.1.1},{address=1.1.1.2}] and ttl 3600",
                 ";; ok"));
     }
 

@@ -24,6 +24,7 @@ import denominator.Provider;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
+import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 
 public class Denominator {
     public static void main(String[] args) {
@@ -43,6 +44,7 @@ public class Denominator {
                .withDefaultCommand(ResourceRecordSetList.class)
                .withCommand(ResourceRecordSetList.class)
                .withCommand(ResourceRecordSetAdd.class)
+               .withCommand(ResourceRecordSetReplace.class)
                .withCommand(ResourceRecordSetRemove.class);
 
         Cli<Runnable> denominatorParser = builder.build();
