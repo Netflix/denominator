@@ -77,6 +77,17 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     }
 
     @Override
+    public void replace(ResourceRecordSet<?> rrset) {
+        checkNotNull(rrset, "rrset was null");
+        Optional<ResourceRecordSet<?>> rrsMatch = from(data.get(zoneName))
+                .firstMatch(nameAndType(rrset.getName(), rrset.getType()));
+        if (rrsMatch.isPresent()) {
+            data.remove(zoneName, rrsMatch.get());
+        }
+        data.put(zoneName, rrset);
+    }
+
+    @Override
     public void remove(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
         Optional<ResourceRecordSet<?>> rrsMatch = from(data.get(zoneName))
