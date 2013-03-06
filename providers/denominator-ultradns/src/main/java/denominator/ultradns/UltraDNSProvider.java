@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.domain.Credentials;
+import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.rest.RestContext;
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.UltraDNSWSAsyncApi;
@@ -17,6 +18,7 @@ import org.jclouds.ultradns.ws.UltraDNSWSProviderMetadata;
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 
 import dagger.Module;
@@ -55,7 +57,9 @@ public class UltraDNSProvider extends Provider {
     @Provides
     @Singleton
     RestContext<UltraDNSWSApi, UltraDNSWSAsyncApi> provideContext(Supplier<Credentials> credentials) {
-        return ContextBuilder.newBuilder(new UltraDNSWSProviderMetadata()).credentialsSupplier(credentials).build();
+        return ContextBuilder.newBuilder(new UltraDNSWSProviderMetadata())
+                             .credentialsSupplier(credentials)
+                             .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule())).build();
     }
 
     @Provides
