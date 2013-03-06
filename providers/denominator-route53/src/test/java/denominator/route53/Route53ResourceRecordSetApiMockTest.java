@@ -1,5 +1,6 @@
 package denominator.route53;
 
+import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
 import static denominator.model.ResourceRecordSets.a;
 import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
@@ -188,6 +189,67 @@ public class Route53ResourceRecordSetApiMockTest {
             assertEquals(createRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
             assertEquals(new String(createRRSet.getBody()), replaceWith1ElementRecordSet);
 
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void applyTTLDoesNothingWhenTTLIsExpected() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(twoRecords));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            api.applyTTLToNameAndType(fromIntBits(3600), "www.foo.com.", "A");
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com.&type=A HTTP/1.1");
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void applyTTLDoesNothingWhenRecordsArentFound() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            api.applyTTLToNameAndType(fromIntBits(3600), "www.boo.com.", "A");
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.boo.com.&type=A HTTP/1.1");
+            server.shutdown();
+        }
+    }
+
+    String recreate2ElementRecordSetWithTTL = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord><ResourceRecord><Value>5.6.7.8</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>10000000</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord><ResourceRecord><Value>5.6.7.8</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+
+    @Test
+    public void applyTTLRecreatesRecordsWithSameRDataWhenDifferent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(twoRecords));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(changeSynced));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            api.applyTTLToNameAndType(fromIntBits(10000000), "www.foo.com.", "A");
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com.&type=A HTTP/1.1");
+
+            RecordedRequest createRRSet = server.takeRequest();
+            assertEquals(createRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
+            assertEquals(new String(createRRSet.getBody()), recreate2ElementRecordSetWithTTL);
             server.shutdown();
         }
     }
