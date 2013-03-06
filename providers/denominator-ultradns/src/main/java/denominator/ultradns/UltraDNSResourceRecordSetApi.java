@@ -50,4 +50,9 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     public void remove(ResourceRecordSet<?> rrset) {
         throw new UnsupportedOperationException("not yet implemented");
     }
+
+    @Override
+    public void replace(ResourceRecordSet<?> rrset) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }

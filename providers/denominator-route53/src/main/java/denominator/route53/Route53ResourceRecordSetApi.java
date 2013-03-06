@@ -178,4 +178,9 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
             return "nameAndTypeEquals(" + name + ", " + type + ")";
         }
     }
+
+    @Override
+    public void replace(ResourceRecordSet<?> rrset) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }

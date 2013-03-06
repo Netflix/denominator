@@ -44,6 +44,27 @@ public interface ResourceRecordSetApi {
     void add(ResourceRecordSet<?> rrset);
 
     /**
+     * Idempotently replaces any existing records with
+     * {@link ResourceRecordSet#getName() name} and
+     * {@link ResourceRecordSet#getName() type} corresponding to {@code rrset}.
+     * 
+     * Example of replacing the {@code A} record set for
+     * {@code www.denominator.io.} with "1.2.3.4".
+     * 
+     * <pre>
+     * import static denominator.model.ResourceRecordSets.a;
+     * ...
+     * rrsApi.replace(a("www.denominator.io.", 3600, "1.2.3.4"));
+     * </pre>
+     * 
+     * @param rrset
+     *            contains the {@code rdata} elements ensure exist. If
+     *            {@link ResourceRecordSet#getTTL() ttl} is not present, zone
+     *            default is used.
+     */
+    void replace(ResourceRecordSet<?> rrset);
+
+    /**
      * If a {@link ResourceRecordSet} exists with
      * {@link ResourceRecordSet#getName() name} and
      * {@link ResourceRecordSet#getName() type} corresponding to {@code rrset},
