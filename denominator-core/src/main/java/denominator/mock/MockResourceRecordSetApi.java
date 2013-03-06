@@ -128,4 +128,12 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
             }
         }
     }
+
+    @Override
+    public void deleteByNameAndType(String name, String type) {
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(name, type);
+        if (rrsMatch.isPresent()) {
+            data.remove(zoneName, rrsMatch.get());
+        }
+    }
 }

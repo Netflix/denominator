@@ -85,4 +85,9 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
         throw new UnsupportedOperationException("not yet implemented");
     }
+
+    @Override
+    public void deleteByNameAndType(String name, String type) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }
