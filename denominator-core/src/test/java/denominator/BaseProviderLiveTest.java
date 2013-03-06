@@ -3,7 +3,6 @@ package denominator;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterators.any;
 import static com.google.common.collect.Iterators.size;
-import static com.google.common.collect.Iterators.tryFind;
 import static com.google.common.io.Closeables.close;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.nameAndType;
@@ -53,13 +52,24 @@ public abstract class BaseProviderLiveTest {
     private void testListRRSs() {
         skipIfNoCredentials();
         for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
-            for (Iterator<ResourceRecordSet<?>> rrsIterator = rrsApi(zone.next()).list(); rrsIterator.hasNext();) {
+            String zoneName = zone.next();
+            for (Iterator<ResourceRecordSet<?>> rrsIterator = rrsApi(zoneName).list(); rrsIterator.hasNext();) {
                 ResourceRecordSet<?> rrs = rrsIterator.next();
                 recordTypeCounts.getUnchecked(rrs.getType()).addAndGet(rrs.size());
                 checkRRS(rrs);
+                assertEquals(rrsApi(zoneName).getByNameAndType(rrs.getName(), rrs.getType()).get(), rrs);
             }
         }
         logRecordSummary();
+    }
+
+    @Test
+    private void testGetByNameAndTypeWhenAbsent() {
+        skipIfNoCredentials();
+        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
+            String zoneName = zone.next();
+            assertEquals(rrsApi(zoneName).getByNameAndType("ARGHH." + zoneName, "TXT"), Optional.absent());
+        }
     }
 
     private void logRecordSummary() {
@@ -91,7 +101,7 @@ public abstract class BaseProviderLiveTest {
 
         rrsApi(zoneName).add(a(recordName, ttl.intValue(), rdata.getAddress()));
 
-        Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName).getByNameAndType(recordName, recordType);
 
         assertTrue(rrs.isPresent(), format("recordset(%s, %s) not present in zone(%s)", recordName, recordType, zoneName));
         checkRRS(rrs.get());
@@ -112,7 +122,7 @@ public abstract class BaseProviderLiveTest {
 
         rrsApi(zoneName).add(a(recordName, rdata2.getAddress()));
 
-        Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName).getByNameAndType(recordName, recordType);
 
         assertTrue(rrs.isPresent(), format("recordset(%s, %s) not present in zone(%s)", recordName, recordType, zoneName));
         checkRRS(rrs.get());
@@ -133,7 +143,7 @@ public abstract class BaseProviderLiveTest {
 
         rrsApi(zoneName).replace(a(recordName, 10000, ImmutableSet.of(rdata.getAddress(), rdata3.getAddress())));
 
-        Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName).getByNameAndType(recordName, recordType);
 
         assertTrue(rrs.isPresent(), format("recordset(%s, %s) not present in zone(%s)", recordName, recordType, zoneName));
         checkRRS(rrs.get());
@@ -153,7 +163,7 @@ public abstract class BaseProviderLiveTest {
 
         rrsApi(zoneName).remove(a(recordName, rdata3.getAddress()));
 
-        Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName).getByNameAndType(recordName, recordType);
 
         assertTrue(rrs.isPresent(), format("recordset(%s, %s) not present in zone(%s)", recordName, recordType, zoneName));
         checkRRS(rrs.get());
@@ -171,7 +181,7 @@ public abstract class BaseProviderLiveTest {
 
         rrsApi(zoneName).remove(a(recordName, rdata.getAddress()));
 
-        Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName).getByNameAndType(recordName, recordType);
 
         assertFalse(rrs.isPresent(), format("recordset(%s, %s) still present in zone(%s)", recordName, recordType, zoneName));
     }

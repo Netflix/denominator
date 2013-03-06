@@ -49,7 +49,7 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      * for efficiency, starts the list at the specified {@code name} and
      * {@code type}.
      */
-    Optional<org.jclouds.route53.domain.ResourceRecordSet> getByNameAndType(String name, String type) {
+    Optional<org.jclouds.route53.domain.ResourceRecordSet> getRoute53RRSByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
         return route53RRsetApi.listAt(NextRecord.nameAndType(name, type)).filter(not(isAlias()))
@@ -69,7 +69,7 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         ChangeBatch.Builder changes = ChangeBatch.builder();
         Builder<String> values = ImmutableList.builder();
         Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = 
-                getByNameAndType(rrset.getName(), rrset.getType());
+                getRoute53RRSByNameAndType(rrset.getName(), rrset.getType());
         if (oldRRS.isPresent()) {
             ttlToApply = ttlToApply.or(oldRRS.get().getTTL());
             changes.delete(oldRRS.get());
@@ -107,7 +107,7 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
                 .addAll(toTextFormat(rrset)).build();
 
         Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = 
-                getByNameAndType(rrset.getName(), rrset.getType());
+                getRoute53RRSByNameAndType(rrset.getName(), rrset.getType());
         if (oldRRS.isPresent()) {
             if (oldRRS.get().getTTL().equals(replacement.getTTL())
                     && oldRRS.get().getValues().equals(replacement.getValues()))
@@ -128,7 +128,7 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
     @Override
     public void remove(ResourceRecordSet<?> rrset) {
         Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = 
-                getByNameAndType(rrset.getName(), rrset.getType());
+                getRoute53RRSByNameAndType(rrset.getName(), rrset.getType());
         if (!oldRRS.isPresent())
             return;
 
@@ -201,5 +201,10 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         public String toString() {
             return "nameAndTypeEquals(" + name + ", " + type + ")";
         }
+    }
+
+    @Override
+    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
+        throw new UnsupportedOperationException("not yet implemented");
     }
 }

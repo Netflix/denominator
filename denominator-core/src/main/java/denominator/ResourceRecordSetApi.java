@@ -2,6 +2,8 @@ package denominator;
 
 import java.util.Iterator;
 
+import com.google.common.base.Optional;
+
 import denominator.model.ResourceRecordSet;
 
 public interface ResourceRecordSetApi {
@@ -20,9 +22,24 @@ public interface ResourceRecordSetApi {
     Iterator<ResourceRecordSet<?>> list();
 
     /**
+     * retrieve a resource record set by name and type.
+     * 
+     * @param name
+     *            {@link ResourceRecordSet#getName() name} of the rrset
+     * @param type
+     *            {@link ResourceRecordSet#getType() type} of the rrset
+     * 
+     * @return present if a resource record exists with the same {@code name}
+     *         and {@code type}
+     * @throws IllegalArgumentException
+     *             if the {@code zoneName} is not found.
+     */
+    Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type);
+
+    /**
      * If a {@link ResourceRecordSet} exists with
      * {@link ResourceRecordSet#getName() name} and
-     * {@link ResourceRecordSet#getName() type} corresponding to {@code rrset},
+     * {@link ResourceRecordSet#getType() type} corresponding to {@code rrset},
      * this adds the {@code rdata} to that set. Otherwise, it creates a
      * {@link ResourceRecordSet} initially comprised of the specified
      * {@code rrset}.
@@ -46,7 +63,7 @@ public interface ResourceRecordSetApi {
     /**
      * Idempotently replaces any existing records with
      * {@link ResourceRecordSet#getName() name} and
-     * {@link ResourceRecordSet#getName() type} corresponding to {@code rrset}.
+     * {@link ResourceRecordSet#getType() type} corresponding to {@code rrset}.
      * 
      * Example of replacing the {@code A} record set for
      * {@code www.denominator.io.} with "1.2.3.4".
@@ -67,7 +84,7 @@ public interface ResourceRecordSetApi {
     /**
      * If a {@link ResourceRecordSet} exists with
      * {@link ResourceRecordSet#getName() name} and
-     * {@link ResourceRecordSet#getName() type} corresponding to {@code rrset},
+     * {@link ResourceRecordSet#getType() type} corresponding to {@code rrset},
      * remove values corresponding to input {@code rdata}, or removes the set
      * entirely, if this is the only entry.
      * 
