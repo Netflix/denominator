@@ -107,6 +107,44 @@ class ResourceRecordSetCommands {
         }
     }
 
+    @Command(name = "replace", description = "creates or replaces data in a record set corresponding to name and type.  sets ttl, if present")
+    public static class ResourceRecordSetReplace extends ModifyRecordSetCommand {
+
+        @Option(type = OptionType.COMMAND, name = "--ttl", description = "time to live of the record set. ex. 300")
+        public int ttl = -1;
+
+        public Iterator<String> doRun(final DNSApiManager mgr) {
+            Builder<Map<String, Object>> builder = rrsetBuilder();
+            if (ttl != -1)
+                builder.ttl(ttl);
+            final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
+            String cmd = format(";; in zone %s replacing rrset %s %s with values: [%s]", zoneName, name, type, Joiner.on(',')
+                    .join(toAdd));
+            if (ttl != -1)
+                cmd = format("%s and ttl %d", cmd, ttl);
+            return Iterators.concat(Iterators.forArray(cmd), new Iterator<String>() {
+                boolean done = false;
+
+                @Override
+                public boolean hasNext() {
+                    return !done;
+                }
+
+                @Override
+                public String next() {
+                    mgr.getApi().getResourceRecordSetApiForZone(zoneName).replace(toAdd);
+                    done = true;
+                    return ";; ok";
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            });
+        }
+    }
+
     @Command(name = "remove", description = "removes data from a record set corresponding to name and type.")
     public static class ResourceRecordSetRemove extends ModifyRecordSetCommand {
 
