@@ -6,10 +6,10 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static denominator.route53.ToDenominatorResourceRecordSet.isAlias;
+import static denominator.route53.ToRoute53ResourceRecordSet.toTextFormat;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -18,7 +18,6 @@ import org.jclouds.route53.domain.ChangeBatch;
 import org.jclouds.route53.domain.HostedZone;
 import org.jclouds.route53.domain.ResourceRecordSetIterable.NextRecord;
 
-import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -56,6 +55,11 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
                 .firstMatch(new Route53NameAndTypeEquals(name, type));
     }
 
+    @Override
+    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
+        return getRoute53RRSByNameAndType(name, type).transform(ToDenominatorResourceRecordSet.INSTANCE);
+    }
+
     /**
      * creates a record set, adding the {@code rdata} values in the
      * {@code rrset}. If the record set already exists, the old copy is deleted
@@ -88,23 +92,11 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         route53RRsetApi.apply(changes.build());
     }
 
-    static List<String> toTextFormat(ResourceRecordSet<?> rrset) {
-        Builder<String> values = ImmutableList.builder();
-        for (Map<String, Object> rdata : rrset) {
-            values.add(Joiner.on(' ').join(rdata.values()));
-        }
-        return values.build();
-    }
-
     @Override
     public void replace(ResourceRecordSet<?> rrset) {
         ChangeBatch.Builder changes = ChangeBatch.builder();
 
-        org.jclouds.route53.domain.ResourceRecordSet replacement = org.jclouds.route53.domain.ResourceRecordSet.builder()
-                .name(rrset.getName())
-                .type(rrset.getType())
-                .ttl(rrset.getTTL().or(fromIntBits(300)))
-                .addAll(toTextFormat(rrset)).build();
+        org.jclouds.route53.domain.ResourceRecordSet replacement = ToRoute53ResourceRecordSet.INSTANCE.apply(rrset);
 
         Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = 
                 getRoute53RRSByNameAndType(rrset.getName(), rrset.getType());
@@ -201,10 +193,5 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         public String toString() {
             return "nameAndTypeEquals(" + name + ", " + type + ")";
         }
-    }
-
-    @Override
-    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
-        throw new UnsupportedOperationException("not yet implemented");
     }
 }
