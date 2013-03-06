@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Ordering.usingToString;
-
+import static denominator.dynect.GroupByRecordNameAndTypeIterator.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +26,7 @@ import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
+import denominator.model.ResourceRecordSet.Builder;
 
 public final class DynECTResourceRecordSetApi implements denominator.ResourceRecordSetApi {
     static final class Factory implements denominator.ResourceRecordSetApi.Factory {
@@ -59,13 +60,32 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     }
 
     @Override
+    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
+        List<Record<?>> existingRecords = existingRecordsByNameAndType(name, type);
+        if (existingRecords.isEmpty())
+            return Optional.absent();
+        
+        Optional<UnsignedInteger> ttl = Optional.absent();
+        Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
+                                                                .name(name)
+                                                                .type(type);
+
+        for (Record<?> existingRecord : existingRecords) {
+            if (!ttl.isPresent())
+                ttl = Optional.of(existingRecord.getTTL());
+            builder.add(existingRecord.getRData());
+        }
+        return Optional.<ResourceRecordSet<?>> of(builder.ttl(ttl.get()).build());
+    }
+
+    @Override
     public void add(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
 
         Optional<UnsignedInteger> ttlToApply = rrset.getTTL();
 
-        List<Record<?>> existingRecords = pullExistingRecords(rrset);
+        List<Record<?>> existingRecords = existingRecordsByNameAndType(rrset.getName(), rrset.getType());
 
         List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset);
 
@@ -102,7 +122,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
         UnsignedInteger ttlToApply = rrset.getTTL().or(UnsignedInteger.ZERO);
 
-        List<Record<?>> existingRecords = pullExistingRecords(rrset);
+        List<Record<?>> existingRecords = existingRecordsByNameAndType(rrset.getName(), rrset.getType());
 
         List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset);
 
@@ -126,12 +146,14 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         }
     }
 
-    private List<Record<?>> pullExistingRecords(ResourceRecordSet<?> rrset) {
+    private List<Record<?>> existingRecordsByNameAndType(String name, String type) {
+        checkNotNull(name, "name");
+        checkNotNull(type, "type");
         try {
-            return api.getRecordApiForZone(zoneFQDN).listByFQDNAndType(rrset.getName(), rrset.getType())
+            return api.getRecordApiForZone(zoneFQDN).listByFQDNAndType(name, type)
                     .transform(new Function<RecordId, Record<?>>() {
                         public Record<?> apply(RecordId in) {
-                            return api.getRecordApiForZone(zoneFQDN).get(in);
+                            return getRecord(api.getRecordApiForZone(zoneFQDN), in);
                         }
 
                         public String toString() {
@@ -163,10 +185,5 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         }
         if (shouldPublish)
             api.getZoneApi().publish(zoneFQDN);
-    }
-
-    @Override
-    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
-        throw new UnsupportedOperationException("not yet implemented");
     }
 }
