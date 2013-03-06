@@ -28,6 +28,7 @@ import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.primitives.UnsignedInteger;
 
 import denominator.model.ResourceRecordSet;
@@ -122,13 +123,35 @@ public abstract class BaseProviderLiveTest {
         assertEquals(rrs.get().get(1), rdata2);
     }
 
+    AData rdata3 = AData.create("1.1.1.3");
+
     @Test(dependsOnMethods = "addRecordToExistingRRS")
+    private void replaceExistingRRSUpdatingTTL() {
+        skipIfNoCredentials();
+        String zoneName = skipIfNoMutableZone();
+        String recordName = recordPrefix + "." + zoneName;
+
+        rrsApi(zoneName).replace(a(recordName, 10000, ImmutableSet.of(rdata.getAddress(), rdata3.getAddress())));
+
+        Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
+
+        assertTrue(rrs.isPresent(), format("recordset(%s, %s) not present in zone(%s)", recordName, recordType, zoneName));
+        checkRRS(rrs.get());
+        assertEquals(rrs.get().getName(), recordName);
+        assertEquals(rrs.get().getType(), recordType);
+        assertEquals(rrs.get().getTTL().get().intValue(), 10000);
+        assertEquals(rrs.get().size(), 2);
+        assertEquals(rrs.get().get(0), rdata);
+        assertEquals(rrs.get().get(1), rdata3);
+    }
+
+    @Test(dependsOnMethods = "replaceExistingRRSUpdatingTTL")
     private void removeRecordFromExistingRRS() {
         skipIfNoCredentials();
         String zoneName = skipIfNoMutableZone();
         String recordName = recordPrefix + "." + zoneName;
 
-        rrsApi(zoneName).remove(a(recordName, rdata2.getAddress()));
+        rrsApi(zoneName).remove(a(recordName, rdata3.getAddress()));
 
         Optional<ResourceRecordSet<?>> rrs = tryFind(rrsApi(zoneName).list(), nameAndType(recordName, recordType));
 
@@ -139,7 +162,7 @@ public abstract class BaseProviderLiveTest {
         assertEquals(rrs.get().size(), 1);
         assertEquals(rrs.get().get(0), rdata);
     }
-    
+
     @Test(dependsOnMethods = "removeRecordFromExistingRRS")
     private void removeLastRecordFromExistingRRSRemovesRRS() {
         skipIfNoCredentials();
