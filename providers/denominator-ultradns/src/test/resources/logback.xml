@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<configuration scan="false">
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>target/test-data/jclouds.log</file>
+
+        <encoder>
+            <Pattern>%d %-5p [%c] [%thread] %m%n</Pattern>
+        </encoder>
+    </appender>
+
+    <appender name="WIREFILE" class="ch.qos.logback.core.FileAppender">
+        <file>target/test-data/jclouds-wire.log</file>
+
+        <encoder>
+            <Pattern>%d %-5p [%c] [%thread] %m%n</Pattern>
+        </encoder>
+    </appender>
+    
+    <root>
+        <level value="warn" />
+    </root>
+
+    <logger name="org.jclouds">
+        <level value="DEBUG" />
+        <appender-ref ref="FILE" />
+    </logger>
+
+    <logger name="jclouds.wire">
+        <level value="DEBUG" />
+        <appender-ref ref="WIREFILE" />
+    </logger>
+
+    <logger name="jclouds.headers">
+        <level value="DEBUG" />
+        <appender-ref ref="WIREFILE" />
+    </logger>
+
+</configuration>

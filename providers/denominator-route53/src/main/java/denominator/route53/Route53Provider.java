@@ -11,6 +11,7 @@ import org.jclouds.ContextBuilder;
 import org.jclouds.aws.domain.SessionCredentials;
 import org.jclouds.aws.route53.AWSRoute53ProviderMetadata;
 import org.jclouds.domain.Credentials;
+import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.rest.RestContext;
 import org.jclouds.route53.Route53AsyncApi;
 
@@ -18,6 +19,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 
 import dagger.Module;
@@ -69,7 +71,9 @@ public class Route53Provider extends Provider {
     @Provides
     @Singleton
     RestContext<org.jclouds.route53.Route53Api, Route53AsyncApi> provideContext(Supplier<Credentials> credentials) {
-        return ContextBuilder.newBuilder(new AWSRoute53ProviderMetadata()).credentialsSupplier(credentials).build();
+        return ContextBuilder.newBuilder(new AWSRoute53ProviderMetadata())
+                             .credentialsSupplier(credentials)
+                             .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule())).build();
     }
 
     @Provides
