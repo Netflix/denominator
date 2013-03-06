@@ -20,5 +20,6 @@ public class UltraDNSProviderLiveTest extends BaseProviderLiveTest {
         if (username != null && password != null) {
             manager = Denominator.create(new UltraDNSProvider(), credentials(username, password));
         }
+        mutableZone = emptyToNull(getProperty("ultradns.zone"));
     }
 }
