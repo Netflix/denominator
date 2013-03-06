@@ -1,7 +1,12 @@
 package denominator.cli;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Iterators.concat;
+import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
+import static com.google.common.primitives.UnsignedInteger.fromIntBits;
+import static com.google.common.primitives.UnsignedInteger.valueOf;
 import static java.lang.String.format;
+import io.airlift.command.Arguments;
 import io.airlift.command.Command;
 import io.airlift.command.Option;
 import io.airlift.command.OptionType;
@@ -15,8 +20,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.DNSApiManager;
 import denominator.cli.Denominator.DenominatorCommand;
@@ -58,8 +61,45 @@ class ResourceRecordSetCommands {
         public String type;
 
         public Iterator<String> doRun(DNSApiManager mgr) {
-            return Iterators.forArray(mgr.getApi().getResourceRecordSetApiForZone(zoneName)
+            return forArray(mgr.getApi().getResourceRecordSetApiForZone(zoneName)
                     .getByNameAndType(name, type).transform(ResourceRecordSetToString.INSTANCE).or(""));
+        }
+    }
+
+    @Command(name = "applyttl", description = "applies the ttl to the record record set by name and type, if present in this zone")
+    public static class ResourceRecordSetApplyTTL extends ResourceRecordSetCommand {
+        @Option(type = OptionType.COMMAND, required = true, name = { "-n", "--name" }, description = "name of the record set. ex. www.denominator.io.")
+        public String name;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-t", "--type" }, description = "type of the record set. ex. CNAME")
+        public String type;
+
+        @Arguments(required = true, description = "time to live of the record set. ex. 300")
+        public int ttl;
+
+        public Iterator<String> doRun(final DNSApiManager mgr) {
+            String cmd = format(";; in zone %s applying ttl %d to rrset %s %s", zoneName, ttl, name, type);
+            return concat(forArray(cmd), new Iterator<String>() {
+                boolean done = false;
+
+                @Override
+                public boolean hasNext() {
+                    return !done;
+                }
+
+                @Override
+                public String next() {
+                    mgr.getApi().getResourceRecordSetApiForZone(zoneName)
+                            .applyTTLToNameAndType(fromIntBits(ttl), name, type);
+                    done = true;
+                    return ";; ok";
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            });
         }
     }
 
@@ -98,7 +138,7 @@ class ResourceRecordSetCommands {
                     .join(toAdd));
             if (ttl != -1)
                 cmd = format("%s applying ttl %d", cmd, ttl);
-            return Iterators.concat(Iterators.forArray(cmd), new Iterator<String>() {
+            return concat(forArray(cmd), new Iterator<String>() {
                 boolean done = false;
 
                 @Override
@@ -136,7 +176,7 @@ class ResourceRecordSetCommands {
                     .join(toAdd));
             if (ttl != -1)
                 cmd = format("%s and ttl %d", cmd, ttl);
-            return Iterators.concat(Iterators.forArray(cmd), new Iterator<String>() {
+            return concat(forArray(cmd), new Iterator<String>() {
                 boolean done = false;
 
                 @Override
@@ -166,7 +206,7 @@ class ResourceRecordSetCommands {
             final ResourceRecordSet<Map<String, Object>> toRemove = rrsetBuilder().build();
             String cmd = format(";; in zone %s removing from rrset %s %s values: [%s]", zoneName, name, type, Joiner.on(',')
                     .join(toRemove));
-            return Iterators.concat(Iterators.forArray(cmd), new Iterator<String>() {
+            return concat(forArray(cmd), new Iterator<String>() {
                 boolean done = false;
 
                 @Override
@@ -221,7 +261,7 @@ class ResourceRecordSetCommands {
             return CNAMEData.create(rdata);
         } else if ("MX".equals(type)) {
             ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return MXData.create(UnsignedInteger.valueOf(parts.get(0)), parts.get(1));
+            return MXData.create(valueOf(parts.get(0)), parts.get(1));
         } else if ("NS".equals(type)) {
             return NSData.create(rdata);
         } else if ("PTR".equals(type)) {
@@ -231,19 +271,19 @@ class ResourceRecordSetCommands {
             return SOAData.builder()
                           .mname(parts.get(0))
                           .rname(parts.get(1))
-                          .serial(UnsignedInteger.valueOf(parts.get(2)))
-                          .refresh(UnsignedInteger.valueOf(parts.get(3)))
-                          .retry(UnsignedInteger.valueOf(parts.get(4)))
-                          .expire(UnsignedInteger.valueOf(parts.get(5)))
-                          .minimum(UnsignedInteger.valueOf(parts.get(6))).build();
+                          .serial(valueOf(parts.get(2)))
+                          .refresh(valueOf(parts.get(3)))
+                          .retry(valueOf(parts.get(4)))
+                          .expire(valueOf(parts.get(5)))
+                          .minimum(valueOf(parts.get(6))).build();
         } else if ("SPF".equals(type)) {
             return SPFData.create(rdata);
         } else if ("SRV".equals(type)) {
             ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
             return SRVData.builder()
-                          .priority(UnsignedInteger.valueOf(parts.get(0)))
-                          .weight(UnsignedInteger.valueOf(parts.get(1)))
-                          .port(UnsignedInteger.valueOf(parts.get(2)))
+                          .priority(valueOf(parts.get(0)))
+                          .weight(valueOf(parts.get(1)))
+                          .port(valueOf(parts.get(2)))
                           .target(parts.get(3)).build();
         } else if ("TXT".equals(type)) {
             return TXTData.create(rdata);

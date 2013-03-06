@@ -68,7 +68,7 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     }
 
     @Override
-    public void applyTTLToNameAndType(String name, String type, UnsignedInteger ttl) {
+    public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
         checkNotNull(ttl, "ttl");
         Optional<ResourceRecordSet<?>> existing = getByNameAndType(name, type);
         if (!existing.isPresent())
