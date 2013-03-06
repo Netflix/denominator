@@ -135,9 +135,29 @@ public abstract class BaseProviderLiveTest {
         assertEquals(rrs.get().get(1), rdata2);
     }
 
+    @Test(dependsOnMethods = "addRecordToExistingRRS")
+    private void applyTTL() {
+        skipIfNoCredentials();
+        String zoneName = skipIfNoMutableZone();
+        String recordName = recordPrefix + "." + zoneName;
+
+        rrsApi(zoneName).applyTTLToNameAndType(recordName, recordType, UnsignedInteger.fromIntBits(200000));
+
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName).getByNameAndType(recordName, recordType);
+
+        assertTrue(rrs.isPresent(), format("recordset(%s, %s) not present in zone(%s)", recordName, recordType, zoneName));
+        checkRRS(rrs.get());
+        assertEquals(rrs.get().getName(), recordName);
+        assertEquals(rrs.get().getType(), recordType);
+        assertEquals(rrs.get().getTTL().get().intValue(), 200000);
+        assertEquals(rrs.get().size(), 2);
+        assertEquals(rrs.get().get(0), rdata);
+        assertEquals(rrs.get().get(1), rdata2);
+    }
+
     AData rdata3 = AData.create("1.1.1.3");
 
-    @Test(dependsOnMethods = "addRecordToExistingRRS")
+    @Test(dependsOnMethods = "applyTTL")
     private void replaceExistingRRSUpdatingTTL() {
         skipIfNoCredentials();
         String zoneName = skipIfNoMutableZone();
