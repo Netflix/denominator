@@ -1,12 +1,12 @@
 package denominator.model;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Iterables.transform;
 
 import java.util.Map;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 import denominator.model.rdata.CNAMEData;
 
@@ -46,8 +46,7 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * </pre>
      */
     public StringRDataBuilder<D> addAll(String... rdata) {
-        this.rdata = ImmutableList.<D> builder().addAll(
-                Iterables.transform(ImmutableList.<String> copyOf(checkNotNull(rdata, "rdata")), this));
+        this.rdata.addAll(transform(ImmutableList.<String> copyOf(checkNotNull(rdata, "rdata")), this));
         return this;
     }
 
@@ -61,7 +60,7 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * </pre>
      */
     public StringRDataBuilder<D> addAll(Iterable<String> rdata) {
-        this.rdata = ImmutableList.<D> builder().addAll(Iterables.transform(checkNotNull(rdata, "rdata"), this));
+        this.rdata.addAll(transform(checkNotNull(rdata, "rdata"), this));
         return this;
     }
 
