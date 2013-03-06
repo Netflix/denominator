@@ -96,6 +96,30 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         return values.build();
     }
 
+    @Override
+    public void replace(ResourceRecordSet<?> rrset) {
+        ChangeBatch.Builder changes = ChangeBatch.builder();
+
+        org.jclouds.route53.domain.ResourceRecordSet replacement = org.jclouds.route53.domain.ResourceRecordSet.builder()
+                .name(rrset.getName())
+                .type(rrset.getType())
+                .ttl(rrset.getTTL().or(fromIntBits(300)))
+                .addAll(toTextFormat(rrset)).build();
+
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = 
+                getByNameAndType(rrset.getName(), rrset.getType());
+        if (oldRRS.isPresent()) {
+            if (oldRRS.get().getTTL().equals(replacement.getTTL())
+                    && oldRRS.get().getValues().equals(replacement.getValues()))
+                return;
+            changes.delete(oldRRS.get());
+        }
+
+        changes.create(replacement);
+
+        route53RRsetApi.apply(changes.build());
+    }
+
     /**
      * if the {@code rdata} is present in an existing RRSet, that RRSet is
      * either deleted, or replaced, depending on whether the parameter is the
@@ -177,10 +201,5 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         public String toString() {
             return "nameAndTypeEquals(" + name + ", " + type + ")";
         }
-    }
-
-    @Override
-    public void replace(ResourceRecordSet<?> rrset) {
-        throw new UnsupportedOperationException("not yet implemented");
     }
 }
