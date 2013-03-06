@@ -262,6 +262,76 @@ public class DynECTResourceRecordSetApiMockTest {
     }
 
     @Test
+    public void replaceRecordSet() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordIdsWithRecord1));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(record1Result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.play();
+
+        try {
+            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
+                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
+            api.replace(a("www.foo.com", 10000000, ImmutableSet.of("1.2.3.4", "5.6.7.8")));
+        } finally {
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(), "GET /ARecord/foo.com/www.foo.com HTTP/1.1");
+
+            RecordedRequest getRecord1 = server.takeRequest();
+            assertEquals(getRecord1.getRequestLine(), "GET /ARecord/foo.com/www.foo.com/1 HTTP/1.1");
+
+            RecordedRequest deleteRecord1 = server.takeRequest();
+            assertEquals(deleteRecord1.getRequestLine(), "DELETE /ARecord/foo.com/www.foo.com/1 HTTP/1.1");
+
+            RecordedRequest postRecord1 = server.takeRequest();
+            assertEquals(postRecord1.getRequestLine(), "POST /ARecord/foo.com/www.foo.com HTTP/1.1");
+            assertEquals(new String(postRecord1.getBody()), createRecord1OverriddenTTL);
+
+            RecordedRequest postRecord2 = server.takeRequest();
+            assertEquals(postRecord2.getRequestLine(), "POST /ARecord/foo.com/www.foo.com HTTP/1.1");
+            assertEquals(new String(postRecord2.getBody()), createRecord2OverriddenTTL);
+
+            RecordedRequest publish = server.takeRequest();
+            assertEquals(publish.getRequestLine(), "PUT /Zone/foo.com HTTP/1.1");
+            assertEquals(new String(publish.getBody()), "{\"publish\":true}");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void replaceRecordSetSkipsWhenEqual() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordIdsWithRecord1));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(record1Result));
+
+        server.play();
+
+        try {
+            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
+                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
+            api.replace(a("www.foo.com", 3600, "1.2.3.4"));
+        } finally {
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(), "GET /ARecord/foo.com/www.foo.com HTTP/1.1");
+
+            RecordedRequest getRecord1 = server.takeRequest();
+            assertEquals(getRecord1.getRequestLine(), "GET /ARecord/foo.com/www.foo.com/1 HTTP/1.1");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
     public void removeWrongRecordDoesNothing() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));

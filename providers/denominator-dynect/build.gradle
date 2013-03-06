@@ -15,6 +15,7 @@ test {
   systemProperty 'dynect.customer', System.getProperty('dynect.customer', '')
   systemProperty 'dynect.username', System.getProperty('dynect.username', '')
   systemProperty 'dynect.password', System.getProperty('dynect.password', '')
+  systemProperty 'dynect.zone', System.getProperty('dynect.zone', '')
 }
 
 dependencies {

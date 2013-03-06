@@ -96,6 +96,36 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         }
     }
 
+    @Override
+    public void replace(ResourceRecordSet<?> rrset) {
+        checkNotNull(rrset, "rrset was null");
+        checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
+        UnsignedInteger ttlToApply = rrset.getTTL().or(UnsignedInteger.ZERO);
+
+        List<Record<?>> existingRecords = pullExistingRecords(rrset);
+
+        List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset);
+
+        for (Record<?> existingRecord : existingRecords) {
+            if (recordsLeftToCreate.contains(existingRecord.getRData()) && ttlToApply.equals(existingRecord.getTTL())) {
+                recordsLeftToCreate.remove(existingRecord.getRData());
+                continue;
+            }
+            api.getRecordApiForZone(zoneFQDN).scheduleDelete(existingRecord);
+        }
+
+        if (recordsLeftToCreate.size() > 0) {
+            CreateRecord.Builder<Map<String, Object>> builder = CreateRecord.builder()
+                                                                            .fqdn(rrset.getName())
+                                                                            .type(rrset.getType())
+                                                                            .ttl(ttlToApply);
+            for (Map<String, Object> record : recordsLeftToCreate) {
+                api.getRecordApiForZone(zoneFQDN).scheduleCreate(builder.rdata(record).build());
+            }
+            api.getZoneApi().publish(zoneFQDN);
+        }
+    }
+
     private List<Record<?>> pullExistingRecords(ResourceRecordSet<?> rrset) {
         try {
             return api.getRecordApiForZone(zoneFQDN).listByFQDNAndType(rrset.getName(), rrset.getType())
@@ -135,8 +165,4 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
             api.getZoneApi().publish(zoneFQDN);
     }
 
-    @Override
-    public void replace(ResourceRecordSet<?> rrset) {
-        throw new UnsupportedOperationException("not yet implemented");
-    }
 }
