@@ -12,6 +12,7 @@ import denominator.Provider;
 import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
+import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
@@ -53,6 +54,26 @@ public class DenominatorTest {
                 "www1.denominator.io.                              A      3600  1.1.1.1",
                 "www1.denominator.io.                              A      3600  1.1.1.2",
                 "www2.denominator.io.                              A      3600  2.2.2.2"));
+    }
+
+    @Test(description = "denominator -p mock record -z denominator.io. get -n www1.denominator.io. -t A ")
+    public void testResourceRecordSetGetWhenPresent() {
+        ResourceRecordSetGet command = new ResourceRecordSetGet();
+        command.zoneName = "denominator.io.";
+        command.name = "www1.denominator.io.";
+        command.type = "A";
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                "www1.denominator.io.                              A      3600  1.1.1.1",
+                "www1.denominator.io.                              A      3600  1.1.1.2"));
+    }
+
+    @Test(description = "denominator -p mock record -z denominator.io. get -n www3.denominator.io. -t A ")
+    public void testResourceRecordSetGetWhenAbsent() {
+        ResourceRecordSetGet command = new ResourceRecordSetGet();
+        command.zoneName = "denominator.io.";
+        command.name = "www3.denominator.io.";
+        command.type = "A";
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), "");
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A -d 1.1.1.1 -d 1.1.1.2")

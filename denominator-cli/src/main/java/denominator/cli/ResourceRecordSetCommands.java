@@ -49,6 +49,20 @@ class ResourceRecordSetCommands {
         }
     }
 
+    @Command(name = "get", description = "gets a normal record record set by name and type, if present in this zone")
+    public static class ResourceRecordSetGet extends ResourceRecordSetCommand {
+        @Option(type = OptionType.COMMAND, required = true, name = { "-n", "--name" }, description = "name of the record set. ex. www.denominator.io.")
+        public String name;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-t", "--type" }, description = "type of the record set. ex. CNAME")
+        public String type;
+
+        public Iterator<String> doRun(DNSApiManager mgr) {
+            return Iterators.forArray(mgr.getApi().getResourceRecordSetApiForZone(zoneName)
+                    .getByNameAndType(name, type).transform(ResourceRecordSetToString.INSTANCE).or(""));
+        }
+    }
+
     private static abstract class ModifyRecordSetCommand extends ResourceRecordSetCommand {
         @Option(type = OptionType.COMMAND, required = true, name = { "-n", "--name" }, description = "name of the record set. ex. www.denominator.io.")
         public String name;
