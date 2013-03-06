@@ -117,4 +117,9 @@ enum ToDenominatorResourceRecordSet implements
     private static ImmutableList<String> split(String rdata) {
         return ImmutableList.copyOf(Splitter.on(' ').split(rdata));
     }
+
+    @Override
+    public String toString() {
+        return "toDenominatorResourceRecordSet()";
+    }
 }
