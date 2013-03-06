@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
 import denominator.BaseProviderLiveTest;
 import denominator.Denominator;
 
-@Test
+@Test(singleThreaded = true)
 public class UltraDNSProviderLiveTest extends BaseProviderLiveTest {
 
     @BeforeClass

@@ -57,6 +57,8 @@ public abstract class BaseProviderLiveTest {
                 ResourceRecordSet<?> rrs = rrsIterator.next();
                 recordTypeCounts.getUnchecked(rrs.getType()).addAndGet(rrs.size());
                 checkRRS(rrs);
+                Optional<ResourceRecordSet<?>> byNameAndType = rrsApi(zoneName).getByNameAndType(rrs.getName(), rrs.getType());
+                assertTrue(byNameAndType.isPresent(), "could not lookup by name and type: " + rrs);
                 assertEquals(rrsApi(zoneName).getByNameAndType(rrs.getName(), rrs.getType()).get(), rrs);
             }
         }
