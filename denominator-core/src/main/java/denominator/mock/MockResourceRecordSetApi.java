@@ -18,6 +18,7 @@ import javax.inject.Inject;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Multimap;
+import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -61,7 +62,26 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
 
     @Override
     public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
+        checkNotNull(name, "name");
+        checkNotNull(type, "type");
         return from(data.get(zoneName)).firstMatch(nameAndType(name, type));
+    }
+
+    @Override
+    public void applyTTLToNameAndType(String name, String type, UnsignedInteger ttl) {
+        checkNotNull(ttl, "ttl");
+        Optional<ResourceRecordSet<?>> existing = getByNameAndType(name, type);
+        if (!existing.isPresent())
+            return;
+        ResourceRecordSet<?> rrset = existing.get();
+        if (rrset.getTTL().isPresent() && rrset.getTTL().get().equals(ttl))
+            return;
+        ResourceRecordSet<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>> builder()
+                                                                       .name(rrset.getName())
+                                                                       .type(rrset.getType())
+                                                                       .ttl(ttl)
+                                                                       .addAll(rrset).build();
+        replace(rrs);
     }
 
     @Override

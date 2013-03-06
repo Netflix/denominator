@@ -3,6 +3,7 @@ package denominator;
 import java.util.Iterator;
 
 import com.google.common.base.Optional;
+import com.google.common.primitives.UnsignedInteger;
 
 import denominator.model.ResourceRecordSet;
 
@@ -59,6 +60,21 @@ public interface ResourceRecordSetApi {
      *            replace the TTL on all records.
      */
     void add(ResourceRecordSet<?> rrset);
+
+    /**
+     * Ensures the supplied {@code ttl} is uniform for all record sets with the
+     * supplied {@link ResourceRecordSet#getName() name} and
+     * {@link ResourceRecordSet#getType() type}.
+     * 
+     * @param name
+     *            {@link ResourceRecordSet#getName() name} of the rrset
+     * @param type
+     *            {@link ResourceRecordSet#getType() type} of the rrset
+     * 
+     * @param ttl
+     *            ttl to apply to all records in seconds
+     */
+    void applyTTLToNameAndType(String name, String type, UnsignedInteger ttl);
 
     /**
      * Idempotently replaces any existing records with

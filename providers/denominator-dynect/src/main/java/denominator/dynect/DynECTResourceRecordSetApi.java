@@ -5,7 +5,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.notNull;
 import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Ordering.usingToString;
-import static denominator.dynect.GroupByRecordNameAndTypeIterator.*;
+import static denominator.dynect.GroupByRecordNameAndTypeIterator.getRecord;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -185,5 +186,10 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         }
         if (shouldPublish)
             api.getZoneApi().publish(zoneFQDN);
+    }
+
+    @Override
+    public void applyTTLToNameAndType(String name, String type, UnsignedInteger ttl) {
+        throw new UnsupportedOperationException("not yet implemented");
     }
 }

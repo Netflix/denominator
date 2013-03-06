@@ -194,4 +194,9 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
             return "nameAndTypeEquals(" + name + ", " + type + ")";
         }
     }
+
+    @Override
+    public void applyTTLToNameAndType(String name, String type, UnsignedInteger ttl) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
 }
