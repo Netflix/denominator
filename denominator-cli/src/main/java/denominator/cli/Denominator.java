@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
+import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
@@ -43,6 +44,7 @@ public class Denominator {
                .withDescription("manage resource record sets in a zone")
                .withDefaultCommand(ResourceRecordSetList.class)
                .withCommand(ResourceRecordSetList.class)
+               .withCommand(ResourceRecordSetGet.class)
                .withCommand(ResourceRecordSetAdd.class)
                .withCommand(ResourceRecordSetReplace.class)
                .withCommand(ResourceRecordSetRemove.class);
