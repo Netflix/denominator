@@ -209,6 +209,31 @@ public abstract class BaseProviderLiveTest {
         assertFalse(rrs.isPresent(), format("recordset(%s, %s) still present in zone(%s)", recordName, recordType, zoneName));
     }
 
+    @Test
+    private void deleteRRS() {
+        skipIfNoCredentials();
+        String zoneName = skipIfNoMutableZone();
+        String recordName = recordPrefix + ".delete." + zoneName;
+
+        skipIfRRSetExists(zoneName, recordName, recordType);
+
+        rrsApi(zoneName).add(a(recordName, ImmutableSet.of(rdata.getAddress(), rdata2.getAddress())));
+
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName).getByNameAndType(recordName, recordType);
+
+        assertTrue(rrs.isPresent(),
+                format("recordset(%s, %s) not present in zone(%s)", recordName, recordType, zoneName));
+
+        rrsApi(zoneName).deleteByNameAndType(recordName, recordType);
+
+        String failureMessage = format("recordset(%s, %s) still exists in zone(%s)", recordName, recordType, zoneName);
+        assertFalse(rrsApi(zoneName).getByNameAndType(recordName, recordType).isPresent(), failureMessage);
+        assertFalse(any(rrsApi(zoneName).list(), nameAndType(recordName, recordType)), failureMessage);
+        
+        // test no exception if re-applied
+        rrsApi(zoneName).deleteByNameAndType(recordName, recordType);
+    }
+
     protected void skipIfRRSetExists(String zoneName, String name, String type) {
         if (any(rrsApi(zoneName).list(), nameAndType(name, type)))
             throw new SkipException(format("recordset with name %s and type %s already exists", name, type));

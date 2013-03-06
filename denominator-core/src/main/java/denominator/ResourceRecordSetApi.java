@@ -118,4 +118,18 @@ public interface ResourceRecordSetApi {
      *            {@link ResourceRecordSet#getTTL() ttl} is ignored.
      */
     void remove(ResourceRecordSet<?> rrset);
+
+    /**
+     * deletes a resource record set by name and type idempotently. This does
+     * not error if the record set doesn't exist.
+     * 
+     * @param name
+     *            {@link ResourceRecordSet#getName() name} of the rrset
+     * @param type
+     *            {@link ResourceRecordSet#getType() type} of the rrset
+     * 
+     * @throws IllegalArgumentException
+     *             if the {@code zoneName} is not found.
+     */
+    void deleteByNameAndType(String name, String type);
 }

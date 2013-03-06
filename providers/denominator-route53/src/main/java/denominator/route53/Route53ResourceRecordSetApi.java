@@ -160,6 +160,11 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         route53RRsetApi.apply(changes.build());
     }
 
+    @Override
+    public void deleteByNameAndType(String name, String type) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
+
     static final class Factory implements denominator.ResourceRecordSetApi.Factory {
 
         private final Route53Api api;
