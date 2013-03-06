@@ -10,6 +10,8 @@ import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
 import org.jclouds.ultradns.ws.features.ResourceRecordApi;
 
+import com.google.common.base.Optional;
+
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 
@@ -53,6 +55,11 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
 
     @Override
     public void replace(ResourceRecordSet<?> rrset) {
+        throw new UnsupportedOperationException("not yet implemented");
+    }
+
+    @Override
+    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
         throw new UnsupportedOperationException("not yet implemented");
     }
 }
