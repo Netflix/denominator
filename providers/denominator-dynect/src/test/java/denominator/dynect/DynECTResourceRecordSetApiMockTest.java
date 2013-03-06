@@ -1,5 +1,6 @@
 package denominator.dynect;
 
+import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
 import static denominator.model.ResourceRecordSets.a;
 import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
@@ -279,6 +280,102 @@ public class DynECTResourceRecordSetApiMockTest {
             assertEquals(publish.getRequestLine(), "PUT /Zone/foo.com HTTP/1.1");
             assertEquals(new String(publish.getBody()), "{\"publish\":true}");
 
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void applyTTLDoesNothingWhenTTLIsExpected() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordIdsWithRecords1And2));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(record1Result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(record2Result));
+        server.play();
+
+        try {
+            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
+                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
+            api.applyTTLToNameAndType(fromIntBits(3600), "www.foo.com", "A");
+        } finally {
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(), "GET /ARecord/foo.com/www.foo.com HTTP/1.1");
+
+            RecordedRequest getRecord1 = server.takeRequest();
+            assertEquals(getRecord1.getRequestLine(), "GET /ARecord/foo.com/www.foo.com/1 HTTP/1.1");
+
+            RecordedRequest getRecord2 = server.takeRequest();
+            assertEquals(getRecord2.getRequestLine(), "GET /ARecord/foo.com/www.foo.com/2 HTTP/1.1");
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void applyTTLDoesNothingWhenRecordsArentFound() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.play();
+
+        try {
+            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
+                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
+            api.applyTTLToNameAndType(fromIntBits(3600), "www.boo.com", "A");
+        } finally {
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void applyTTLRecreatesRecordsWithSameRDataWhenDifferent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordIdsWithRecords1And2));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(record1Result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(record2Result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.play();
+
+        try {
+            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
+                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
+            api.applyTTLToNameAndType(fromIntBits(10000000), "www.foo.com", "A");
+        } finally {
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(), "GET /ARecord/foo.com/www.foo.com HTTP/1.1");
+
+            RecordedRequest getRecord1 = server.takeRequest();
+            assertEquals(getRecord1.getRequestLine(), "GET /ARecord/foo.com/www.foo.com/1 HTTP/1.1");
+
+            RecordedRequest getRecord2 = server.takeRequest();
+            assertEquals(getRecord2.getRequestLine(), "GET /ARecord/foo.com/www.foo.com/2 HTTP/1.1");
+
+            RecordedRequest deleteRecord1 = server.takeRequest();
+            assertEquals(deleteRecord1.getRequestLine(), "DELETE /ARecord/foo.com/www.foo.com/1 HTTP/1.1");
+
+            RecordedRequest deleteRecord2 = server.takeRequest();
+            assertEquals(deleteRecord2.getRequestLine(), "DELETE /ARecord/foo.com/www.foo.com/2 HTTP/1.1");
+
+            RecordedRequest postRecord1 = server.takeRequest();
+            assertEquals(postRecord1.getRequestLine(), "POST /ARecord/foo.com/www.foo.com HTTP/1.1");
+            assertEquals(new String(postRecord1.getBody()), createRecord1OverriddenTTL);
+
+            RecordedRequest postRecord2 = server.takeRequest();
+            assertEquals(postRecord2.getRequestLine(), "POST /ARecord/foo.com/www.foo.com HTTP/1.1");
+            assertEquals(new String(postRecord2.getBody()), createRecord2OverriddenTTL);
+
+            RecordedRequest publish = server.takeRequest();
+            assertEquals(publish.getRequestLine(), "PUT /Zone/foo.com HTTP/1.1");
+            assertEquals(new String(publish.getBody()), "{\"publish\":true}");
             server.shutdown();
         }
     }
