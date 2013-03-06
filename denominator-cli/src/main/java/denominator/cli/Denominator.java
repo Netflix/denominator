@@ -22,6 +22,7 @@ import com.google.common.base.Joiner;
 import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
+import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetApplyTTL;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
@@ -46,6 +47,7 @@ public class Denominator {
                .withCommand(ResourceRecordSetList.class)
                .withCommand(ResourceRecordSetGet.class)
                .withCommand(ResourceRecordSetAdd.class)
+               .withCommand(ResourceRecordSetApplyTTL.class)
                .withCommand(ResourceRecordSetReplace.class)
                .withCommand(ResourceRecordSetRemove.class);
 

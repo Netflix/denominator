@@ -12,6 +12,7 @@ import denominator.Provider;
 import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
+import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetApplyTTL;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
@@ -74,6 +75,18 @@ public class DenominatorTest {
         command.name = "www3.denominator.io.";
         command.type = "A";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), "");
+    }
+
+    @Test(description = "denominator -p mock record -z denominator.io. applyttl -n www3.denominator.io. -t A 10000")
+    public void testResourceRecordSetApplyTTL() {
+        ResourceRecordSetApplyTTL command = new ResourceRecordSetApplyTTL();
+        command.zoneName = "denominator.io.";
+        command.name = "www3.denominator.io.";
+        command.type = "A";
+        command.ttl = 10000;
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                ";; in zone denominator.io. applying ttl 10000 to rrset www3.denominator.io. A",
+                ";; ok"));
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A -d 1.1.1.1 -d 1.1.1.2")
