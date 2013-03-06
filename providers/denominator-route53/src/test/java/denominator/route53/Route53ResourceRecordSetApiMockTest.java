@@ -76,7 +76,6 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
             api.add(a("www.foo.com.", "5.6.7.8"));
@@ -103,7 +102,6 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
             api.add(a("www.foo.com.", 10000000, "5.6.7.8"));
@@ -130,7 +128,6 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
             api.remove(a("www.foo.com.", "1.2.3.4"));
@@ -158,7 +155,6 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
             api.remove(a("www.foo.com.", "5.6.7.8"));
@@ -176,13 +172,54 @@ public class Route53ResourceRecordSetApiMockTest {
     }
 
     @Test
+    public void replaceRecordSet() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(changeSynced));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            api.replace(a("www.foo.com.", 10000000, ImmutableSet.of("1.2.3.4", "5.6.7.8")));
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com.&type=A HTTP/1.1");
+
+            RecordedRequest createRRSet = server.takeRequest();
+            assertEquals(createRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
+            assertEquals(new String(createRRSet.getBody()), replaceWith2ElementRecordSetOverridingTTL);
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void replaceRecordSetSkipsWhenEqual() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            api.replace(a("www.foo.com.", 3600, "1.2.3.4"));
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com.&type=A HTTP/1.1");
+            server.shutdown();
+        }
+    }
+
+    @Test
     public void removeWrongRecordDoesNothing() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
         server.play();
 
         try {
-
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
             api.remove(a("www.foo.com.", "5.6.7.8"));
