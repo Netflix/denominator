@@ -31,7 +31,7 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
 
     @Override
     public ResourceRecordSet<?> next() {
-        Record<?> record = getRecord(peekingIterator.next());
+        Record<?> record = getRecord(api, peekingIterator.next());
         // it is possible that the record was deleted between the list and the get
         if (record == null)
             return null;
@@ -45,7 +45,7 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
             if (next == null)
                 continue;
             if (fqdnAndTypeEquals(next, record)) {
-                builder.add(getRecord(peekingIterator.next()).getRData());
+                builder.add(getRecord(api, peekingIterator.next()).getRData());
             } else {
                 break;
             }
@@ -53,7 +53,7 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
         return builder.build();
     }
 
-    Record<? extends Map<String, Object>> getRecord(RecordId recordId) {
+    static Record<? extends Map<String, Object>> getRecord(RecordApi api, RecordId recordId) {
         if ("A".equals(recordId.getType())) {
             return api.getA(recordId.getFQDN(), recordId.getId());
         } else if ("AAAA".equals(recordId.getType())) {
