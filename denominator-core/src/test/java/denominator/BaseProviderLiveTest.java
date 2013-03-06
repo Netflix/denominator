@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterators.any;
 import static com.google.common.collect.Iterators.size;
 import static com.google.common.io.Closeables.close;
+import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.nameAndType;
 import static java.lang.String.format;
@@ -99,7 +100,7 @@ public abstract class BaseProviderLiveTest {
 
         skipIfRRSetExists(zoneName, recordName, recordType);
 
-        UnsignedInteger ttl = UnsignedInteger.fromIntBits(1800);
+        UnsignedInteger ttl = fromIntBits(1800);
 
         rrsApi(zoneName).add(a(recordName, ttl.intValue(), rdata.getAddress()));
 
@@ -141,7 +142,7 @@ public abstract class BaseProviderLiveTest {
         String zoneName = skipIfNoMutableZone();
         String recordName = recordPrefix + "." + zoneName;
 
-        rrsApi(zoneName).applyTTLToNameAndType(recordName, recordType, UnsignedInteger.fromIntBits(200000));
+        rrsApi(zoneName).applyTTLToNameAndType(fromIntBits(200000), recordName, recordType);
 
         Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName).getByNameAndType(recordName, recordType);
 

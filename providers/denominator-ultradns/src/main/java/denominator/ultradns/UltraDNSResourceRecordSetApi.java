@@ -82,7 +82,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     }
 
     @Override
-    public void applyTTLToNameAndType(String name, String type, UnsignedInteger ttl) {
+    public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
         throw new UnsupportedOperationException("not yet implemented");
     }
 }

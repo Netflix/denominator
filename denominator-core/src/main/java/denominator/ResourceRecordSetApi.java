@@ -64,17 +64,17 @@ public interface ResourceRecordSetApi {
     /**
      * Ensures the supplied {@code ttl} is uniform for all record sets with the
      * supplied {@link ResourceRecordSet#getName() name} and
-     * {@link ResourceRecordSet#getType() type}.
+     * {@link ResourceRecordSet#getType() type}. Returns without error if there
+     * are no record sets of the specified name and type.
      * 
+     * @param ttl
+     *            ttl to apply to all records in seconds
      * @param name
      *            {@link ResourceRecordSet#getName() name} of the rrset
      * @param type
      *            {@link ResourceRecordSet#getType() type} of the rrset
-     * 
-     * @param ttl
-     *            ttl to apply to all records in seconds
      */
-    void applyTTLToNameAndType(String name, String type, UnsignedInteger ttl);
+    void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type);
 
     /**
      * Idempotently replaces any existing records with
