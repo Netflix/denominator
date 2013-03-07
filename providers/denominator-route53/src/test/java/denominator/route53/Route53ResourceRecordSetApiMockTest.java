@@ -317,7 +317,7 @@ public class Route53ResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void removeWrongRecordDoesNothing() throws IOException, InterruptedException {
+    public void removeAbsentRecordDoesNothing() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
         server.play();
@@ -330,6 +330,50 @@ public class Route53ResourceRecordSetApiMockTest {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
                     "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com.&type=A HTTP/1.1");
+            server.shutdown();
+        }
+    }
+
+    String delete2ElementRecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord><ResourceRecord><Value>5.6.7.8</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+
+    @Test
+    public void deleteRRSet() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(twoRecords));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(changeSynced));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            api.deleteByNameAndType("www.foo.com.", "A");
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com.&type=A HTTP/1.1");
+
+            RecordedRequest createRRSet = server.takeRequest();
+            assertEquals(createRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
+            assertEquals(new String(createRRSet.getBody()), delete2ElementRecordSet);
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void deleteAbsentRRSDoesNothing() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            api.deleteByNameAndType("www1.foo.com.", "A");
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www1.foo.com.&type=A HTTP/1.1");
             server.shutdown();
         }
     }
