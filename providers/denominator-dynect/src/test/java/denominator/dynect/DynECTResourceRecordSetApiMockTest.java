@@ -460,7 +460,6 @@ public class DynECTResourceRecordSetApiMockTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(recordIdsWithRecord1));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(record1Result));
-
         server.play();
 
         try {
@@ -481,12 +480,11 @@ public class DynECTResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void removeWrongRecordDoesNothing() throws IOException, InterruptedException {
+    public void removeAbsentRecordDoesNothing() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(recordIdsWithRecord1));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(record1Result));
-
         server.play();
 
         try {
@@ -501,6 +499,61 @@ public class DynECTResourceRecordSetApiMockTest {
 
             RecordedRequest getRecord1 = server.takeRequest();
             assertEquals(getRecord1.getRequestLine(), "GET /ARecord/foo.com/www.foo.com/1 HTTP/1.1");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void deleteRRSet() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordIdsWithRecords1And2));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.play();
+
+        try {
+            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
+                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
+            api.deleteByNameAndType("www.foo.com", "A");
+        } finally {
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(), "GET /ARecord/foo.com/www.foo.com HTTP/1.1");
+
+            RecordedRequest deleteRecord1 = server.takeRequest();
+            assertEquals(deleteRecord1.getRequestLine(), "DELETE /ARecord/foo.com/www.foo.com/1 HTTP/1.1");
+
+            RecordedRequest deleteRecord2 = server.takeRequest();
+            assertEquals(deleteRecord2.getRequestLine(), "DELETE /ARecord/foo.com/www.foo.com/2 HTTP/1.1");
+
+            RecordedRequest publish = server.takeRequest();
+            assertEquals(publish.getRequestLine(), "PUT /Zone/foo.com HTTP/1.1");
+            assertEquals(new String(publish.getBody()), "{\"publish\":true}");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void deleteAbsentRRSDoesNothing() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.play();
+
+        try {
+            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
+                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
+            api.deleteByNameAndType("www.foo.com", "A");
+        } finally {
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(), "GET /ARecord/foo.com/www.foo.com HTTP/1.1");
 
             server.shutdown();
         }
