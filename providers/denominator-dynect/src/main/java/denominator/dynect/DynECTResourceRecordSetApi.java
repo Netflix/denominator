@@ -21,6 +21,7 @@ import org.jclouds.rest.ResourceNotFoundException;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedInteger;
@@ -178,23 +179,15 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     }
 
     private List<Record<?>> existingRecordsByNameAndType(String name, String type) {
-        checkNotNull(name, "name");
-        checkNotNull(type, "type");
-        try {
-            return api.getRecordApiForZone(zoneFQDN).listByFQDNAndType(name, type)
-                    .transform(new Function<RecordId, Record<?>>() {
-                        public Record<?> apply(RecordId in) {
-                            return getRecord(api.getRecordApiForZone(zoneFQDN), in);
-                        }
+        return exisingRecordIdsByNameAndType(name, type).transform(new Function<RecordId, Record<?>>() {
+            public Record<?> apply(RecordId in) {
+                return getRecord(api.getRecordApiForZone(zoneFQDN), in);
+            }
 
-                        public String toString() {
-                            return "getRecord()";
-                        }
-                    }).filter(notNull()).toSortedList(usingToString());
-        } catch (ResourceNotFoundException e) {
-            // TODO: fix jclouds to just return an empty set
-            return ImmutableList.of();
-        }
+            public String toString() {
+                return "getRecord()";
+            }
+        }).filter(notNull()).toSortedList(usingToString());
     }
 
     @Override
@@ -202,8 +195,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
 
-        List<RecordId> keys = api.getRecordApiForZone(zoneFQDN).listByFQDNAndType(rrset.getName(), rrset.getType())
-                .toSortedList(usingToString());
+        List<RecordId> keys = exisingRecordIdsByNameAndType(rrset.getName(), rrset.getType()).toList();
         if (keys.isEmpty())
             return;
         boolean shouldPublish = false;
@@ -220,6 +212,23 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
     @Override
     public void deleteByNameAndType(String name, String type) {
-        throw new UnsupportedOperationException("not yet implemented");
+        List<RecordId> keys = exisingRecordIdsByNameAndType(name, type).toList();
+        if (keys.isEmpty())
+            return;
+        for (RecordId key : keys) {
+            api.getRecordApiForZone(zoneFQDN).scheduleDelete(key);
+        }
+        api.getZoneApi().publish(zoneFQDN);
+    }
+
+    private FluentIterable<RecordId> exisingRecordIdsByNameAndType(String name, String type) {
+        checkNotNull(name, "name");
+        checkNotNull(type, "type");
+        try {
+            return api.getRecordApiForZone(zoneFQDN).listByFQDNAndType(name, type);
+        } catch (ResourceNotFoundException e) {
+            // TODO: fix jclouds to just return an empty set
+            return FluentIterable.from(ImmutableList.<RecordId> of());
+        }
     }
 }
