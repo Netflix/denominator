@@ -162,7 +162,10 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
 
     @Override
     public void deleteByNameAndType(String name, String type) {
-        throw new UnsupportedOperationException("not yet implemented");
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = getRoute53RRSByNameAndType(name, type);
+        if (!oldRRS.isPresent())
+            return;
+        route53RRsetApi.delete(oldRRS.get());
     }
 
     static final class Factory implements denominator.ResourceRecordSetApi.Factory {
