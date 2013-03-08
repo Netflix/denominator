@@ -1,7 +1,7 @@
 package denominator.ultradns;
 
 import static com.google.common.collect.Iterators.peekingIterator;
-import static denominator.ultradns.Converters.toRdataMap;
+import static denominator.ultradns.UltraDNSFunctions.toRdataMap;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -35,13 +35,13 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
                                                                 .type(new ResourceTypeToValue().inverse().get(record.getType()))
                                                                 .ttl(record.getTTL());
 
-        builder.add(toRdataMap(record));
+        builder.add(toRdataMap().apply(record));
 
         while (hasNext()) {
             ResourceRecord next = peekingIterator.peek().getRecord();
             if (fqdnAndTypeEquals(next, record)) {
                 peekingIterator.next();
-                builder.add(toRdataMap(next));
+                builder.add(toRdataMap().apply(next));
             } else {
                 break;
             }

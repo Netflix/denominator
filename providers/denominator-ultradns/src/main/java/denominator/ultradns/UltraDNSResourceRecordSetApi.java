@@ -1,10 +1,12 @@
 package denominator.ultradns;
+
 import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterables.transform;
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Ordering.usingToString;
-import static denominator.ultradns.Converters.toRdataMap;
+import static denominator.ultradns.UltraDNSFunctions.toRdataMap;
 
 import java.util.Iterator;
 import java.util.List;
@@ -19,7 +21,6 @@ import org.jclouds.ultradns.ws.features.ResourceRecordApi;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Ordering;
 import com.google.common.primitives.UnsignedInteger;
 
@@ -59,25 +60,21 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         Iterator<ResourceRecordMetadata> orderedRecords = api.list().toSortedList(Ordering.usingToString()).iterator();
         return new GroupByRecordNameAndTypeIterator(orderedRecords);
     }
-    
-    
-    
+
     @Override
     public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
         List<ResourceRecordMetadata> references = referencesByNameAndType(name, type);
         if (references.isEmpty())
             return Optional.absent();
-        
+
         Optional<UnsignedInteger> ttl = Optional.absent();
-        Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
-                                                                .name(name)
-                                                                .type(type);
+        Builder<Map<String, Object>> builder = ResourceRecordSet.builder().name(name).type(type);
 
         for (ResourceRecordMetadata reference : references) {
             if (!ttl.isPresent())
                 ttl = Optional.of(reference.getRecord().getTTL());
             ResourceRecord record = reference.getRecord();
-            builder.add(toRdataMap(record));
+            builder.add(toRdataMap().apply(record));
         }
         return Optional.<ResourceRecordSet<?>> of(builder.ttl(ttl.get()).build());
     }
@@ -106,7 +103,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
 
         List<ResourceRecordMetadata> references = referencesByNameAndType(rrset.getName(), rrset.getType());
 
-        List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset);
+        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset);
 
         for (ResourceRecordMetadata reference : references) {
             ResourceRecord record = reference.getRecord();
@@ -114,7 +111,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
                 ttlToApply = Optional.of(record.getTTL());
             ResourceRecord updateTTL = record.toBuilder().ttl(ttlToApply.or(defaultTTL)).build();
 
-            Map<String, Object> rdata = toRdataMap(record);
+            Map<String, Object> rdata = toRdataMap().apply(record);
             if (recordsLeftToCreate.contains(rdata)) {
                 recordsLeftToCreate.remove(rdata);
                 // all ok.
@@ -128,12 +125,8 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
                 api.update(reference.getGuid(), updateTTL);
             }
         }
-        
-        create(rrset.getName(), rrset.getType(), ttlToApply.or(defaultTTL), 
-                recordsLeftToCreate);
+        create(rrset.getName(), rrset.getType(), ttlToApply.or(defaultTTL), recordsLeftToCreate);
     }
-    
-    
 
     @Override
     public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
@@ -146,7 +139,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         for (ResourceRecordMetadata reference : references) {
             ResourceRecord updateTTL = reference.getRecord().toBuilder().ttl(ttl).build();
             // this will update normal or RR pool records.
-            api.update(reference.getGuid(), updateTTL); 
+            api.update(reference.getGuid(), updateTTL);
         }
     }
 
@@ -158,11 +151,11 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
 
         List<ResourceRecordMetadata> references = referencesByNameAndType(rrset.getName(), rrset.getType());
 
-        List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset);
+        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset);
 
         for (ResourceRecordMetadata reference : references) {
             ResourceRecord record = reference.getRecord();
-            Map<String, Object> rdata = toRdataMap(record);
+            Map<String, Object> rdata = toRdataMap().apply(record);
             if (recordsLeftToCreate.contains(rdata)) {
                 recordsLeftToCreate.remove(rdata);
                 // all ok.
@@ -175,44 +168,41 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
                 remove(rrset.getName(), rrset.getType(), reference.getGuid());
             }
         }
-        
+
         create(rrset.getName(), rrset.getType(), ttlToApply, recordsLeftToCreate);
     }
 
-    protected void create(String name, String type, UnsignedInteger ttl, List<Map<String, Object>> rdatas) {
+    private void create(String name, String type, UnsignedInteger ttl, List<Map<String, Object>> rdatas) {
         if (rdatas.size() > 0) {
-            // adding requires the use of a special RR pool api, however we can update them using the normal one..
+            // adding requires the use of a special RR pool api, however we can
+            // update them using the normal one..
             if (roundRobinPoolApi.isPoolType(type)) {
                 roundRobinPoolApi.add(name, type, ttl, rdatas);
             } else {
-                ResourceRecord.Builder builder = ResourceRecord.rrBuilder()
-                        .name(name)
-                        .type(new ResourceTypeToValue().get(type))
-                        .ttl(ttl);
-                
+                ResourceRecord.Builder builder = ResourceRecord.rrBuilder().name(name)
+                        .type(new ResourceTypeToValue().get(type)).ttl(ttl);
+
                 for (Map<String, Object> rdata : rdatas) {
                     api.create(builder.rdata(transform(rdata.values(), toStringFunction())).build());
                 }
             }
         }
     }
-    
-    
+
     @Override
     public void remove(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
 
-        List<ResourceRecordMetadata> references = referencesByNameAndType(rrset.getName(), rrset.getType());
-        for (ResourceRecordMetadata reference : references) {
+        for (ResourceRecordMetadata reference : referencesByNameAndType(rrset.getName(), rrset.getType())) {
             ResourceRecord record = reference.getRecord();
-            if (rrset.contains(toRdataMap(record))) {
+            if (rrset.contains(toRdataMap().apply(record))) {
                 remove(rrset.getName(), rrset.getType(), reference.getGuid());
             }
         }
     }
-    
-    protected void remove(String name, String type, String guid) {
+
+    private void remove(String name, String type, String guid) {
         if (roundRobinPoolApi.isPoolType(type)) {
             roundRobinPoolApi.remove(name, type, guid);
         } else {
@@ -222,6 +212,8 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
 
     @Override
     public void deleteByNameAndType(String name, String type) {
-        throw new UnsupportedOperationException("not yet implemented");
+        for (ResourceRecordMetadata reference : referencesByNameAndType(name, type)) {
+            remove(name, type, reference.getGuid());
+        }
     }
 }

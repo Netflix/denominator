@@ -40,26 +40,26 @@ public class UltraDNSResourceRecordSetApiMockTest {
                              .modules(modules)
                              .build(UltraDNSWSApiMetadata.CONTEXT_TOKEN).getApi();
     }
-    
+
     private static final String ZONE_NAME = "denominator.io.";
-    
+
     static UltraDNSResourceRecordSetApi mockUltraDNSResourceRecordSetApi(MockWebServer server) {
         String uri = server.getUrl("/").toString();
         UltraDNSWSApi wsApi = mockUltraDNSWSApi(uri);
-        return new UltraDNSResourceRecordSetApi(
-                wsApi.getResourceRecordApiForZone(ZONE_NAME),
+        return new UltraDNSResourceRecordSetApi(wsApi.getResourceRecordApiForZone(ZONE_NAME),
                 new UltraDNSRoundRobinPoolApi(wsApi.getRoundRobinPoolApiForZone(ZONE_NAME)));
     }
-    
+
     String getResourceRecordsOfDNameByType = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:getResourceRecordsOfDNameByType><zoneName>denominator.io.</zoneName><hostName>www.denominator.io.</hostName><rrType>1</rrType></v01:getResourceRecordsOfDNameByType></soapenv:Body></soapenv:Envelope>";
     // TODO: temp until ultra fixes the getResourceRecordsOfDNameByType for NS records.
     String getResourceRecordsOfZone = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:getResourceRecordsOfZone><zoneName>denominator.io.</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone></soapenv:Body></soapenv:Envelope>";
-    
+
     //
     String getResourceRecordsOfZoneResponseHeader = "<?xml version=\"1.0\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:getResourceRecordsOfZoneResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><ResourceRecordList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">";
     String getResourceRecordsOfZoneResponseFooter = "</ResourceRecordList></ns1:getResourceRecordsOfZoneResponse></soap:Body></soap:Envelope>";
 
-    String noRecords = new StringBuilder(getResourceRecordsOfZoneResponseHeader).append(getResourceRecordsOfZoneResponseFooter).toString();
+    String noRecords = new StringBuilder(getResourceRecordsOfZoneResponseHeader).append(
+            getResourceRecordsOfZoneResponseFooter).toString();
 
     @Test
     public void getByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
@@ -73,10 +73,10 @@ public class UltraDNSResourceRecordSetApiMockTest {
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(), "POST / HTTP/1.1");
-            
+
             // TODO: temp until ultra fixes the getResourceRecordsOfDNameByType for NS records.
             assertEquals(new String(listNameAndType.getBody()), getResourceRecordsOfZone);
-            //assertEquals(new String(listNameAndType.getBody()), getResourceRecordsOfDNameByType);
+            // assertEquals(new String(listNameAndType.getBody()), getResourceRecordsOfDNameByType);
 
             server.shutdown();
         }
@@ -102,10 +102,10 @@ public class UltraDNSResourceRecordSetApiMockTest {
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(), "POST / HTTP/1.1");
-            
+
             // TODO: temp until ultra fixes the getResourceRecordsOfDNameByType for NS records.
             assertEquals(new String(listNameAndType.getBody()), getResourceRecordsOfZone);
-            //assertEquals(new String(listNameAndType.getBody()), getResourceRecordsOfDNameByType);
+            // assertEquals(new String(listNameAndType.getBody()),  getResourceRecordsOfDNameByType);
 
             server.shutdown();
         }
