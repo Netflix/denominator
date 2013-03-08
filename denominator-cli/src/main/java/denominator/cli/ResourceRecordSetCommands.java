@@ -1,4 +1,5 @@
 package denominator.cli;
+
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
@@ -12,17 +13,20 @@ import io.airlift.command.Option;
 import io.airlift.command.OptionType;
 
 import java.net.InetAddress;
+import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
 import denominator.DNSApiManager;
 import denominator.cli.Denominator.DenominatorCommand;
+import denominator.hook.InstanceMetadataHook;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 import denominator.model.rdata.AAAAData;
@@ -61,8 +65,8 @@ class ResourceRecordSetCommands {
         public String type;
 
         public Iterator<String> doRun(DNSApiManager mgr) {
-            return forArray(mgr.getApi().getResourceRecordSetApiForZone(zoneName)
-                    .getByNameAndType(name, type).transform(ResourceRecordSetToString.INSTANCE).or(""));
+            return forArray(mgr.getApi().getResourceRecordSetApiForZone(zoneName).getByNameAndType(name, type)
+                    .transform(ResourceRecordSetToString.INSTANCE).or(""));
         }
     }
 
@@ -110,22 +114,65 @@ class ResourceRecordSetCommands {
         @Option(type = OptionType.COMMAND, required = true, name = { "-t", "--type" }, description = "type of the record set. ex. CNAME")
         public String type;
 
-        @Option(type = OptionType.COMMAND, required = true, name = { "-d", "--data" }, description = "repeat for each record value (rdata) to add. ex. 1.2.3.4")
+        @Option(type = OptionType.COMMAND, required = false, name = { "-d", "--data" }, description = "repeat for each record value (rdata) to add. ex. 1.2.3.4")
         public List<String> values;
 
-        protected Builder<Map<String, Object>> rrsetBuilder() {
-            checkArgument(values != null, "you must pass data to add");
+        @Option(type = OptionType.COMMAND, required = false, name = "--ec2-public-ipv4", description = "take data from EC2 Instance Metadata public-ipv4")
+        public boolean ec2PublicIpv4;
+
+        @Option(type = OptionType.COMMAND, required = false, name = "--ec2-public-hostname", description = "take data from EC2 Instance Metadata public-hostname")
+        public boolean ec2PublicHostname;
+
+        @Option(type = OptionType.COMMAND, required = false, name = "--ec2-local-ipv4", description = "take data from EC2 Instance Metadata local-ipv4")
+        public boolean ec2LocalIpv4;
+
+        @Option(type = OptionType.COMMAND, required = false, name = "--ec2-local-hostname", description = "take data from EC2 Instance Metadata local-hostname")
+        public boolean ec2LocalHostname;
+
+        public URI metadataService = InstanceMetadataHook.DEFAULT_URI;
+
+        /**
+         * @throws IllegalArgumentException
+         *             if an ec2 instance metadata hook was requested, but the
+         *             service could not be contacted.
+         */
+        protected Builder<Map<String, Object>> rrsetBuilder() throws IllegalArgumentException {
+            ImmutableList.Builder<String> valuesBuilder = ImmutableList.<String> builder();
+            if (values != null)
+                valuesBuilder.addAll(values);
+            if (ec2PublicIpv4) {
+                addIfPresentInMetadataService(valuesBuilder, "public-ipv4", metadataService);
+            } else if (ec2PublicHostname) {
+                addIfPresentInMetadataService(valuesBuilder, "public-hostname", metadataService);
+            } else if (ec2LocalIpv4) {
+                addIfPresentInMetadataService(valuesBuilder, "local-ipv4", metadataService);
+            } else if (ec2LocalHostname) {
+                addIfPresentInMetadataService(valuesBuilder, "local-hostname", metadataService);
+            }
+            values = valuesBuilder.build();
+            checkArgument(values.size() > 0, "you must pass data to add");
             Builder<Map<String, Object>> builder = ResourceRecordSet.builder().name(name).type(type);
-            for (String value : values){
+            for (String value : values) {
                 builder.add(toMap(type, value));
             }
             return builder;
+        }
+
+        /**
+         * @throws IllegalArgumentException
+         *             if an ec2 instance metadata hook was requested, but the
+         *             service could not be contacted.
+         */
+        private void addIfPresentInMetadataService(ImmutableList.Builder<String> valuesBuilder, String key,
+                URI metadataService) throws IllegalArgumentException {
+            Optional<String> value = InstanceMetadataHook.get(metadataService, key);
+            checkArgument(value.isPresent(), "could not retrieve %s from %s", key, metadataService);
+            valuesBuilder.add(value.get());
         }
     }
 
     @Command(name = "add", description = "creates or adds data to a record set corresponding to name and type.  sets ttl, if present")
     public static class ResourceRecordSetAdd extends ModifyRecordSetCommand {
-
         @Option(type = OptionType.COMMAND, name = "--ttl", description = "time to live of the record set. ex. 300")
         public int ttl = -1;
 
@@ -134,8 +181,8 @@ class ResourceRecordSetCommands {
             if (ttl != -1)
                 builder.ttl(ttl);
             final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
-            String cmd = format(";; in zone %s adding to rrset %s %s values: [%s]", zoneName, name, type, Joiner.on(',')
-                    .join(toAdd));
+            String cmd = format(";; in zone %s adding to rrset %s %s values: [%s]", zoneName, name, type, Joiner
+                    .on(',').join(toAdd));
             if (ttl != -1)
                 cmd = format("%s applying ttl %d", cmd, ttl);
             return concat(forArray(cmd), new Iterator<String>() {
@@ -163,7 +210,6 @@ class ResourceRecordSetCommands {
 
     @Command(name = "replace", description = "creates or replaces data in a record set corresponding to name and type.  sets ttl, if present")
     public static class ResourceRecordSetReplace extends ModifyRecordSetCommand {
-
         @Option(type = OptionType.COMMAND, name = "--ttl", description = "time to live of the record set. ex. 300")
         public int ttl = -1;
 
@@ -172,8 +218,8 @@ class ResourceRecordSetCommands {
             if (ttl != -1)
                 builder.ttl(ttl);
             final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
-            String cmd = format(";; in zone %s replacing rrset %s %s with values: [%s]", zoneName, name, type, Joiner.on(',')
-                    .join(toAdd));
+            String cmd = format(";; in zone %s replacing rrset %s %s with values: [%s]", zoneName, name, type, Joiner
+                    .on(',').join(toAdd));
             if (ttl != -1)
                 cmd = format("%s and ttl %d", cmd, ttl);
             return concat(forArray(cmd), new Iterator<String>() {
@@ -204,8 +250,8 @@ class ResourceRecordSetCommands {
 
         public Iterator<String> doRun(final DNSApiManager mgr) {
             final ResourceRecordSet<Map<String, Object>> toRemove = rrsetBuilder().build();
-            String cmd = format(";; in zone %s removing from rrset %s %s values: [%s]", zoneName, name, type, Joiner.on(',')
-                    .join(toRemove));
+            String cmd = format(";; in zone %s removing from rrset %s %s values: [%s]", zoneName, name, type, Joiner
+                    .on(',').join(toRemove));
             return concat(forArray(cmd), new Iterator<String>() {
                 boolean done = false;
 
@@ -280,7 +326,7 @@ class ResourceRecordSetCommands {
         ImmutableList<Object> orderedRdataValues = ImmutableList.copyOf(input.values());
         if (orderedRdataValues.size() == 1) {
             Object rdata = orderedRdataValues.get(0);
-            return rdata instanceof InetAddress ? InetAddress.class.cast(rdata).getHostAddress() :rdata.toString();
+            return rdata instanceof InetAddress ? InetAddress.class.cast(rdata).getHostAddress() : rdata.toString();
         }
         return Joiner.on(' ').join(input.values());
     }
@@ -301,23 +347,15 @@ class ResourceRecordSetCommands {
             return PTRData.create(rdata);
         } else if ("SOA".equals(type)) {
             ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return SOAData.builder()
-                          .mname(parts.get(0))
-                          .rname(parts.get(1))
-                          .serial(valueOf(parts.get(2)))
-                          .refresh(valueOf(parts.get(3)))
-                          .retry(valueOf(parts.get(4)))
-                          .expire(valueOf(parts.get(5)))
-                          .minimum(valueOf(parts.get(6))).build();
+            return SOAData.builder().mname(parts.get(0)).rname(parts.get(1)).serial(valueOf(parts.get(2)))
+                    .refresh(valueOf(parts.get(3))).retry(valueOf(parts.get(4))).expire(valueOf(parts.get(5)))
+                    .minimum(valueOf(parts.get(6))).build();
         } else if ("SPF".equals(type)) {
             return SPFData.create(rdata);
         } else if ("SRV".equals(type)) {
             ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return SRVData.builder()
-                          .priority(valueOf(parts.get(0)))
-                          .weight(valueOf(parts.get(1)))
-                          .port(valueOf(parts.get(2)))
-                          .target(parts.get(3)).build();
+            return SRVData.builder().priority(valueOf(parts.get(0))).weight(valueOf(parts.get(1)))
+                    .port(valueOf(parts.get(2))).target(parts.get(3)).build();
         } else if ("TXT".equals(type)) {
             return TXTData.create(rdata);
         } else {

@@ -1,13 +1,8 @@
 package denominator.route53;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.jclouds.util.Strings2.toStringAndClose;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -19,6 +14,7 @@ import com.google.common.collect.ImmutableMap.Builder;
 
 import denominator.Credentials;
 import denominator.Credentials.MapCredentials;
+import denominator.hook.InstanceMetadataHook;
 
 /**
  * Credentials supplier implementation that loads credentials from the Amazon
@@ -31,7 +27,7 @@ public class InstanceProfileCredentialsSupplier implements Supplier<Credentials>
         this(new ReadFirstInstanceProfileCredentialsOrNull());
     }
 
-    public InstanceProfileCredentialsSupplier(String baseUri) {
+    public InstanceProfileCredentialsSupplier(URI baseUri) {
         this(new ReadFirstInstanceProfileCredentialsOrNull(baseUri));
     }
 
@@ -86,41 +82,26 @@ public class InstanceProfileCredentialsSupplier implements Supplier<Credentials>
      * default means to grab instance credentials, or return null
      */
     static class ReadFirstInstanceProfileCredentialsOrNull implements Supplier<String> {
-        private final String baseUri;
+        private final URI baseUri;
 
         public ReadFirstInstanceProfileCredentialsOrNull() {
-            this("http://169.254.169.254/");
+            this(URI.create("http://169.254.169.254/latest/meta-data/"));
         }
 
         /**
          * @param baseUri
          *            uri string with trailing slash
          */
-        public ReadFirstInstanceProfileCredentialsOrNull(String baseUri) {
+        public ReadFirstInstanceProfileCredentialsOrNull(URI baseUri) {
             this.baseUri = checkNotNull(baseUri, "baseUri");
         }
 
         @Override
         public String get() {
-            String resource = baseUri + "latest/meta-data/iam/security-credentials/";
-            try {
-                String output = toStringAndClose(openStream(resource)).trim();
-                List<String> roles = ImmutableList.copyOf(Splitter.on('\n').split(output));
-                if (roles.isEmpty())
-                    return null;
-                return toStringAndClose(openStream(resource + roles.get(0)));
-            } catch (IOException e) {
+            ImmutableList<String> roles = InstanceMetadataHook.list(baseUri, "iam/security-credentials/");
+            if (roles.isEmpty())
                 return null;
-            }
-        }
-
-        private InputStream openStream(String resource) throws IOException {
-            HttpURLConnection connection = HttpURLConnection.class.cast(URI.create(resource).toURL().openConnection());
-            connection.setConnectTimeout(1000 * 2);
-            connection.setReadTimeout(1000 * 2);
-            connection.setAllowUserInteraction(false);
-            connection.setInstanceFollowRedirects(false);
-            return connection.getInputStream();
+            return InstanceMetadataHook.get(baseUri, "iam/security-credentials/" + roles.get(0)).orNull();
         }
 
         @Override
