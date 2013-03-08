@@ -64,6 +64,7 @@ task fat(dependsOn: classes, type: Jar) {
 
   manifest {
     attributes 'Main-Class': 'denominator.cli.Denominator'
+    attributes("Implementation-Title": "Denominator", "Specification-Version": version, "Implementation-Version": version)
   }
 
   doLast {
