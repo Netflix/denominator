@@ -20,6 +20,7 @@ import java.util.Map.Entry;
 import com.google.common.base.Joiner;
 
 import denominator.DNSApiManager;
+import denominator.Denominator.Version;
 import denominator.Provider;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetApplyTTL;
@@ -32,9 +33,10 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 public class Denominator {
     public static void main(String[] args) {
         CliBuilder<Runnable> builder = Cli.<Runnable> builder("denominator")
-                                          .withDescription("dns manager")
+                                          .withDescription("Denominator: Portable control of DNS clouds")
                                           .withDefaultCommand(Help.class)
                                           .withCommand(Help.class)
+                                          .withCommand(PrintVersion.class)
                                           .withCommand(ListProviders.class);
 
         builder.withGroup("zone")
@@ -61,6 +63,14 @@ public class Denominator {
             System.exit(1);
         } 
         System.exit(0);
+    }
+
+    @Command(name = "version", description = "output the version of denominator and java runtime in use")
+    public static class PrintVersion implements Runnable {
+        public void run() {
+            System.out.println("Denominator " + Version.INSTANCE);
+            System.out.println("Java version: " + System.getProperty("java.version"));
+        }
     }
 
     @Command(name = "providers", description = "List the providers and their expected credentials")

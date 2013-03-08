@@ -24,6 +24,21 @@ import denominator.mock.MockProvider;
 
 public final class Denominator {
 
+    public static enum Version {
+        INSTANCE;
+
+        private final String version;
+
+        private Version() {
+            this.version = Version.class.getPackage().getSpecificationVersion();
+        }
+
+        @Override
+        public String toString() {
+            return version;
+        }
+    }
+
     /**
      * returns the currently configured providers
      */
