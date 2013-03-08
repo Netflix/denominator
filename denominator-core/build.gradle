@@ -11,6 +11,12 @@ eclipse {
   }
 }
 
+jar {
+    manifest {
+        attributes("Implementation-Title": "Denominator", "Specification-Version": version, "Implementation-Version": version)
+    }
+}
+
 dependencies {
   compile      project(':denominator-model')
   compile     'com.squareup:dagger:0.9.1'
