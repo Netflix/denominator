@@ -17,12 +17,10 @@ import org.jclouds.dynect.v3.DynECTApi;
 import org.jclouds.dynect.v3.domain.CreateRecord;
 import org.jclouds.dynect.v3.domain.Record;
 import org.jclouds.dynect.v3.domain.RecordId;
-import org.jclouds.rest.ResourceNotFoundException;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedInteger;
 
@@ -224,11 +222,6 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     private FluentIterable<RecordId> exisingRecordIdsByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        try {
-            return api.getRecordApiForZone(zoneFQDN).listByFQDNAndType(name, type);
-        } catch (ResourceNotFoundException e) {
-            // TODO: fix jclouds to just return an empty set
-            return FluentIterable.from(ImmutableList.<RecordId> of());
-        }
+        return api.getRecordApiForZone(zoneFQDN).listByFQDNAndType(name, type);
     }
 }
