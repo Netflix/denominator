@@ -40,7 +40,6 @@ public class GroupByRecordNameAndTypeIteratorTest {
         assertFalse(expectedIter.hasNext());
     }
 
-    
     public Iterator<ResourceRecordSet<?>> expected() {
         ImmutableList<ResourceRecordSet<?>> rrsetList = ImmutableList.<ResourceRecordSet<?>>builder()
                 .add(a("www.jclouds.org.", 3600, "1.2.3.4"))
@@ -64,7 +63,7 @@ public class GroupByRecordNameAndTypeIteratorTest {
                 .build();
         return rrsetList.iterator();
     }
-    
+
     public ImmutableList<ResourceRecordMetadata> createMetadataList() throws Exception {
           Builder builder = ResourceRecordMetadata.builder().zoneId("0000000000000001").zoneName("jclouds.org.");
           
