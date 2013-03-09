@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <configuration scan="false">
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>target/test-data/jclouds.log</file>
+        <file>target/test-data/denominator.log</file>
 
         <encoder>
             <Pattern>%d %-5p [%c] [%thread] %m%n</Pattern>
@@ -9,7 +9,7 @@
     </appender>
 
     <appender name="WIREFILE" class="ch.qos.logback.core.FileAppender">
-        <file>target/test-data/jclouds-wire.log</file>
+        <file>target/test-data/http-wire.log</file>
 
         <encoder>
             <Pattern>%d %-5p [%c] [%thread] %m%n</Pattern>
@@ -20,7 +20,7 @@
         <level value="warn" />
     </root>
 
-    <logger name="org.jclouds">
+    <logger name="denominator">
         <level value="DEBUG" />
         <appender-ref ref="FILE" />
     </logger>
