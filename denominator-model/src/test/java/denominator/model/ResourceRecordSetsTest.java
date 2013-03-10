@@ -7,8 +7,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
-import java.util.Map;
-
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -134,19 +132,5 @@ public class ResourceRecordSetsTest {
         assertEquals(shortForm.getType(), longForm.getType());
         assertEquals(shortForm.getTTL(), longForm.getTTL());
         assertEquals(ImmutableList.copyOf(shortForm), ImmutableList.copyOf(longForm));
-    }
-
-    static Object[][] toArray(Map<?, ?> data) {
-        Object[][] str = null;
-        {
-            Object[] keys = data.keySet().toArray();
-            Object[] values = data.values().toArray();
-            str = new String[keys.length][values.length];
-            for (int i = 0; i < keys.length; i++) {
-                str[0][i] = keys[i];
-                str[1][i] = values[i];
-            }
-        }
-        return str;
     }
 }
