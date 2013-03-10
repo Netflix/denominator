@@ -6,6 +6,7 @@ import java.io.Serializable;
 
 import org.jclouds.ultradns.ws.domain.ResourceRecord;
 import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
+import org.jclouds.ultradns.ws.domain.RoundRobinPool;
 
 import com.google.common.base.Predicate;
 import com.google.common.primitives.UnsignedInteger;
@@ -59,6 +60,56 @@ final class UltraDNSPredicates {
         @Override
         public String toString() {
             return "RecordGuidEqualTo(" + guid + ")";
+        }
+
+        private static final long serialVersionUID = 0;
+    }
+
+    public static Predicate<RoundRobinPool> poolDNameEqualTo(String dname) {
+        return new PoolDNameEqualToPredicate(dname);
+    }
+
+    /** @see UltraDNSPredicates#poolDNameEqualTo(String) */
+    private static class PoolDNameEqualToPredicate implements Predicate<RoundRobinPool>, Serializable {
+        private final String dname;
+
+        private PoolDNameEqualToPredicate(String dname) {
+            this.dname = checkNotNull(dname, "dname");
+        }
+
+        @Override
+        public boolean apply(RoundRobinPool in) {
+            return dname.equals(in.getDName());
+        }
+
+        @Override
+        public String toString() {
+            return "PoolDNameEqualTo(" + dname + ")";
+        }
+
+        private static final long serialVersionUID = 0;
+    }
+
+    public static Predicate<RoundRobinPool> poolNameEqualTo(String name) {
+        return new PoolNameEqualToPredicate(name);
+    }
+
+    /** @see UltraDNSPredicates#poolNameEqualTo(String) */
+    private static class PoolNameEqualToPredicate implements Predicate<RoundRobinPool>, Serializable {
+        private final String name;
+
+        private PoolNameEqualToPredicate(String name) {
+            this.name = checkNotNull(name, "name");
+        }
+
+        @Override
+        public boolean apply(RoundRobinPool in) {
+            return name.equals(in.getName());
+        }
+
+        @Override
+        public String toString() {
+            return "PoolNameEqualTo(" + name + ")";
         }
 
         private static final long serialVersionUID = 0;

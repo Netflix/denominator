@@ -2,14 +2,18 @@ package denominator.ultradns;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.compose;
 import static denominator.ultradns.UltraDNSFunctions.toResourceRecord;
+import static denominator.ultradns.UltraDNSPredicates.poolDNameEqualTo;
+import static denominator.ultradns.UltraDNSPredicates.poolNameEqualTo;
 import static denominator.ultradns.UltraDNSPredicates.recordGuidEqualTo;
 import static denominator.ultradns.UltraDNSPredicates.resourceTypeEqualTo;
 
 import java.util.List;
 import java.util.Map;
 
+import org.jclouds.ultradns.ws.domain.ResourceRecord;
 import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
 import org.jclouds.ultradns.ws.domain.RoundRobinPool;
 import org.jclouds.ultradns.ws.features.RoundRobinPoolApi;
@@ -35,10 +39,10 @@ class UltraDNSRoundRobinPoolApi {
         return type.equals("A") || type.equals("AAAA");
     }
 
-    void add(String name, String type, UnsignedInteger ttl, List<Map<String, Object>> rdatas) {
+    void add(String dname, String type, UnsignedInteger ttl, List<Map<String, Object>> rdatas) {
         checkState(isPoolType(type), "not A or AAAA type");
 
-        String poolId = reuseOrCreatePoolForNameAndType(name, type);
+        String poolId = reuseOrCreatePoolForNameAndType(dname, type);
 
         for (Map<String, Object> rdata : rdatas) {
             String recordId = null;
@@ -52,20 +56,44 @@ class UltraDNSRoundRobinPoolApi {
         }
     }
 
-    private String reuseOrCreatePoolForNameAndType(String name, String type) {
-        Optional<RoundRobinPool> pool = filterPoolsByNameAndType(name, type).first();
+    private String reuseOrCreatePoolForNameAndType(String dname, String type) {
+        Optional<RoundRobinPool> pool = firstPoolWithDNameAndType(dname, type);
         if (!pool.isPresent()) {
-            LOGGER.debug("No pool ({}) for type ({}) found", name, type);
+            LOGGER.debug("No pool ({}) for type ({}) found", dname, type);
             // see findPool for information on why we are storing the type in
             // description field.
             if (type.equals("A")) {
-                return roundRobinPoolApi.createAPoolForHostname(type, name);
+                return roundRobinPoolApi.createAPoolForHostname(type, dname);
             } else { // or AAAA
-                return roundRobinPoolApi.createAAAAPoolForHostname(type, name);
+                return roundRobinPoolApi.createAAAAPoolForHostname(type, dname);
             }
         } else {
             return pool.get().getId();
         }
+    }
+
+    private Optional<RoundRobinPool> firstPoolWithDNameAndType(String dname, String type) {
+        checkNotNull(dname, "pool dname was null");
+        checkNotNull(type, "resource type was null");
+
+        FluentIterable<RoundRobinPool> pools = roundRobinPoolApi.list().filter(poolDNameEqualTo(dname));
+        
+        // first, try a cheap match as it avoids having to search through all
+        // records of a pool that happen to be ahead in line. This occurs when
+        // you are adding to a AAAA pool, which is lexicographically after A.
+        Predicate<RoundRobinPool> cheapPredicate = poolNameEqualTo(type);
+        Optional<RoundRobinPool> match = pools.firstMatch(cheapPredicate);
+        if (match.isPresent())
+            return match;
+
+        // failing above, we need to exhaustive search in order to find any pools
+        // that may not follow our naming convention, but are present for the
+        // correct dname.
+        Predicate<ResourceRecord> resourceRecordMetadataPredicate = resourceTypeEqualTo(new ResourceTypeToValue()
+                .get(type));
+        Predicate<RoundRobinPool> expensivePredicate = toRoundRobinPoolPredicate(compose(
+                resourceRecordMetadataPredicate, toResourceRecord()));
+        return pools.firstMatch(expensivePredicate);
     }
 
     /**
@@ -74,37 +102,35 @@ class UltraDNSRoundRobinPoolApi {
      * 
      * @param name
      *            the name of the pool
-     * @param type
-     *            the record type of the pool, A or AAAA
      * @param guid
      *            the guid of the record in the pool
      */
-    void remove(String name, String type, String guid) {
-        for (RoundRobinPool pool : filterPoolsByNameAndPredicate(name, recordGuidEqualTo(guid))) {
-            roundRobinPoolApi.deleteRecord(guid);
-            if (roundRobinPoolApi.listRecords(pool.getId()).isEmpty()) {
-                roundRobinPoolApi.delete(pool.getId());
+    void remove(String dname, String guid) {
+        checkNotNull(dname, "pool dname was null");
+        checkNotNull(guid, "record guid was null");
+        Predicate<RoundRobinPool> dnameWithRecord = and(poolDNameEqualTo(dname),
+                toRoundRobinPoolPredicate(recordGuidEqualTo(guid)));
+        Optional<RoundRobinPool> poolContainingRecord = roundRobinPoolApi.list().firstMatch(dnameWithRecord);
+        roundRobinPoolApi.deleteRecord(guid);
+        if (poolContainingRecord.isPresent()) {
+            if (roundRobinPoolApi.listRecords(poolContainingRecord.get().getId()).isEmpty()) {
+                roundRobinPoolApi.delete(poolContainingRecord.get().getId());
             }
         }
     }
 
-    private FluentIterable<RoundRobinPool> filterPoolsByNameAndType(final String name, String type) {
-        checkNotNull(name, "pool name was null");
-        checkNotNull(type, "resource type was null");
-        Predicate<ResourceRecordMetadata> recordPredicate = compose(
-                resourceTypeEqualTo(new ResourceTypeToValue().get(type)), toResourceRecord());
-        return filterPoolsByNameAndPredicate(name, recordPredicate);
-    }
-
-    private FluentIterable<RoundRobinPool> filterPoolsByNameAndPredicate(final String name,
-            final Predicate<ResourceRecordMetadata> recordPredicate) {
-        return roundRobinPoolApi.list().filter(new Predicate<RoundRobinPool>() {
+    private Predicate<RoundRobinPool> toRoundRobinPoolPredicate(
+            final Predicate<ResourceRecordMetadata> resourceRecordMetadataPredicate) {
+        return new Predicate<RoundRobinPool>() {
             @Override
             public boolean apply(RoundRobinPool pool) {
-                if (!pool.getDName().equalsIgnoreCase(name))
-                    return false;
-                return roundRobinPoolApi.listRecords(pool.getId()).anyMatch(recordPredicate);
+                return roundRobinPoolApi.listRecords(pool.getId()).anyMatch(resourceRecordMetadataPredicate);
             }
-        });
+
+            @Override
+            public String toString() {
+                return "AnyRecordMatches(" + resourceRecordMetadataPredicate + ")";
+            }
+        };
     }
 }
