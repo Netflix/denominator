@@ -204,7 +204,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
 
     private void remove(String name, String type, String guid) {
         if (roundRobinPoolApi.isPoolType(type)) {
-            roundRobinPoolApi.remove(name, type, guid);
+            roundRobinPoolApi.remove(name, guid);
         } else {
             api.delete(guid);
         }
