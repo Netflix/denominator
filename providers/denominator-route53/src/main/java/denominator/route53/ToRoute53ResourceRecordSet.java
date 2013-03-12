@@ -1,6 +1,6 @@
 package denominator.route53;
-
 import static com.google.common.primitives.UnsignedInteger.fromIntBits;
+import static java.lang.String.format;
 
 import java.util.List;
 import java.util.Map;
@@ -9,6 +9,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.ImmutableSet;
 
 import denominator.model.ResourceRecordSet;
 
@@ -27,7 +28,11 @@ enum ToRoute53ResourceRecordSet implements Function<ResourceRecordSet<?>, org.jc
     static List<String> toTextFormat(ResourceRecordSet<?> rrset) {
         Builder<String> values = ImmutableList.builder();
         for (Map<String, Object> rdata : rrset) {
-            values.add(Joiner.on(' ').join(rdata.values()));
+            String textFormat = Joiner.on(' ').join(rdata.values());
+            if (ImmutableSet.of("SPF", "TXT").contains(rrset.getType())) {
+                textFormat = format("\"%s\"", textFormat);
+            }
+            values.add(textFormat);
         }
         return values.build();
     }
