@@ -6,7 +6,7 @@ import org.testng.annotations.Test;
 
 public class ResourceTypeToValueTest {
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ResourceTypes do not include RRRR; types: \\[A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, SRV\\]")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ResourceTypes do not include RRRR; types: \\[A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, SSHFP, SPF, SRV\\]")
     public void testNiceExceptionOnNotFound() {
         new ResourceTypeToValue().apply("RRRR");
     }

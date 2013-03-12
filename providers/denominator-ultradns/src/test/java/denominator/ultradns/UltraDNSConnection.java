@@ -3,22 +3,21 @@ package denominator.ultradns;
 import static com.google.common.base.Strings.emptyToNull;
 import static denominator.CredentialsConfiguration.credentials;
 import static java.lang.System.getProperty;
-
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import denominator.BaseProviderLiveTest;
+import denominator.DNSApiManager;
 import denominator.Denominator;
 
-@Test(singleThreaded = true)
-public class UltraDNSProviderLiveTest extends BaseProviderLiveTest {
+public class UltraDNSConnection {
 
-    @BeforeClass
-    private void setUp() {
+    final DNSApiManager manager;
+    final String mutableZone;
+
+    UltraDNSConnection() {
         String username = emptyToNull(getProperty("ultradns.username"));
         String password = emptyToNull(getProperty("ultradns.password"));
         if (username != null && password != null) {
             manager = Denominator.create(new UltraDNSProvider(), credentials(username, password));
+        } else {
+            manager = null;
         }
         mutableZone = emptyToNull(getProperty("ultradns.zone"));
     }
