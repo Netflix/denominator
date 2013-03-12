@@ -22,7 +22,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -65,14 +64,14 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         if (existingRecords.isEmpty())
             return Optional.absent();
         
-        Optional<UnsignedInteger> ttl = Optional.absent();
+        Optional<Integer> ttl = Optional.absent();
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
                                                                 .name(name)
                                                                 .type(type);
 
         for (Record<?> existingRecord : existingRecords) {
             if (!ttl.isPresent())
-                ttl = Optional.of(existingRecord.getTTL());
+                ttl = Optional.of(existingRecord.getTTL().intValue());
             builder.add(existingRecord.getRData());
         }
         return Optional.<ResourceRecordSet<?>> of(builder.ttl(ttl.get()).build());
@@ -83,7 +82,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
 
-        Optional<UnsignedInteger> ttlToApply = rrset.getTTL();
+        Optional<Integer> ttlToApply = rrset.getTTL();
 
         List<Record<?>> existingRecords = existingRecordsByNameAndType(rrset.getName(), rrset.getType());
 
@@ -91,14 +90,14 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
         for (Record<?> existingRecord : existingRecords) {
             if (!ttlToApply.isPresent())
-                ttlToApply = Optional.of(existingRecord.getTTL());
+                ttlToApply = Optional.of(existingRecord.getTTL().intValue());
             if (recordsLeftToCreate.contains(existingRecord.getRData())) {
-                if (ttlToApply.get().equals(existingRecord.getTTL())) {
+                if (ttlToApply.get().intValue() == existingRecord.getTTL().intValue()) {
                     recordsLeftToCreate.remove(existingRecord.getRData());
                     continue;
                 }
                 api.getRecordApiForZone(zoneFQDN).scheduleDelete(existingRecord);
-            } else if (!ttlToApply.get().equals(existingRecord.getTTL())) {
+            } else if (ttlToApply.get().intValue() != existingRecord.getTTL().intValue()) {
                 api.getRecordApiForZone(zoneFQDN).scheduleDelete(existingRecord);
                 recordsLeftToCreate.add(0, existingRecord.getRData());
             }
@@ -108,7 +107,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
             CreateRecord.Builder<Map<String, Object>> builder = CreateRecord.builder()
                                                                             .fqdn(rrset.getName())
                                                                             .type(rrset.getType())
-                                                                            .ttl(ttlToApply.or(UnsignedInteger.ZERO));
+                                                                            .ttl(ttlToApply.or(0));
             for (Map<String, Object> record : recordsLeftToCreate) {
                 api.getRecordApiForZone(zoneFQDN).scheduleCreate(builder.rdata(record).build());
             }
@@ -117,7 +116,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     }
 
     @Override
-    public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
+    public void applyTTLToNameAndType(int ttl, String name, String type) {
         checkNotNull(ttl, "ttl");
 
         List<Record<?>> existingRecords = existingRecordsByNameAndType(name, type);
@@ -127,7 +126,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         List<Record<?>> recordsToRecreate = Lists.newArrayList(existingRecords);
 
         for (Record<?> existingRecord : existingRecords) {
-            if (ttl.equals(existingRecord.getTTL())) {
+            if (ttl == existingRecord.getTTL().intValue()) {
                 recordsToRecreate.remove(existingRecord);
                 continue;
             }
@@ -150,14 +149,15 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     public void replace(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
-        UnsignedInteger ttlToApply = rrset.getTTL().or(UnsignedInteger.ZERO);
+        int ttlToApply = rrset.getTTL().or(0);
 
         List<Record<?>> existingRecords = existingRecordsByNameAndType(rrset.getName(), rrset.getType());
 
         List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset);
 
         for (Record<?> existingRecord : existingRecords) {
-            if (recordsLeftToCreate.contains(existingRecord.getRData()) && ttlToApply.equals(existingRecord.getTTL())) {
+            if (recordsLeftToCreate.contains(existingRecord.getRData())
+                    && ttlToApply == existingRecord.getTTL().intValue()) {
                 recordsLeftToCreate.remove(existingRecord.getRData());
                 continue;
             }

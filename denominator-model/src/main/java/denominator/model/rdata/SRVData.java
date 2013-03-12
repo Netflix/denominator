@@ -8,7 +8,6 @@ import java.util.Map;
 
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.UnsignedInteger;
 
 /**
  * Corresponds to the binary representation of the {@code SRV} (Service) RData
@@ -27,16 +26,16 @@ import com.google.common.primitives.UnsignedInteger;
  */
 public class SRVData extends ForwardingMap<String, Object> {
 
-    private final UnsignedInteger priority;
-    private final UnsignedInteger weight;
-    private final UnsignedInteger port;
+    private final int priority;
+    private final int weight;
+    private final int port;
     private final String target;
 
     @ConstructorProperties({ "priority", "weight", "port", "target" })
-    private SRVData(UnsignedInteger priority, UnsignedInteger weight, UnsignedInteger port, String target) {
-        checkArgument(checkNotNull(priority, "priority of %s", target).intValue() <= 0xFFFF, "priority must be 0-65535");
-        checkArgument(checkNotNull(weight, "weight of %s", target).intValue() <= 0xFFFF, "weight must be 0-65535");
-        checkArgument(checkNotNull(port, "port of %s", target).intValue() <= 0xFFFF, "port must be 0-65535");
+    private SRVData(int priority, int weight, int port, String target) {
+        checkArgument(priority <= 0xFFFF, "priority must be 0-65535");
+        checkArgument(weight <= 0xFFFF, "weight must be 0-65535");
+        checkArgument(port <= 0xFFFF, "port must be 0-65535");
         this.priority = priority;
         this.weight = weight;
         this.port = port;
@@ -54,7 +53,7 @@ public class SRVData extends ForwardingMap<String, Object> {
      * with the same priority SHOULD be tried in an order defined by the weight
      * field.
      */
-    public UnsignedInteger getPriority() {
+    public int getPriority() {
         return priority;
     }
 
@@ -63,14 +62,14 @@ public class SRVData extends ForwardingMap<String, Object> {
      * priority. Larger weights SHOULD be given a proportionately higher
      * probability of being selected.
      */
-    public UnsignedInteger getWeight() {
+    public int getWeight() {
         return weight;
     }
 
     /**
      * The port on this target host of this service.
      */
-    public UnsignedInteger getPort() {
+    public int getPort() {
         return port;
     }
 
@@ -87,31 +86,16 @@ public class SRVData extends ForwardingMap<String, Object> {
     }
 
     public final static class Builder {
-        private UnsignedInteger priority;
-        private UnsignedInteger weight;
-        private UnsignedInteger port;
+        private int priority = -1;
+        private int weight = -1;
+        private int port = -1;
         private String target;
 
         /**
          * @see SRVData#getPriority()
          */
-        public SRVData.Builder priority(UnsignedInteger priority) {
-            this.priority = priority;
-            return this;
-        }
-
-        /**
-         * @see SRVData#getPriority()
-         */
         public SRVData.Builder priority(int priority) {
-            return priority(UnsignedInteger.fromIntBits(priority));
-        }
-
-        /**
-         * @see SRVData#getWeight()
-         */
-        public SRVData.Builder weight(UnsignedInteger weight) {
-            this.weight = weight;
+            this.priority = priority;
             return this;
         }
 
@@ -119,14 +103,7 @@ public class SRVData extends ForwardingMap<String, Object> {
          * @see SRVData#getWeight()
          */
         public SRVData.Builder weight(int weight) {
-            return weight(UnsignedInteger.fromIntBits(weight));
-        }
-
-        /**
-         * @see SRVData#getPort()
-         */
-        public SRVData.Builder port(UnsignedInteger port) {
-            this.port = port;
+            this.weight = weight;
             return this;
         }
 
@@ -134,7 +111,8 @@ public class SRVData extends ForwardingMap<String, Object> {
          * @see SRVData#getPort()
          */
         public SRVData.Builder port(int port) {
-            return port(UnsignedInteger.fromIntBits(port));
+            this.port = port;
+            return this;
         }
 
         /**

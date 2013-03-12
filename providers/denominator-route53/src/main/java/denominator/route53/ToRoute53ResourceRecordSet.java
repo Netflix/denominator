@@ -1,5 +1,4 @@
 package denominator.route53;
-import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static java.lang.String.format;
 
 import java.util.List;
@@ -21,7 +20,7 @@ enum ToRoute53ResourceRecordSet implements Function<ResourceRecordSet<?>, org.jc
         return org.jclouds.route53.domain.ResourceRecordSet.builder()
                 .name(rrset.getName())
                 .type(rrset.getType())
-                .ttl(rrset.getTTL().or(fromIntBits(300)))
+                .ttl(rrset.getTTL().or(300))
                 .addAll(toTextFormat(rrset)).build();
     }
 

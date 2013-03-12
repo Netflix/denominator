@@ -9,27 +9,26 @@ import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
 import org.jclouds.ultradns.ws.domain.RoundRobinPool;
 
 import com.google.common.base.Predicate;
-import com.google.common.primitives.UnsignedInteger;
 
 final class UltraDNSPredicates {
     private UltraDNSPredicates() { /* */
     }
 
-    public static Predicate<ResourceRecord> resourceTypeEqualTo(UnsignedInteger typeValue) {
+    public static Predicate<ResourceRecord> resourceTypeEqualTo(int typeValue) {
         return new ResourceTypeEqualToPredicate(typeValue);
     }
 
-    /** @see UltraDNSPredicates#resourceTypeEqualTo(UnsignedInteger) */
+    /** @see UltraDNSPredicates#resourceTypeEqualTo(int) */
     private static class ResourceTypeEqualToPredicate implements Predicate<ResourceRecord>, Serializable {
-        private final UnsignedInteger typeValue;
+        private final int typeValue;
 
-        private ResourceTypeEqualToPredicate(UnsignedInteger typeValue) {
+        private ResourceTypeEqualToPredicate(int typeValue) {
             this.typeValue = checkNotNull(typeValue, "typeValue");
         }
 
         @Override
         public boolean apply(ResourceRecord in) {
-            return typeValue.equals(in.getType());
+            return typeValue == in.getType().intValue();
         }
 
         @Override
@@ -44,7 +43,7 @@ final class UltraDNSPredicates {
         return new RecordGuidEqualToPredicate(guid);
     }
 
-    /** @see UltraDNSPredicates#resourceTypeEqualTo(UnsignedInteger) */
+    /** @see UltraDNSPredicates#resourceTypeEqualTo(int) */
     private static class RecordGuidEqualToPredicate implements Predicate<ResourceRecordMetadata>, Serializable {
         private final String guid;
 

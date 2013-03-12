@@ -75,7 +75,7 @@ public class GroupByRecordNameAndTypeIteratorMockTest {
             RecordApi api = mockDynECTApi(server.getUrl("/").toString()).getRecordApiForZone("denominator.io");
 
             Iterator<ResourceRecordSet<?>> iterator  = new GroupByRecordNameAndTypeIterator(api, recordIds.iterator());
-            assertEquals(iterator.next(), ResourceRecordSet.<SOAData> builder()
+            assertEquals(iterator.next().toString(), ResourceRecordSet.<SOAData> builder()
                                                            .name("denominator.io")
                                                            .type("SOA")
                                                            .ttl(3600)
@@ -86,7 +86,7 @@ public class GroupByRecordNameAndTypeIteratorMockTest {
                                                                        .refresh(3600)
                                                                        .retry(600)
                                                                        .expire(604800)
-                                                                       .minimum(60).build()).build());
+                                                                       .minimum(60).build()).build().toString());
             assertEquals(iterator.next(), ns("denominator.io", 86400, ImmutableList.of("ns4.p28.dynect.net.", "ns4.p28.dynect.net.")));
             assertFalse(iterator.hasNext());
         } finally {

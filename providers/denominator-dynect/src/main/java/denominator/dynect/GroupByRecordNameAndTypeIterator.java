@@ -11,7 +11,6 @@ import org.jclouds.dynect.v3.features.RecordApi;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.PeekingIterator;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
@@ -40,7 +39,7 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
                                                                 .name(record.getFQDN())
                                                                 .type(record.getType())
-                                                                .ttl(record.getTTL())
+                                                                .ttl(record.getTTL().intValue())
                                                                 .add(record.getRData());
         while (hasNext()) {
             RecordId next = peekingIterator.peek();
@@ -78,8 +77,8 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
                 return null;
             // temporary until jclouds 1.6 rc2, as ints are coming out as doubles.
             Map<String, Object> rdata = ImmutableMap.<String, Object> builder()
-                    .put("algorithm", UnsignedInteger.fromIntBits(Double.class.cast(sshFP.getRData().get("algorithm")).intValue()))
-                    .put("fptype", UnsignedInteger.fromIntBits(Double.class.cast(sshFP.getRData().get("fptype")).intValue()))
+                    .put("algorithm", Integer.valueOf(Double.class.cast(sshFP.getRData().get("algorithm")).intValue()))
+                    .put("fptype", Integer.valueOf(Double.class.cast(sshFP.getRData().get("fptype")).intValue()))
                     .put("fingerprint", sshFP.getRData().get("fingerprint")).build();
             return Record.builder().from(sshFP).ttl(sshFP.getTTL()).rdata(rdata).build();
         } else if ("TXT".equals(recordId.getType())) {

@@ -7,7 +7,6 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.FluentIterable.from;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Ordering.usingToString;
-import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static denominator.model.ResourceRecordSets.nameAndType;
 
 import java.util.Iterator;
@@ -18,7 +17,6 @@ import javax.inject.Inject;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Multimap;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -68,7 +66,7 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     }
 
     @Override
-    public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
+    public void applyTTLToNameAndType(int ttl, String name, String type) {
         checkNotNull(ttl, "ttl");
         Optional<ResourceRecordSet<?>> existing = getByNameAndType(name, type);
         if (!existing.isPresent())
@@ -91,7 +89,7 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
         Builder<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>>builder()
                                                              .name(rrset.getName())
                                                              .type(rrset.getType())
-                                                             .ttl(rrset.getTTL().or(fromIntBits(3600)));
+                                                             .ttl(rrset.getTTL().or(3600));
         if (rrsMatch.isPresent()) {
             rrs.addAll(rrsMatch.get());
             rrs.addAll(filter(rrset, not(in(rrsMatch.get()))));

@@ -7,7 +7,6 @@ import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
@@ -83,7 +82,7 @@ enum ToDenominatorResourceRecordSet implements
             return CNAMEData.create(rdata);
         } else if ("MX".equals(type)) {
             ImmutableList<String> parts = split(rdata);
-            return MXData.create(UnsignedInteger.valueOf(parts.get(0)), parts.get(1));
+            return MXData.create(Integer.valueOf(parts.get(0)), parts.get(1));
         } else if ("NS".equals(type)) {
             return NSData.create(rdata);
         } else if ("PTR".equals(type)) {
@@ -93,20 +92,20 @@ enum ToDenominatorResourceRecordSet implements
             return SOAData.builder()
                           .mname(parts.get(0))
                           .rname(parts.get(1))
-                          .serial(UnsignedInteger.valueOf(parts.get(2)))
-                          .refresh(UnsignedInteger.valueOf(parts.get(3)))
-                          .retry(UnsignedInteger.valueOf(parts.get(4)))
-                          .expire(UnsignedInteger.valueOf(parts.get(5)))
-                          .minimum(UnsignedInteger.valueOf(parts.get(6))).build();
+                          .serial(Integer.valueOf(parts.get(2)))
+                          .refresh(Integer.valueOf(parts.get(3)))
+                          .retry(Integer.valueOf(parts.get(4)))
+                          .expire(Integer.valueOf(parts.get(5)))
+                          .minimum(Integer.valueOf(parts.get(6))).build();
         } else if ("SPF".equals(type)) {
             // unquote
             return SPFData.create(rdata.substring(1, rdata.length() - 1));
         } else if ("SRV".equals(type)) {
             ImmutableList<String> parts = split(rdata);
             return SRVData.builder()
-                          .priority(UnsignedInteger.valueOf(parts.get(0)))
-                          .weight(UnsignedInteger.valueOf(parts.get(1)))
-                          .port(UnsignedInteger.valueOf(parts.get(2)))
+                          .priority(Integer.valueOf(parts.get(0)))
+                          .weight(Integer.valueOf(parts.get(1)))
+                          .port(Integer.valueOf(parts.get(2)))
                           .target(parts.get(3)).build();
         } else if ("TXT".equals(type)) {
             // unquote

@@ -4,7 +4,6 @@ import static org.testng.Assert.assertEquals;
 
 import org.testng.annotations.Test;
 
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.model.rdata.AData;
 
@@ -20,7 +19,7 @@ public class ResourceRecordSetTest {
 
         assertEquals(record.getName(), "www.denominator.io.");
         assertEquals(record.getType(), "A");
-        assertEquals(record.getTTL().get(), UnsignedInteger.fromIntBits(3600));
+        assertEquals(record.getTTL().get(), Integer.valueOf(3600));
         assertEquals(record.get(0), AData.create("1.1.1.1"));
     }
 

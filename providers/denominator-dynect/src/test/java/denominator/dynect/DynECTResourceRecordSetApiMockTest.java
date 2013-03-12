@@ -1,6 +1,5 @@
 package denominator.dynect;
 
-import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
 import static denominator.model.ResourceRecordSets.a;
 import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
@@ -296,7 +295,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.applyTTLToNameAndType(fromIntBits(3600), "www.foo.com", "A");
+            api.applyTTLToNameAndType(3600, "www.foo.com", "A");
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -322,7 +321,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.applyTTLToNameAndType(fromIntBits(3600), "www.boo.com", "A");
+            api.applyTTLToNameAndType(3600, "www.boo.com", "A");
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
             server.shutdown();
@@ -346,7 +345,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.applyTTLToNameAndType(fromIntBits(10000000), "www.foo.com", "A");
+            api.applyTTLToNameAndType(10000000, "www.foo.com", "A");
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 

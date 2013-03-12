@@ -1,5 +1,6 @@
 package denominator.model.rdata;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
@@ -7,7 +8,6 @@ import java.util.Map;
 
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.UnsignedInteger;
 
 /**
  * Corresponds to the binary representation of the {@code SOA} (Start of
@@ -32,22 +32,27 @@ public class SOAData extends ForwardingMap<String, Object> {
 
     private final String mname;
     private final String rname;
-    private final UnsignedInteger serial;
-    private final UnsignedInteger refresh;
-    private final UnsignedInteger retry;
-    private final UnsignedInteger expire;
-    private final UnsignedInteger minimum;
+    private final int serial;
+    private final int refresh;
+    private final int retry;
+    private final int expire;
+    private final int minimum;
 
     @ConstructorProperties({ "mname", "rname", "serial", "refresh", "retry", "expire", "minimum" })
-    private SOAData(String mname, String rname, UnsignedInteger serial, UnsignedInteger refresh, UnsignedInteger retry,
-            UnsignedInteger expire, UnsignedInteger minimum) {
+    private SOAData(String mname, String rname, int serial, int refresh, int retry,
+            int expire, int minimum) {
         this.mname = checkNotNull(mname, "mname");
         this.rname = checkNotNull(rname, "rname of %s", mname);
-        this.serial = checkNotNull(serial, "serial of %s", mname);
-        this.refresh = checkNotNull(refresh, "refresh of %s", mname);
-        this.retry = checkNotNull(retry, "retry of %s", mname);
-        this.expire = checkNotNull(expire, "expire of %s", mname);
-        this.minimum = checkNotNull(minimum, "minimum of %s", mname);
+        checkArgument(serial >= 0, "serial of %s must be unsigned", mname);
+        this.serial = serial;
+        checkArgument(refresh >= 0, "refresh of %s must be unsigned", mname);
+        this.refresh = refresh;
+        checkArgument(retry >= 0, "retry of %s must be unsigned", mname);
+        this.retry = retry;
+        checkArgument(expire >= 0, "expire of %s must be unsigned", mname);
+        this.expire = expire;
+        checkArgument(minimum >= 0, "minimum of %s must be unsigned", mname);
+        this.minimum = minimum;
         this.delegate = ImmutableMap.<String, Object> builder()
                                     .put("mname", mname)
                                     .put("rname", rname)
@@ -77,14 +82,14 @@ public class SOAData extends ForwardingMap<String, Object> {
     /**
      * version number of the original copy of the zone.
      */
-    public UnsignedInteger getSerial() {
+    public int getSerial() {
         return serial;
     }
 
     /**
      * time interval before the zone should be refreshed
      */
-    public UnsignedInteger getRefresh() {
+    public int getRefresh() {
         return refresh;
     }
 
@@ -92,7 +97,7 @@ public class SOAData extends ForwardingMap<String, Object> {
      * time interval that should elapse before a failed refresh should be
      * retried
      */
-    public UnsignedInteger getRetry() {
+    public int getRetry() {
         return retry;
     }
 
@@ -100,14 +105,14 @@ public class SOAData extends ForwardingMap<String, Object> {
      * time value that specifies the upper limit on the time interval that can
      * elapse before the zone is no longer authoritative.
      */
-    public UnsignedInteger getExpire() {
+    public int getExpire() {
         return expire;
     }
 
     /**
      * minimum TTL field that should be exported with any RR from this zone.
      */
-    public UnsignedInteger getMinimum() {
+    public int getMinimum() {
         return minimum;
     }
 
@@ -118,11 +123,11 @@ public class SOAData extends ForwardingMap<String, Object> {
     public final static class Builder {
         private String mname;
         private String rname;
-        private UnsignedInteger serial;
-        private UnsignedInteger refresh;
-        private UnsignedInteger retry;
-        private UnsignedInteger expire;
-        private UnsignedInteger minimum;
+        private int serial = -1;
+        private int refresh = -1;
+        private int retry = -1;
+        private int expire = -1;
+        private int minimum = -1;
 
         /**
          * @see SOAData#getMname()
@@ -143,23 +148,8 @@ public class SOAData extends ForwardingMap<String, Object> {
         /**
          * @see SOAData#getSerial()
          */
-        public SOAData.Builder serial(UnsignedInteger serial) {
-            this.serial = serial;
-            return this;
-        }
-
-        /**
-         * @see SOAData#getSerial()
-         */
         public SOAData.Builder serial(int serial) {
-            return serial(UnsignedInteger.fromIntBits(serial));
-        }
-
-        /**
-         * @see SOAData#getRefresh()
-         */
-        public SOAData.Builder refresh(UnsignedInteger refresh) {
-            this.refresh = refresh;
+            this.serial = serial;
             return this;
         }
 
@@ -167,14 +157,7 @@ public class SOAData extends ForwardingMap<String, Object> {
          * @see SOAData#getRefresh()
          */
         public SOAData.Builder refresh(int refresh) {
-            return refresh(UnsignedInteger.fromIntBits(refresh));
-        }
-
-        /**
-         * @see SOAData#getRetry()
-         */
-        public SOAData.Builder retry(UnsignedInteger retry) {
-            this.retry = retry;
+            this.refresh = refresh;
             return this;
         }
 
@@ -182,14 +165,7 @@ public class SOAData extends ForwardingMap<String, Object> {
          * @see SOAData#getRetry()
          */
         public SOAData.Builder retry(int retry) {
-            return retry(UnsignedInteger.fromIntBits(retry));
-        }
-
-        /**
-         * @see SOAData#getExpire()
-         */
-        public SOAData.Builder expire(UnsignedInteger expire) {
-            this.expire = expire;
+            this.retry = retry;
             return this;
         }
 
@@ -197,14 +173,7 @@ public class SOAData extends ForwardingMap<String, Object> {
          * @see SOAData#getExpire()
          */
         public SOAData.Builder expire(int expire) {
-            return expire(UnsignedInteger.fromIntBits(expire));
-        }
-
-        /**
-         * @see SOAData#getMinimum()
-         */
-        public SOAData.Builder minimum(UnsignedInteger minimum) {
-            this.minimum = minimum;
+            this.expire = expire;
             return this;
         }
 
@@ -212,7 +181,8 @@ public class SOAData extends ForwardingMap<String, Object> {
          * @see SOAData#getMinimum()
          */
         public SOAData.Builder minimum(int minimum) {
-            return minimum(UnsignedInteger.fromIntBits(minimum));
+            this.minimum = minimum;
+            return this;
         }
 
         public SOAData build() {
