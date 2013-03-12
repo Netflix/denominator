@@ -8,7 +8,6 @@ import java.util.Map;
 
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.UnsignedInteger;
 
 /**
  * Corresponds to the binary representation of the {@code MX} (Mail Exchange)
@@ -25,19 +24,15 @@ import com.google.common.primitives.UnsignedInteger;
 public class MXData extends ForwardingMap<String, Object> {
 
     public static MXData create(int preference, String exchange) {
-        return create(UnsignedInteger.fromIntBits(preference), exchange);
-    }
-
-    public static MXData create(UnsignedInteger preference, String exchange) {
         return new MXData(preference, exchange);
     }
 
-    private final UnsignedInteger preference;
+    private final int preference;
     private final String exchange;
 
     @ConstructorProperties({ "preference", "exchange" })
-    private MXData(UnsignedInteger preference, String exchange) {
-        checkArgument(checkNotNull(preference, "preference").intValue() <= 0xFFFF, "preference must be 65535 or less");
+    private MXData(int preference, String exchange) {
+        checkArgument(preference <= 0xFFFF, "preference must be 65535 or less");
         this.preference = preference;
         this.exchange = checkNotNull(exchange, "exchange");
         this.delegate = ImmutableMap.<String, Object> builder()
@@ -49,7 +44,7 @@ public class MXData extends ForwardingMap<String, Object> {
      * specifies the preference given to this RR among others at the same owner.
      * Lower values are preferred.
      */
-    public UnsignedInteger getPreference() {
+    public int getPreference() {
         return preference;
     }
 

@@ -39,7 +39,7 @@ class UltraDNSRoundRobinPoolApi {
         return type.equals("A") || type.equals("AAAA");
     }
 
-    void add(String dname, String type, UnsignedInteger ttl, List<Map<String, Object>> rdatas) {
+    void add(String dname, String type, int ttl, List<Map<String, Object>> rdatas) {
         checkState(isPoolType(type), "not A or AAAA type");
 
         String poolId = reuseOrCreatePoolForNameAndType(dname, type);
@@ -48,9 +48,9 @@ class UltraDNSRoundRobinPoolApi {
             String recordId = null;
             String address = rdata.get("address").toString();
             if (type.equals("A")) {
-                recordId = roundRobinPoolApi.addARecordWithAddressAndTTL(poolId, address, ttl);
+                recordId = roundRobinPoolApi.addARecordWithAddressAndTTL(poolId, address, UnsignedInteger.fromIntBits(ttl));
             } else {
-                recordId = roundRobinPoolApi.addAAAARecordWithAddressAndTTL(poolId, address, ttl);
+                recordId = roundRobinPoolApi.addAAAARecordWithAddressAndTTL(poolId, address, UnsignedInteger.fromIntBits(ttl));
             }
             LOGGER.debug("record ({}) created with id({})", address, recordId);
         }

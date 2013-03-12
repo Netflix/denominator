@@ -1,5 +1,6 @@
 package denominator.model.rdata;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
@@ -7,7 +8,6 @@ import java.util.Map;
 
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.UnsignedInteger;
 
 /**
  * Corresponds to the binary representation of the {@code SSHFP} (SSH Fingerprint) RData
@@ -41,14 +41,16 @@ public class SSHFPData extends ForwardingMap<String, Object> {
         return builder().algorithm(1).fptype(1).fingerprint(fingerprint).build();
     }
 
-    private final UnsignedInteger algorithm;
-    private final UnsignedInteger fptype;
+    private final int algorithm;
+    private final int fptype;
     private final String fingerprint;
 
     @ConstructorProperties({ "algorithm", "fptype", "fingerprint" })
-    private SSHFPData(UnsignedInteger algorithm, UnsignedInteger fptype, String fingerprint) {
-        this.algorithm = checkNotNull(algorithm, "algorithm of %s", fingerprint);
-        this.fptype = checkNotNull(fptype, "fptype of %s", fingerprint);
+    private SSHFPData(int algorithm, int fptype, String fingerprint) {
+        checkArgument(algorithm >= 0, "algorithm of %s must be unsigned", fingerprint);
+        this.algorithm = algorithm;
+        checkArgument(fptype >= 0, "fptype of %s must be unsigned", fingerprint);
+        this.fptype = fptype;
         this.fingerprint = checkNotNull(fingerprint, "fingerprint");
         this.delegate = ImmutableMap.<String, Object> builder()
                                     .put("algorithm", algorithm)
@@ -60,7 +62,7 @@ public class SSHFPData extends ForwardingMap<String, Object> {
      * This algorithm number octet describes the algorithm of the public key.
      * @return most often {@code 1} for {@code RSA} or {@code 2} for {@code DSA}. 
      */
-    public UnsignedInteger getAlgorithm() {
+    public int getAlgorithm() {
         return algorithm;
     }
 
@@ -70,7 +72,7 @@ public class SSHFPData extends ForwardingMap<String, Object> {
      * 
      * @return most often {@code 1} for {@code SHA-1}
      */
-    public UnsignedInteger getType() {
+    public int getType() {
         return fptype;
     }
 
@@ -82,30 +84,15 @@ public class SSHFPData extends ForwardingMap<String, Object> {
     }
 
     public final static class Builder {
-        private UnsignedInteger algorithm;
-        private UnsignedInteger fptype;
+        private int algorithm;
+        private int fptype;
         private String fingerprint;
 
         /**
          * @see SSHFPData#getAlgorithm()
          */
-        public SSHFPData.Builder algorithm(UnsignedInteger algorithm) {
-            this.algorithm = algorithm;
-            return this;
-        }
-
-        /**
-         * @see SSHFPData#getAlgorithm()
-         */
         public SSHFPData.Builder algorithm(int algorithm) {
-            return algorithm(UnsignedInteger.fromIntBits(algorithm));
-        }
-
-        /**
-         * @see SSHFPData#getType()
-         */
-        public SSHFPData.Builder fptype(UnsignedInteger fptype) {
-            this.fptype = fptype;
+            this.algorithm = algorithm;
             return this;
         }
 
@@ -113,7 +100,8 @@ public class SSHFPData extends ForwardingMap<String, Object> {
          * @see SSHFPData#getType()
          */
         public SSHFPData.Builder fptype(int fptype) {
-            return fptype(UnsignedInteger.fromIntBits(fptype));
+            this.fptype = fptype;
+            return this;
         }
 
         /**

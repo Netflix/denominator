@@ -4,8 +4,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
-import static com.google.common.primitives.UnsignedInteger.fromIntBits;
-import static com.google.common.primitives.UnsignedInteger.valueOf;
 import static java.lang.String.format;
 import io.airlift.command.Arguments;
 import io.airlift.command.Command;
@@ -94,7 +92,7 @@ class ResourceRecordSetCommands {
                 @Override
                 public String next() {
                     mgr.getApi().getResourceRecordSetApiForZone(zoneName)
-                            .applyTTLToNameAndType(fromIntBits(ttl), name, type);
+                            .applyTTLToNameAndType(ttl, name, type);
                     done = true;
                     return ";; ok";
                 }
@@ -340,22 +338,22 @@ class ResourceRecordSetCommands {
             return CNAMEData.create(rdata);
         } else if ("MX".equals(type)) {
             ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return MXData.create(valueOf(parts.get(0)), parts.get(1));
+            return MXData.create(Integer.valueOf(parts.get(0)), parts.get(1));
         } else if ("NS".equals(type)) {
             return NSData.create(rdata);
         } else if ("PTR".equals(type)) {
             return PTRData.create(rdata);
         } else if ("SOA".equals(type)) {
             ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return SOAData.builder().mname(parts.get(0)).rname(parts.get(1)).serial(valueOf(parts.get(2)))
-                    .refresh(valueOf(parts.get(3))).retry(valueOf(parts.get(4))).expire(valueOf(parts.get(5)))
-                    .minimum(valueOf(parts.get(6))).build();
+            return SOAData.builder().mname(parts.get(0)).rname(parts.get(1)).serial(Integer.valueOf(parts.get(2)))
+                    .refresh(Integer.valueOf(parts.get(3))).retry(Integer.valueOf(parts.get(4)))
+                    .expire(Integer.valueOf(parts.get(5))).minimum(Integer.valueOf(parts.get(6))).build();
         } else if ("SPF".equals(type)) {
             return SPFData.create(rdata);
         } else if ("SRV".equals(type)) {
             ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return SRVData.builder().priority(valueOf(parts.get(0))).weight(valueOf(parts.get(1)))
-                    .port(valueOf(parts.get(2))).target(parts.get(3)).build();
+            return SRVData.builder().priority(Integer.valueOf(parts.get(0))).weight(Integer.valueOf(parts.get(1)))
+                    .port(Integer.valueOf(parts.get(2))).target(parts.get(3)).build();
         } else if ("TXT".equals(type)) {
             return TXTData.create(rdata);
         } else {

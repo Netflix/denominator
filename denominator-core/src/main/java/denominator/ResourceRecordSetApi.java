@@ -3,7 +3,6 @@ package denominator;
 import java.util.Iterator;
 
 import com.google.common.base.Optional;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.model.ResourceRecordSet;
 
@@ -74,7 +73,7 @@ public interface ResourceRecordSetApi {
      * @param type
      *            {@link ResourceRecordSet#getType() type} of the rrset
      */
-    void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type);
+    void applyTTLToNameAndType(int ttl, String name, String type);
 
     /**
      * Idempotently replaces any existing records with

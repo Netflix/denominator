@@ -10,6 +10,7 @@ import org.jclouds.ultradns.ws.domain.ResourceRecord;
 import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
 
 import com.google.common.collect.PeekingIterator;
+import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceTypeToValue;
 import denominator.model.ResourceRecordSet;
@@ -30,10 +31,12 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
     @Override
     public ResourceRecordSet<?> next() {
         ResourceRecord record = peekingIterator.next().getRecord();
+        UnsignedInteger typeCode = record.getType();
+        String type = new ResourceTypeToValue().inverse().get(Integer.valueOf(typeCode.intValue()));
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
                                                                 .name(record.getName())
-                                                                .type(new ResourceTypeToValue().inverse().get(record.getType()))
-                                                                .ttl(record.getTTL());
+                                                                .type(type)
+                                                                .ttl(record.getTTL().intValue());
 
         builder.add(toRdataMap().apply(record));
 

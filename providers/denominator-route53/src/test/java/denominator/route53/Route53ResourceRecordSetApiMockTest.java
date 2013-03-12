@@ -1,6 +1,5 @@
 package denominator.route53;
 
-import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
 import static denominator.model.ResourceRecordSets.a;
 import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
@@ -202,7 +201,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.applyTTLToNameAndType(fromIntBits(3600), "www.foo.com.", "A");
+            api.applyTTLToNameAndType(3600, "www.foo.com.", "A");
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -220,7 +219,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.applyTTLToNameAndType(fromIntBits(3600), "www.boo.com.", "A");
+            api.applyTTLToNameAndType(3600, "www.boo.com.", "A");
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -241,7 +240,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.applyTTLToNameAndType(fromIntBits(10000000), "www.foo.com.", "A");
+            api.applyTTLToNameAndType(10000000, "www.foo.com.", "A");
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),

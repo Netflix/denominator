@@ -3,7 +3,6 @@ package denominator;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.collect.Iterators.any;
 import static com.google.common.collect.Maps.filterKeys;
-import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static denominator.model.ResourceRecordSets.nameAndType;
 import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
@@ -17,7 +16,6 @@ import org.testng.annotations.Test;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.model.ResourceRecordSet;
 
@@ -49,12 +47,10 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
 
         skipIfRRSetExists(zoneName, recordSet.getName(), recordSet.getType());
 
-        UnsignedInteger ttl = fromIntBits(1800);
-
         rrsApi(zoneName).add(ResourceRecordSet.<Map<String, Object>> builder()
                                               .name(recordSet.getName())
                                               .type(recordSet.getType())
-                                              .ttl(ttl)
+                                              .ttl(1800)
                                               .add(recordSet.get(0)).build());
 
         Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName)
@@ -64,7 +60,7 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
 
         checkRRS(rrs.get());
         assertEquals(rrs.get().getName(), recordSet.getName());
-        assertEquals(rrs.get().getTTL().get(), ttl);
+        assertEquals(rrs.get().getTTL().get(), Integer.valueOf(1800));
         assertEquals(rrs.get().getType(), recordSet.getType());
         assertEquals(rrs.get().size(), 1);
         assertEquals(rrs.get().get(0), recordSet.get(0));
@@ -98,7 +94,7 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
         skipIfNoCredentials();
         String zoneName = skipIfNoMutableZone();
 
-        rrsApi(zoneName).applyTTLToNameAndType(fromIntBits(200000), recordSet.getName(), recordSet.getType());
+        rrsApi(zoneName).applyTTLToNameAndType(200000, recordSet.getName(), recordSet.getType());
 
         Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName)
                 .getByNameAndType(recordSet.getName(), recordSet.getType());
@@ -108,7 +104,7 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
         checkRRS(rrs.get());
         assertEquals(rrs.get().getName(), recordSet.getName());
         assertEquals(rrs.get().getType(), recordSet.getType());
-        assertEquals(rrs.get().getTTL().get().intValue(), 200000);
+        assertEquals(rrs.get().getTTL().get(), Integer.valueOf(200000));
         assertEquals(rrs.get().size(), 2);
         assertEquals(rrs.get().get(0), recordSet.get(0));
         assertEquals(rrs.get().get(1), recordSet.get(1));
@@ -134,7 +130,7 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
         checkRRS(rrs.get());
         assertEquals(rrs.get().getName(), recordSet.getName());
         assertEquals(rrs.get().getType(), recordSet.getType());
-        assertEquals(rrs.get().getTTL().get().intValue(), 10000);
+        assertEquals(rrs.get().getTTL().get(), Integer.valueOf(10000));
         assertEquals(rrs.get().size(), 2);
         assertEquals(rrs.get().get(0), recordSet.get(0));
         assertEquals(rrs.get().get(1), recordSet.get(2));

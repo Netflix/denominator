@@ -11,7 +11,6 @@ import com.google.common.base.Function;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableBiMap;
-import com.google.common.primitives.UnsignedInteger;
 
 /**
  * Some apis use numerical type value of a resource record rather than their
@@ -20,8 +19,8 @@ import com.google.common.primitives.UnsignedInteger;
  * need updates over time.
  */
 @Beta
-public class ResourceTypeToValue extends ForwardingMap<String, UnsignedInteger> implements Function<Object, String>,
-        BiMap<String, UnsignedInteger> {
+public class ResourceTypeToValue extends ForwardingMap<String, Integer> implements Function<Object, String>,
+        BiMap<String, Integer> {
 
     /**
      * look up the value (ex. {@code 28}) for the mnemonic name (ex.
@@ -32,7 +31,7 @@ public class ResourceTypeToValue extends ForwardingMap<String, UnsignedInteger> 
      * @throws IllegalArgumentException
      *             if the type was not configured.
      */
-    public static UnsignedInteger lookup(String type) throws IllegalArgumentException {
+    public static Integer lookup(String type) throws IllegalArgumentException {
         checkNotNull(type, "resource type was null");
         checkArgument(lookup.containsKey(type), "%s do not include %s; types: %s", ResourceTypes.class.getSimpleName(),
                 type, EnumSet.allOf(ResourceTypes.class));
@@ -102,22 +101,22 @@ public class ResourceTypeToValue extends ForwardingMap<String, UnsignedInteger> 
          */
         SRV(33);
 
-        private final UnsignedInteger value;
+        private final int value;
 
         private ResourceTypes(int value) {
-            this.value = UnsignedInteger.fromIntBits(value);
+            this.value = value;
         }
     }
 
     @Override
-    protected ImmutableBiMap<String, UnsignedInteger> delegate() {
+    protected ImmutableBiMap<String, Integer> delegate() {
         return lookup;
     }
 
-    private static final ImmutableBiMap<String, UnsignedInteger> lookup;
+    private static final ImmutableBiMap<String, Integer> lookup;
 
     static {
-        ImmutableBiMap.Builder<String, UnsignedInteger> builder = ImmutableBiMap.builder();
+        ImmutableBiMap.Builder<String, Integer> builder = ImmutableBiMap.builder();
         for (ResourceTypes r : EnumSet.allOf(ResourceTypes.class)) {
             builder.put(r.name(), r.value);
         }
@@ -129,17 +128,17 @@ public class ResourceTypeToValue extends ForwardingMap<String, UnsignedInteger> 
      */
     @Deprecated
     @Override
-    public UnsignedInteger forcePut(String key, UnsignedInteger value) {
+    public Integer forcePut(String key, Integer value) {
         return lookup.forcePut(key, value);
     }
 
     @Override
-    public Set<UnsignedInteger> values() {
+    public Set<Integer> values() {
         return lookup.values();
     }
 
     @Override
-    public BiMap<UnsignedInteger, String> inverse() {
+    public BiMap<Integer, String> inverse() {
         return lookup.inverse();
     }
 

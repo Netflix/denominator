@@ -22,7 +22,6 @@ import org.jclouds.ultradns.ws.features.ResourceRecordApi;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Ordering;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceRecordSetApi;
 import denominator.ResourceTypeToValue;
@@ -67,12 +66,12 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         if (references.isEmpty())
             return Optional.absent();
 
-        Optional<UnsignedInteger> ttl = Optional.absent();
+        Optional<Integer> ttl = Optional.absent();
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder().name(name).type(type);
 
         for (ResourceRecordMetadata reference : references) {
             if (!ttl.isPresent())
-                ttl = Optional.of(reference.getRecord().getTTL());
+                ttl = Optional.of(reference.getRecord().getTTL().intValue());
             ResourceRecord record = reference.getRecord();
             builder.add(toRdataMap().apply(record));
         }
@@ -82,24 +81,24 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     private List<ResourceRecordMetadata> referencesByNameAndType(final String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        final UnsignedInteger typeValue = checkNotNull(new ResourceTypeToValue().get(type), "typeValue for %s", type);
+        final int typeValue = checkNotNull(new ResourceTypeToValue().get(type), "typeValue for %s", type);
         // TODO: temporary until listByNameAndType() works with NS records where
         // name = zoneName
         return api.list().filter(new Predicate<ResourceRecordMetadata>() {
             public boolean apply(ResourceRecordMetadata in) {
-                return name.equals(in.getRecord().getName()) && typeValue.equals(in.getRecord().getType());
+                return name.equals(in.getRecord().getName()) && typeValue == in.getRecord().getType().intValue();
             }
         }).toSortedList(usingToString());
     }
 
-    private static final UnsignedInteger defaultTTL = UnsignedInteger.fromIntBits(300);
+    private static final int defaultTTL = 300;
 
     @Override
     public void add(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
 
-        Optional<UnsignedInteger> ttlToApply = rrset.getTTL();
+        Optional<Integer> ttlToApply = rrset.getTTL();
 
         List<ResourceRecordMetadata> references = referencesByNameAndType(rrset.getName(), rrset.getType());
 
@@ -108,19 +107,19 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         for (ResourceRecordMetadata reference : references) {
             ResourceRecord record = reference.getRecord();
             if (!ttlToApply.isPresent())
-                ttlToApply = Optional.of(record.getTTL());
+                ttlToApply = Optional.of(record.getTTL().intValue());
             ResourceRecord updateTTL = record.toBuilder().ttl(ttlToApply.or(defaultTTL)).build();
 
             Map<String, Object> rdata = toRdataMap().apply(record);
             if (recordsLeftToCreate.contains(rdata)) {
                 recordsLeftToCreate.remove(rdata);
                 // all ok.
-                if (ttlToApply.get().equals(record.getTTL())) {
+                if (ttlToApply.get().intValue() == record.getTTL().intValue()) {
                     continue;
                 }
                 // update ttl of rdata in input
                 api.update(reference.getGuid(), updateTTL);
-            } else if (!ttlToApply.get().equals(record.getTTL())) {
+            } else if (ttlToApply.get().intValue() != record.getTTL().intValue()) {
                 // update ttl of other record
                 api.update(reference.getGuid(), updateTTL);
             }
@@ -129,7 +128,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     }
 
     @Override
-    public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
+    public void applyTTLToNameAndType(int ttl, String name, String type) {
         checkNotNull(ttl, "ttl");
 
         List<ResourceRecordMetadata> references = referencesByNameAndType(name, type);
@@ -147,7 +146,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     public void replace(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
-        UnsignedInteger ttlToApply = rrset.getTTL().or(defaultTTL);
+        int ttlToApply = rrset.getTTL().or(defaultTTL);
 
         List<ResourceRecordMetadata> references = referencesByNameAndType(rrset.getName(), rrset.getType());
 
@@ -159,7 +158,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
             if (recordsLeftToCreate.contains(rdata)) {
                 recordsLeftToCreate.remove(rdata);
                 // all ok.
-                if (ttlToApply.equals(record.getTTL())) {
+                if (ttlToApply == record.getTTL().intValue()) {
                     continue;
                 }
                 // update ttl of rdata in input
@@ -172,7 +171,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         create(rrset.getName(), rrset.getType(), ttlToApply, recordsLeftToCreate);
     }
 
-    private void create(String name, String type, UnsignedInteger ttl, List<Map<String, Object>> rdatas) {
+    private void create(String name, String type, int ttl, List<Map<String, Object>> rdatas) {
         if (rdatas.size() > 0) {
             // adding requires the use of a special RR pool api, however we can
             // update them using the normal one..
