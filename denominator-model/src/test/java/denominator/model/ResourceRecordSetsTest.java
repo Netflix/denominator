@@ -3,6 +3,9 @@ package denominator.model;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.cname;
 import static denominator.model.ResourceRecordSets.ns;
+import static denominator.model.ResourceRecordSets.ptr;
+import static denominator.model.ResourceRecordSets.spf;
+import static denominator.model.ResourceRecordSets.txt;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -17,6 +20,9 @@ import com.google.common.collect.ImmutableSet;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import denominator.model.rdata.NSData;
+import denominator.model.rdata.PTRData;
+import denominator.model.rdata.SPFData;
+import denominator.model.rdata.TXTData;
 
 @Test
 public class ResourceRecordSetsTest {
@@ -61,7 +67,7 @@ public class ResourceRecordSetsTest {
 
     @DataProvider(name = "a")
     public Object[][] createData() {
-        Object[][] data = new Object[16][2];
+        Object[][] data = new Object[28][2];
         data[0][0] = a("www.denominator.io.", "1.1.1.1");
         data[0][1] = ResourceRecordSet.<AData> builder()
                                       .name("www.denominator.io.")
@@ -122,6 +128,51 @@ public class ResourceRecordSetsTest {
         data[14][1] = data[12][1];
         data[15][0] = ns("denominator.io.", 3600, ImmutableSet.of("ns.denominator.io."));
         data[15][1] = data[13][1];
+        data[16][0] = ptr("denominator.io.", "ptr.denominator.io.");
+        data[16][1] = ResourceRecordSet.<PTRData> builder()
+                                      .name("denominator.io.")
+                                      .type("PTR")
+                                      .add(PTRData.create("ptr.denominator.io.")).build();
+        data[17][0] = ptr("denominator.io.", 3600, "ptr.denominator.io.");
+        data[17][1] = ResourceRecordSet.<PTRData> builder()
+                                      .name("denominator.io.")
+                                      .type("PTR")
+                                      .ttl(3600)
+                                      .add(PTRData.create("ptr.denominator.io.")).build();
+        data[18][0] = ptr("denominator.io.", ImmutableSet.of("ptr.denominator.io."));
+        data[18][1] = data[16][1];
+        data[19][0] = ptr("denominator.io.", 3600, ImmutableSet.of("ptr.denominator.io."));
+        data[19][1] = data[17][1];
+        data[20][0] = txt("denominator.io.", "\"made in sweden\"");
+        data[20][1] = ResourceRecordSet.<TXTData> builder()
+                                      .name("denominator.io.")
+                                      .type("TXT")
+                                      .add(TXTData.create("\"made in sweden\"")).build();
+        data[21][0] = txt("denominator.io.", 3600, "\"made in sweden\"");
+        data[21][1] = ResourceRecordSet.<TXTData> builder()
+                                      .name("denominator.io.")
+                                      .type("TXT")
+                                      .ttl(3600)
+                                      .add(TXTData.create("\"made in sweden\"")).build();
+        data[22][0] = txt("denominator.io.", ImmutableSet.of("\"made in sweden\""));
+        data[22][1] = data[20][1];
+        data[23][0] = txt("denominator.io.", 3600, ImmutableSet.of("\"made in sweden\""));
+        data[23][1] = data[21][1];
+        data[24][0] = spf("denominator.io.", "\"v=spf1 a mx -all\"");
+        data[24][1] = ResourceRecordSet.<SPFData> builder()
+                                      .name("denominator.io.")
+                                      .type("SPF")
+                                      .add(SPFData.create("\"v=spf1 a mx -all\"")).build();
+        data[25][0] = spf("denominator.io.", 3600, "\"v=spf1 a mx -all\"");
+        data[25][1] = ResourceRecordSet.<SPFData> builder()
+                                      .name("denominator.io.")
+                                      .type("SPF")
+                                      .ttl(3600)
+                                      .add(SPFData.create("\"v=spf1 a mx -all\"")).build();
+        data[26][0] = spf("denominator.io.", ImmutableSet.of("\"v=spf1 a mx -all\""));
+        data[26][1] = data[24][1];
+        data[27][0] = spf("denominator.io.", 3600, ImmutableSet.of("\"v=spf1 a mx -all\""));
+        data[27][1] = data[25][1];        
         return data;
     }
 

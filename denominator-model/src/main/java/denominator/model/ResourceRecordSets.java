@@ -10,6 +10,9 @@ import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import denominator.model.rdata.NSData;
+import denominator.model.rdata.PTRData;
+import denominator.model.rdata.SPFData;
+import denominator.model.rdata.TXTData;
 
 /**
  * Static utility methods that build {@code ResourceRecordSet} instances.
@@ -299,11 +302,11 @@ public class ResourceRecordSets {
      * 
      * @param name
      *            ex. {@code denominator.io.}
-     * @param address
+     * @param nsdname
      *            ex. {@code ns1.denominator.io.}
      */
-    public static ResourceRecordSet<NSData> ns(String name, String address) {
-        return new NSBuilder().name(name).add(address).build();
+    public static ResourceRecordSet<NSData> ns(String name, String nsdname) {
+        return new NSBuilder().name(name).add(nsdname).build();
     }
 
     /**
@@ -314,11 +317,11 @@ public class ResourceRecordSets {
      *            ex. {@code denominator.io.}
      * @param ttl
      *            see {@link ResourceRecordSet#getTTL()}
-     * @param address
+     * @param nsdname
      *            ex. {@code ns1.denominator.io.}
      */
-    public static ResourceRecordSet<NSData> ns(String name, int ttl, String address) {
-        return new NSBuilder().name(name).ttl(ttl).add(address).build();
+    public static ResourceRecordSet<NSData> ns(String name, int ttl, String nsdname) {
+        return new NSBuilder().name(name).ttl(ttl).add(nsdname).build();
     }
 
     /**
@@ -327,12 +330,12 @@ public class ResourceRecordSets {
      * 
      * @param name
      *            ex. {@code denominator.io.}
-     * @param addresses
-     *            address values ex.
+     * @param nsdnames
+     *            nsdname values ex.
      *            {@code [ns1.denominator.io., ns2.denominator.io.]}
      */
-    public static ResourceRecordSet<NSData> ns(String name, Iterable<String> addresses) {
-        return new NSBuilder().name(name).addAll(addresses).build();
+    public static ResourceRecordSet<NSData> ns(String name, Iterable<String> nsdnames) {
+        return new NSBuilder().name(name).addAll(nsdnames).build();
     }
 
     /**
@@ -343,12 +346,12 @@ public class ResourceRecordSets {
      *            ex. {@code denominator.io.}
      * @param ttl
      *            see {@link ResourceRecordSet#getTTL()}
-     * @param addresses
-     *            address values ex.
+     * @param nsdnames
+     *            nsdname values ex.
      *            {@code [ns1.denominator.io., ns2.denominator.io.]}
      */
-    public static ResourceRecordSet<NSData> ns(String name, int ttl, Iterable<String> addresses) {
-        return new NSBuilder().name(name).ttl(ttl).addAll(addresses).build();
+    public static ResourceRecordSet<NSData> ns(String name, int ttl, Iterable<String> nsdnames) {
+        return new NSBuilder().name(name).ttl(ttl).addAll(nsdnames).build();
     }
 
     private static class NSBuilder extends StringRDataBuilder<NSData> {
@@ -358,6 +361,210 @@ public class ResourceRecordSets {
 
         public NSData apply(String input) {
             return NSData.create(input);
+        }
+    }
+
+    /**
+     * creates ptr set of ptr single {@link denominator.model.rdata.PTRData PTR}
+     * record for the specified name.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ptrdname
+     *            ex. {@code ptr1.denominator.io.}
+     */
+    public static ResourceRecordSet<PTRData> ptr(String name, String ptrdname) {
+        return new PTRBuilder().name(name).add(ptrdname).build();
+    }
+
+    /**
+     * creates ptr set of ptr single {@link denominator.model.rdata.PTRData PTR}
+     * record for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#getTTL()}
+     * @param ptrdname
+     *            ex. {@code ptr1.denominator.io.}
+     */
+    public static ResourceRecordSet<PTRData> ptr(String name, int ttl, String ptrdname) {
+        return new PTRBuilder().name(name).ttl(ttl).add(ptrdname).build();
+    }
+
+    /**
+     * creates ptr set of {@link denominator.model.rdata.PTRData PTR} records for
+     * the specified name.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ptrdname
+     *            ptrdname values ex.
+     *            {@code [ptr1.denominator.io., ptr2.denominator.io.]}
+     */
+    public static ResourceRecordSet<PTRData> ptr(String name, Iterable<String> ptrdnames) {
+        return new PTRBuilder().name(name).addAll(ptrdnames).build();
+    }
+
+    /**
+     * creates ptr set of {@link denominator.model.rdata.PTRData PTR} records for
+     * the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#getTTL()}
+     * @param ptrdname
+     *            ptrdname values ex.
+     *            {@code [ptr1.denominator.io., ptr2.denominator.io.]}
+     */
+    public static ResourceRecordSet<PTRData> ptr(String name, int ttl, Iterable<String> ptrdnames) {
+        return new PTRBuilder().name(name).ttl(ttl).addAll(ptrdnames).build();
+    }
+
+    private static class PTRBuilder extends StringRDataBuilder<PTRData> {
+        private PTRBuilder() {
+            type("PTR");
+        }
+
+        public PTRData apply(String input) {
+            return PTRData.create(input);
+        }
+    }
+
+    /**
+     * creates spf set of spf single {@link denominator.model.rdata.SPFData SPF}
+     * record for the specified name.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param spfdata
+     *            ex. {@code v=spf1 a mx -all}
+     */
+    public static ResourceRecordSet<SPFData> spf(String name, String spfdata) {
+        return new SPFBuilder().name(name).add(spfdata).build();
+    }
+
+    /**
+     * creates spf set of spf single {@link denominator.model.rdata.SPFData SPF}
+     * record for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#getTTL()}
+     * @param spfdata
+     *            ex. {@code v=spf1 a mx -all}
+     */
+    public static ResourceRecordSet<SPFData> spf(String name, int ttl, String spfdata) {
+        return new SPFBuilder().name(name).ttl(ttl).add(spfdata).build();
+    }
+
+    /**
+     * creates spf set of {@link denominator.model.rdata.SPFData SPF} records for
+     * the specified name.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param spfdata
+     *            spfdata values ex.
+     *            {@code [v=spf1 a mx -all, v=spf1 ipv6 -all]}
+     */
+    public static ResourceRecordSet<SPFData> spf(String name, Iterable<String> spfdata) {
+        return new SPFBuilder().name(name).addAll(spfdata).build();
+    }
+
+    /**
+     * creates spf set of {@link denominator.model.rdata.SPFData SPF} records for
+     * the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#getTTL()}
+     * @param spfdata
+     *            spfdata values ex.
+     *            {@code [v=spf1 a mx -all, v=spf1 ipv6 -all]}
+     */
+    public static ResourceRecordSet<SPFData> spf(String name, int ttl, Iterable<String> spfdata) {
+        return new SPFBuilder().name(name).ttl(ttl).addAll(spfdata).build();
+    }
+
+    private static class SPFBuilder extends StringRDataBuilder<SPFData> {
+        private SPFBuilder() {
+            type("SPF");
+        }
+
+        public SPFData apply(String input) {
+            return SPFData.create(input);
+        }
+    }
+
+    /**
+     * creates txt set of txt single {@link denominator.model.rdata.TXTData TXT}
+     * record for the specified name.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param txtdata
+     *            ex. {@code "made in sweden"}
+     */
+    public static ResourceRecordSet<TXTData> txt(String name, String txtdata) {
+        return new TXTBuilder().name(name).add(txtdata).build();
+    }
+
+    /**
+     * creates txt set of txt single {@link denominator.model.rdata.TXTData TXT}
+     * record for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#getTTL()}
+     * @param txtdata
+     *            ex. {@code "made in sweden"}
+     */
+    public static ResourceRecordSet<TXTData> txt(String name, int ttl, String txtdata) {
+        return new TXTBuilder().name(name).ttl(ttl).add(txtdata).build();
+    }
+
+    /**
+     * creates txt set of {@link denominator.model.rdata.TXTData TXT} records for
+     * the specified name.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param txtdata
+     *            txtdata values ex.
+     *            {@code ["made in sweden", "made in norway"]}
+     */
+    public static ResourceRecordSet<TXTData> txt(String name, Iterable<String> txtdata) {
+        return new TXTBuilder().name(name).addAll(txtdata).build();
+    }
+
+    /**
+     * creates txt set of {@link denominator.model.rdata.TXTData TXT} records for
+     * the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#getTTL()}
+     * @param txtdata
+     *            txtdata values ex.
+     *            {@code ["made in sweden", "made in norway"]}
+     */
+    public static ResourceRecordSet<TXTData> txt(String name, int ttl, Iterable<String> txtdata) {
+        return new TXTBuilder().name(name).ttl(ttl).addAll(txtdata).build();
+    }
+
+    private static class TXTBuilder extends StringRDataBuilder<TXTData> {
+        private TXTBuilder() {
+            type("TXT");
+        }
+
+        public TXTData apply(String input) {
+            return TXTData.create(input);
         }
     }
 }
