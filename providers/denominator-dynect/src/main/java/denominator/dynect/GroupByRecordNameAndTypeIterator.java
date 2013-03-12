@@ -9,7 +9,9 @@ import org.jclouds.dynect.v3.domain.Record;
 import org.jclouds.dynect.v3.domain.RecordId;
 import org.jclouds.dynect.v3.features.RecordApi;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.PeekingIterator;
+import com.google.common.primitives.UnsignedInteger;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
@@ -70,6 +72,16 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
             return api.getSOA(recordId.getFQDN(), recordId.getId());
         } else if ("SRV".equals(recordId.getType())) {
             return api.getSRV(recordId.getFQDN(), recordId.getId());
+        } else if ("SSHFP".equals(recordId.getType())) {
+            Record<? extends Map<String, Object>> sshFP = api.get(recordId);
+            if (sshFP == null)
+                return null;
+            // temporary until jclouds 1.6 rc2, as ints are coming out as doubles.
+            Map<String, Object> rdata = ImmutableMap.<String, Object> builder()
+                    .put("algorithm", UnsignedInteger.fromIntBits(Double.class.cast(sshFP.getRData().get("algorithm")).intValue()))
+                    .put("fptype", UnsignedInteger.fromIntBits(Double.class.cast(sshFP.getRData().get("fptype")).intValue()))
+                    .put("fingerprint", sshFP.getRData().get("fingerprint")).build();
+            return Record.builder().from(sshFP).ttl(sshFP.getTTL()).rdata(rdata).build();
         } else if ("TXT".equals(recordId.getType())) {
             return api.getTXT(recordId.getFQDN(), recordId.getId());
         } else {

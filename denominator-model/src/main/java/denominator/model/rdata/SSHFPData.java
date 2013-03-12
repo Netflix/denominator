@@ -17,7 +17,7 @@ import com.google.common.primitives.UnsignedInteger;
  * <pre>
  * SSHFPData rdata = SSHFPData.builder()
  *                            .algorithm(2)
- *                            .type(1)
+ *                            .fptype(1)
  *                            .fingerprint(&quot;123456789abcdef67890123456789abcdef67890&quot;).build();
  *  // or shortcut
  * SSHFPData rdata = SSHFPData.createDSA(&quot;123456789abcdef67890123456789abcdef67890&quot;);
@@ -31,28 +31,28 @@ public class SSHFPData extends ForwardingMap<String, Object> {
      * @param fingerprint {@code DSA} {@code SHA-1} fingerprint 
      */
     public static SSHFPData createDSA(String fingerprint) {
-        return builder().algorithm(1).type(2).fingerprint(fingerprint).build();
+        return builder().algorithm(2).fptype(1).fingerprint(fingerprint).build();
     }
 
     /**
      * @param fingerprint {@code RSA} {@code SHA-1} fingerprint 
      */
     public static SSHFPData createRSA(String fingerprint) {
-        return builder().algorithm(1).type(1).fingerprint(fingerprint).build();
+        return builder().algorithm(1).fptype(1).fingerprint(fingerprint).build();
     }
 
     private final UnsignedInteger algorithm;
-    private final UnsignedInteger type;
+    private final UnsignedInteger fptype;
     private final String fingerprint;
 
-    @ConstructorProperties({ "algorithm", "type", "fingerprint" })
-    private SSHFPData(UnsignedInteger algorithm, UnsignedInteger type, String fingerprint) {
+    @ConstructorProperties({ "algorithm", "fptype", "fingerprint" })
+    private SSHFPData(UnsignedInteger algorithm, UnsignedInteger fptype, String fingerprint) {
         this.algorithm = checkNotNull(algorithm, "algorithm of %s", fingerprint);
-        this.type = checkNotNull(type, "type of %s", fingerprint);
+        this.fptype = checkNotNull(fptype, "fptype of %s", fingerprint);
         this.fingerprint = checkNotNull(fingerprint, "fingerprint");
         this.delegate = ImmutableMap.<String, Object> builder()
                                     .put("algorithm", algorithm)
-                                    .put("type", type)
+                                    .put("fptype", fptype)
                                     .put("fingerprint", fingerprint).build();
     }
 
@@ -65,13 +65,13 @@ public class SSHFPData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * The fingerprint type octet describes the message-digest algorithm used to
+     * The fingerprint fptype octet describes the message-digest algorithm used to
      * calculate the fingerprint of the public key.
      * 
      * @return most often {@code 1} for {@code SHA-1}
      */
     public UnsignedInteger getType() {
-        return type;
+        return fptype;
     }
 
     /**
@@ -83,7 +83,7 @@ public class SSHFPData extends ForwardingMap<String, Object> {
 
     public final static class Builder {
         private UnsignedInteger algorithm;
-        private UnsignedInteger type;
+        private UnsignedInteger fptype;
         private String fingerprint;
 
         /**
@@ -104,16 +104,16 @@ public class SSHFPData extends ForwardingMap<String, Object> {
         /**
          * @see SSHFPData#getType()
          */
-        public SSHFPData.Builder type(UnsignedInteger type) {
-            this.type = type;
+        public SSHFPData.Builder fptype(UnsignedInteger fptype) {
+            this.fptype = fptype;
             return this;
         }
 
         /**
          * @see SSHFPData#getType()
          */
-        public SSHFPData.Builder type(int type) {
-            return type(UnsignedInteger.fromIntBits(type));
+        public SSHFPData.Builder fptype(int fptype) {
+            return fptype(UnsignedInteger.fromIntBits(fptype));
         }
 
         /**
@@ -125,7 +125,7 @@ public class SSHFPData extends ForwardingMap<String, Object> {
         }
 
         public SSHFPData build() {
-            return new SSHFPData(algorithm, type, fingerprint);
+            return new SSHFPData(algorithm, fptype, fingerprint);
         }
     }
 

@@ -1,5 +1,6 @@
 package denominator.route53;
 import static denominator.model.ResourceRecordSets.ns;
+import static denominator.model.ResourceRecordSets.txt;
 import static org.testng.Assert.assertEquals;
 
 import java.util.List;
@@ -51,5 +52,16 @@ public class ToDenominatorResourceRecordSetTest {
                 .build();
 
         assertEquals(ToDenominatorResourceRecordSet.INSTANCE.apply(input), ns("denominator.io", 3600, nameServers));
+    }
+
+    public void transformsTXTRecordSet() {
+        org.jclouds.route53.domain.ResourceRecordSet input = org.jclouds.route53.domain.ResourceRecordSet.builder()
+                .name("denominator.io")
+                .type("TXT")
+                .ttl(3600)
+                .add("\"foo bar\"")                
+                .build();
+
+        assertEquals(ToDenominatorResourceRecordSet.INSTANCE.apply(input), txt("denominator.io", 3600, "foo bar"));
     }
 }

@@ -88,6 +88,16 @@ public class ResourceTypeToValue extends ForwardingMap<String, UnsignedInteger> 
         AAAA(28),
 
         /**
+         * SSH Public Key Fingerprint
+         */
+        SSHFP(44),
+
+        /**
+         * Sender Policy Framework
+         */
+        SPF(99),
+
+        /**
          * Server Selection
          */
         SRV(33);

@@ -82,7 +82,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     private List<ResourceRecordMetadata> referencesByNameAndType(final String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        final UnsignedInteger typeValue = new ResourceTypeToValue().get(type);
+        final UnsignedInteger typeValue = checkNotNull(new ResourceTypeToValue().get(type), "typeValue for %s", type);
         // TODO: temporary until listByNameAndType() works with NS records where
         // name = zoneName
         return api.list().filter(new Predicate<ResourceRecordMetadata>() {

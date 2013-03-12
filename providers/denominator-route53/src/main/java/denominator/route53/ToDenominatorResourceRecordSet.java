@@ -99,7 +99,8 @@ enum ToDenominatorResourceRecordSet implements
                           .expire(UnsignedInteger.valueOf(parts.get(5)))
                           .minimum(UnsignedInteger.valueOf(parts.get(6))).build();
         } else if ("SPF".equals(type)) {
-            return SPFData.create(rdata);
+            // unquote
+            return SPFData.create(rdata.substring(1, rdata.length() - 1));
         } else if ("SRV".equals(type)) {
             ImmutableList<String> parts = split(rdata);
             return SRVData.builder()
@@ -108,7 +109,8 @@ enum ToDenominatorResourceRecordSet implements
                           .port(UnsignedInteger.valueOf(parts.get(2)))
                           .target(parts.get(3)).build();
         } else if ("TXT".equals(type)) {
-            return TXTData.create(rdata);
+            // unquote
+            return TXTData.create(rdata.substring(1, rdata.length() - 1));
         } else {
             return ImmutableMap.<String, Object> of("rdata", rdata);
         }
