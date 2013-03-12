@@ -29,21 +29,19 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
 
     final String name;
     final String type;
-    final Optional<UnsignedInteger> ttl;
+    final Optional<Integer> ttl;
     final ImmutableList<D> rdata;
 
     @ConstructorProperties({ "name", "type", "ttl", "rdata" })
-    ResourceRecordSet(String name, String type, Optional<UnsignedInteger> ttl, ImmutableList<D> rdata) {
+    ResourceRecordSet(String name, String type, Optional<Integer> ttl, ImmutableList<D> rdata) {
         this.name = checkNotNull(name, "name");
         this.type = checkNotNull(type, "type of %s", name);
         this.ttl = checkNotNull(ttl, "ttl of %s", name);
         this.rdata = checkNotNull(rdata, "rdata of %s", name);
         
         checkArgument(name.length() <= 255, "Name must be limited to 255 characters"); 
-        if (ttl.isPresent()) {
-            checkArgument(ttl.get().longValue() <= 0x7FFFFFFFL, // Per RFC 2181 
-                "Invalid ttl value: %s, must be 0-2147483647", ttl.get());
-        }
+        checkArgument(UnsignedInteger.fromIntBits(ttl.or(0)).longValue() <= 0x7FFFFFFFL, // Per RFC 2181 
+                "Invalid ttl value: %s, must be 0-2147483647", ttl);
     }
 
     /**
@@ -65,7 +63,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
      * the time interval that the resource record may be cached. Zero implies it
      * is not cached. Absent means default for the zone.
      */
-    public Optional<UnsignedInteger> getTTL() {
+    public Optional<Integer> getTTL() {
         return ttl;
     }
 

@@ -10,7 +10,6 @@ import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
 import org.jclouds.ultradns.ws.domain.RoundRobinPool;
 import org.testng.annotations.Test;
 
-import com.google.common.primitives.UnsignedInteger;
 
 
 @Test
@@ -36,11 +35,11 @@ public class UltraDNSPredicatesTest {
                                         .zoneId(aRecord.getGuid()).build();
 
     public void resourceTypeEqualToFalseOnDifferentType() {
-        assertFalse(UltraDNSPredicates.resourceTypeEqualTo(UnsignedInteger.fromIntBits(28)).apply(a));
+        assertFalse(UltraDNSPredicates.resourceTypeEqualTo(28).apply(a));
     }
 
     public void resourceTypeEqualToTrueOnSameType() {
-        assertTrue(UltraDNSPredicates.resourceTypeEqualTo(a.getType()).apply(a));
+        assertTrue(UltraDNSPredicates.resourceTypeEqualTo(a.getType().intValue()).apply(a));
     }
 
     public void recordGuidEqualToFalseOnDifferentGuid() {

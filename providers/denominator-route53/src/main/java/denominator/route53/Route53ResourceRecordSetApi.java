@@ -4,7 +4,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterables.filter;
-import static com.google.common.primitives.UnsignedInteger.fromIntBits;
 import static denominator.route53.ToDenominatorResourceRecordSet.isAlias;
 import static denominator.route53.ToRoute53ResourceRecordSet.toTextFormat;
 
@@ -18,6 +17,7 @@ import org.jclouds.route53.domain.ChangeBatch;
 import org.jclouds.route53.domain.HostedZone;
 import org.jclouds.route53.domain.ResourceRecordSetIterable.NextRecord;
 
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -68,14 +68,19 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      */
     @Override
     public void add(ResourceRecordSet<?> rrset) {
-        Optional<UnsignedInteger> ttlToApply = rrset.getTTL();
+        Optional<Integer> ttlToApply = rrset.getTTL();
 
         ChangeBatch.Builder changes = ChangeBatch.builder();
         Builder<String> values = ImmutableList.builder();
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = 
-                getRoute53RRSByNameAndType(rrset.getName(), rrset.getType());
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = getRoute53RRSByNameAndType(rrset.getName(),
+                rrset.getType());
         if (oldRRS.isPresent()) {
-            ttlToApply = ttlToApply.or(oldRRS.get().getTTL());
+            ttlToApply = ttlToApply.or(oldRRS.get().getTTL().transform(new Function<UnsignedInteger, Integer>() {
+                // temporary until jclouds 1.6 rc2
+                public Integer apply( UnsignedInteger input) {
+                    return Integer.valueOf(input.intValue());
+                }
+            }));
             changes.delete(oldRRS.get());
             values.addAll(oldRRS.get().getValues());
             values.addAll(filter(toTextFormat(rrset), not(in(oldRRS.get().getValues()))));
@@ -86,20 +91,20 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         changes.create(org.jclouds.route53.domain.ResourceRecordSet.builder()
                         .name(rrset.getName())
                         .type(rrset.getType())
-                        .ttl(ttlToApply.or(fromIntBits(300)))
+                        .ttl(ttlToApply.or(300))
                         .addAll(values.build()).build());
 
         route53RRsetApi.apply(changes.build());
     }
 
     @Override
-    public void applyTTLToNameAndType(UnsignedInteger ttl, String name, String type) {
+    public void applyTTLToNameAndType(int ttl, String name, String type) {
         checkNotNull(ttl, "ttl");
         Optional<org.jclouds.route53.domain.ResourceRecordSet> existing = getRoute53RRSByNameAndType(name, type);
         if (!existing.isPresent())
             return;
         org.jclouds.route53.domain.ResourceRecordSet rrset = existing.get();
-        if (rrset.getTTL().isPresent() && rrset.getTTL().get().equals(ttl))
+        if (rrset.getTTL().isPresent() && rrset.getTTL().get().intValue() == ttl)
             return;
         ChangeBatch.Builder changes = ChangeBatch.builder();
         changes.delete(rrset);
@@ -113,8 +118,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
 
         org.jclouds.route53.domain.ResourceRecordSet replacement = ToRoute53ResourceRecordSet.INSTANCE.apply(rrset);
 
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = 
-                getRoute53RRSByNameAndType(rrset.getName(), rrset.getType());
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = getRoute53RRSByNameAndType(rrset.getName(),
+                rrset.getType());
         if (oldRRS.isPresent()) {
             if (oldRRS.get().getTTL().equals(replacement.getTTL())
                     && oldRRS.get().getValues().equals(replacement.getValues()))
