@@ -23,23 +23,23 @@ import com.google.common.collect.ImmutableMap;
  */
 public class SPFData extends ForwardingMap<String, Object> {
 
-    public static SPFData create(String spfdata) {
-        return new SPFData(spfdata);
+    public static SPFData create(String txtdata) {
+        return new SPFData(txtdata);
     }
 
-    private final String spfdata;
+    private final String txtdata;
 
-    @ConstructorProperties("spfdata")
-    private SPFData(String spfdata) {
-        this.spfdata = checkNotNull(spfdata, "spfdata");
-        this.delegate = ImmutableMap.<String, Object> of("spfdata", spfdata);
+    @ConstructorProperties("txtdata")
+    private SPFData(String txtdata) {
+        this.txtdata = checkNotNull(txtdata, "txtdata");
+        this.delegate = ImmutableMap.<String, Object> of("txtdata", txtdata);
     }
 
     /**
      * One or more character-strings.
      */
-    public String getSpfdata() {
-        return spfdata;
+    public String getTxtdata() {
+        return txtdata;
     }
 
     // transient to avoid serializing by default, for example in json
