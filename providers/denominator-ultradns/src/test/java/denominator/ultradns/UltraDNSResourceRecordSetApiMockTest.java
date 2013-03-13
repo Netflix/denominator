@@ -6,6 +6,7 @@ import static denominator.model.ResourceRecordSets.aaaa;
 import static java.lang.String.format;
 import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -59,6 +60,50 @@ public class UltraDNSResourceRecordSetApiMockTest {
                                     .append(getResourceRecordsOfZoneResponseFooter).toString();
 
     @Test
+    public void listByNameWhenNoneMatch() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
+        server.play();
+
+        try {
+            UltraDNSResourceRecordSetApi api = mockUltraDNSResourceRecordSetApi(server);
+            assertFalse(api.listByName("www.foo.com.").hasNext());
+        } finally {
+            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
+            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+
+            server.shutdown();
+        }
+    }
+
+    private String aRecordTTLGuidAddressTemplate = "<ns2:ResourceRecord ZoneName=\"foo.com.\" Type=\"1\" DName=\"www.foo.com.\" TTL=\"%d\" Guid=\"%s\" ZoneId=\"0000000000000001\" LName=\"www.foo.com.\" Created=\"2009-10-12T12:02:23.000Z\" Modified=\"2011-09-27T23:49:22.000Z\"><ns2:InfoValues Info1Value=\"%s\"/></ns2:ResourceRecord>";
+
+    private String records1And2 = new StringBuilder(getResourceRecordsOfZoneResponseHeader)
+            .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "1.2.3.4"))
+            .append(format(aRecordTTLGuidAddressTemplate, 3600, "BBBBBBBBBBBB", "5.6.7.8"))
+            .append(getResourceRecordsOfZoneResponseFooter).toString();
+
+    @Test
+    public void listByNameWhenMatch() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(records1And2));
+        server.play();
+
+        try {
+            UltraDNSResourceRecordSetApi api = mockUltraDNSResourceRecordSetApi(server);
+            assertEquals(api.listByName("www.foo.com.").next(),
+                    a("www.foo.com.", 3600, ImmutableList.of("1.2.3.4", "5.6.7.8")));
+        } finally {
+            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
+            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+
+            server.shutdown();
+        }
+    }
+
+    @Test
     public void getByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
@@ -75,13 +120,6 @@ public class UltraDNSResourceRecordSetApiMockTest {
             server.shutdown();
         }
     }
-
-    private String aRecordTTLGuidAddressTemplate = "<ns2:ResourceRecord ZoneName=\"foo.com.\" Type=\"1\" DName=\"www.foo.com.\" TTL=\"%d\" Guid=\"%s\" ZoneId=\"0000000000000001\" LName=\"www.foo.com.\" Created=\"2009-10-12T12:02:23.000Z\" Modified=\"2011-09-27T23:49:22.000Z\"><ns2:InfoValues Info1Value=\"%s\"/></ns2:ResourceRecord>";
-
-    private String records1And2 = new StringBuilder(getResourceRecordsOfZoneResponseHeader)
-            .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "1.2.3.4"))
-            .append(format(aRecordTTLGuidAddressTemplate, 3600, "BBBBBBBBBBBB", "5.6.7.8"))
-            .append(getResourceRecordsOfZoneResponseFooter).toString();
 
     @Test
     public void getByNameAndTypeWhenPresent() throws IOException, InterruptedException {
