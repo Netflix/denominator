@@ -1,12 +1,15 @@
 package denominator;
 
 import static com.google.common.collect.Iterators.size;
+import static com.google.common.collect.Ordering.usingToString;
 import static java.lang.String.format;
 import static java.util.logging.Logger.getAnonymousLogger;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -17,6 +20,7 @@ import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.Lists;
 
 import denominator.model.ResourceRecordSet;
 
@@ -50,11 +54,46 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     }
 
     @Test
+    private void testListByName() {
+        skipIfNoCredentials();
+        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
+            String zoneName = zone.next();
+            Iterator<ResourceRecordSet<?>> rrsIterator = rrsApi(zoneName).list();
+            if (!rrsIterator.hasNext())
+                continue;
+            ResourceRecordSet<?> rrset = rrsIterator.next();
+            String name = rrset.getName();
+            List<ResourceRecordSet<?>> withName = Lists.newArrayList();
+            withName.add(rrset);
+            while (rrsIterator.hasNext()) {
+                rrset = rrsIterator.next();
+                if (!name.equalsIgnoreCase(rrset.getName()))
+                        break;
+                withName.add(rrset);
+            }
+            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(rrsApi(zoneName).listByName(name));
+            assertEquals(usingToString().immutableSortedCopy(fromApi), usingToString().immutableSortedCopy(withName));
+            break;
+        }
+    }
+
+    @Test
+    private void testListByNameWhenNotFound() {
+        skipIfNoCredentials();
+        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
+            String zoneName = zone.next();
+            assertFalse(rrsApi(zoneName).listByName("ARGHH." + zoneName).hasNext());
+            break;
+        }
+    }
+
+    @Test
     private void testGetByNameAndTypeWhenAbsent() {
         skipIfNoCredentials();
         for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
             String zoneName = zone.next();
             assertEquals(rrsApi(zoneName).getByNameAndType("ARGHH." + zoneName, "TXT"), Optional.absent());
+            break;
         }
     }
 

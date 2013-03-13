@@ -3,9 +3,12 @@ package denominator.ultradns;
 import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Ordering.usingToString;
+import static denominator.model.ResourceRecordSets.nameEqualTo;
+import static denominator.model.ResourceRecordSets.typeEqualTo;
 import static denominator.ultradns.UltraDNSFunctions.toRdataMap;
 
 import java.util.Iterator;
@@ -21,12 +24,12 @@ import org.jclouds.ultradns.ws.features.ResourceRecordApi;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
 
 import denominator.ResourceRecordSetApi;
 import denominator.ResourceTypeToValue;
 import denominator.model.ResourceRecordSet;
-import denominator.model.ResourceRecordSet.Builder;
 
 public final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSetApi {
     static final class Factory implements denominator.ResourceRecordSetApi.Factory {
@@ -61,26 +64,20 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     }
 
     @Override
-    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
-        List<ResourceRecordMetadata> references = referencesByNameAndType(name, type);
-        if (references.isEmpty())
-            return Optional.absent();
-
-        Optional<Integer> ttl = Optional.absent();
-        Builder<Map<String, Object>> builder = ResourceRecordSet.builder().name(name).type(type);
-
-        for (ResourceRecordMetadata reference : references) {
-            if (!ttl.isPresent())
-                ttl = Optional.of(reference.getRecord().getTTL().intValue());
-            ResourceRecord record = reference.getRecord();
-            builder.add(toRdataMap().apply(record));
-        }
-        return Optional.<ResourceRecordSet<?>> of(builder.ttl(ttl.get()).build());
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        checkNotNull(name, "name");
+        // TODO: temporary until listByNameAndType() works with NS records where
+        // name = zoneName
+        return Iterators.filter(list(), nameEqualTo(name));
     }
 
     @Override
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        throw new UnsupportedOperationException();
+    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
+        checkNotNull(name, "name");
+        checkNotNull(type, "type");
+        // TODO: temporary until listByNameAndType() works with NS records where
+        // name = zoneName
+        return Iterators.tryFind(list(), and(nameEqualTo(name), typeEqualTo(type)));
     }
 
     private List<ResourceRecordMetadata> referencesByNameAndType(final String name, String type) {
