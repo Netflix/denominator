@@ -88,7 +88,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         // name = zoneName
         return api.list().filter(new Predicate<ResourceRecordMetadata>() {
             public boolean apply(ResourceRecordMetadata in) {
-                return name.equals(in.getRecord().getName()) && typeValue == in.getRecord().getType().intValue();
+                return name.equals(in.getRecord().getName()) && typeValue == in.getRecord().getType();
             }
         }).toSortedList(usingToString());
     }
@@ -109,19 +109,19 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         for (ResourceRecordMetadata reference : references) {
             ResourceRecord record = reference.getRecord();
             if (!ttlToApply.isPresent())
-                ttlToApply = Optional.of(record.getTTL().intValue());
+                ttlToApply = Optional.of(record.getTTL());
             ResourceRecord updateTTL = record.toBuilder().ttl(ttlToApply.or(defaultTTL)).build();
 
             Map<String, Object> rdata = toRdataMap().apply(record);
             if (recordsLeftToCreate.contains(rdata)) {
                 recordsLeftToCreate.remove(rdata);
                 // all ok.
-                if (ttlToApply.get().intValue() == record.getTTL().intValue()) {
+                if (ttlToApply.get().intValue() == record.getTTL()) {
                     continue;
                 }
                 // update ttl of rdata in input
                 api.update(reference.getGuid(), updateTTL);
-            } else if (ttlToApply.get().intValue() != record.getTTL().intValue()) {
+            } else if (ttlToApply.get().intValue() != record.getTTL()) {
                 // update ttl of other record
                 api.update(reference.getGuid(), updateTTL);
             }
@@ -160,7 +160,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
             if (recordsLeftToCreate.contains(rdata)) {
                 recordsLeftToCreate.remove(rdata);
                 // all ok.
-                if (ttlToApply == record.getTTL().intValue()) {
+                if (ttlToApply == record.getTTL()) {
                     continue;
                 }
                 // update ttl of rdata in input

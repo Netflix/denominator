@@ -76,7 +76,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
         for (Record<?> existingRecord : existingRecords) {
             if (!ttl.isPresent())
-                ttl = Optional.of(existingRecord.getTTL().intValue());
+                ttl = Optional.of(existingRecord.getTTL());
             builder.add(existingRecord.getRData());
         }
         return Optional.<ResourceRecordSet<?>> of(builder.ttl(ttl.get()).build());
@@ -95,14 +95,14 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
         for (Record<?> existingRecord : existingRecords) {
             if (!ttlToApply.isPresent())
-                ttlToApply = Optional.of(existingRecord.getTTL().intValue());
+                ttlToApply = Optional.of(existingRecord.getTTL());
             if (recordsLeftToCreate.contains(existingRecord.getRData())) {
-                if (ttlToApply.get().intValue() == existingRecord.getTTL().intValue()) {
+                if (ttlToApply.get().intValue() == existingRecord.getTTL()) {
                     recordsLeftToCreate.remove(existingRecord.getRData());
                     continue;
                 }
                 api.getRecordApiForZone(zoneFQDN).scheduleDelete(existingRecord);
-            } else if (ttlToApply.get().intValue() != existingRecord.getTTL().intValue()) {
+            } else if (ttlToApply.get().intValue() != existingRecord.getTTL()) {
                 api.getRecordApiForZone(zoneFQDN).scheduleDelete(existingRecord);
                 recordsLeftToCreate.add(0, existingRecord.getRData());
             }
@@ -131,7 +131,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         List<Record<?>> recordsToRecreate = Lists.newArrayList(existingRecords);
 
         for (Record<?> existingRecord : existingRecords) {
-            if (ttl == existingRecord.getTTL().intValue()) {
+            if (ttl == existingRecord.getTTL()) {
                 recordsToRecreate.remove(existingRecord);
                 continue;
             }
@@ -162,7 +162,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
         for (Record<?> existingRecord : existingRecords) {
             if (recordsLeftToCreate.contains(existingRecord.getRData())
-                    && ttlToApply == existingRecord.getTTL().intValue()) {
+                    && ttlToApply == existingRecord.getTTL()) {
                 recordsLeftToCreate.remove(existingRecord.getRData());
                 continue;
             }

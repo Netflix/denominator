@@ -10,7 +10,6 @@ import org.jclouds.ultradns.ws.domain.ResourceRecord;
 import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
 
 import com.google.common.collect.PeekingIterator;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceTypeToValue;
 import denominator.model.ResourceRecordSet;
@@ -31,12 +30,11 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
     @Override
     public ResourceRecordSet<?> next() {
         ResourceRecord record = peekingIterator.next().getRecord();
-        UnsignedInteger typeCode = record.getType();
-        String type = new ResourceTypeToValue().inverse().get(Integer.valueOf(typeCode.intValue()));
+        String type = new ResourceTypeToValue().inverse().get(record.getType());
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
                                                                 .name(record.getName())
                                                                 .type(type)
-                                                                .ttl(record.getTTL().intValue());
+                                                                .ttl(record.getTTL());
 
         builder.add(toRdataMap().apply(record));
 
@@ -58,6 +56,6 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
     }
 
     static boolean fqdnAndTypeEquals(ResourceRecord actual, ResourceRecord expected) {
-        return actual.getName().equals(expected.getName()) && actual.getType().equals(expected.getType());
+        return actual.getName().equals(expected.getName()) && actual.getType() == expected.getType();
     }   
 }

@@ -16,7 +16,7 @@ import org.testng.annotations.Test;
 public class UltraDNSPredicatesTest {
 
     ResourceRecord a = ResourceRecord.rrBuilder().name("www.foo.com.")
-                                                 .type("A")
+                                                 .type(1)
                                                  .ttl(3600)
                                                  .rdata("1.1.1.1").build();
 
@@ -39,7 +39,7 @@ public class UltraDNSPredicatesTest {
     }
 
     public void resourceTypeEqualToTrueOnSameType() {
-        assertTrue(UltraDNSPredicates.resourceTypeEqualTo(a.getType().intValue()).apply(a));
+        assertTrue(UltraDNSPredicates.resourceTypeEqualTo(a.getType()).apply(a));
     }
 
     public void recordGuidEqualToFalseOnDifferentGuid() {

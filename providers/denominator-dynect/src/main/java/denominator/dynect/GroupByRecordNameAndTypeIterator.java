@@ -39,7 +39,7 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
                                                                 .name(record.getFQDN())
                                                                 .type(record.getType())
-                                                                .ttl(record.getTTL().intValue())
+                                                                .ttl(record.getTTL())
                                                                 .add(record.getRData());
         while (hasNext()) {
             RecordId next = peekingIterator.peek();
