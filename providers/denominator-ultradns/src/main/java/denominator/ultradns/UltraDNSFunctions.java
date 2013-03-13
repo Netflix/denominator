@@ -10,7 +10,6 @@ import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceTypeToValue;
 import denominator.model.rdata.AAAAData;
@@ -57,8 +56,7 @@ final class UltraDNSFunctions {
         @Override
         public Map<String, Object> apply(ResourceRecord in) {
             List<String> parts = in.getRData();
-            UnsignedInteger typeCode = in.getType();
-            String type = new ResourceTypeToValue().inverse().get(Integer.valueOf(typeCode.intValue()));
+            String type = new ResourceTypeToValue().inverse().get(in.getType());
             if ("A".equals(type)) {
                 return AData.create(parts.get(0));
             } else if ("AAAA".equals(type)) {

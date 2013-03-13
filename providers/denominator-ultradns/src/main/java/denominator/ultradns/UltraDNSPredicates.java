@@ -28,7 +28,7 @@ final class UltraDNSPredicates {
 
         @Override
         public boolean apply(ResourceRecord in) {
-            return typeValue == in.getType().intValue();
+            return typeValue == in.getType();
         }
 
         @Override
