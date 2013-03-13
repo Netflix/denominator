@@ -78,6 +78,11 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         return Optional.<ResourceRecordSet<?>> of(builder.ttl(ttl.get()).build());
     }
 
+    @Override
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        throw new UnsupportedOperationException();
+    }
+
     private List<ResourceRecordMetadata> referencesByNameAndType(final String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
