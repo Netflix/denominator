@@ -59,6 +59,11 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     }
 
     @Override
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
         List<Record<?>> existingRecords = existingRecordsByNameAndType(name, type);
         if (existingRecords.isEmpty())

@@ -60,6 +60,11 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         return getRoute53RRSByNameAndType(name, type).transform(ToDenominatorResourceRecordSet.INSTANCE);
     }
 
+    @Override
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * creates a record set, adding the {@code rdata} values in the
      * {@code rrset}. If the record set already exists, the old copy is deleted

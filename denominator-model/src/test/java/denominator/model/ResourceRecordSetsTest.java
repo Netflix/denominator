@@ -33,22 +33,30 @@ public class ResourceRecordSetsTest {
                                                      .ttl(3600)
                                                      .add(AData.create("1.1.1.1")).build();
 
-    public void nameAndTypeReturnsFalseOnNull() {
-        assertFalse(ResourceRecordSets.nameAndType(aRRS.getName(), aRRS.getType()).apply(null));
+    public void nameEqualToReturnsFalseOnNull() {
+        assertFalse(ResourceRecordSets.nameEqualTo(aRRS.getName()).apply(null));
     }
 
-    public void nameAndTypeReturnsFalseOnSameNameDifferentType() {
-        assertFalse(ResourceRecordSets.nameAndType(aRRS.getName(), "TXT").apply(aRRS));
+    public void nameEqualToReturnsFalseOnDifferentName() {
+        assertFalse(ResourceRecordSets.nameEqualTo("www.foo.com").apply(aRRS));
     }
 
-    public void nameAndTypeReturnsFalseOnSameTypeDifferentName() {
-        assertFalse(ResourceRecordSets.nameAndType("www.foo.com", aRRS.getType()).apply(aRRS));
+    public void nameEqualToReturnsTrueOnSameName() {
+        assertTrue(ResourceRecordSets.nameEqualTo(aRRS.getName()).apply(aRRS));
     }
 
-    public void nameAndTypeReturnsTrueOnSameNameAndType() {
-        assertTrue(ResourceRecordSets.nameAndType(aRRS.getName(), aRRS.getType()).apply(aRRS));
+    public void typeEqualToReturnsFalseOnNull() {
+        assertFalse(ResourceRecordSets.typeEqualTo(aRRS.getType()).apply(null));
     }
-    
+
+    public void typeEqualToReturnsFalseOnDifferentType() {
+        assertFalse(ResourceRecordSets.typeEqualTo("TXT").apply(aRRS));
+    }
+
+    public void typeEqualToReturnsTrueOnSameType() {
+        assertTrue(ResourceRecordSets.typeEqualTo(aRRS.getType()).apply(aRRS));
+    }
+
     public void containsRDataReturnsFalseOnNull() {
         assertFalse(ResourceRecordSets.containsRData(aRRS.get(0)).apply(null));
     }

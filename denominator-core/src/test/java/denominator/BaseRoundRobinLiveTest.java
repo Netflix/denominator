@@ -1,9 +1,11 @@
 package denominator;
 
+import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.collect.Iterators.any;
 import static com.google.common.collect.Maps.filterKeys;
-import static denominator.model.ResourceRecordSets.nameAndType;
+import static denominator.model.ResourceRecordSets.nameEqualTo;
+import static denominator.model.ResourceRecordSets.typeEqualTo;
 import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -198,7 +200,8 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
         String failureMessage = format("recordset(%s, %s) still exists in zone(%s)", recordName, recordSet.getType(),
                 zoneName);
         assertFalse(rrsApi(zoneName).getByNameAndType(recordName, recordSet.getType()).isPresent(), failureMessage);
-        assertFalse(any(rrsApi(zoneName).list(), nameAndType(recordName, recordSet.getType())), failureMessage);
+        assertFalse(any(rrsApi(zoneName).list(), and(nameEqualTo(recordName), typeEqualTo(recordSet.getType()))),
+                failureMessage);
 
         // test no exception if re-applied
         rrsApi(zoneName).deleteByNameAndType(recordName, recordSet.getType());

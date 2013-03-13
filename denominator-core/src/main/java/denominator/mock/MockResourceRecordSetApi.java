@@ -2,12 +2,14 @@ package denominator.mock;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.FluentIterable.from;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Ordering.usingToString;
-import static denominator.model.ResourceRecordSets.nameAndType;
+import static denominator.model.ResourceRecordSets.nameEqualTo;
+import static denominator.model.ResourceRecordSets.typeEqualTo;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -62,7 +64,13 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        return from(data.get(zoneName)).firstMatch(nameAndType(name, type));
+        return from(data.get(zoneName)).firstMatch(and(nameEqualTo(name), typeEqualTo(type)));
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        checkNotNull(name, "name");
+        return from(data.get(zoneName)).filter(nameEqualTo(name)).iterator();
     }
 
     @Override
