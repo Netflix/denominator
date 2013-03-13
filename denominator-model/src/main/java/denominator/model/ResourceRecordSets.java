@@ -25,26 +25,21 @@ public class ResourceRecordSets {
 
     /**
      * evaluates to true if the input {@link ResourceRecordSet} exists with
-     * {@link ResourceRecordSet#getName() name} and
-     * {@link ResourceRecordSet#getName() type} corresponding to parameters.
+     * {@link ResourceRecordSet#getType() type} corresponding to the
+     * {@code type} parameter.
      * 
-     * @param name
-     *            the {@link ResourceRecordSet#getName() name} of the desired
-     *            record set
      * @param type
      *            the {@link ResourceRecordSet#getType() type} of the desired
      *            record set
      */
-    public static Predicate<ResourceRecordSet<?>> nameAndType(String name, String type) {
-        return new NameAndTypeEquals(name, type);
+    public static Predicate<ResourceRecordSet<?>> typeEqualTo(String type) {
+        return new TypeEqualToPredicate(type);
     }
 
-    private static final class NameAndTypeEquals implements Predicate<ResourceRecordSet<?>> {
-        private final String name;
+    private static final class TypeEqualToPredicate implements Predicate<ResourceRecordSet<?>> {
         private final String type;
 
-        public NameAndTypeEquals(String name, String type) {
-            this.name = checkNotNull(name, "name");
+        public TypeEqualToPredicate(String type) {
             this.type = checkNotNull(type, "type");
         }
 
@@ -52,12 +47,45 @@ public class ResourceRecordSets {
         public boolean apply(ResourceRecordSet<?> input) {
             if (input == null)
                 return false;
-            return name.equals(input.getName()) && type.equals(input.getType());
+            return type.equals(input.getType());
         }
 
         @Override
         public String toString() {
-            return "nameAndTypeEquals(" + name + ", " + type + ")";
+            return "TypeEqualTo(" + type + ")";
+        }
+    }
+
+    /**
+     * evaluates to true if the input {@link ResourceRecordSet} exists with
+     * {@link ResourceRecordSet#getName() name} corresponding to the
+     * {@code name} parameter.
+     * 
+     * @param name
+     *            the {@link ResourceRecordSet#getName() name} of the desired
+     *            record set
+     */
+    public static Predicate<ResourceRecordSet<?>> nameEqualTo(String name) {
+        return new NameEqualToPredicate(name);
+    }
+
+    private static final class NameEqualToPredicate implements Predicate<ResourceRecordSet<?>> {
+        private final String name;
+
+        public NameEqualToPredicate(String name) {
+            this.name = checkNotNull(name, "name");
+        }
+
+        @Override
+        public boolean apply(ResourceRecordSet<?> input) {
+            if (input == null)
+                return false;
+            return name.equals(input.getName());
+        }
+
+        @Override
+        public String toString() {
+            return "NameEqualTo(" + name + ")";
         }
     }
 

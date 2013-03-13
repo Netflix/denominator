@@ -1,16 +1,18 @@
 package denominator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.Iterators.any;
 import static com.google.common.io.Closeables.close;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.aaaa;
 import static denominator.model.ResourceRecordSets.cname;
-import static denominator.model.ResourceRecordSets.nameAndType;
+import static denominator.model.ResourceRecordSets.nameEqualTo;
 import static denominator.model.ResourceRecordSets.ns;
 import static denominator.model.ResourceRecordSets.ptr;
 import static denominator.model.ResourceRecordSets.spf;
 import static denominator.model.ResourceRecordSets.txt;
+import static denominator.model.ResourceRecordSets.typeEqualTo;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
 import static org.testng.Assert.assertTrue;
@@ -102,7 +104,7 @@ abstract class BaseProviderLiveTest {
     }
 
     protected void skipIfRRSetExists(String zoneName, String name, String type) {
-        if (any(rrsApi(zoneName).list(), nameAndType(name, type)))
+        if (any(rrsApi(zoneName).list(), and(nameEqualTo(name), typeEqualTo(type))))
             throw new SkipException(format("recordset with name %s and type %s already exists", name, type));
     }
 

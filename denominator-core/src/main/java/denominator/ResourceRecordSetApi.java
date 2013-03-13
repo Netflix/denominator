@@ -22,6 +22,15 @@ public interface ResourceRecordSetApi {
     Iterator<ResourceRecordSet<?>> list();
 
     /**
+     * a listing of all resource record sets which have the specified name.
+     * 
+     * @return iterator which is lazy where possible, empty if there are no records with that name.
+     * @throws IllegalArgumentException
+     *             if the {@code zoneName} is not found.
+     */
+    Iterator<ResourceRecordSet<?>> listByName(String name);
+
+    /**
      * retrieve a resource record set by name and type.
      * 
      * @param name
