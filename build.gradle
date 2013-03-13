@@ -8,7 +8,8 @@ buildscript {
 
 allprojects {
     repositories { mavenLocal()
-                   mavenCentral() }
+                   mavenCentral()
+                   maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }}
 }
 
 apply from: file('gradle/convention.gradle')

@@ -17,12 +17,10 @@ import org.jclouds.route53.domain.ChangeBatch;
 import org.jclouds.route53.domain.HostedZone;
 import org.jclouds.route53.domain.ResourceRecordSetIterable.NextRecord;
 
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -80,12 +78,7 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = getRoute53RRSByNameAndType(rrset.getName(),
                 rrset.getType());
         if (oldRRS.isPresent()) {
-            ttlToApply = ttlToApply.or(oldRRS.get().getTTL().transform(new Function<UnsignedInteger, Integer>() {
-                // temporary until jclouds 1.6 rc2
-                public Integer apply( UnsignedInteger input) {
-                    return Integer.valueOf(input.intValue());
-                }
-            }));
+            ttlToApply = ttlToApply.or(oldRRS.get().getTTL());
             changes.delete(oldRRS.get());
             values.addAll(oldRRS.get().getValues());
             values.addAll(filter(toTextFormat(rrset), not(in(oldRRS.get().getValues()))));

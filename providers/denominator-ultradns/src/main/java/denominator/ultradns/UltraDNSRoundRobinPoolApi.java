@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.ResourceTypeToValue;
 
@@ -48,9 +47,9 @@ class UltraDNSRoundRobinPoolApi {
             String recordId = null;
             String address = rdata.get("address").toString();
             if (type.equals("A")) {
-                recordId = roundRobinPoolApi.addARecordWithAddressAndTTL(poolId, address, UnsignedInteger.fromIntBits(ttl));
+                recordId = roundRobinPoolApi.addARecordWithAddressAndTTL(poolId, address, ttl);
             } else {
-                recordId = roundRobinPoolApi.addAAAARecordWithAddressAndTTL(poolId, address, UnsignedInteger.fromIntBits(ttl));
+                recordId = roundRobinPoolApi.addAAAARecordWithAddressAndTTL(poolId, address, ttl);
             }
             LOGGER.debug("record ({}) created with id({})", address, recordId);
         }
