@@ -35,13 +35,12 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
     @ConstructorProperties({ "name", "type", "ttl", "rdata" })
     ResourceRecordSet(String name, String type, Optional<Integer> ttl, ImmutableList<D> rdata) {
         this.name = checkNotNull(name, "name");
-        this.type = checkNotNull(type, "type of %s", name);
-        this.ttl = checkNotNull(ttl, "ttl of %s", name);
-        this.rdata = checkNotNull(rdata, "rdata of %s", name);
-        
         checkArgument(name.length() <= 255, "Name must be limited to 255 characters"); 
-        checkArgument(UnsignedInteger.fromIntBits(ttl.or(0)).longValue() <= 0x7FFFFFFFL, // Per RFC 2181 
-                "Invalid ttl value: %s, must be 0-2147483647", ttl);
+        this.type = checkNotNull(type, "type of %s", name);
+        this.ttl = ttl != null ? ttl : Optional.<Integer> absent(); //temporary until jcloud 1.6.0-rc.2
+        checkArgument(UnsignedInteger.fromIntBits(this.ttl.or(0)).longValue() <= 0x7FFFFFFFL, // Per RFC 2181 
+                "Invalid ttl value: %s, must be 0-2147483647", this.ttl);
+        this.rdata = checkNotNull(rdata, "rdata of %s", name);
     }
 
     /**
