@@ -72,3 +72,12 @@ Ex.
 ```
 ./denominator -p route53 zone list
 ```
+### EC2 Instance Metadata
+When running on an ec2 instance, you can use shortcuts to supply `A` or `CNAME` record data from instance metadata.
+
+Ex.
+```
+$ ./denominator -p route53 record -z myzone.com. add -n wonky.myzone.com. -t A --ec2-public-ipv4
+;; in zone myzone.com. adding to rrset wonky.myzone.com. A values: [{address=75.101.168.33}]
+;; ok
+```
