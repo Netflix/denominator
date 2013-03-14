@@ -20,6 +20,7 @@ import org.jclouds.route53.domain.ResourceRecordSetIterable.NextRecord;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
@@ -39,9 +40,13 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      */
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
-        return route53RRsetApi.list().concat().filter(not(isAlias()))
-                .transform(ToDenominatorResourceRecordSet.INSTANCE).iterator();
+        Iterator<ResourceRecordSet<?>> iterator = route53RRsetApi.list().concat()
+                                                                 .filter(not(isAlias()))
+                                                                 .transform(ToDenominatorResourceRecordSet.INSTANCE)
+                                                                 .iterator();
+        return new GroupByRecordNameAndTypeIterator(iterator);
     }
+
 
     /**
      * lists and lazily transforms all record sets for a name which are not
@@ -49,9 +54,24 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      */
     @Override
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        checkNotNull(name, "name");
-        return route53RRsetApi.listAt(NextRecord.name(name)).filter(and(not(isAlias()), nameEqualTo(name)))
-                .transform(ToDenominatorResourceRecordSet.INSTANCE).iterator();
+        Iterator<ResourceRecordSet<?>> iterator = route53RRsetApi.listAt(NextRecord.name(name))
+                                                                 .filter(and(not(isAlias()), nameEqualTo(name)))
+                                                                 .transform(ToDenominatorResourceRecordSet.INSTANCE)
+                                                                 .iterator();
+        return new GroupByRecordNameAndTypeIterator(iterator);
+    }
+
+    @Override
+    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
+        List<ResourceRecordSet<?>> matches = filterRoute53RRSByNameAndType(name, type).transform(
+                ToDenominatorResourceRecordSet.INSTANCE).toList();
+        switch (matches.size()) {
+        case 0:
+            return Optional.absent();
+        case 1:
+            return Optional.<ResourceRecordSet<?>> of(matches.get(0));
+        }
+        return Optional.<ResourceRecordSet<?>> of(new GroupByRecordNameAndTypeIterator(matches.iterator()).next());
     }
 
     /**
@@ -59,16 +79,9 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      * {@code type}.
      */
     @SuppressWarnings("unchecked")
-    Optional<org.jclouds.route53.domain.ResourceRecordSet> getRoute53RRSByNameAndType(String name, String type) {
-        checkNotNull(name, "name");
-        checkNotNull(type, "type");
-        return route53RRsetApi.listAt(NextRecord.nameAndType(name, type))
-                .filter(and(not(isAlias()), nameEqualTo(name), typeEqualTo(type))).first();
-    }
-
-    @Override
-    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
-        return getRoute53RRSByNameAndType(name, type).transform(ToDenominatorResourceRecordSet.INSTANCE);
+    FluentIterable<org.jclouds.route53.domain.ResourceRecordSet> filterRoute53RRSByNameAndType(String name, String type) {
+        return route53RRsetApi.listAt(NextRecord.nameAndType(name, type)).filter(
+                and(not(isAlias()), nameEqualTo(name), typeEqualTo(type)));
     }
 
     /**
@@ -83,8 +96,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
 
         ChangeBatch.Builder changes = ChangeBatch.builder();
         Builder<String> values = ImmutableList.builder();
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = getRoute53RRSByNameAndType(rrset.getName(),
-                rrset.getType());
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.getName(),
+                rrset.getType()).first();
         if (oldRRS.isPresent()) {
             ttlToApply = ttlToApply.or(oldRRS.get().getTTL());
             changes.delete(oldRRS.get());
@@ -106,7 +119,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
     @Override
     public void applyTTLToNameAndType(int ttl, String name, String type) {
         checkNotNull(ttl, "ttl");
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> existing = getRoute53RRSByNameAndType(name, type);
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> existing = filterRoute53RRSByNameAndType(name, type)
+                .first();
         if (!existing.isPresent())
             return;
         org.jclouds.route53.domain.ResourceRecordSet rrset = existing.get();
@@ -124,8 +138,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
 
         org.jclouds.route53.domain.ResourceRecordSet replacement = ToRoute53ResourceRecordSet.INSTANCE.apply(rrset);
 
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = getRoute53RRSByNameAndType(rrset.getName(),
-                rrset.getType());
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.getName(),
+                rrset.getType()).first();
         if (oldRRS.isPresent()) {
             if (oldRRS.get().getTTL().equals(replacement.getTTL())
                     && oldRRS.get().getValues().equals(replacement.getValues()))
@@ -145,8 +159,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      */
     @Override
     public void remove(ResourceRecordSet<?> rrset) {
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = 
-                getRoute53RRSByNameAndType(rrset.getName(), rrset.getType());
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.getName(),
+                rrset.getType()).first();
         if (!oldRRS.isPresent())
             return;
 
@@ -173,7 +187,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
 
     @Override
     public void deleteByNameAndType(String name, String type) {
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = getRoute53RRSByNameAndType(name, type);
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(name, type)
+                .first();
         if (!oldRRS.isPresent())
             return;
         route53RRsetApi.delete(oldRRS.get());

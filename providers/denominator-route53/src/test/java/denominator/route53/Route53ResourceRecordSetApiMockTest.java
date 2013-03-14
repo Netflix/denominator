@@ -2,6 +2,7 @@ package denominator.route53;
 
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
 import static denominator.model.ResourceRecordSets.a;
+import static denominator.model.ResourceRecordSets.cname;
 import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -38,6 +39,68 @@ public class Route53ResourceRecordSetApiMockTest {
                              .modules(modules)
                              .build(Route53ApiMetadata.CONTEXT_TOKEN).getApi()
                              .getResourceRecordSetApiForHostedZone("Z1PA6795UKMFR9");
+    }
+
+    String weightedRecords = "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.foo.com.</Name><Type>CNAME</Type><SetIdentifier>Route53Service:us-east-1:PLATFORMSERVICE:i-7f0aec0d:20130313205017</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www1.foo.com.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet><ResourceRecordSet><Name>www.foo.com.</Name><Type>CNAME</Type><SetIdentifier>Route53Service:us-east-1:PLATFORMSERVICE:i-fbe41089:20130312203418</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www2.foo.com.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
+
+    @Test
+    public void listWeightedRecordSubsetsAggregateOnNameAndType() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(weightedRecords));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            assertEquals(api.list().next(),
+                    cname("www.foo.com.", 0, ImmutableList.of("www1.foo.com.", "www2.foo.com.")));
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void listByNameWeightedRecordSubsetsAggregateOnNameAndType() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(weightedRecords));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            assertEquals(api.listByName("www.foo.com.").next(),
+                    cname("www.foo.com.", 0, ImmutableList.of("www1.foo.com.", "www2.foo.com.")));
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com. HTTP/1.1");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void getByNameAndTypeWeightedRecordSubsetsAggregateOnNameAndType() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(weightedRecords));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            assertEquals(api.getByNameAndType("www.foo.com.", "CNAME").get(),
+                    cname("www.foo.com.", 0, ImmutableList.of("www1.foo.com.", "www2.foo.com.")));
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com.&type=CNAME HTTP/1.1");
+
+            server.shutdown();
+        }
     }
 
     String noRecords = "<ListResourceRecordSetsResponse><ResourceRecordSets></ResourceRecordSets></ListResourceRecordSetsResponse>";
