@@ -1,6 +1,7 @@
 package denominator.route53;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterables.filter;
@@ -43,24 +44,31 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
     }
 
     /**
+     * lists and lazily transforms all record sets for a name which are not
+     * aliases into denominator format.
+     */
+    @Override
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        checkNotNull(name, "name");
+        return route53RRsetApi.listAt(NextRecord.name(name)).filter(and(not(isAlias()), nameEqualTo(name)))
+                .transform(ToDenominatorResourceRecordSet.INSTANCE).iterator();
+    }
+
+    /**
      * for efficiency, starts the list at the specified {@code name} and
      * {@code type}.
      */
+    @SuppressWarnings("unchecked")
     Optional<org.jclouds.route53.domain.ResourceRecordSet> getRoute53RRSByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        return route53RRsetApi.listAt(NextRecord.nameAndType(name, type)).filter(not(isAlias()))
-                .firstMatch(new Route53NameAndTypeEquals(name, type));
+        return route53RRsetApi.listAt(NextRecord.nameAndType(name, type))
+                .filter(and(not(isAlias()), nameEqualTo(name), typeEqualTo(type))).first();
     }
 
     @Override
     public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
         return getRoute53RRSByNameAndType(name, type).transform(ToDenominatorResourceRecordSet.INSTANCE);
-    }
-
-    @Override
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        throw new UnsupportedOperationException();
     }
 
     /**
@@ -201,23 +209,47 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         };
     }
 
-    private static class Route53NameAndTypeEquals implements Predicate<org.jclouds.route53.domain.ResourceRecordSet> {
+    public static Predicate<org.jclouds.route53.domain.ResourceRecordSet> nameEqualTo(String name) {
+        return new Route53NameEqualToPredicate(name);
+    }
+
+    private static class Route53NameEqualToPredicate implements Predicate<org.jclouds.route53.domain.ResourceRecordSet> {
         private final String name;
+
+        private Route53NameEqualToPredicate(String name) {
+            this.name = checkNotNull(name, "name");
+        }
+
+        @Override
+        public boolean apply(org.jclouds.route53.domain.ResourceRecordSet input) {
+            return name.equals(input.getName());
+        }
+
+        @Override
+        public String toString() {
+            return "NameEqualTo(" + name + ")";
+        }
+    }
+
+    public static Predicate<org.jclouds.route53.domain.ResourceRecordSet> typeEqualTo(String type) {
+        return new Route53TypeEqualToPredicate(type);
+    }
+
+    private static class Route53TypeEqualToPredicate implements Predicate<org.jclouds.route53.domain.ResourceRecordSet> {
         private final String type;
 
-        private Route53NameAndTypeEquals(String name, String type) {
-            this.name = checkNotNull(name, "name");
+        private Route53TypeEqualToPredicate(String type) {
             this.type = checkNotNull(type, "type");
         }
 
         @Override
         public boolean apply(org.jclouds.route53.domain.ResourceRecordSet input) {
-            return name.equals(input.getName()) && type.equals(input.getType());
+            return type.equals(input.getType());
         }
 
         @Override
         public String toString() {
-            return "nameAndTypeEquals(" + name + ", " + type + ")";
+            return "TypeEqualTo(" + type + ")";
         }
     }
 }
