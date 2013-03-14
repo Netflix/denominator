@@ -4,6 +4,7 @@ import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor
 import static denominator.model.ResourceRecordSets.a;
 import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -62,25 +63,6 @@ public class Route53ResourceRecordSetApiMockTest {
             RecordedRequest createRRSet = server.takeRequest();
             assertEquals(createRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
             assertEquals(new String(createRRSet.getBody()), createARecordSet);
-
-            server.shutdown();
-        }
-    }
-
-    @Test
-    public void getByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
-        server.play();
-
-        try {
-            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
-                    .toString()));
-            assertEquals(api.getByNameAndType("www.foo.com.", "A"), Optional.absent());
-        } finally {
-            RecordedRequest listNameAndType = server.takeRequest();
-            assertEquals(listNameAndType.getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com.&type=A HTTP/1.1");
 
             server.shutdown();
         }
@@ -254,6 +236,45 @@ public class Route53ResourceRecordSetApiMockTest {
     }
 
     @Test
+    public void listByNameWhenPresent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(twoRecords));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            assertEquals(api.listByName("www.foo.com.").next(),
+                    a("www.foo.com.", 3600, ImmutableList.of("1.2.3.4", "5.6.7.8")));
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com. HTTP/1.1");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void listByNameWhenAbsent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            assertFalse(api.listByName("www.foo.com.").hasNext());
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com. HTTP/1.1");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
     public void getByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(twoRecords));
@@ -264,6 +285,25 @@ public class Route53ResourceRecordSetApiMockTest {
                     .toString()));
             assertEquals(api.getByNameAndType("www.foo.com.", "A").get(),
                     a("www.foo.com.", 3600, ImmutableList.of("1.2.3.4", "5.6.7.8")));
+        } finally {
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.foo.com.&type=A HTTP/1.1");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void getByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
+        server.play();
+
+        try {
+            Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
+                    .toString()));
+            assertEquals(api.getByNameAndType("www.foo.com.", "A"), Optional.absent());
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
