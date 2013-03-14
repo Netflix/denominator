@@ -47,9 +47,15 @@ class ResourceRecordSetCommands {
 
     @Command(name = "list", description = "Lists the record record sets present in this zone")
     public static class ResourceRecordSetList extends ResourceRecordSetCommand {
+        @Option(type = OptionType.COMMAND, name = { "-n", "--name" }, description = "name of the record sets. ex. www.denominator.io.")
+        public String name;
 
         public Iterator<String> doRun(DNSApiManager mgr) {
-            Iterator<ResourceRecordSet<?>> list = mgr.getApi().getResourceRecordSetApiForZone(zoneName).list();
+            Iterator<ResourceRecordSet<?>> list;
+            if (name != null)
+                list = mgr.getApi().getResourceRecordSetApiForZone(zoneName).listByName(name);
+            else
+                list = mgr.getApi().getResourceRecordSetApiForZone(zoneName).list();
             return transform(list, ResourceRecordSetToString.INSTANCE);
         }
     }

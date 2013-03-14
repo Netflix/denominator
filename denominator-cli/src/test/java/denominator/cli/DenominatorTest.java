@@ -58,6 +58,16 @@ public class DenominatorTest {
                 "www2.denominator.io.                              A      3600  2.2.2.2"));
     }
 
+    @Test(description = "denominator -p mock record -z denominator.io. list -n www1.denominator.io.")
+    public void testResourceRecordSetListByName() {
+        ResourceRecordSetList command = new ResourceRecordSetList();
+        command.zoneName = "denominator.io.";
+        command.name = "www1.denominator.io.";
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                "www1.denominator.io.                              A      3600  1.1.1.1",
+                "www1.denominator.io.                              A      3600  1.1.1.2"));
+    }
+
     @Test(description = "denominator -p mock record -z denominator.io. get -n www1.denominator.io. -t A ")
     public void testResourceRecordSetGetWhenPresent() {
         ResourceRecordSetGet command = new ResourceRecordSetGet();
