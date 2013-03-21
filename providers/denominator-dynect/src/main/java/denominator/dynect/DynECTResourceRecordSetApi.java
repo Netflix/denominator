@@ -53,14 +53,13 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
-        Iterator<RecordId> orderedKeys = api.getRecordApiForZone(zoneFQDN).list().toSortedList(usingToString())
-                .iterator();
-        return filter(new GroupByRecordNameAndTypeIterator(api.getRecordApiForZone(zoneFQDN), orderedKeys), notNull());
+        return groupByRecordNameAndType(api.getRecordApiForZone(zoneFQDN).list());
     }
 
     @Override
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        throw new UnsupportedOperationException();
+    public Iterator<ResourceRecordSet<?>> listByName(String fqdn) {
+        checkNotNull(fqdn, "fqdn was null");
+        return groupByRecordNameAndType(api.getRecordApiForZone(zoneFQDN).listByFQDN(fqdn));
     }
 
     @Override
@@ -222,6 +221,11 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
             api.getRecordApiForZone(zoneFQDN).scheduleDelete(key);
         }
         api.getZoneApi().publish(zoneFQDN);
+    }
+
+    private Iterator<ResourceRecordSet<?>> groupByRecordNameAndType(FluentIterable<RecordId> recordIds) {
+        Iterator<RecordId> orderedKeys = recordIds.toSortedList(usingToString()).iterator();
+        return filter(new GroupByRecordNameAndTypeIterator(api.getRecordApiForZone(zoneFQDN), orderedKeys), notNull());
     }
 
     private FluentIterable<RecordId> exisingRecordIdsByNameAndType(String name, String type) {

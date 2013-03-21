@@ -4,6 +4,7 @@ import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor
 import static denominator.model.ResourceRecordSets.a;
 import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
 import java.util.Properties;
@@ -70,27 +71,6 @@ public class DynECTResourceRecordSetApiMockTest {
             RecordedRequest publish = server.takeRequest();
             assertEquals(publish.getRequestLine(), "PUT /Zone/foo.com HTTP/1.1");
             assertEquals(new String(publish.getBody()), "{\"publish\":true}");
-
-            server.shutdown();
-        }
-    }
-
-    @Test
-    public void getByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
-        server.play();
-
-        try {
-            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
-                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            assertEquals(api.getByNameAndType("www.foo.com", "A"), Optional.absent());
-        } finally {
-            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-
-            RecordedRequest listNameAndType = server.takeRequest();
-            assertEquals(listNameAndType.getRequestLine(), "GET /ARecord/foo.com/www.foo.com HTTP/1.1");
 
             server.shutdown();
         }
@@ -380,6 +360,57 @@ public class DynECTResourceRecordSetApiMockTest {
     }
 
     @Test
+    public void listByNameWhenPresent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordIdsWithRecords1And2));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(record1Result));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(record2Result));
+        server.play();
+
+        try {
+            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
+                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
+            assertEquals(api.listByName("www.foo.com").next(),
+                    a("www.foo.com", 3600, ImmutableList.of("1.2.3.4", "5.6.7.8")));
+        } finally {
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+
+            RecordedRequest listByFQDN = server.takeRequest();
+            assertEquals(listByFQDN.getRequestLine(), "GET /AllRecord/foo.com/www.foo.com HTTP/1.1");
+
+            RecordedRequest getRecord1 = server.takeRequest();
+            assertEquals(getRecord1.getRequestLine(), "GET /ARecord/foo.com/www.foo.com/1 HTTP/1.1");
+
+            RecordedRequest getRecord2 = server.takeRequest();
+            assertEquals(getRecord2.getRequestLine(), "GET /ARecord/foo.com/www.foo.com/2 HTTP/1.1");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void listByNameWhenAbsent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.play();
+
+        try {
+            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
+                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
+            assertFalse(api.listByName("www.foo.com").hasNext());
+        } finally {
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+
+            RecordedRequest listByFQDN = server.takeRequest();
+            assertEquals(listByFQDN.getRequestLine(), "GET /AllRecord/foo.com/www.foo.com HTTP/1.1");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
     public void getByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
@@ -404,6 +435,27 @@ public class DynECTResourceRecordSetApiMockTest {
 
             RecordedRequest getRecord2 = server.takeRequest();
             assertEquals(getRecord2.getRequestLine(), "GET /ARecord/foo.com/www.foo.com/2 HTTP/1.1");
+
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void getByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.play();
+
+        try {
+            DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
+                    mockDynECTApi(server.getUrl("/").toString()), "foo.com");
+            assertEquals(api.getByNameAndType("www.foo.com", "A"), Optional.absent());
+        } finally {
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+
+            RecordedRequest listNameAndType = server.takeRequest();
+            assertEquals(listNameAndType.getRequestLine(), "GET /ARecord/foo.com/www.foo.com HTTP/1.1");
 
             server.shutdown();
         }
