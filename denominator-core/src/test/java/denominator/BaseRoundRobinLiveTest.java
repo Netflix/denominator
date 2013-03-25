@@ -183,7 +183,7 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
     private void deleteRRS(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         String zoneName = skipIfNoMutableZone();
-        String recordName = recordPrefix + ".delete." + zoneName;
+        String recordName = recordSet.getName().replace("." + zoneName, "-delete." + zoneName);
 
         skipIfRRSetExists(zoneName, recordName, recordSet.getType());
 
