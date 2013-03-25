@@ -202,7 +202,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
             return;
         boolean shouldPublish = false;
         for (RecordId key : keys) {
-            Record<? extends Map<String, Object>> toEvaluate = api.getRecordApiForZone(zoneFQDN).get(key);
+            Record<? extends Map<String, Object>> toEvaluate = getRecord(api.getRecordApiForZone(zoneFQDN), key);
             if (toEvaluate != null && rrset.contains(toEvaluate.getRData())) {
                 shouldPublish = true;
                 api.getRecordApiForZone(zoneFQDN).scheduleDelete(key);
@@ -217,10 +217,13 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         List<RecordId> keys = exisingRecordIdsByNameAndType(name, type).toList();
         if (keys.isEmpty())
             return;
+        boolean shouldPublish = false;
         for (RecordId key : keys) {
+            shouldPublish = true;
             api.getRecordApiForZone(zoneFQDN).scheduleDelete(key);
         }
-        api.getZoneApi().publish(zoneFQDN);
+        if (shouldPublish)
+            api.getZoneApi().publish(zoneFQDN);
     }
 
     private Iterator<ResourceRecordSet<?>> groupByRecordNameAndType(FluentIterable<RecordId> recordIds) {
