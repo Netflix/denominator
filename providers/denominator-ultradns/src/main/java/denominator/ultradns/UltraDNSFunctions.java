@@ -21,6 +21,7 @@ import denominator.model.rdata.PTRData;
 import denominator.model.rdata.SOAData;
 import denominator.model.rdata.SPFData;
 import denominator.model.rdata.SRVData;
+import denominator.model.rdata.SSHFPData;
 import denominator.model.rdata.TXTData;
 
 final class UltraDNSFunctions {
@@ -86,6 +87,11 @@ final class UltraDNSFunctions {
                               .weight(Integer.valueOf(parts.get(1)))
                               .port(Integer.valueOf(parts.get(2)))
                               .target(parts.get(3)).build();
+            } else if ("SSHFP".equals(type)) {
+                return SSHFPData.builder()
+                                .algorithm(Integer.valueOf(parts.get(0)))
+                                .fptype(Integer.valueOf(parts.get(1)))
+                                .fingerprint(parts.get(2)).build();
             } else if ("TXT".equals(type)) {
                 return TXTData.create(parts.get(0));
             } else {
