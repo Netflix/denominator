@@ -1,12 +1,9 @@
 package denominator.ultradns;
 
-import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
-import static com.google.common.collect.Iterables.transform;
 import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Ordering.usingToString;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
 import static denominator.model.ResourceRecordSets.typeEqualTo;
 import static denominator.ultradns.UltraDNSFunctions.toRdataMap;
@@ -24,6 +21,7 @@ import org.jclouds.ultradns.ws.features.ResourceRecordApi;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
 
@@ -59,7 +57,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
         // this will list all normal or RR pool records.
-        Iterator<ResourceRecordMetadata> orderedRecords = api.list().toSortedList(Ordering.usingToString()).iterator();
+        Iterator<ResourceRecordMetadata> orderedRecords = api.list().toSortedList(byNameTypeAndCreateDate).iterator();
         return new GroupByRecordNameAndTypeIterator(orderedRecords);
     }
 
@@ -90,7 +88,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
             public boolean apply(ResourceRecordMetadata in) {
                 return name.equals(in.getRecord().getName()) && typeValue == in.getRecord().getType();
             }
-        }).toSortedList(usingToString());
+        }).toSortedList(byNameTypeAndCreateDate);
     }
 
     private static final int defaultTTL = 300;
@@ -180,11 +178,13 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
             if (roundRobinPoolApi.isPoolType(type)) {
                 roundRobinPoolApi.add(name, type, ttl, rdatas);
             } else {
-                ResourceRecord.Builder builder = ResourceRecord.rrBuilder().name(name)
-                        .type(new ResourceTypeToValue().get(type)).ttl(ttl);
+                ResourceRecord.Builder builder = ResourceRecord.rrBuilder()
+                                                               .name(name)
+                                                               .type(new ResourceTypeToValue().get(type))
+                                                               .ttl(ttl);
 
                 for (Map<String, Object> rdata : rdatas) {
-                    api.create(builder.rdata(transform(rdata.values(), toStringFunction())).build());
+                    api.create(builder.rdata(rdata.values()).build());
                 }
             }
         }
@@ -217,4 +217,17 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
             remove(name, type, reference.getGuid());
         }
     }
+
+    private static final Ordering<ResourceRecordMetadata> byNameTypeAndCreateDate = new Ordering<ResourceRecordMetadata>() {
+
+        @Override
+        public int compare(ResourceRecordMetadata left, ResourceRecordMetadata right) {
+            return ComparisonChain.start()
+                                  .compare(left.getRecord().getName(), right.getRecord().getName())
+                                  .compare(left.getRecord().getType(), right.getRecord().getType())
+                                  .compare(left.getCreated(), right.getCreated())
+                                  .result();
+        }
+
+    };
 }
