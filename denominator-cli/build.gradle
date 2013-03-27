@@ -34,14 +34,14 @@ task fat(dependsOn: classes, type: Jar) {
 
   def mergeDir = "${buildDir}/merge"
 
-  def runtimeDeps = configurations.runtime.collect {
-    it.isDirectory() ? it : zipTree(it)
-  }
-
   doFirst {
     new File(mergeDir).delete()
     def mergedFile = new File(mergeDir, providerFile)
     new File(mergedFile.parent).mkdirs()
+    def runtimeDeps = configurations.runtime.collect {
+      it.isDirectory() ? it : zipTree(it)
+    }
+
     runtimeDeps*.matching({ include "**/${providerFile}" })*.each {
       mergedFile << it.bytes
     }
