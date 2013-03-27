@@ -7,7 +7,7 @@ task release(overwrite: true, dependsOn: commitNewVersion) << {
 commitNewVersion.dependsOn updateVersion
 updateVersion.dependsOn createReleaseTag
 createReleaseTag.dependsOn preTagCommit
-def buildTasks = tasks.matching { it.name =~ /:build/ }
+def buildTasks = childProjects.values().collect { it.tasks.matching { it.name.contains('build') } }.flatten()
 preTagCommit.dependsOn buildTasks
 preTagCommit.dependsOn checkSnapshotDependencies
 //checkSnapshotDependencies.dependsOn confirmReleaseVersion // Introduced in 1.0, forces readLine
