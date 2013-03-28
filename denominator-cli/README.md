@@ -58,7 +58,7 @@ netflix.com.
 ### Record
 `-z zone. record list` returns the record details of that zone.  Ex.
 ```bash
-$ denominator -p ultradns -c my_user -c my_password --zone netflix.com. record list
+$ denominator -p ultradns -c my_user -c my_password record --zone netflix.com. list
 --snip--
 email.netflix.com.                                 A     3600   69.53.237.168
 --snip--
