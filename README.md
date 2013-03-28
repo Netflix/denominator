@@ -24,7 +24,7 @@ If you just want to fool around, you can use the `mock` provider.
 ```bash
 $ denominator -p mock zone list
 denominator.io.
-$ denominator -p mock -z denominator.io. record list
+$ denominator -p mock record -z denominator.io. list
 denominator.io.                                    SOA   3600   ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 60
 denominator.io.                                    NS    86400  ns1.denominator.io.
 ```
