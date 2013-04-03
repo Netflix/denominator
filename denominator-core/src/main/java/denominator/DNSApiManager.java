@@ -31,6 +31,13 @@ public class DNSApiManager implements Closeable {
     }
 
     /**
+     * Get the provider associated with this instance
+     */
+    public final Provider getProvider() {
+        return provider;
+    }
+    
+    /**
      * closes resources associated with the connections, such as thread pools or
      * open files.
      */
@@ -38,7 +45,7 @@ public class DNSApiManager implements Closeable {
     public void close() throws IOException {
         closer.close();
     }
-
+    
     @Override
     public String toString() {
         return toStringHelper(this).add("provider", provider).toString();
