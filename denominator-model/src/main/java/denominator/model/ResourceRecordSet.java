@@ -73,7 +73,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(name, type);
+        return Objects.hashCode(name, type, rdata);
     }
 
     @Override
@@ -83,13 +83,16 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
         if (obj == null || !(obj instanceof ResourceRecordSet))
             return false;
         ResourceRecordSet<?> that = ResourceRecordSet.class.cast(obj);
-        return equal(this.name, that.name) && equal(this.type, that.type);
+        return equal(this.name, that.name) && equal(this.type, that.type) && equal(this.rdata, that.rdata);
     }
 
     @Override
     public String toString() {
-        return toStringHelper(this).omitNullValues().add("name", name).add("type", type).add("ttl", ttl.orNull())
-                .add("rdata", rdata).toString();
+        return toStringHelper(this).omitNullValues()
+                                   .add("name", name)
+                                   .add("type", type)
+                                   .add("ttl", ttl.orNull())
+                                   .add("rdata", rdata).toString();
     }
 
     public static <D extends Map<String, Object>> Builder<D> builder() {
