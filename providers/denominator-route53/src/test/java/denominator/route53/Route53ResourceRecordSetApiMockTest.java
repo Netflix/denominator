@@ -13,7 +13,7 @@ import java.util.Set;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.concurrent.config.ExecutorServiceModule;
-import org.jclouds.route53.Route53ApiMetadata;
+import org.jclouds.route53.Route53Api;
 import org.testng.annotations.Test;
 
 import com.google.common.base.Optional;
@@ -37,7 +37,7 @@ public class Route53ResourceRecordSetApiMockTest {
                              .endpoint(uri)
                              .overrides(overrides)
                              .modules(modules)
-                             .build(Route53ApiMetadata.CONTEXT_TOKEN).getApi()
+                             .buildApi(Route53Api.class)
                              .getResourceRecordSetApiForHostedZone("Z1PA6795UKMFR9");
     }
 

@@ -16,7 +16,6 @@ import java.util.Set;
 import org.jclouds.ContextBuilder;
 import org.jclouds.concurrent.config.ExecutorServiceModule;
 import org.jclouds.dynect.v3.DynECTApi;
-import org.jclouds.dynect.v3.DynECTApiMetadata;
 import org.jclouds.dynect.v3.domain.RecordId;
 import org.jclouds.dynect.v3.domain.RecordId.Builder;
 import org.jclouds.dynect.v3.features.RecordApi;
@@ -44,7 +43,7 @@ public class GroupByRecordNameAndTypeIteratorMockTest {
                              .endpoint(uri)
                              .overrides(overrides)
                              .modules(modules)
-                             .build(DynECTApiMetadata.CONTEXT_TOKEN).getApi();
+                             .buildApi(DynECTApi.class);
     }
 
     Builder<?> builder = recordIdBuilder().zone("denominator.io").fqdn("denominator.io");

@@ -10,9 +10,7 @@ import javax.inject.Singleton;
 import org.jclouds.ContextBuilder;
 import org.jclouds.domain.Credentials;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.rest.RestContext;
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
-import org.jclouds.ultradns.ws.UltraDNSWSAsyncApi;
 import org.jclouds.ultradns.ws.UltraDNSWSProviderMetadata;
 
 import com.google.common.base.Function;
@@ -56,28 +54,28 @@ public class UltraDNSProvider extends Provider {
 
     @Provides
     @Singleton
-    RestContext<UltraDNSWSApi, UltraDNSWSAsyncApi> provideContext(Supplier<Credentials> credentials) {
+    UltraDNSWSApi provideApi(Supplier<Credentials> credentials) {
         return ContextBuilder.newBuilder(new UltraDNSWSProviderMetadata())
                              .credentialsSupplier(credentials)
-                             .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule())).build();
+                             .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
+                             .buildApi(UltraDNSWSApi.class);
     }
 
     @Provides
     @Singleton
-    ZoneApi provideZoneApi(RestContext<UltraDNSWSApi, UltraDNSWSAsyncApi> context) {
-        return new UltraDNSZoneApi(context.getApi());
+    ZoneApi provideZoneApi(UltraDNSWSApi api) {
+        return new UltraDNSZoneApi(api);
     }
 
     @Provides
     @Singleton
-    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(
-            RestContext<UltraDNSWSApi, UltraDNSWSAsyncApi> context) {
-        return new UltraDNSResourceRecordSetApi.Factory(context.getApi());
+    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(UltraDNSWSApi api) {
+        return new UltraDNSResourceRecordSetApi.Factory(api);
     }
 
     @Provides
     @Singleton
-    Closeable provideCloser(RestContext<org.jclouds.ultradns.ws.UltraDNSWSApi, UltraDNSWSAsyncApi> context) {
-        return context;
+    Closeable provideCloser(UltraDNSWSApi api) {
+        return api;
     }
 }

@@ -20,7 +20,7 @@ test {
 dependencies {
   compile      project(':denominator-core')
   testCompile  project(':denominator-core').sourceSets.test.output
-  compile     'org.jclouds.provider:ultradns-ws:1.6.0-rc.2'
-  compile     'org.jclouds.driver:jclouds-slf4j:1.6.0-rc.2'
+  compile     'org.jclouds.provider:ultradns-ws:1.6.0-rc.4'
+  compile     'org.jclouds.driver:jclouds-slf4j:1.6.0-rc.4'
 }
 

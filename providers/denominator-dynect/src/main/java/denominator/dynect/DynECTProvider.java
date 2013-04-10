@@ -3,39 +3,21 @@ package denominator.dynect;
 import static com.google.common.base.Suppliers.compose;
 
 import java.io.Closeable;
-import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Singleton;
 
 import org.jclouds.ContextBuilder;
-import org.jclouds.apis.ApiMetadata;
 import org.jclouds.domain.Credentials;
-import org.jclouds.dynect.v3.DynECTApiMetadata;
-import org.jclouds.dynect.v3.DynECTAsyncApi;
+import org.jclouds.dynect.v3.DynECTApi;
 import org.jclouds.dynect.v3.DynECTProviderMetadata;
-import org.jclouds.dynect.v3.config.DynECTParserModule;
-import org.jclouds.dynect.v3.config.DynECTRestClientModule;
-import org.jclouds.dynect.v3.domain.SessionCredentials;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.providers.ProviderMetadata;
-import org.jclouds.rest.RestContext;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
-import com.google.common.primitives.UnsignedInteger;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonPrimitive;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 
 import dagger.Module;
 import dagger.Provides;
@@ -73,60 +55,28 @@ public class DynECTProvider extends Provider {
 
     @Provides
     @Singleton
-    ZoneApi provideZoneApi(RestContext<org.jclouds.dynect.v3.DynECTApi, DynECTAsyncApi> context) {
-        return new DynECTZoneApi(context.getApi());
+    ZoneApi provideZoneApi(DynECTApi api) {
+        return new DynECTZoneApi(api);
     }
 
     @Provides
     @Singleton
-    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(
-            RestContext<org.jclouds.dynect.v3.DynECTApi, DynECTAsyncApi> context) {
-        return new DynECTResourceRecordSetApi.Factory(context.getApi());
+    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(DynECTApi api) {
+        return new DynECTResourceRecordSetApi.Factory(api);
     }
 
     @Provides
     @Singleton
-    RestContext<org.jclouds.dynect.v3.DynECTApi, DynECTAsyncApi> provideContext(Supplier<Credentials> credentials) {
-        return ContextBuilder.newBuilder(provider)
+    DynECTApi provideApi(Supplier<Credentials> credentials) {
+        return ContextBuilder.newBuilder(new DynECTProviderMetadata())
                              .credentialsSupplier(credentials)
-                             .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule())).build();
-    }
-
-    static ApiMetadata api = new DynECTApiMetadata().toBuilder()
-            .defaultModules(ImmutableSet.<Class<? extends com.google.inject.Module>>of(PatchedDynECTParserModule.class, DynECTRestClientModule.class))
-            .build();
-    static ProviderMetadata provider = new DynECTProviderMetadata().toBuilder().apiMetadata(api).build();
-
-    public static class PatchedDynECTParserModule extends DynECTParserModule {
-
-        @Override
-        protected void configure() {
-        }
-
-        @Override
-        public Map<Type, Object> provideCustomAdapterBindings() {
-            return new ImmutableMap.Builder<Type, Object>()
-                    .put(SessionCredentials.class, super.provideCustomAdapterBindings().get(SessionCredentials.class))
-                    .put(UnsignedInteger.class, new UnsignedIntegerAdapter()).build();
-        }
-
-        // patched as in 1.6.0-rc.1, serialize was not implemented.
-        private static class UnsignedIntegerAdapter implements JsonSerializer<UnsignedInteger>,
-                JsonDeserializer<UnsignedInteger> {
-            public JsonElement serialize(UnsignedInteger src, Type typeOfSrc, JsonSerializationContext context) {
-                return new JsonPrimitive(src);
-            }
-
-            public UnsignedInteger deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext context)
-                    throws JsonParseException {
-                return UnsignedInteger.fromIntBits(jsonElement.getAsBigInteger().intValue());
-            }
-        }
+                             .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
+                             .buildApi(DynECTApi.class);
     }
 
     @Provides
     @Singleton
-    Closeable provideCloser(RestContext<org.jclouds.dynect.v3.DynECTApi, DynECTAsyncApi> context) {
-        return context;
+    Closeable provideCloseable(DynECTApi api) {
+        return api;
     }
 }
