@@ -12,8 +12,7 @@ import org.jclouds.aws.domain.SessionCredentials;
 import org.jclouds.aws.route53.AWSRoute53ProviderMetadata;
 import org.jclouds.domain.Credentials;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.rest.RestContext;
-import org.jclouds.route53.Route53AsyncApi;
+import org.jclouds.route53.Route53Api;
 
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
@@ -70,28 +69,28 @@ public class Route53Provider extends Provider {
 
     @Provides
     @Singleton
-    RestContext<org.jclouds.route53.Route53Api, Route53AsyncApi> provideContext(Supplier<Credentials> credentials) {
+    Route53Api provideApi(Supplier<Credentials> credentials) {
         return ContextBuilder.newBuilder(new AWSRoute53ProviderMetadata())
                              .credentialsSupplier(credentials)
-                             .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule())).build();
+                             .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
+                             .buildApi(Route53Api.class);
     }
 
     @Provides
     @Singleton
-    ZoneApi provideZoneApi(RestContext<org.jclouds.route53.Route53Api, Route53AsyncApi> context) {
-        return new Route53ZoneApi(context.getApi());
+    ZoneApi provideZoneApi(Route53Api api) {
+        return new Route53ZoneApi(api);
     }
 
     @Provides
     @Singleton
-    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(
-            RestContext<org.jclouds.route53.Route53Api, Route53AsyncApi> context) {
-        return new Route53ResourceRecordSetApi.Factory(context.getApi());
+    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(Route53Api api) {
+        return new Route53ResourceRecordSetApi.Factory(api);
     }
 
     @Provides
     @Singleton
-    Closeable provideCloser(RestContext<org.jclouds.route53.Route53Api, Route53AsyncApi> context) {
-        return context;
+    Closeable provideCloser(Route53Api api) {
+        return api;
     }
 }
