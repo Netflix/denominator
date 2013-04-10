@@ -15,7 +15,6 @@ import java.util.Set;
 import org.jclouds.ContextBuilder;
 import org.jclouds.concurrent.config.ExecutorServiceModule;
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
-import org.jclouds.ultradns.ws.UltraDNSWSApiMetadata;
 import org.testng.annotations.Test;
 
 import com.google.common.base.Optional;
@@ -39,7 +38,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
                              .endpoint(uri)
                              .overrides(overrides)
                              .modules(modules)
-                             .build(UltraDNSWSApiMetadata.CONTEXT_TOKEN).getApi();
+                             .buildApi(UltraDNSWSApi.class);
     }
 
     private static final String ZONE_NAME = "foo.com.";

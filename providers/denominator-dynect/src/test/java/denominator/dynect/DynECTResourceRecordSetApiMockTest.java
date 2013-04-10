@@ -13,7 +13,6 @@ import java.util.Set;
 import org.jclouds.ContextBuilder;
 import org.jclouds.concurrent.config.ExecutorServiceModule;
 import org.jclouds.dynect.v3.DynECTApi;
-import org.jclouds.dynect.v3.DynECTApiMetadata;
 import org.testng.annotations.Test;
 
 import com.google.common.base.Optional;
@@ -37,7 +36,7 @@ public class DynECTResourceRecordSetApiMockTest {
                              .endpoint(uri)
                              .overrides(overrides)
                              .modules(modules)
-                             .build(DynECTApiMetadata.CONTEXT_TOKEN).getApi();
+                             .buildApi(DynECTApi.class);
     }
 
     String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.3.8\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
