@@ -10,9 +10,9 @@ Denominator is a portable Java library for manipulating DNS clouds.  Denominator
 For your convenience, the denominator cli is a [single executable file](http://skife.org/java/unix/2011/06/20/really_executable_jars.html).  Under the hood, the cli uses [airline](https://github.com/airlift/airline) to look and feel like dig or git.
 
 ### Binaries
-While still incubating, the denominator cli [download](http://dl.bintray.com/content/netflixoss/denominator/denominator?direct) will be updated frequently.  Once stable, we'll look into homebrew, debian, rpm packages.  In the mean time, here's how to get it.
+Here's how to get denominator-cli `1.0.0` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
 
-1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator?direct)
+1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.0.0/denominator?direct)
 2. Place it on your `$PATH`. (ex. `~/bin`)
 3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
 
@@ -59,6 +59,8 @@ email.netflix.com.                                 A     3600   69.53.237.168
 Denominator exposes a portable [model](https://github.com/Netflix/denominator/wiki/Models) implemented by pluggable `Provider`s such as `route53`, `ultradns`, `dynect`, or `mock`.  Under the covers, providers are [Dagger](http://square.github.com/dagger/) modules.  Except for the mock, all current providers bind to [jclouds](https://github.com/jclouds/jclouds) libraries.  That said, denominator has no core dependencies outside guava and dagger, so developers are free to implement providers however they choose.
 
 ### Binaries
+
+The current version of denominator is `1.0.0`
 
 Denominator can be resolved as maven dependencies, or equivalent in lein, gradle, etc.  Here are the coordinates, noting you only need to list the providers you use.
 ```xml
