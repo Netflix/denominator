@@ -28,12 +28,25 @@ task fat(dependsOn: classes, type: Jar) {
   destinationDir = buildDir
   archiveName = "denominator"  
 
-  // merge provider files together
-  // http://java.dzone.com/articles/jar-deps-dont-meta
-  def providerFile = "META-INF/services/denominator.Provider"
+  // denominator providers are looked up via service loader
+  // normally a fat jar will truncate these.  While we could
+  // use fancy groovy to try and combine them dynamically,
+  // it is much more straight-forward to hard-code the list.
+  doFirst {
+    def providerDir = "${buildDir}/provider"
+    new File(providerDir).delete()
+    def providerFile = new File(providerDir, "META-INF/services/denominator.Provider")
+    providerFile.parentFile.mkdirs()
+    providerFile << """\
+denominator.mock.MockProvider
+denominator.dynect.DynECTProvider
+denominator.route53.Route53Provider
+denominator.ultradns.UltraDNSProvider
+"""
+    from(providerDir)  
+  }
 
-  def mergeDir = "${buildDir}/merge"
-
+  // grab project compile and runtime deps into the jar
   doFirst {
     // Delay evaluation until the compile configuration is ready
     from {
@@ -41,28 +54,15 @@ task fat(dependsOn: classes, type: Jar) {
         it.isDirectory() ? it : zipTree(it)
       }
     }
-  }
-
-  doFirst {
-    new File(mergeDir).delete()
-    def mergedFile = new File(mergeDir, providerFile)
-    new File(mergedFile.parent).mkdirs()
     def runtimeDeps = configurations.runtime.collect {
       it.isDirectory() ? it : zipTree(it)
     }
-
-    runtimeDeps*.matching({ include "**/${providerFile}" })*.each {
-      mergedFile << it.bytes
-    }
   }
 
-  from (sourceSets*.output.classesDir) {
-    exclude providerFile
-  }
+  // grab the classes representing the cli
+  from (sourceSets*.output.classesDir)
 
-  from(mergeDir)  
-
-  // really executable jar
+  // make the fat jar a really executable jar
   // http://skife.org/java/unix/2011/06/20/really_executable_jars.html
 
   manifest {
