@@ -26,7 +26,7 @@ dependencies {
 task fat(dependsOn: classes, type: Jar) { 
   classifier = "fat"
   destinationDir = buildDir
-  archiveName = "denominator"  
+  archiveName = "denominator"
 
   // merge provider files together
   // http://java.dzone.com/articles/jar-deps-dont-meta
@@ -37,9 +37,7 @@ task fat(dependsOn: classes, type: Jar) {
   doFirst {
     // Delay evaluation until the compile configuration is ready
     from {
-      configurations.compile.collect {
-        it.isDirectory() ? it : zipTree(it)
-      }
+      configurations.compile.collect { zipTree(it).matching { exclude "**/${providerFile}" } }
     }
   }
 
@@ -47,20 +45,20 @@ task fat(dependsOn: classes, type: Jar) {
     new File(mergeDir).delete()
     def mergedFile = new File(mergeDir, providerFile)
     new File(mergedFile.parent).mkdirs()
-    def runtimeDeps = configurations.runtime.collect {
-      it.isDirectory() ? it : zipTree(it)
+
+    def depProjects = configurations.runtime.allDependencies.withType(ProjectDependency)*.dependencyProject
+    depProjects.collect { it.sourceSets.main.resources }*.matching { include "**/${providerFile}" }*.each { 
+        mergedFile << it.bytes
     }
 
-    runtimeDeps*.matching({ include "**/${providerFile}" })*.each {
-      mergedFile << it.bytes
-    }
+    from(mergeDir)  
+
   }
 
   from (sourceSets*.output.classesDir) {
     exclude providerFile
   }
 
-  from(mergeDir)  
 
   // really executable jar
   // http://skife.org/java/unix/2011/06/20/really_executable_jars.html
