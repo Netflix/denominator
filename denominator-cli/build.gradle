@@ -22,11 +22,10 @@ dependencies {
 }
 
 // create a self-contained jar that is executable
-// the file output name is "build/denominator"
-task fat(dependsOn: classes, type: Jar) { 
-  classifier = "fat"
-  destinationDir = buildDir
-  archiveName = "denominator"
+// the output is both a 'fat' project artifact and
+// a convenience file named "build/denominator"
+task fatJar(dependsOn: classes, type: Jar) { 
+  classifier 'fat'
 
   // merge provider files together
   // http://java.dzone.com/articles/jar-deps-dont-meta
@@ -68,18 +67,22 @@ task fat(dependsOn: classes, type: Jar) {
     attributes("Implementation-Title": "Denominator", "Specification-Version": version, "Implementation-Version": version)
   }
 
+
+  // for convenience, we make a file in the build dir named denominator with no extension
   doLast {
-    def srcFile = new File("${destinationDir}/${archiveName}")
-    def tmpFile = new File(srcFile.getAbsolutePath() + ".tmp")
-    tmpFile.delete()
-    tmpFile << "#!/usr/bin/env sh\n"
-    tmpFile << 'exec java -jar $0 "$@"' + "\n"
-    tmpFile << srcFile.bytes
-    tmpFile.setExecutable(true, true)
-    tmpFile.renameTo(srcFile)
+    def srcFile = new File("${buildDir}/libs/${archiveName}")
+    def shortcutFile = new File("${buildDir}/denominator")
+    shortcutFile.delete()
+    shortcutFile << "#!/usr/bin/env sh\n"
+    shortcutFile << 'exec java -jar $0 "$@"' + "\n"
+    shortcutFile << srcFile.bytes
+    shortcutFile.setExecutable(true, true)
+    srcFile.delete()
+    srcFile << shortcutFile.bytes   
+    srcFile.setExecutable(true, true)
   }
 }
 
 artifacts {
-    archives fat
+  archives fatJar
 }
