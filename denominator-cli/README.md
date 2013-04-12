@@ -3,9 +3,9 @@
 The denominator CLI is a git-like-cli based on the [airline](https://github.com/airlift/airline) project.  It is packaged as a [really executable jar](http://skife.org/java/unix/2011/06/20/really_executable_jars.html) which means you can do `./denominator` without any of the `java -jar` stuff.
 
 ### Binaries
-While still incubating, the denominator cli [download](http://dl.bintray.com/content/netflixoss/denominator/denominator?direct) will be updated frequently.  Once stable, we'll look into homebrew, debian, rpm packages.  In the mean time, here's how to get it.
+Here's how to get denominator-cli `1.0.0` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
 
-1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator?direct)
+1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.0.0/denominator?direct)
 2. Place it on your `$PATH`. (ex. `~/bin`)
 3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
 
