@@ -35,6 +35,15 @@ task fat(dependsOn: classes, type: Jar) {
   def mergeDir = "${buildDir}/merge"
 
   doFirst {
+    // Delay evaluation until the compile configuration is ready
+    from {
+      configurations.compile.collect {
+        it.isDirectory() ? it : zipTree(it)
+      }
+    }
+  }
+
+  doFirst {
     new File(mergeDir).delete()
     def mergedFile = new File(mergeDir, providerFile)
     new File(mergedFile.parent).mkdirs()
@@ -49,12 +58,6 @@ task fat(dependsOn: classes, type: Jar) {
 
   from (sourceSets*.output.classesDir) {
     exclude providerFile
-  }
-
-  from {
-    configurations.compile.collect {
-      it.isDirectory() ? it : zipTree(it)
-    }    
   }
 
   from(mergeDir)  
