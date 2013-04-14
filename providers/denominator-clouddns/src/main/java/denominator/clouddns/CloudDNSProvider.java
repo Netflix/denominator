@@ -26,8 +26,12 @@ import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
+import denominator.config.GeoUnsupported;
+import denominator.config.OnlyNormalResourceRecordSets;
 
-@Module(entryPoints = DNSApiManager.class)
+@Module(entryPoints = DNSApiManager.class,
+           includes = { GeoUnsupported.class, 
+                        OnlyNormalResourceRecordSets.class } )
 public class CloudDNSProvider extends Provider {
 
     @Provides

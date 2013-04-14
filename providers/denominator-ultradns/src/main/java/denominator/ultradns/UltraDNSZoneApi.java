@@ -5,16 +5,20 @@ import java.util.Iterator;
 import javax.inject.Inject;
 
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
+import org.jclouds.ultradns.ws.domain.Account;
 import org.jclouds.ultradns.ws.domain.Zone;
 
 import com.google.common.base.Function;
+import com.google.common.base.Supplier;
 
 public final class UltraDNSZoneApi implements denominator.ZoneApi {
     private final UltraDNSWSApi api;
+    private final Supplier<Account> account;
 
     @Inject
-    UltraDNSZoneApi(UltraDNSWSApi api) {
+    UltraDNSZoneApi(UltraDNSWSApi api, Supplier<Account> account) {
         this.api = api;
+        this.account = account;
     }
 
     private static enum ZoneName implements Function<Zone, String> {
@@ -29,6 +33,6 @@ public final class UltraDNSZoneApi implements denominator.ZoneApi {
      */
     @Override
     public Iterator<String> list() {
-        return api.getZoneApi().listByAccount(api.getCurrentAccount().getId()).transform(ZoneName.INSTANCE).iterator();
+        return api.getZoneApi().listByAccount(account.get().getId()).transform(ZoneName.INSTANCE).iterator();
     }
 }

@@ -8,10 +8,6 @@ import denominator.model.ResourceRecordSet;
 
 public interface ResourceRecordSetApi {
 
-    static interface Factory {
-        ResourceRecordSetApi create(String zoneName);
-    }
-
     /**
      * a listing of all resource record sets inside the zone.
      * 
@@ -140,4 +136,8 @@ public interface ResourceRecordSetApi {
      *             if the {@code zoneName} is not found.
      */
     void deleteByNameAndType(String name, String type);
+
+    static interface Factory {
+        ResourceRecordSetApi create(String zoneName);
+    }
 }
