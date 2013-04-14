@@ -22,6 +22,10 @@ import com.google.common.base.Joiner;
 import denominator.DNSApiManager;
 import denominator.Denominator.Version;
 import denominator.Provider;
+import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList;
+import denominator.cli.GeoResourceRecordSetCommands.GeoTypeList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetApplyTTL;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetDelete;
@@ -54,6 +58,14 @@ public class Denominator {
                .withCommand(ResourceRecordSetReplace.class)
                .withCommand(ResourceRecordSetRemove.class)
                .withCommand(ResourceRecordSetDelete.class);
+
+        builder.withGroup("geo")
+               .withDescription("manage geo resource record sets in a zone")
+               .withDefaultCommand(GeoResourceRecordSetList.class)
+               .withCommand(GeoTypeList.class)
+               .withCommand(GeoRegionList.class)
+               .withCommand(GeoResourceRecordSetList.class)
+               .withCommand(GeoResourceRecordSetGet.class);
 
         Cli<Runnable> denominatorParser = builder.build();
         try {
