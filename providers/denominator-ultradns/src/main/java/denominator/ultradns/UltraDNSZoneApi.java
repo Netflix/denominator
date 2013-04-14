@@ -5,7 +5,7 @@ import java.util.Iterator;
 import javax.inject.Inject;
 
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
-import org.jclouds.ultradns.ws.domain.Account;
+import org.jclouds.ultradns.ws.domain.IdAndName;
 import org.jclouds.ultradns.ws.domain.Zone;
 
 import com.google.common.base.Function;
@@ -13,10 +13,10 @@ import com.google.common.base.Supplier;
 
 public final class UltraDNSZoneApi implements denominator.ZoneApi {
     private final UltraDNSWSApi api;
-    private final Supplier<Account> account;
+    private final Supplier<IdAndName> account;
 
     @Inject
-    UltraDNSZoneApi(UltraDNSWSApi api, Supplier<Account> account) {
+    UltraDNSZoneApi(UltraDNSWSApi api, Supplier<IdAndName> account) {
         this.api = api;
         this.account = account;
     }
