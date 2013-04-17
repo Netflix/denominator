@@ -1,0 +1,26 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+
+eclipse {
+  classpath {
+    downloadSources = true
+    downloadJavadoc = true
+  }
+}
+
+test {
+  systemProperty 'clouddns.username', System.getProperty('clouddns.username', '')
+  systemProperty 'clouddns.apiKey', System.getProperty('clouddns.apiKey', '')
+  systemProperty 'clouddns.zone', System.getProperty('clouddns.zone', '')
+}
+
+dependencies {
+  compile      project(':denominator-core')
+  testCompile  project(':denominator-core').sourceSets.test.output
+  compile     'org.jclouds.labs:rackspace-clouddns-us:1.6.0-rc.5'
+  compile     'org.jclouds.labs:rackspace-clouddns-uk:1.6.0-rc.5'
+  compile     'org.jclouds.driver:jclouds-slf4j:1.6.0-rc.5'
+}
