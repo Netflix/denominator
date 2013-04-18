@@ -26,9 +26,11 @@ import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
-import denominator.config.GeoUnsupported;
+import denominator.config.ConcatNormalAndGeoResourceRecordSets;
 
-@Module(entryPoints = DNSApiManager.class, includes = GeoUnsupported.class)
+@Module(entryPoints = DNSApiManager.class, 
+           includes = { DynECTGeoSupport.class, 
+                        ConcatNormalAndGeoResourceRecordSets.class })
 public class DynECTProvider extends Provider {
 
     @Provides
