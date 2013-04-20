@@ -31,7 +31,7 @@ public class ResourceRecordSetsTest {
                                                      .name("www.denominator.io.")
                                                      .type("A")
                                                      .ttl(3600)
-                                                     .add(AData.create("1.1.1.1")).build();
+                                                     .add(AData.create("192.0.2.1")).build();
 
     public void nameEqualToReturnsFalseOnNull() {
         assertFalse(ResourceRecordSets.nameEqualTo(aRRS.getName()).apply(null));
@@ -62,34 +62,34 @@ public class ResourceRecordSetsTest {
     }
 
     public void containsRDataReturnsFalseWhenRDataDifferent() {
-        assertFalse(ResourceRecordSets.containsRData(AData.create("2.2.2.2")).apply(aRRS));
+        assertFalse(ResourceRecordSets.containsRData(AData.create("198.51.100.1")).apply(aRRS));
     }
 
     public void containsRDataReturnsTrueWhenRDataEqual() {
-        assertTrue(ResourceRecordSets.containsRData(AData.create("1.1.1.1")).apply(aRRS));
+        assertTrue(ResourceRecordSets.containsRData(AData.create("192.0.2.1")).apply(aRRS));
     }
 
     public void containsRDataReturnsTrueWhenRDataEqualButDifferentType() {
-        assertTrue(ResourceRecordSets.containsRData(ImmutableMap.of("address", "1.1.1.1")).apply(aRRS));
+        assertTrue(ResourceRecordSets.containsRData(ImmutableMap.of("address", "192.0.2.1")).apply(aRRS));
     }
 
     @DataProvider(name = "a")
     public Object[][] createData() {
         Object[][] data = new Object[28][2];
-        data[0][0] = a("www.denominator.io.", "1.1.1.1");
+        data[0][0] = a("www.denominator.io.", "192.0.2.1");
         data[0][1] = ResourceRecordSet.<AData> builder()
                                       .name("www.denominator.io.")
                                       .type("A")
-                                      .add(AData.create("1.1.1.1")).build();
-        data[1][0] = a("www.denominator.io.", 3600, "1.1.1.1");
+                                      .add(AData.create("192.0.2.1")).build();
+        data[1][0] = a("www.denominator.io.", 3600, "192.0.2.1");
         data[1][1] = ResourceRecordSet.<AData> builder()
                                       .name("www.denominator.io.")
                                       .type("A")
                                       .ttl(3600)
-                                      .add(AData.create("1.1.1.1")).build();
-        data[2][0] = a("www.denominator.io.", ImmutableSet.of("1.1.1.1"));
+                                      .add(AData.create("192.0.2.1")).build();
+        data[2][0] = a("www.denominator.io.", ImmutableSet.of("192.0.2.1"));
         data[2][1] = data[0][1];
-        data[3][0] = a("www.denominator.io.", 3600, ImmutableSet.of("1.1.1.1"));
+        data[3][0] = a("www.denominator.io.", 3600, ImmutableSet.of("192.0.2.1"));
         data[3][1] = data[1][1];
         data[4][0] = cname("www.denominator.io.", "1234:ab00:ff00::6b14:abcd");
         data[4][1] = ResourceRecordSet.<CNAMEData> builder()

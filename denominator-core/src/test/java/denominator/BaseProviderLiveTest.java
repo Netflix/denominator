@@ -45,8 +45,8 @@ abstract class BaseProviderLiveTest {
         String recordSuffix =  recordPrefix + "." + zoneName;
         Builder<String, ResourceRecordSet<?>> builder = ImmutableMap.<String, ResourceRecordSet<?>> builder();
         builder.put("AAAA", aaaa("ipv6-" + recordSuffix, ImmutableList.of("2001:0DB8:85A3:0000:0000:8A2E:0370:7334",
-                "2002:0DB8:85A3:0000:0000:8A2E:0370:7334", "2003:0DB8:85A3:0000:0000:8A2E:0370:7334")));
-        builder.put("A", a("ipv4-" + recordSuffix, ImmutableList.of("1.1.1.1", "2.2.2.2", "3.3.3.3")));
+                "2001:0DB8:85A3:0000:0000:8A2E:0370:7335", "2001:0DB8:85A3:0000:0000:8A2E:0370:7336")));
+        builder.put("A", a("ipv4-" + recordSuffix, ImmutableList.of("192.0.2.1", "198.51.100.1", "203.0.113.1")));
         builder.put(
                 "CNAME",
                 cname("www-" + recordSuffix,

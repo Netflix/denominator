@@ -18,7 +18,7 @@ public class UltraDNSPredicatesTest {
     ResourceRecord a = ResourceRecord.rrBuilder().name("www.foo.com.")
                                                  .type(1)
                                                  .ttl(3600)
-                                                 .rdata("1.1.1.1").build();
+                                                 .rdata("192.0.2.1").build();
 
     ResourceRecordMetadata aRecord = ResourceRecordMetadata.builder()
                                                            .guid("AAAAAAAAAAAA")

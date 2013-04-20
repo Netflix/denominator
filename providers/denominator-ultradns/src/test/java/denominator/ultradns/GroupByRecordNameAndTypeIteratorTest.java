@@ -42,11 +42,11 @@ public class GroupByRecordNameAndTypeIteratorTest {
 
     public Iterator<ResourceRecordSet<?>> expected() {
         ImmutableList<ResourceRecordSet<?>> rrsetList = ImmutableList.<ResourceRecordSet<?>>builder()
-                .add(a("www.jclouds.org.", 3600, "1.2.3.4"))
+                .add(a("www.jclouds.org.", 3600, "192.0.2.1"))
                 .add(ns("jclouds.org.", 86400,
                         ImmutableList.of("pdns1.ultradns.net.", "pdns2.ultradns.net.", "pdns3.ultradns.org.", 
                                 "pdns4.ultradns.org.", "pdns5.ultradns.info.", "pdns6.ultradns.co.uk.")))
-                .add(a("jclouds.org.", 3000, "1.2.3.4"))
+                .add(a("jclouds.org.", 3000, "192.0.2.1"))
                 .add(ResourceRecordSet.<SOAData>builder()
                         .name("jclouds.org.")
                         .ttl(3600)
@@ -71,7 +71,7 @@ public class GroupByRecordNameAndTypeIteratorTest {
                   .add(builder.guid("04023A2507B6468F")
                           .created(dateService.iso8601DateParse("2010-10-02T16:57:16.000Z"))
                           .modified(dateService.iso8601DateParse("2011-09-27T23:49:21.000Z"))
-                          .record(rrBuilder().type(1).name("www.jclouds.org.").ttl(3600).rdata("1.2.3.4")).build())
+                          .record(rrBuilder().type(1).name("www.jclouds.org.").ttl(3600).rdata("192.0.2.1")).build())
                   .add(builder.guid("0B0338C2023F7969")
                           .created(dateService.iso8601DateParse("2009-10-12T12:02:23.000Z"))
                           .modified(dateService.iso8601DateParse("2009-10-12T12:02:23.000Z"))
@@ -92,7 +92,7 @@ public class GroupByRecordNameAndTypeIteratorTest {
                   .add(builder.guid("0B0338C2023F796E")
                           .created(dateService.iso8601DateParse("2009-10-12T12:02:23.000Z"))
                           .modified(dateService.iso8601DateParse("2011-09-27T23:49:22.000Z"))
-                          .record(rrBuilder().type(1).name("jclouds.org.").ttl(3000).rdata("1.2.3.4")).build())
+                          .record(rrBuilder().type(1).name("jclouds.org.").ttl(3000).rdata("192.0.2.1")).build())
                   .add(builder.guid("0B0338C2023F796C")
                           .created(dateService.iso8601DateParse("2009-10-12T12:02:23.000Z"))
                           .modified(dateService.iso8601DateParse("2009-10-12T12:02:23.000Z"))
