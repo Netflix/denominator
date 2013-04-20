@@ -28,7 +28,7 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * ex.
      * 
      * <pre>
-     * builder.add(&quot;1.1.1.1&quot;);
+     * builder.add(&quot;192.0.2.1&quot;);
      * </pre>
      */
     public StringRDataBuilder<D> add(String rdata) {
@@ -42,7 +42,7 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * ex.
      * 
      * <pre>
-     * builder.addAll(&quot;1.1.1.1&quot;, &quot;1.1.1.2&quot;);
+     * builder.addAll(&quot;192.0.2.1&quot;, &quot;192.0.2.2&quot;);
      * </pre>
      */
     public StringRDataBuilder<D> addAll(String... rdata) {
@@ -56,7 +56,7 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * ex.
      * 
      * <pre>
-     * builder.addAll(&quot;1.1.1.1&quot;, &quot;1.1.1.2&quot;);
+     * builder.addAll(&quot;192.0.2.1&quot;, &quot;192.0.2.2&quot;);
      * </pre>
      */
     public StringRDataBuilder<D> addAll(Iterable<String> rdata) {

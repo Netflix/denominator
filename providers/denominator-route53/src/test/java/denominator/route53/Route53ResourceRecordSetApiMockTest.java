@@ -104,7 +104,7 @@ public class Route53ResourceRecordSetApiMockTest {
     }
 
     String noRecords = "<ListResourceRecordSetsResponse><ResourceRecordSets></ResourceRecordSets></ListResourceRecordSetsResponse>";
-    String createARecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+    String createARecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
     String changeSynced = "<GetChangeResponse><ChangeInfo><Id>/change/C2682N5HXP0BZ4</Id><Status>INSYNC</Status><SubmittedAt>2011-09-10T01:36:41.958Z</SubmittedAt></ChangeInfo></GetChangeResponse>";
 
     @Test
@@ -117,7 +117,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.add(a("www.foo.com.", 3600, "1.2.3.4"));
+            api.add(a("www.foo.com.", 3600, "192.0.2.1"));
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -131,8 +131,8 @@ public class Route53ResourceRecordSetApiMockTest {
         }
     }
 
-    String oneRecord = "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
-    String replaceWith2ElementRecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord><ResourceRecord><Value>5.6.7.8</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+    String oneRecord = "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
+    String replaceWith2ElementRecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
 
     @Test
     public void addSecondRecordRecreatesRRSetAndRetainsTTL() throws IOException, InterruptedException {
@@ -144,7 +144,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.add(a("www.foo.com.", "5.6.7.8"));
+            api.add(a("www.foo.com.", "198.51.100.1"));
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -158,7 +158,7 @@ public class Route53ResourceRecordSetApiMockTest {
         }
     }
 
-    String replaceWith2ElementRecordSetOverridingTTL = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>10000000</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord><ResourceRecord><Value>5.6.7.8</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+    String replaceWith2ElementRecordSetOverridingTTL = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>10000000</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
 
     @Test
     public void addSecondRecordRecreatesRRSetAndOverridesTTLWhenPresent() throws IOException, InterruptedException {
@@ -170,7 +170,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.add(a("www.foo.com.", 10000000, "5.6.7.8"));
+            api.add(a("www.foo.com.", 10000000, "198.51.100.1"));
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -184,7 +184,7 @@ public class Route53ResourceRecordSetApiMockTest {
         }
     }
 
-    String deleteARecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+    String deleteARecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
 
     @Test
     public void removeOnlyRecordDoesntAdd() throws IOException, InterruptedException {
@@ -196,7 +196,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.remove(a("www.foo.com.", "1.2.3.4"));
+            api.remove(a("www.foo.com.", "192.0.2.1"));
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -210,8 +210,8 @@ public class Route53ResourceRecordSetApiMockTest {
         }
     }
 
-    String twoRecords = "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord><ResourceRecord><Value>5.6.7.8</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
-    String replaceWith1ElementRecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord><ResourceRecord><Value>5.6.7.8</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+    String twoRecords = "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
+    String replaceWith1ElementRecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
 
     @Test
     public void removeOneRecordReplacesRRSet() throws IOException, InterruptedException {
@@ -223,7 +223,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.remove(a("www.foo.com.", "5.6.7.8"));
+            api.remove(a("www.foo.com.", "198.51.100.1"));
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -273,7 +273,7 @@ public class Route53ResourceRecordSetApiMockTest {
         }
     }
 
-    String recreate2ElementRecordSetWithTTL = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord><ResourceRecord><Value>5.6.7.8</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>10000000</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord><ResourceRecord><Value>5.6.7.8</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+    String recreate2ElementRecordSetWithTTL = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>10000000</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
 
     @Test
     public void applyTTLRecreatesRecordsWithSameRDataWhenDifferent() throws IOException, InterruptedException {
@@ -308,7 +308,7 @@ public class Route53ResourceRecordSetApiMockTest {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
             assertEquals(api.listByName("www.foo.com.").next(),
-                    a("www.foo.com.", 3600, ImmutableList.of("1.2.3.4", "5.6.7.8")));
+                    a("www.foo.com.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -347,7 +347,7 @@ public class Route53ResourceRecordSetApiMockTest {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
             assertEquals(api.getByNameAndType("www.foo.com.", "A").get(),
-                    a("www.foo.com.", 3600, ImmutableList.of("1.2.3.4", "5.6.7.8")));
+                    a("www.foo.com.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -386,7 +386,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.replace(a("www.foo.com.", 10000000, ImmutableSet.of("1.2.3.4", "5.6.7.8")));
+            api.replace(a("www.foo.com.", 10000000, ImmutableSet.of("192.0.2.1", "198.51.100.1")));
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -409,7 +409,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.replace(a("www.foo.com.", 3600, "1.2.3.4"));
+            api.replace(a("www.foo.com.", 3600, "192.0.2.1"));
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -427,7 +427,7 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             Route53ResourceRecordSetApi api = new Route53ResourceRecordSetApi(mockRoute53Api(server.getUrl("/")
                     .toString()));
-            api.remove(a("www.foo.com.", "5.6.7.8"));
+            api.remove(a("www.foo.com.", "198.51.100.1"));
         } finally {
             RecordedRequest listNameAndType = server.takeRequest();
             assertEquals(listNameAndType.getRequestLine(),
@@ -436,7 +436,7 @@ public class Route53ResourceRecordSetApiMockTest {
         }
     }
 
-    String delete2ElementRecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>1.2.3.4</Value></ResourceRecord><ResourceRecord><Value>5.6.7.8</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+    String delete2ElementRecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.foo.com.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
 
     @Test
     public void deleteRRSet() throws IOException, InterruptedException {

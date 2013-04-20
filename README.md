@@ -51,7 +51,7 @@ netflix.com.
 --snip--
 $ denominator -p ultradns -c my_user -c my_password record --zone netflix.com. list
 --snip--
-email.netflix.com.                                 A     3600   69.53.237.168
+email.netflix.com.                                 A     3600   192.0.2.1
 --snip--
 ```
 

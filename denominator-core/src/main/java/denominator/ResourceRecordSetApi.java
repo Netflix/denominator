@@ -53,13 +53,13 @@ public interface ResourceRecordSetApi {
      * {@link ResourceRecordSet} initially comprised of the specified
      * {@code rrset}.
      * 
-     * Example of adding "1.2.3.4" to the {@code A} record set for
+     * Example of adding "192.0.2.1" to the {@code A} record set for
      * {@code www.denominator.io.}
      * 
      * <pre>
      * import static denominator.model.ResourceRecordSets.a;
      * ...
-     * rrsApi.add(a("www.denominator.io.", 3600, "1.2.3.4"));
+     * rrsApi.add(a("www.denominator.io.", 3600, "192.0.2.1"));
      * </pre>
      * 
      * @param rrset
@@ -90,12 +90,12 @@ public interface ResourceRecordSetApi {
      * {@link ResourceRecordSet#getType() type} corresponding to {@code rrset}.
      * 
      * Example of replacing the {@code A} record set for
-     * {@code www.denominator.io.} with "1.2.3.4".
+     * {@code www.denominator.io.} with "192.0.2.1".
      * 
      * <pre>
      * import static denominator.model.ResourceRecordSets.a;
      * ...
-     * rrsApi.replace(a("www.denominator.io.", 3600, "1.2.3.4"));
+     * rrsApi.replace(a("www.denominator.io.", 3600, "192.0.2.1"));
      * </pre>
      * 
      * @param rrset
@@ -112,13 +112,13 @@ public interface ResourceRecordSetApi {
      * remove values corresponding to input {@code rdata}, or removes the set
      * entirely, if this is the only entry.
      * 
-     * Example of removing "1.2.3.4" from the {@code A} record set for
+     * Example of removing "192.0.2.1" from the {@code A} record set for
      * {@code www.denominator.io.}
      * 
      * <pre>
      * import static denominator.model.ResourceRecordSets.a;
      * ...
-     * rrsApi.remove(a("www.denominator.io.", "1.2.3.4"));
+     * rrsApi.remove(a("www.denominator.io.", "192.0.2.1"));
      * </pre>
      * 
      * @param rrset

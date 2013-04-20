@@ -15,12 +15,12 @@ public class ResourceRecordSetTest {
                                                            .name("www.denominator.io.")
                                                            .type("A")
                                                            .ttl(3600)
-                                                           .add(AData.create("1.1.1.1")).build();
+                                                           .add(AData.create("192.0.2.1")).build();
 
         assertEquals(record.getName(), "www.denominator.io.");
         assertEquals(record.getType(), "A");
         assertEquals(record.getTTL().get(), Integer.valueOf(3600));
-        assertEquals(record.get(0), AData.create("1.1.1.1"));
+        assertEquals(record.get(0), AData.create("192.0.2.1"));
     }
 
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "rdata")
@@ -34,6 +34,6 @@ public class ResourceRecordSetTest {
             .name("www.denominator.io.")
             .type("A")
             .ttl(0xFFFFFFFF)
-            .add(AData.create("1.1.1.1")).build();
+            .add(AData.create("192.0.2.1")).build();
     }
 }
