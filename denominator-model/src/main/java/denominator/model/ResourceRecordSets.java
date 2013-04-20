@@ -127,7 +127,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code www.denominator.io.}
      * @param address
-     *            ex. {@code 1.1.1.1}
+     *            ex. {@code 192.0.2.1}
      */
     public static ResourceRecordSet<AData> a(String name, String address) {
         return new ABuilder().name(name).add(address).build();
@@ -142,7 +142,7 @@ public class ResourceRecordSets {
      * @param ttl
      *            see {@link ResourceRecordSet#getTTL()}
      * @param address
-     *            ex. {@code 1.1.1.1}
+     *            ex. {@code 192.0.2.1}
      */
     public static ResourceRecordSet<AData> a(String name, int ttl, String address) {
         return new ABuilder().name(name).ttl(ttl).add(address).build();
@@ -155,7 +155,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code www.denominator.io.}
      * @param addresses
-     *            address values ex. {@code [1.1.1.1, 1.1.1.2]}
+     *            address values ex. {@code [192.0.2.1, 192.0.2.2]}
      */
     public static ResourceRecordSet<AData> a(String name, Iterable<String> addresses) {
         return new ABuilder().name(name).addAll(addresses).build();
@@ -170,7 +170,7 @@ public class ResourceRecordSets {
      * @param ttl
      *            see {@link ResourceRecordSet#getTTL()}
      * @param addresses
-     *            address values ex. {@code [1.1.1.1, 1.1.1.2]}
+     *            address values ex. {@code [192.0.2.1, 192.0.2.2]}
      */
     public static ResourceRecordSet<AData> a(String name, int ttl, Iterable<String> addresses) {
         return new ABuilder().name(name).ttl(ttl).addAll(addresses).build();

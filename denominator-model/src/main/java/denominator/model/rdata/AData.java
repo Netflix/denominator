@@ -17,7 +17,7 @@ import com.google.common.net.InetAddresses;
  * <h4>Example</h4>
  * 
  * <pre>
- * AData rdata = AData.create(&quot;1.1.1.1&quot;);
+ * AData rdata = AData.create(&quot;192.0.2.1&quot;);
  * </pre>
  * 
  * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
@@ -27,7 +27,7 @@ public class AData extends ForwardingMap<String, Object> {
     /**
      * 
      * @param ipv4address
-     *            valid ipv4 address. ex. {@code 1.1.1.1}
+     *            valid ipv4 address. ex. {@code 192.0.2.1}
      * @throws IllegalArgumentException
      *             if the address is malformed or not ipv4
      * @see InetAddresses#forString(String)

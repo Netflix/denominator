@@ -64,8 +64,8 @@ public class MockProvider extends Provider {
                                                         .expire(604800)
                                                         .minimum(60).build()).build());
         data.put(zoneName, ns(zoneName, 86400, "ns1." + zoneName));
-        data.put(zoneName, a("www1." + zoneName, 3600, ImmutableSet.of("1.1.1.1", "1.1.1.2")));
-        data.put(zoneName, a("www2." + zoneName, 3600, "2.2.2.2"));
+        data.put(zoneName, a("www1." + zoneName, 3600, ImmutableSet.of("192.0.2.1", "192.0.2.2")));
+        data.put(zoneName, a("www2." + zoneName, 3600, "198.51.100.1"));
         data.put(zoneName, cname("www." + zoneName, 3600, "www1." + zoneName));
         return Multimap.class.cast(data);
     }
