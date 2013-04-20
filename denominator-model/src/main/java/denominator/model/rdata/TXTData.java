@@ -15,7 +15,7 @@ import com.google.common.collect.ImmutableMap;
  * <h4>Example</h4>
  * 
  * <pre>
- * TXTData rdata = TXTData.create("=spf1 ip4:1.1.1.1/24 ip4:2.2.2.2/24 -all");
+ * TXTData rdata = TXTData.create("=spf1 ip4:192.0.2.1/24 ip4:198.51.100.1/24 -all");
  * </pre>
  * 
  * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>

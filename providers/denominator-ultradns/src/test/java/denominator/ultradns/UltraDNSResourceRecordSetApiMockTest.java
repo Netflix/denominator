@@ -79,8 +79,8 @@ public class UltraDNSResourceRecordSetApiMockTest {
     private String aRecordTTLGuidAddressTemplate = "<ns2:ResourceRecord ZoneName=\"foo.com.\" Type=\"1\" DName=\"www.foo.com.\" TTL=\"%d\" Guid=\"%s\" ZoneId=\"0000000000000001\" LName=\"www.foo.com.\" Created=\"2009-10-12T12:02:23.000Z\" Modified=\"2011-09-27T23:49:22.000Z\"><ns2:InfoValues Info1Value=\"%s\"/></ns2:ResourceRecord>";
 
     private String records1And2 = new StringBuilder(getResourceRecordsOfZoneResponseHeader)
-            .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "1.2.3.4"))
-            .append(format(aRecordTTLGuidAddressTemplate, 3600, "BBBBBBBBBBBB", "5.6.7.8"))
+            .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "192.0.2.1"))
+            .append(format(aRecordTTLGuidAddressTemplate, 3600, "BBBBBBBBBBBB", "198.51.100.1"))
             .append(getResourceRecordsOfZoneResponseFooter).toString();
 
     @Test
@@ -92,7 +92,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         try {
             UltraDNSResourceRecordSetApi api = mockUltraDNSResourceRecordSetApi(server);
             assertEquals(api.listByName("www.foo.com.").next(),
-                    a("www.foo.com.", 3600, ImmutableList.of("1.2.3.4", "5.6.7.8")));
+                    a("www.foo.com.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
         } finally {
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
@@ -129,7 +129,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         try {
             UltraDNSResourceRecordSetApi api = mockUltraDNSResourceRecordSetApi(server);
             assertEquals(api.getByNameAndType("www.foo.com.", "A").get(),
-                    a("www.foo.com.", 3600, ImmutableList.of("1.2.3.4", "5.6.7.8")));
+                    a("www.foo.com.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
         } finally {
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
@@ -166,7 +166,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             UltraDNSResourceRecordSetApi api = mockUltraDNSResourceRecordSetApi(server);
-            api.add(a("www.foo.com.", 3600, "1.2.3.4"));
+            api.add(a("www.foo.com.", 3600, "192.0.2.1"));
         } finally {
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
@@ -183,7 +183,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
             RecordedRequest addRecord1 = server.takeRequest();
             assertEquals(addRecord1.getRequestLine(), "POST / HTTP/1.1");
             assertEquals(new String(addRecord1.getBody()),
-                    format(addRecordToRRPoolTemplate, "POOLA", "1.2.3.4", "1", 3600));
+                    format(addRecordToRRPoolTemplate, "POOLA", "192.0.2.1", "1", 3600));
 
             server.shutdown();
         }
@@ -206,7 +206,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             UltraDNSResourceRecordSetApi api = mockUltraDNSResourceRecordSetApi(server);
-            api.add(a("www.foo.com.", 3600, "1.2.3.4"));
+            api.add(a("www.foo.com.", 3600, "192.0.2.1"));
         } finally {
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
@@ -219,14 +219,14 @@ public class UltraDNSResourceRecordSetApiMockTest {
             RecordedRequest addRecord1 = server.takeRequest();
             assertEquals(addRecord1.getRequestLine(), "POST / HTTP/1.1");
             assertEquals(new String(addRecord1.getBody()),
-                    format(addRecordToRRPoolTemplate, "POOLA", "1.2.3.4", "1", 3600));
+                    format(addRecordToRRPoolTemplate, "POOLA", "192.0.2.1", "1", 3600));
 
             server.shutdown();
         }
     }
 
     private String record1 = new StringBuilder(getResourceRecordsOfZoneResponseHeader)
-            .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "1.2.3.4"))
+            .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "192.0.2.1"))
             .append(getResourceRecordsOfZoneResponseFooter).toString();
 
     private String getRRPoolRecordsTemplate = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:getRRPoolRecords><lbPoolId>%s</lbPoolId></v01:getRRPoolRecords></soapenv:Body></soapenv:Envelope>";
@@ -235,7 +235,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
     private String getRRPoolRecordsResponseFooter = "</ResourceRecordList></ns1:getRRPoolRecordsResponse></soap:Body></soap:Envelope>";
 
     private String pooledRecord1 = new StringBuilder(getRRPoolRecordsResponseHeader)
-            .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "1.2.3.4"))
+            .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "192.0.2.1"))
             .append(getRRPoolRecordsResponseFooter).toString();
 
     private String deleteRecordOfRRPoolTemplate = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:deleteRecordOfRRPool><transactionID /><guid>%s</guid></v01:deleteRecordOfRRPool></soapenv:Body></soapenv:Envelope>";
@@ -257,7 +257,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             UltraDNSResourceRecordSetApi api = mockUltraDNSResourceRecordSetApi(server);
-            api.remove(a("www.foo.com.", "1.2.3.4"));
+            api.remove(a("www.foo.com.", "192.0.2.1"));
         } finally {
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
@@ -298,7 +298,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             UltraDNSResourceRecordSetApi api = mockUltraDNSResourceRecordSetApi(server);
-            api.add(a("www.foo.com.", "5.6.7.8"));
+            api.add(a("www.foo.com.", "198.51.100.1"));
         } finally {
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
@@ -311,7 +311,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
             RecordedRequest addRecord2 = server.takeRequest();
             assertEquals(addRecord2.getRequestLine(), "POST / HTTP/1.1");
             assertEquals(new String(addRecord2.getBody()),
-                    format(addRecordToRRPoolTemplate, "POOLA", "5.6.7.8", "1", 3600));
+                    format(addRecordToRRPoolTemplate, "POOLA", "198.51.100.1", "1", 3600));
 
             server.shutdown();
         }

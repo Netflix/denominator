@@ -118,7 +118,7 @@ class ResourceRecordSetCommands {
         @Option(type = OptionType.COMMAND, required = true, name = { "-t", "--type" }, description = "type of the record set. ex. CNAME")
         public String type;
 
-        @Option(type = OptionType.COMMAND, required = false, name = { "-d", "--data" }, description = "repeat for each record value (rdata) to add. ex. 1.2.3.4")
+        @Option(type = OptionType.COMMAND, required = false, name = { "-d", "--data" }, description = "repeat for each record value (rdata) to add. ex. 192.0.2.1")
         public List<String> values;
 
         @Option(type = OptionType.COMMAND, required = false, name = "--ec2-public-ipv4", description = "take data from EC2 Instance Metadata public-ipv4")

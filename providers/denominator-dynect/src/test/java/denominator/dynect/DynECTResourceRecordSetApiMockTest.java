@@ -42,7 +42,7 @@ public class DynECTResourceRecordSetApiMockTest {
     String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.3.8\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
     String success = "{\"status\": \"success\", \"data\": {}, \"job_id\": 262989027, \"msgs\": [{\"INFO\": \"thing done\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
-    String createRecord1 = "{\"rdata\":{\"address\":\"1.2.3.4\"},\"ttl\":3600}";
+    String createRecord1 = "{\"rdata\":{\"address\":\"192.0.2.1\"},\"ttl\":3600}";
 
     @Test
     public void addFirstRecordPostsAndPublishes() throws IOException, InterruptedException {
@@ -56,7 +56,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.add(a("www.foo.com", 3600, "1.2.3.4"));
+            api.add(a("www.foo.com", 3600, "192.0.2.1"));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -76,7 +76,7 @@ public class DynECTResourceRecordSetApiMockTest {
     }
 
     String recordIdsWithRecord1 = "{\"status\": \"success\", \"data\": [\"/REST/ARecord/foo.com/www.foo.com/1\"], \"job_id\": 273523368, \"msgs\": [{\"INFO\": \"get_tree: Here is your zone tree\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
-    String record1Result = "{\"status\": \"success\", \"data\": {\"zone\": \"foo.com\", \"ttl\": 3600, \"fqdn\": \"www.foo.com\", \"record_type\": \"A\", \"rdata\": {\"address\": \"1.2.3.4\"}, \"record_id\": 1}, \"job_id\": 274279510, \"msgs\": [{\"INFO\": \"get: Found the record\", \"SOURCE\": \"API-B\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+    String record1Result = "{\"status\": \"success\", \"data\": {\"zone\": \"foo.com\", \"ttl\": 3600, \"fqdn\": \"www.foo.com\", \"record_type\": \"A\", \"rdata\": {\"address\": \"192.0.2.1\"}, \"record_id\": 1}, \"job_id\": 274279510, \"msgs\": [{\"INFO\": \"get: Found the record\", \"SOURCE\": \"API-B\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
     @Test
     public void addAddExistingRecordDoesNothing() throws IOException, InterruptedException {
@@ -89,7 +89,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.add(a("www.foo.com", 3600, "1.2.3.4"));
+            api.add(a("www.foo.com", 3600, "192.0.2.1"));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -103,7 +103,7 @@ public class DynECTResourceRecordSetApiMockTest {
         }
     }
 
-    String createRecord2 = "{\"rdata\":{\"address\":\"5.6.7.8\"},\"ttl\":3600}";
+    String createRecord2 = "{\"rdata\":{\"address\":\"198.51.100.1\"},\"ttl\":3600}";
 
     @Test
     public void addSecondRecordPostsRecordWithOldTTLAndPublishes() throws IOException, InterruptedException {
@@ -118,7 +118,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.add(a("www.foo.com", "5.6.7.8"));
+            api.add(a("www.foo.com", "198.51.100.1"));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -140,8 +140,8 @@ public class DynECTResourceRecordSetApiMockTest {
         }
     }
     
-    String createRecord1OverriddenTTL = "{\"rdata\":{\"address\":\"1.2.3.4\"},\"ttl\":10000000}";
-    String createRecord2OverriddenTTL = "{\"rdata\":{\"address\":\"5.6.7.8\"},\"ttl\":10000000}";
+    String createRecord1OverriddenTTL = "{\"rdata\":{\"address\":\"192.0.2.1\"},\"ttl\":10000000}";
+    String createRecord2OverriddenTTL = "{\"rdata\":{\"address\":\"198.51.100.1\"},\"ttl\":10000000}";
 
     @Test
     public void addSecondRecordWithNewTTLRecreatesFirstRecordWithTTLAndPublishes() throws IOException, InterruptedException {
@@ -158,7 +158,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.add(a("www.foo.com", 10000000, "5.6.7.8"));
+            api.add(a("www.foo.com", 10000000, "198.51.100.1"));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -200,7 +200,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.remove(a("www.foo.com", "1.2.3.4"));
+            api.remove(a("www.foo.com", "192.0.2.1"));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -222,7 +222,7 @@ public class DynECTResourceRecordSetApiMockTest {
     }
 
     String recordIdsWithRecords1And2 = "{\"status\": \"success\", \"data\": [\"/REST/ARecord/foo.com/www.foo.com/1\",\"/REST/ARecord/foo.com/www.foo.com/2\"], \"job_id\": 273523368, \"msgs\": [{\"INFO\": \"get_tree: Here is your zone tree\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
-    String record2Result = "{\"status\": \"success\", \"data\": {\"zone\": \"foo.com\", \"ttl\": 3600, \"fqdn\": \"www.foo.com\", \"record_type\": \"A\", \"rdata\": {\"address\": \"5.6.7.8\"}, \"record_id\": 2}, \"job_id\": 274279510, \"msgs\": [{\"INFO\": \"get: Found the record\", \"SOURCE\": \"API-B\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+    String record2Result = "{\"status\": \"success\", \"data\": {\"zone\": \"foo.com\", \"ttl\": 3600, \"fqdn\": \"www.foo.com\", \"record_type\": \"A\", \"rdata\": {\"address\": \"198.51.100.1\"}, \"record_id\": 2}, \"job_id\": 274279510, \"msgs\": [{\"INFO\": \"get: Found the record\", \"SOURCE\": \"API-B\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
     @Test
     public void removeRecord1ResultReplacesRRSet() throws IOException, InterruptedException {
@@ -238,7 +238,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.remove(a("www.foo.com", "5.6.7.8"));
+            api.remove(a("www.foo.com", "198.51.100.1"));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -371,7 +371,7 @@ public class DynECTResourceRecordSetApiMockTest {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
             assertEquals(api.listByName("www.foo.com").next(),
-                    a("www.foo.com", 3600, ImmutableList.of("1.2.3.4", "5.6.7.8")));
+                    a("www.foo.com", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -422,7 +422,7 @@ public class DynECTResourceRecordSetApiMockTest {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
             assertEquals(api.getByNameAndType("www.foo.com", "A").get(),
-                    a("www.foo.com", 3600, ImmutableList.of("1.2.3.4", "5.6.7.8")));
+                    a("www.foo.com", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -475,7 +475,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.replace(a("www.foo.com", 10000000, ImmutableSet.of("1.2.3.4", "5.6.7.8")));
+            api.replace(a("www.foo.com", 10000000, ImmutableSet.of("192.0.2.1", "198.51.100.1")));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -515,7 +515,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.replace(a("www.foo.com", 3600, "1.2.3.4"));
+            api.replace(a("www.foo.com", 3600, "192.0.2.1"));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
@@ -540,7 +540,7 @@ public class DynECTResourceRecordSetApiMockTest {
         try {
             DynECTResourceRecordSetApi api = new DynECTResourceRecordSetApi(
                     mockDynECTApi(server.getUrl("/").toString()), "foo.com");
-            api.remove(a("www.foo.com", "5.6.7.8"));
+            api.remove(a("www.foo.com", "198.51.100.1"));
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
 
