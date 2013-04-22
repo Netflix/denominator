@@ -9,12 +9,14 @@ import static denominator.ultradns.UltraDNSPredicates.poolDNameEqualTo;
 import static denominator.ultradns.UltraDNSPredicates.poolNameEqualTo;
 import static denominator.ultradns.UltraDNSPredicates.recordGuidEqualTo;
 import static denominator.ultradns.UltraDNSPredicates.resourceTypeEqualTo;
+import static org.jclouds.ultradns.ws.domain.RoundRobinPool.RecordType.A;
+import static org.jclouds.ultradns.ws.domain.RoundRobinPool.RecordType.AAAA;
 
 import java.util.List;
 import java.util.Map;
 
 import org.jclouds.ultradns.ws.domain.ResourceRecord;
-import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
+import org.jclouds.ultradns.ws.domain.ResourceRecordDetail;
 import org.jclouds.ultradns.ws.domain.RoundRobinPool;
 import org.jclouds.ultradns.ws.features.RoundRobinPoolApi;
 import org.slf4j.Logger;
@@ -25,7 +27,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 
 import denominator.ResourceTypeToValue;
-
 class UltraDNSRoundRobinPoolApi {
     private static final Logger LOGGER = LoggerFactory.getLogger(UltraDNSRoundRobinPoolApi.class);
     private final RoundRobinPoolApi roundRobinPoolApi;
@@ -62,9 +63,9 @@ class UltraDNSRoundRobinPoolApi {
             // see findPool for information on why we are storing the type in
             // description field.
             if (type.equals("A")) {
-                return roundRobinPoolApi.createAPoolForHostname(type, dname);
+                return roundRobinPoolApi.createForDNameAndType(type, dname, A.getCode());
             } else { // or AAAA
-                return roundRobinPoolApi.createAAAAPoolForHostname(type, dname);
+                return roundRobinPoolApi.createForDNameAndType(type, dname, AAAA.getCode());
             }
         } else {
             return pool.get().getId();
@@ -88,10 +89,10 @@ class UltraDNSRoundRobinPoolApi {
         // failing above, we need to exhaustive search in order to find any pools
         // that may not follow our naming convention, but are present for the
         // correct dname.
-        Predicate<ResourceRecord> resourceRecordMetadataPredicate = resourceTypeEqualTo(new ResourceTypeToValue()
+        Predicate<ResourceRecord> resourceResourceDetailPredicate = resourceTypeEqualTo(new ResourceTypeToValue()
                 .get(type));
         Predicate<RoundRobinPool> expensivePredicate = toRoundRobinPoolPredicate(compose(
-                resourceRecordMetadataPredicate, toResourceRecord()));
+                resourceResourceDetailPredicate, toResourceRecord()));
         return pools.firstMatch(expensivePredicate);
     }
 
@@ -119,16 +120,16 @@ class UltraDNSRoundRobinPoolApi {
     }
 
     private Predicate<RoundRobinPool> toRoundRobinPoolPredicate(
-            final Predicate<ResourceRecordMetadata> resourceRecordMetadataPredicate) {
+            final Predicate<ResourceRecordDetail> resourceResourceDetailPredicate) {
         return new Predicate<RoundRobinPool>() {
             @Override
             public boolean apply(RoundRobinPool pool) {
-                return roundRobinPoolApi.listRecords(pool.getId()).anyMatch(resourceRecordMetadataPredicate);
+                return roundRobinPoolApi.listRecords(pool.getId()).anyMatch(resourceResourceDetailPredicate);
             }
 
             @Override
             public String toString() {
-                return "AnyRecordMatches(" + resourceRecordMetadataPredicate + ")";
+                return "AnyRecordMatches(" + resourceResourceDetailPredicate + ")";
             }
         };
     }

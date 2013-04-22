@@ -10,8 +10,8 @@ import static org.testng.Assert.assertTrue;
 import java.util.Iterator;
 
 import org.jclouds.date.internal.SimpleDateFormatDateService;
-import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
-import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata.Builder;
+import org.jclouds.ultradns.ws.domain.ResourceRecordDetail;
+import org.jclouds.ultradns.ws.domain.ResourceRecordDetail.Builder;
 import org.testng.annotations.Test;
 
 import com.google.common.base.Splitter;
@@ -26,7 +26,7 @@ public class GroupByRecordNameAndTypeIteratorTest {
     
     @Test
     public void testResourceRecordSetCreation() throws Exception {
-        ImmutableList<ResourceRecordMetadata> metadataList = createMetadataList();
+        ImmutableList<ResourceRecordDetail> metadataList = createMetadataList();
         GroupByRecordNameAndTypeIterator  iter = new GroupByRecordNameAndTypeIterator(metadataList.iterator());
         assertTrue(iter.hasNext());
     
@@ -64,10 +64,10 @@ public class GroupByRecordNameAndTypeIteratorTest {
         return rrsetList.iterator();
     }
 
-    public ImmutableList<ResourceRecordMetadata> createMetadataList() throws Exception {
-          Builder builder = ResourceRecordMetadata.builder().zoneId("0000000000000001").zoneName("jclouds.org.");
+    public ImmutableList<ResourceRecordDetail> createMetadataList() throws Exception {
+          Builder builder = ResourceRecordDetail.builder().zoneId("0000000000000001").zoneName("jclouds.org.");
           
-          return Ordering.usingToString().immutableSortedCopy(ImmutableList.<ResourceRecordMetadata> builder()
+          return Ordering.usingToString().immutableSortedCopy(ImmutableList.<ResourceRecordDetail> builder()
                   .add(builder.guid("04023A2507B6468F")
                           .created(dateService.iso8601DateParse("2010-10-02T16:57:16.000Z"))
                           .modified(dateService.iso8601DateParse("2011-09-27T23:49:21.000Z"))
