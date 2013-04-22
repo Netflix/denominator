@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.jclouds.ultradns.ws.domain.ResourceRecord;
-import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
+import org.jclouds.ultradns.ws.domain.ResourceRecordDetail;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -27,16 +27,16 @@ import denominator.model.rdata.TXTData;
 final class UltraDNSFunctions {
     private UltraDNSFunctions() { /* */}
 
-    static Function<ResourceRecordMetadata, ResourceRecord> toResourceRecord() {
+    static Function<ResourceRecordDetail, ResourceRecord> toResourceRecord() {
         return ToResourceRecord.INSTANCE;
     }
 
     // enum singleton pattern
-    private enum ToResourceRecord implements Function<ResourceRecordMetadata, ResourceRecord> {
+    private enum ToResourceRecord implements Function<ResourceRecordDetail, ResourceRecord> {
         INSTANCE;
 
         @Override
-        public ResourceRecord apply(ResourceRecordMetadata in) {
+        public ResourceRecord apply(ResourceRecordDetail in) {
             return in.getRecord();
         }
 

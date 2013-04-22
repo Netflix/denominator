@@ -5,7 +5,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.Serializable;
 
 import org.jclouds.ultradns.ws.domain.ResourceRecord;
-import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
+import org.jclouds.ultradns.ws.domain.ResourceRecordDetail;
 import org.jclouds.ultradns.ws.domain.RoundRobinPool;
 
 import com.google.common.base.Predicate;
@@ -39,12 +39,12 @@ final class UltraDNSPredicates {
         private static final long serialVersionUID = 0;
     }
 
-    public static Predicate<ResourceRecordMetadata> recordGuidEqualTo(String guid) {
+    public static Predicate<ResourceRecordDetail> recordGuidEqualTo(String guid) {
         return new RecordGuidEqualToPredicate(guid);
     }
 
     /** @see UltraDNSPredicates#resourceTypeEqualTo(int) */
-    private static class RecordGuidEqualToPredicate implements Predicate<ResourceRecordMetadata>, Serializable {
+    private static class RecordGuidEqualToPredicate implements Predicate<ResourceRecordDetail>, Serializable {
         private final String guid;
 
         private RecordGuidEqualToPredicate(String guid) {
@@ -52,7 +52,7 @@ final class UltraDNSPredicates {
         }
 
         @Override
-        public boolean apply(ResourceRecordMetadata in) {
+        public boolean apply(ResourceRecordDetail in) {
             return guid.equals(in.getGuid());
         }
 
