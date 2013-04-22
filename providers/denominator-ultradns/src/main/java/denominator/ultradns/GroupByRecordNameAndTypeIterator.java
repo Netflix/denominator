@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.jclouds.ultradns.ws.domain.ResourceRecord;
-import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
+import org.jclouds.ultradns.ws.domain.ResourceRecordDetail;
 
 import com.google.common.collect.PeekingIterator;
 
@@ -16,9 +16,9 @@ import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 
 class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>> {
-    private final PeekingIterator<ResourceRecordMetadata> peekingIterator;
+    private final PeekingIterator<ResourceRecordDetail> peekingIterator;
 
-    public GroupByRecordNameAndTypeIterator(Iterator<ResourceRecordMetadata> sortedIterator) {
+    public GroupByRecordNameAndTypeIterator(Iterator<ResourceRecordDetail> sortedIterator) {
         this.peekingIterator = peekingIterator(sortedIterator);
     }
 
