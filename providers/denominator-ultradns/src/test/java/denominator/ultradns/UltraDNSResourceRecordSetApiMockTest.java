@@ -189,7 +189,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         }
     }
 
-    private String poolNameAndIDTemplate = "<ns2:LBPoolData zoneid=\"0000000000000001\"><ns2:PoolData PoolName=\"%s\" PoolId=\"%s\" PoolType=\"RD\" PoolDName=\"www.foo.com.\" ResponseMethod=\"RR\"/></ns2:LBPoolData>";
+    private String poolNameAndIDTemplate = "<ns2:LBPoolData zoneid=\"0000000000000001\"><ns2:PoolData description=\"%s\" PoolId=\"%s\" PoolType=\"RD\" PoolDName=\"www.foo.com.\" ResponseMethod=\"RR\"/></ns2:LBPoolData>";
     private String poolsForAandAAAA = new StringBuilder(getLoadBalancingPoolsByZoneResponseHeader)
             .append(format(poolNameAndIDTemplate, "A", "POOLA"))
             .append(format(poolNameAndIDTemplate, "AAAA", "POOLAAAA"))

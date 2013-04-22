@@ -16,7 +16,7 @@ import javax.inject.Inject;
 
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.domain.ResourceRecord;
-import org.jclouds.ultradns.ws.domain.ResourceRecordMetadata;
+import org.jclouds.ultradns.ws.domain.ResourceRecordDetail;
 import org.jclouds.ultradns.ws.features.ResourceRecordApi;
 
 import com.google.common.base.Optional;
@@ -57,7 +57,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
         // this will list all normal or RR pool records.
-        Iterator<ResourceRecordMetadata> orderedRecords = api.list().toSortedList(byNameTypeAndCreateDate).iterator();
+        Iterator<ResourceRecordDetail> orderedRecords = api.list().toSortedList(byNameTypeAndCreateDate).iterator();
         return new GroupByRecordNameAndTypeIterator(orderedRecords);
     }
 
@@ -78,14 +78,14 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         return Iterators.tryFind(list(), and(nameEqualTo(name), typeEqualTo(type)));
     }
 
-    private List<ResourceRecordMetadata> referencesByNameAndType(final String name, String type) {
+    private List<ResourceRecordDetail> referencesByNameAndType(final String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
         final int typeValue = checkNotNull(new ResourceTypeToValue().get(type), "typeValue for %s", type);
         // TODO: temporary until listByNameAndType() works with NS records where
         // name = zoneName
-        return api.list().filter(new Predicate<ResourceRecordMetadata>() {
-            public boolean apply(ResourceRecordMetadata in) {
+        return api.list().filter(new Predicate<ResourceRecordDetail>() {
+            public boolean apply(ResourceRecordDetail in) {
                 return name.equals(in.getRecord().getName()) && typeValue == in.getRecord().getType();
             }
         }).toSortedList(byNameTypeAndCreateDate);
@@ -100,11 +100,11 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
 
         Optional<Integer> ttlToApply = rrset.getTTL();
 
-        List<ResourceRecordMetadata> references = referencesByNameAndType(rrset.getName(), rrset.getType());
+        List<ResourceRecordDetail> references = referencesByNameAndType(rrset.getName(), rrset.getType());
 
         List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset);
 
-        for (ResourceRecordMetadata reference : references) {
+        for (ResourceRecordDetail reference : references) {
             ResourceRecord record = reference.getRecord();
             if (!ttlToApply.isPresent())
                 ttlToApply = Optional.of(record.getTTL());
@@ -131,11 +131,11 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     public void applyTTLToNameAndType(int ttl, String name, String type) {
         checkNotNull(ttl, "ttl");
 
-        List<ResourceRecordMetadata> references = referencesByNameAndType(name, type);
+        List<ResourceRecordDetail> references = referencesByNameAndType(name, type);
         if (references.isEmpty())
             return;
 
-        for (ResourceRecordMetadata reference : references) {
+        for (ResourceRecordDetail reference : references) {
             ResourceRecord updateTTL = reference.getRecord().toBuilder().ttl(ttl).build();
             // this will update normal or RR pool records.
             api.update(reference.getGuid(), updateTTL);
@@ -148,11 +148,11 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
         int ttlToApply = rrset.getTTL().or(defaultTTL);
 
-        List<ResourceRecordMetadata> references = referencesByNameAndType(rrset.getName(), rrset.getType());
+        List<ResourceRecordDetail> references = referencesByNameAndType(rrset.getName(), rrset.getType());
 
         List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset);
 
-        for (ResourceRecordMetadata reference : references) {
+        for (ResourceRecordDetail reference : references) {
             ResourceRecord record = reference.getRecord();
             Map<String, Object> rdata = toRdataMap().apply(record);
             if (recordsLeftToCreate.contains(rdata)) {
@@ -195,7 +195,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
 
-        for (ResourceRecordMetadata reference : referencesByNameAndType(rrset.getName(), rrset.getType())) {
+        for (ResourceRecordDetail reference : referencesByNameAndType(rrset.getName(), rrset.getType())) {
             ResourceRecord record = reference.getRecord();
             if (rrset.contains(toRdataMap().apply(record))) {
                 remove(rrset.getName(), rrset.getType(), reference.getGuid());
@@ -213,15 +213,15 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
 
     @Override
     public void deleteByNameAndType(String name, String type) {
-        for (ResourceRecordMetadata reference : referencesByNameAndType(name, type)) {
+        for (ResourceRecordDetail reference : referencesByNameAndType(name, type)) {
             remove(name, type, reference.getGuid());
         }
     }
 
-    private static final Ordering<ResourceRecordMetadata> byNameTypeAndCreateDate = new Ordering<ResourceRecordMetadata>() {
+    private static final Ordering<ResourceRecordDetail> byNameTypeAndCreateDate = new Ordering<ResourceRecordDetail>() {
 
         @Override
-        public int compare(ResourceRecordMetadata left, ResourceRecordMetadata right) {
+        public int compare(ResourceRecordDetail left, ResourceRecordDetail right) {
             return ComparisonChain.start()
                                   .compare(left.getRecord().getName(), right.getRecord().getName())
                                   .compare(left.getRecord().getType(), right.getRecord().getType())
