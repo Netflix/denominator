@@ -12,9 +12,11 @@ import org.jclouds.domain.Credentials;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.UltraDNSWSProviderMetadata;
+import org.jclouds.ultradns.ws.domain.IdAndName;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
@@ -26,8 +28,11 @@ import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
+import denominator.config.ConcatNormalAndGeoResourceRecordSets;
 
-@Module(entryPoints = DNSApiManager.class)
+@Module(entryPoints = DNSApiManager.class,
+           includes = { UltraDNSGeoSupport.class,
+                        ConcatNormalAndGeoResourceRecordSets.class })
 public class UltraDNSProvider extends Provider {
 
     @Provides
@@ -63,8 +68,25 @@ public class UltraDNSProvider extends Provider {
 
     @Provides
     @Singleton
-    ZoneApi provideZoneApi(UltraDNSWSApi api) {
-        return new UltraDNSZoneApi(api);
+    ZoneApi provideZoneApi(UltraDNSWSApi api, Supplier<IdAndName> account) {
+        return new UltraDNSZoneApi(api, account);
+    }
+
+    @Provides
+    @Singleton
+    Supplier<IdAndName> account(final UltraDNSWSApi api) {
+        return Suppliers.memoize(new Supplier<IdAndName>() {
+
+            @Override
+            public IdAndName get() {
+                return api.getCurrentAccount();
+            }
+
+            @Override
+            public String toString() {
+                return "accountOf(" + api + ")";
+            }
+        });
     }
 
     @Provides

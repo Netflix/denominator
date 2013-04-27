@@ -1,6 +1,5 @@
 package denominator;
 
-import static com.google.common.collect.Iterators.size;
 import static com.google.common.collect.Ordering.usingToString;
 import static java.lang.String.format;
 import static java.util.logging.Logger.getAnonymousLogger;
@@ -16,10 +15,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import denominator.model.ResourceRecordSet;
@@ -30,24 +29,17 @@ import denominator.model.ResourceRecordSet;
 public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
 
     @Test
-    public void testListZones() {
-        skipIfNoCredentials();
-        int zoneCount = size(zoneApi().list());
-        getAnonymousLogger().info(format("%s ::: zones: %s", manager, zoneCount));
-    }
-
-    @Test
     private void testListRRSs() {
         skipIfNoCredentials();
         for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
             String zoneName = zone.next();
-            for (Iterator<ResourceRecordSet<?>> rrsIterator = rrsApi(zoneName).list(); rrsIterator.hasNext();) {
+            for (Iterator<ResourceRecordSet<?>> rrsIterator = roApi(zoneName).list(); rrsIterator.hasNext();) {
                 ResourceRecordSet<?> rrs = rrsIterator.next();
                 recordTypeCounts.getUnchecked(rrs.getType()).addAndGet(rrs.size());
                 checkRRS(rrs);
-                Optional<ResourceRecordSet<?>> byNameAndType = rrsApi(zoneName).getByNameAndType(rrs.getName(), rrs.getType());
-                assertTrue(byNameAndType.isPresent(), "could not lookup by name and type: " + rrs);
-                assertEquals(rrsApi(zoneName).getByNameAndType(rrs.getName(), rrs.getType()).get(), rrs);
+                Iterator<ResourceRecordSet<?>> byNameAndType = roApi(zoneName).listByNameAndType(rrs.getName(), rrs.getType());
+                assertTrue(byNameAndType.hasNext(), "could not lookup by name and type: " + rrs);
+                assertTrue(ImmutableList.copyOf(byNameAndType).contains(rrs));
             }
         }
         logRecordSummary();
@@ -58,7 +50,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
         skipIfNoCredentials();
         for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
             String zoneName = zone.next();
-            Iterator<ResourceRecordSet<?>> rrsIterator = rrsApi(zoneName).list();
+            Iterator<ResourceRecordSet<?>> rrsIterator = roApi(zoneName).list();
             if (!rrsIterator.hasNext())
                 continue;
             ResourceRecordSet<?> rrset = rrsIterator.next();
@@ -71,7 +63,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
                         break;
                 withName.add(rrset);
             }
-            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(rrsApi(zoneName).listByName(name));
+            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(roApi(zoneName).listByName(name));
             assertEquals(usingToString().immutableSortedCopy(fromApi), usingToString().immutableSortedCopy(withName));
             break;
         }
@@ -82,17 +74,17 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
         skipIfNoCredentials();
         for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
             String zoneName = zone.next();
-            assertFalse(rrsApi(zoneName).listByName("ARGHH." + zoneName).hasNext());
+            assertFalse(roApi(zoneName).listByName("ARGHH." + zoneName).hasNext());
             break;
         }
     }
 
     @Test
-    private void testGetByNameAndTypeWhenAbsent() {
+    private void testListByNameAndTypeWhenEmpty() {
         skipIfNoCredentials();
         for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
             String zoneName = zone.next();
-            assertEquals(rrsApi(zoneName).getByNameAndType("ARGHH." + zoneName, "TXT"), Optional.absent());
+            assertFalse(roApi(zoneName).listByNameAndType("ARGHH." + zoneName, "TXT").hasNext());
             break;
         }
     }
@@ -109,4 +101,8 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
                     return new AtomicLong();
                 }
             });
+
+    private AllProfileResourceRecordSetApi roApi(String zoneName) {
+        return manager.getApi().getAllProfileResourceRecordSetApiForZone(zoneName);
+    }
 }

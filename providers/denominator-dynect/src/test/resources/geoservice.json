@@ -1,0 +1,259 @@
+{"status": "success",
+    "data": {
+        "active": "Y",
+        "nodes": [{
+                "fqdn": "srv.denominator.io",
+                "zone": "denominator.io"
+            }
+        ],
+        "name": "CCS",
+        "groups": [{
+                "name": "Everywhere Else",
+                "weight": {
+                    "aaaa_weight": [],
+                    "a_weight": [],
+                    "cname_weight": []
+                },
+                "countries": ["11", "16", "12", "17", "15", "14"],
+                "rdata": {
+                    "spf_rdata": [],
+                    "px_rdata": [],
+                    "srv_rdata": [],
+                    "txt_rdata": [],
+                    "soa_rdata": [],
+                    "rp_rdata": [],
+                    "ipseckey_rdata": [],
+                    "dhcid_rdata": [],
+                    "kx_rdata": [],
+                    "key_rdata": [],
+                    "aaaa_rdata": [],
+                    "mx_rdata": [],
+                    "dnskey_rdata": [],
+                    "naptr_rdata": [],
+                    "a_rdata": [],
+                    "cname_rdata": [{
+                            "cname": "srv-000000001.us-east-1.elb.amazonaws.com."
+                        }
+                    ],
+                    "cert_rdata": [],
+                    "nsap_rdata": [],
+                    "ptr_rdata": [],
+                    "ds_rdata": [],
+                    "sshfp_rdata": [],
+                    "dname_rdata": [],
+                    "ns_rdata": [],
+                    "loc_rdata": []
+                },
+                "label": {
+                    "a_label": [],
+                    "key_label": [],
+                    "ptr_label": [],
+                    "srv_label": [],
+                    "txt_label": [],
+                    "spf_label": [],
+                    "mx_label": [],
+                    "rp_label": [],
+                    "sshfp_label": [],
+                    "dnskey_label": [],
+                    "aaaa_label": [],
+                    "dhcid_label": [],
+                    "nsap_label": [],
+                    "loc_label": [],
+                    "px_label": [],
+                    "cname_label": [],
+                    "cert_label": []
+                },
+                "ttl": {
+                    "dhcid_ttl": 0,
+                    "key_ttl": 0,
+                    "ptr_ttl": 0,
+                    "srv_ttl": 0,
+                    "mx_ttl": 0,
+                    "aaaa_ttl": 0,
+                    "rp_ttl": 0,
+                    "loc_ttl": 0,
+                    "dnskey_ttl": 0,
+                    "cname_ttl": 300,
+                    "cert_ttl": 0,
+                    "nsap_ttl": 0,
+                    "a_ttl": 0,
+                    "px_ttl": 0,
+                    "sshfp_ttl": 0,
+                    "spf_ttl": 0,
+                    "txt_ttl": 0
+                },
+                "serve_count": {
+                    "a_serve_count": "",
+                    "aaaa_serve_count": ""
+                }
+            }, {
+                "name": "Europe",
+                "weight": {
+                    "aaaa_weight": [],
+                    "a_weight": [],
+                    "cname_weight": []
+                },
+                "countries": ["13"],
+                "rdata": {
+                    "spf_rdata": [],
+                    "px_rdata": [],
+                    "srv_rdata": [],
+                    "txt_rdata": [],
+                    "soa_rdata": [],
+                    "rp_rdata": [],
+                    "ipseckey_rdata": [],
+                    "dhcid_rdata": [],
+                    "kx_rdata": [],
+                    "key_rdata": [],
+                    "aaaa_rdata": [],
+                    "mx_rdata": [],
+                    "dnskey_rdata": [],
+                    "naptr_rdata": [],
+                    "a_rdata": [],
+                    "cname_rdata": [{
+                            "cname": "srv-000000001.eu-west-1.elb.amazonaws.com."
+                        }
+                    ],
+                    "cert_rdata": [],
+                    "nsap_rdata": [],
+                    "ptr_rdata": [],
+                    "ds_rdata": [],
+                    "sshfp_rdata": [],
+                    "dname_rdata": [],
+                    "ns_rdata": [],
+                    "loc_rdata": []
+                },
+                "label": {
+                    "a_label": [],
+                    "key_label": [],
+                    "ptr_label": [],
+                    "srv_label": [],
+                    "txt_label": [],
+                    "spf_label": [],
+                    "mx_label": [],
+                    "rp_label": [],
+                    "sshfp_label": [],
+                    "dnskey_label": [],
+                    "aaaa_label": [],
+                    "dhcid_label": [],
+                    "nsap_label": [],
+                    "loc_label": [],
+                    "px_label": [],
+                    "cname_label": [],
+                    "cert_label": []
+                },
+                "ttl": {
+                    "dhcid_ttl": 0,
+                    "key_ttl": 0,
+                    "ptr_ttl": 0,
+                    "srv_ttl": 0,
+                    "mx_ttl": 0,
+                    "aaaa_ttl": 0,
+                    "rp_ttl": 0,
+                    "loc_ttl": 0,
+                    "dnskey_ttl": 0,
+                    "cname_ttl": 300,
+                    "cert_ttl": 0,
+                    "nsap_ttl": 0,
+                    "a_ttl": 0,
+                    "px_ttl": 0,
+                    "sshfp_ttl": 0,
+                    "spf_ttl": 0,
+                    "txt_ttl": 0
+                },
+                "serve_count": {
+                    "a_serve_count": "",
+                    "aaaa_serve_count": ""
+                }
+            }, {
+                "name": "Fallback",
+                "weight": {
+                    "aaaa_weight": [],
+                    "a_weight": [],
+                    "cname_weight": []
+                },
+                "countries": ["@!", "@@"],
+                "rdata": {
+                    "spf_rdata": [],
+                    "px_rdata": [],
+                    "srv_rdata": [],
+                    "txt_rdata": [],
+                    "soa_rdata": [],
+                    "rp_rdata": [],
+                    "ipseckey_rdata": [],
+                    "dhcid_rdata": [],
+                    "kx_rdata": [],
+                    "key_rdata": [],
+                    "aaaa_rdata": [],
+                    "mx_rdata": [],
+                    "dnskey_rdata": [],
+                    "naptr_rdata": [],
+                    "a_rdata": [],
+                    "cname_rdata": [{
+                            "cname": "srv-000000002.us-east-1.elb.amazonaws.com."
+                        }
+                    ],
+                    "cert_rdata": [],
+                    "nsap_rdata": [],
+                    "ptr_rdata": [],
+                    "ds_rdata": [],
+                    "sshfp_rdata": [],
+                    "dname_rdata": [],
+                    "ns_rdata": [],
+                    "loc_rdata": []
+                },
+                "label": {
+                    "a_label": [],
+                    "key_label": [],
+                    "ptr_label": [],
+                    "srv_label": [],
+                    "txt_label": [],
+                    "spf_label": [],
+                    "mx_label": [],
+                    "rp_label": [],
+                    "sshfp_label": [],
+                    "dnskey_label": [],
+                    "aaaa_label": [],
+                    "dhcid_label": [],
+                    "nsap_label": [],
+                    "loc_label": [],
+                    "px_label": [],
+                    "cname_label": [],
+                    "cert_label": []
+                },
+                "ttl": {
+                    "dhcid_ttl": 0,
+                    "key_ttl": 0,
+                    "ptr_ttl": 0,
+                    "srv_ttl": 0,
+                    "mx_ttl": 0,
+                    "aaaa_ttl": 0,
+                    "rp_ttl": 0,
+                    "loc_ttl": 0,
+                    "dnskey_ttl": 0,
+                    "cname_ttl": 300,
+                    "cert_ttl": 0,
+                    "nsap_ttl": 0,
+                    "a_ttl": 0,
+                    "px_ttl": 0,
+                    "sshfp_ttl": 0,
+                    "spf_ttl": 0,
+                    "txt_ttl": 0
+                },
+                "serve_count": {
+                    "a_serve_count": "",
+                    "aaaa_serve_count": ""
+                }
+            }
+        ],
+        "ttl": 30
+    },
+    "job_id": 321488519,
+    "msgs": [{
+            "INFO": "detail: Here is your service",
+            "SOURCE": "BLL",
+            "ERR_CD": null,
+            "LVL": "INFO"
+        }
+    ]
+}

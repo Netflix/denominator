@@ -4,14 +4,59 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.Serializable;
 
+import org.jclouds.ultradns.ws.domain.DirectionalPool;
+import org.jclouds.ultradns.ws.domain.DirectionalPoolRecordDetail;
 import org.jclouds.ultradns.ws.domain.ResourceRecord;
 import org.jclouds.ultradns.ws.domain.ResourceRecordDetail;
 import org.jclouds.ultradns.ws.domain.RoundRobinPool;
+import org.jclouds.ultradns.ws.domain.DirectionalPool.Type;
 
 import com.google.common.base.Predicate;
 
 final class UltraDNSPredicates {
     private UltraDNSPredicates() { /* */
+    }
+
+    public static Predicate<DirectionalPool> isGeolocationPool() {
+        return TypeGeoLocationPredicate.INSTANCE;
+    }
+
+    /** @see UltraDNSPredicates#isGeolocationPool() */
+    private static enum TypeGeoLocationPredicate implements Predicate<DirectionalPool>, Serializable {
+        INSTANCE;
+
+        @Override
+        public boolean apply(DirectionalPool in) {
+            return in.getType() == Type.GEOLOCATION;
+        }
+
+        @Override
+        public String toString() {
+            return "TypeGeoLocation()";
+        }
+
+        private static final long serialVersionUID = 0;
+    }
+
+    public static Predicate<DirectionalPoolRecordDetail> isGeolocationRecord() {
+        return GeolocationGroupPresentPredicate.INSTANCE;
+    }
+
+    /** @see UltraDNSPredicates#isGeolocationRecord() */
+    private static enum GeolocationGroupPresentPredicate implements Predicate<DirectionalPoolRecordDetail>, Serializable {
+        INSTANCE;
+
+        @Override
+        public boolean apply(DirectionalPoolRecordDetail in) {
+            return in.getGeolocationGroup().isPresent();
+        }
+
+        @Override
+        public String toString() {
+            return "GeolocationGroupPresent()";
+        }
+
+        private static final long serialVersionUID = 0;
     }
 
     public static Predicate<ResourceRecord> resourceTypeEqualTo(int typeValue) {
