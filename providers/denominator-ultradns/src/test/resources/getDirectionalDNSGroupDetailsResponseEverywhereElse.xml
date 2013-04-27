@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+	<soap:Body>
+		<ns1:getDirectionalDNSGroupDetailsResponse
+			xmlns:ns1="http://webservice.api.ultra.neustar.com/v01/">
+			<DirectionalDNSGroupDetail
+				xmlns:ns2="http://schema.ultraservice.neustar.com/v01/" GroupName="Everywhere Else">
+				<ns2:DirectionalDNSRegion>
+					<ns2:RegionForNewGroups RegionName="Anonymous Proxy (A1)"
+						TerritoryName="Anonymous Proxy" />
+					<ns2:RegionForNewGroups RegionName="Mexico"
+						TerritoryName="Mexico" />
+					<ns2:RegionForNewGroups RegionName="Satellite Provider (A2)"
+						TerritoryName="Satellite Provider" />
+					<ns2:RegionForNewGroups RegionName="Unknown / Uncategorized IPs"
+						TerritoryName="Unknown / Uncategorized IPs" />
+					<ns2:RegionForNewGroups RegionName="Canada (CA)"
+						TerritoryName="Alberta;British Columbia;Greenland;Manitoba;New Brunswick;Newfoundland and Labrador;Northwest Territories;Nova Scotia;Nunavut;Ontario;Prince Edward Island;Quebec;Saint Pierre and Miquelon;Saskatchewan;Undefined Canada;Yukon" />
+					<ns2:RegionForNewGroups RegionName="The Caribbean"
+						TerritoryName="Anguilla;Antigua and Barbuda;Aruba;Bahamas;Barbados;Bermuda;British Virgin Islands;Cayman Islands;Cuba;Dominica;Dominican Republic;Grenada;Guadeloupe;Haiti;Jamaica;Martinique;Montserrat;Netherlands Antilles;Puerto Rico;Saint Barthelemy;Saint Martin;Saint Vincent and the Grenadines;St. Kitts and Nevis;St. Lucia;Trinidad and Tobago;Turks and Caicos Islands;U.S. Virgin Islands" />
+					<ns2:RegionForNewGroups RegionName="Central America"
+						TerritoryName="Belize;Costa Rica;El Salvador;Guatemala;Honduras;Nicaragua;Panama;Undefined Central America" />
+					<ns2:RegionForNewGroups RegionName="South America"
+						TerritoryName="Argentina;Bolivia;Brazil;Chile;Colombia;Ecuador;Falkland Islands;French Guiana;Guyana;Paraguay;Peru;South Georgia and the South Sandwich Islands;Suriname;Undefined South America;Uruguay;Venezuela, Bolivarian Republic of" />
+					<ns2:RegionForNewGroups RegionName="Russian Federation"
+						TerritoryName="Russian Federation" />
+					<ns2:RegionForNewGroups RegionName="Middle East"
+						TerritoryName="Afghanistan;Bahrain;Cyprus;Iran;Iraq;Israel;Jordan;Kuwait;Lebanon;Oman;Palestinian Territory, Occupied;Qatar;Saudi Arabia;Syrian Arab Republic;Turkey, Republic of;Undefined Middle East;United Arab Emirates;Yemen" />
+					<ns2:RegionForNewGroups RegionName="Africa"
+						TerritoryName="Algeria;Angola;Benin;Botswana;Burkina Faso;Burundi;Cameroon;Cape Verde;Central African Republic;Chad;Comoros;Congo;Cote d'Ivoire;Democratic Republic of the Congo;Djibouti;Egypt;Equatorial Guinea;Eritrea;Ethiopia;Gabon;Gambia;Ghana;Guinea;Guinea-Bissau;Kenya;Lesotho;Liberia;Libyan Arab Jamahiriya;Madagascar;Malawi;Mali;Mauritania;Mauritius;Mayotte;Morocco;Mozambique;Namibia;Niger;Nigeria;Reunion;Rwanda;Sao Tome and Principe;Senegal;Seychelles;Sierra Leone;Somalia;South Africa;St. Helena;Sudan;Swaziland;Tanzania, United Republic of;Togo;Tunisia;Uganda;Undefined Africa;Western Sahara;Zambia;Zimbabwe" />
+					<ns2:RegionForNewGroups RegionName="Asia"
+						TerritoryName="Bangladesh;Bhutan;British Indian Ocean Territory - Chagos Islands;Brunei Darussalam;Cambodia;China;Hong Kong;India;Indonesia;Japan;Kazakhstan;Korea, Democratic People's Republic of;Korea, Republic of;Kyrgyzstan;Lao People's Democratic Republic;Macao;Malaysia;Maldives;Mongolia;Myanmar;Nepal;Pakistan;Philippines;Singapore;Sri Lanka;Taiwan;Tajikistan;Thailand;Timor-Leste, Democratic Republic of;Turkmenistan;Undefined Asia;Uzbekistan;Vietnam" />
+					<ns2:RegionForNewGroups RegionName="Australia / Oceania"
+						TerritoryName="American Samoa;Australia;Christmas Island;Cocos (Keeling) Islands;Cook Islands;Fiji;French Polynesia;Guam;Heard Island and McDonald Islands;Kiribati;Marshall Islands;Micronesia , Federated States of;Nauru;New Caledonia;New Zealand;Niue;Norfolk Island;Northern Mariana Islands, Commonwealth of;Palau;Papua New Guinea;Pitcairn;Samoa;Solomon Islands;Tokelau;Tonga;Tuvalu;Undefined Australia / Oceania;Vanuatu;Wallis and Futuna" />
+					<ns2:RegionForNewGroups RegionName="Antarctica"
+						TerritoryName="Antarctica;Bouvet Island;French Southern Territories" />
+				</ns2:DirectionalDNSRegion>
+			</DirectionalDNSGroupDetail>
+		</ns1:getDirectionalDNSGroupDetailsResponse>
+	</soap:Body>
+</soap:Envelope>

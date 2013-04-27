@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
 
+import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 
 import denominator.model.rdata.AAAAData;
@@ -117,6 +118,104 @@ public class ResourceRecordSets {
         @Override
         public String toString() {
             return "containsRData(" + rdata + ")";
+        }
+    }
+
+    /**
+     * returns true if the input is not null and
+     * {@link ResourceRecordSet#getProfiles() profile} is empty.
+     */
+    public static Predicate<ResourceRecordSet<?>> withoutProfile() {
+        return WithoutProfile.INSTANCE;
+    }
+
+    private static enum WithoutProfile implements Predicate<ResourceRecordSet<?>> {
+
+        INSTANCE;
+
+        @Override
+        public boolean apply(ResourceRecordSet<?> input) {
+            return input != null && input.getProfiles().isEmpty();
+        }
+
+        @Override
+        public String toString() {
+            return "WithoutProfile()";
+        }
+    }
+
+    /**
+     * returns true if {@link ResourceRecordSet#getProfiles() profile} contains a
+     * value is assignable from {@code type}.
+     * 
+     * @param type
+     *            expected type of the profile
+     */
+    public static Predicate<ResourceRecordSet<?>> profileContainsType(Class<?> type) {
+        return new ProfileContainsTypeToPredicate(type);
+    }
+
+    private static final class ProfileContainsTypeToPredicate implements Predicate<ResourceRecordSet<?>> {
+        private final Class<?> type;
+
+        private ProfileContainsTypeToPredicate(Class<?> type) {
+            this.type = checkNotNull(type, "type");
+        }
+
+        @Override
+        public boolean apply(ResourceRecordSet<?> input) {
+            if (input == null)
+                return false;
+            if (input.getProfiles().isEmpty())
+                return false;
+            for (Map<String, Object> profile : input.getProfiles()) {
+                if (type.isAssignableFrom(profile.getClass()))
+                    return true;
+            }
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "ProfileContainsTypeTo(" + type + ")";
+        }
+    }
+
+    /**
+     * returns value of {@link ResourceRecordSet#getProfiles() profile},
+     * if matches the input {@code type} and is not null;
+     * 
+     * @param type
+     *            expected type of profile
+     */
+    public static <C extends Map<String, Object>> Function<ResourceRecordSet<?>, C> toProfile(
+            Class<C> type) {
+        return new ToProfileFunction<C>(type);
+    }
+
+    private static final class ToProfileFunction<C> implements Function<ResourceRecordSet<?>, C> {
+        private final Class<C> type;
+
+        private ToProfileFunction(Class<C> type) {
+            this.type = checkNotNull(type, "type");
+        }
+
+        @Override
+        public C apply(ResourceRecordSet<?> input) {
+            if (input == null)
+                return null;
+            if (input.getProfiles().isEmpty())
+                return null;
+            for (Map<String, Object> profile : input.getProfiles()) {
+                if (type.isAssignableFrom(profile.getClass()))
+                    return type.cast(profile);
+            }
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return "ToProfile(" + type + ")";
         }
     }
 

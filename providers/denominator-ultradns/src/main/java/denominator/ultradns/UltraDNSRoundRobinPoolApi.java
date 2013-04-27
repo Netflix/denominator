@@ -89,10 +89,10 @@ class UltraDNSRoundRobinPoolApi {
         // failing above, we need to exhaustive search in order to find any pools
         // that may not follow our naming convention, but are present for the
         // correct dname.
-        Predicate<ResourceRecord> resourceResourceDetailPredicate = resourceTypeEqualTo(new ResourceTypeToValue()
+        Predicate<ResourceRecord> resourceRecordDetailPredicate = resourceTypeEqualTo(new ResourceTypeToValue()
                 .get(type));
         Predicate<RoundRobinPool> expensivePredicate = toRoundRobinPoolPredicate(compose(
-                resourceResourceDetailPredicate, toResourceRecord()));
+                resourceRecordDetailPredicate, toResourceRecord()));
         return pools.firstMatch(expensivePredicate);
     }
 
@@ -120,16 +120,16 @@ class UltraDNSRoundRobinPoolApi {
     }
 
     private Predicate<RoundRobinPool> toRoundRobinPoolPredicate(
-            final Predicate<ResourceRecordDetail> resourceResourceDetailPredicate) {
+            final Predicate<ResourceRecordDetail> resourceRecordDetailPredicate) {
         return new Predicate<RoundRobinPool>() {
             @Override
             public boolean apply(RoundRobinPool pool) {
-                return roundRobinPoolApi.listRecords(pool.getId()).anyMatch(resourceResourceDetailPredicate);
+                return roundRobinPoolApi.listRecords(pool.getId()).anyMatch(resourceRecordDetailPredicate);
             }
 
             @Override
             public String toString() {
-                return "AnyRecordMatches(" + resourceResourceDetailPredicate + ")";
+                return "AnyRecordMatches(" + resourceRecordDetailPredicate + ")";
             }
         };
     }
