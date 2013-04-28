@@ -1,3 +1,7 @@
+### Version 1.0.2
+* updates to jclouds 1.6.0
+* add read-only implementation of Rackspace Cloud DNS (`clouddns`)
+
 ### Version 1.0.1
 * updates to jclouds 1.6.0-rc.5
 * fixes session problem when ip changes during dynect session
