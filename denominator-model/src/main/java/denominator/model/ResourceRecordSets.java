@@ -426,7 +426,7 @@ public class ResourceRecordSets {
      * 
      * @param name
      *            ex. {@code denominator.io.}
-     * @param ptrdname
+     * @param ptrdnames
      *            ptrdname values ex.
      *            {@code [ptr1.denominator.io., ptr2.denominator.io.]}
      */
@@ -442,7 +442,7 @@ public class ResourceRecordSets {
      *            ex. {@code denominator.io.}
      * @param ttl
      *            see {@link ResourceRecordSet#getTTL()}
-     * @param ptrdname
+     * @param ptrdnames
      *            ptrdname values ex.
      *            {@code [ptr1.denominator.io., ptr2.denominator.io.]}
      */

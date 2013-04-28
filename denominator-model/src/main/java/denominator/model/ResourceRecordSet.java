@@ -20,8 +20,7 @@ import com.google.common.primitives.UnsignedInteger;
  * {@link #getName() name} and {@link #getType}.
  * 
  * @param <D>
- *            RData type shared across elements. see
- *            {@link denominator.model.rdata}
+ *            RData type shared across elements.
  * 
  * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
@@ -104,8 +103,8 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
      * form {@code D} as extends {@code Map<String, Object>}
      * 
      * @param <D>
-     *            RData type shared across elements. see
-     *            {@link denominator.model.rdata}
+     *            RData type shared across elements. see package
+     *            {@code denominator.model.rdata}
      * 
      */
     public static class Builder<D extends Map<String, Object>> extends AbstractRecordSetBuilder<D, D, Builder<D>> {
