@@ -3,9 +3,9 @@
 The denominator CLI is a git-like-cli based on the [airline](https://github.com/airlift/airline) project.  It is packaged as a [really executable jar](http://skife.org/java/unix/2011/06/20/really_executable_jars.html) which means you can do `./denominator` without any of the `java -jar` stuff.
 
 ### Binaries
-Here's how to get denominator-cli `1.0.0` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
+Here's how to get denominator-cli `1.0.2` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
 
-1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.0.0/denominator?direct)
+1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.0.2/denominator?direct)
 2. Place it on your `$PATH`. (ex. `~/bin`)
 3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
 
@@ -35,6 +35,7 @@ dynect               password         customer username password
 ultradns             password         username password
 route53              accessKey        accessKey secretKey
 route53              session          accessKey secretKey sessionToken
+clouddns             apiKey           username apiKey
 ```
 
 The first field says the type, if any.  If there's no type listed, it needs no credentials.  If there is a type listed, the following fields are credential args.  Say for example, you were using `ultradns`.  
