@@ -88,6 +88,11 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
                                      .transform(retainNodes(nodeFilter));
     }
 
+    @Override
+    public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
+        throw new UnsupportedOperationException();
+    }
+
     private final Function<String, GeoService> getGeoService = new Function<String, GeoService>() {
         @Override
         public GeoService apply(String input) {

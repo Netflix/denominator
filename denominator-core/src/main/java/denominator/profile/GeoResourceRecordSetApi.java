@@ -62,6 +62,24 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
      */
     Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type, String group);
 
+    /**
+     * Ensures the supplied {@code ttl} is uniform for all record sets with the
+     * supplied {@link ResourceRecordSet#getName() name},
+     * {@link ResourceRecordSet#getType() type}, and {@link Geo#getName() group}
+     * . Returns without error if there are no record sets of the specified
+     * name, type, and group.
+     * 
+     * @param ttl
+     *            ttl to apply to all records in seconds
+     * @param name
+     *            {@link ResourceRecordSet#getName() name} of the rrset
+     * @param type
+     *            {@link ResourceRecordSet#getType() type} of the rrset
+     * @param group
+     *            {@link Geo#getGroup() group} of the rrset
+     */
+    void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group);
+
     static interface Factory {
         Optional<GeoResourceRecordSetApi> create(String zoneName);
     }

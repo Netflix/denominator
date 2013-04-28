@@ -10,6 +10,7 @@ import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.model.ResourceRecordSets.toProfile;
 import static denominator.model.profile.Geos.groupEqualTo;
 
+import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -51,6 +52,35 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         checkNotNull(type, "group");
         return from(records.get(zoneName))
                 .firstMatch(and(nameAndTypeEqualTo(name, type), geoGroupEqualTo(group)));
+    }
+
+    @Override
+    public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
+        checkNotNull(ttl, "ttl");
+        Optional<ResourceRecordSet<?>> existing = getByNameTypeAndGroup(name, type, group);
+        if (!existing.isPresent())
+            return;
+        ResourceRecordSet<?> rrset = existing.get();
+        if (rrset.getTTL().isPresent() && rrset.getTTL().get().equals(ttl))
+            return;
+        ResourceRecordSet<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>> builder()
+                                                                       .name(rrset.getName())
+                                                                       .type(rrset.getType())
+                                                                       .ttl(ttl)
+                                                                       .profile(rrset.getProfiles())
+                                                                       .addAll(rrset).build();
+        replace(rrs);
+    }
+
+    private void replace(ResourceRecordSet<?> rrset) {
+        checkNotNull(rrset, "rrset was null");
+        checkArgument(profileContainsType(Geo.class).apply(rrset), "no geo profile found: %s", rrset);
+        Geo geo = toProfile(Geo.class).apply(rrset);
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameTypeAndGroup(rrset.getName(), rrset.getType(), geo.getGroup());
+        if (rrsMatch.isPresent()) {
+            records.remove(zoneName, rrsMatch.get());
+        }
+        records.put(zoneName, rrset);
     }
 
     private static Predicate<ResourceRecordSet<?>> geoGroupEqualTo(String group) {

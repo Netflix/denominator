@@ -7,7 +7,6 @@ import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.transform;
 import static denominator.model.ResourceRecordSets.typeEqualTo;
 import static denominator.ultradns.UltraDNSPredicates.isGeolocationPool;
-import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType;
 import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType.IPV4;
 import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType.IPV6;
 
@@ -20,6 +19,7 @@ import javax.inject.Inject;
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.domain.DirectionalGroupCoordinates;
 import org.jclouds.ultradns.ws.domain.DirectionalPool;
+import org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType;
 import org.jclouds.ultradns.ws.domain.DirectionalPoolRecordDetail;
 import org.jclouds.ultradns.ws.domain.IdAndName;
 import org.jclouds.ultradns.ws.features.DirectionalGroupApi;
@@ -142,6 +142,11 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
                                                                        .recordType(typeValue)
                                                                        .groupName(group).build();
         return groupApi.listRecordsByGroupCoordinates(coord).iterator();
+    }
+
+    @Override
+    public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
+        throw new UnsupportedOperationException();
     }
 
     private Iterator<ResourceRecordSet<?>> iteratorForDNameAndDirectionalType(String name, RecordType dirType) {
