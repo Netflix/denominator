@@ -12,6 +12,7 @@ import denominator.Provider;
 import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoTypeList;
@@ -262,5 +263,21 @@ public class DenominatorTest {
         command.type = "A";
         command.group = "alazona";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), "");
+    }
+
+    @Test(description = "denominator -p mock geo -z denominator.io. applyttl -n www2.geo.denominator.io. -t A -g alazona 300")
+    public void testGeoResourceRecordSetApplyTTL() {
+        GeoResourceRecordSetApplyTTL command = new GeoResourceRecordSetApplyTTL();
+        command.zoneName = "denominator.io.";
+        command.name = "www2.geo.denominator.io.";
+        command.type = "A";
+        command.group = "alazona";
+        command.ttl = 300;
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                ";; in zone denominator.io. applying ttl 300 to rrset www2.geo.denominator.io. A alazona",
+                ";; ok"));
+        assertEquals(mgr.getApi().getGeoResourceRecordSetApiForZone(command.zoneName).get()
+                        .getByNameTypeAndGroup(command.name, command.type, command.group).get()
+                        .getTTL().get(), Integer.valueOf(command.ttl));
     }
 }
