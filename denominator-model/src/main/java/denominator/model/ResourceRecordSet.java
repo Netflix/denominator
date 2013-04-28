@@ -124,8 +124,8 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
      * form {@code D} as extends {@code Map<String, Object>}
      * 
      * @param <D>
-     *            RData type shared across elements. see
-     *            {@link denominator.model.rdata}
+     *            RData type shared across elements. see package
+     *            {@code denominator.model.rdata}
      * 
      */
     public static class Builder<D extends Map<String, Object>> extends AbstractRecordSetBuilder<D, D, Builder<D>> {
