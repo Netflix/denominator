@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+	<soap:Body>
+		<ns1:getDirectionalDNSRecordsForGroupResponse
+			xmlns:ns1="http://webservice.api.ultra.neustar.com/v01/">
+			<DirectionalDNSRecordDetailList
+				xmlns:ns2="http://schema.ultraservice.neustar.com/v01/" ZoneName="geo.denominator.io."
+				DName="srv.geo.denominator.io.">
+				<ns2:DirectionalDNSRecordDetail
+					GeolocationGroupName="Europe" GeolocationGroupId="C000000000000001"
+					TerritoriesCount="54" DirPoolRecordId="A000000000000001">
+					<ns2:DirectionalDNSRecord recordType="CNAME"
+						TTL="300" noResponseRecord="false">
+						<ns2:InfoValues Info1Value="srv-000000001.eu-west-1.elb.amazonaws.com." />
+					</ns2:DirectionalDNSRecord>
+				</ns2:DirectionalDNSRecordDetail>
+			</DirectionalDNSRecordDetailList>
+		</ns1:getDirectionalDNSRecordsForGroupResponse>
+	</soap:Body>
+</soap:Envelope>
