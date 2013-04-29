@@ -8,7 +8,7 @@ import static com.google.common.collect.FluentIterable.from;
 import static com.google.common.collect.Multimaps.filterValues;
 import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.model.ResourceRecordSets.toProfile;
-import static denominator.model.profile.Geos.nameEqualTo;
+import static denominator.model.profile.Geos.groupEqualTo;
 
 import java.util.Set;
 
@@ -50,11 +50,11 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         checkNotNull(type, "type");
         checkNotNull(type, "group");
         return from(records.get(zoneName))
-                .firstMatch(and(nameAndTypeEqualTo(name, type), geoGroupNameEqualTo(group)));
+                .firstMatch(and(nameAndTypeEqualTo(name, type), geoGroupEqualTo(group)));
     }
 
-    private static Predicate<ResourceRecordSet<?>> geoGroupNameEqualTo(String group) {
-        return compose(nameEqualTo(group), toProfile(Geo.class));
+    private static Predicate<ResourceRecordSet<?>> geoGroupEqualTo(String group) {
+        return compose(groupEqualTo(group), toProfile(Geo.class));
     }
 
     public static final class Factory implements GeoResourceRecordSetApi.Factory {

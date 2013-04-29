@@ -22,25 +22,25 @@ import com.google.common.collect.Multimap;
 public class Geo extends ForwardingMap<String, Object> {
 
     /**
-     * @param name corresponds to {@link #getName()}
+     * @param group corresponds to {@link #getGroup()}
      * @param regions corresponds to {@link #getRegions()}
      */
-    public static Geo create(String name, Multimap<String, String> regions) {
-        return new Geo(name, regions);
+    public static Geo create(String group, Multimap<String, String> regions) {
+        return new Geo(group, regions);
     }
 
     private final String type = "geo";
-    private final String name;
+    private final String group;
     private final Multimap<String, String> regions;
 
-    @ConstructorProperties({ "name", "regions"})
-    private Geo(String name, Multimap<String, String> regions) {
-        this.name = checkNotNull(name, "name");
+    @ConstructorProperties({ "group", "regions"})
+    private Geo(String group, Multimap<String, String> regions) {
+        this.group = checkNotNull(group, "group");
         checkNotNull(regions, "regions");
         this.regions = ImmutableMultimap.copyOf(regions);
         this.delegate = ImmutableMap.<String, Object> builder()
                                     .put("type", type)
-                                    .put("name", name)
+                                    .put("group", group)
                                     .put("regions", regions).build();
     }
 
@@ -48,8 +48,8 @@ public class Geo extends ForwardingMap<String, Object> {
      * user-defined name for the group of regions that represent the traffic
      * desired. For example, {@code "US-West"} or {@code "Non-EU"}.
      */
-    public String getName() {
-        return name;
+    public String getGroup() {
+        return group;
     }
 
     /**

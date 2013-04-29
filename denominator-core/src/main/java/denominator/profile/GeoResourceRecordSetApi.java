@@ -53,7 +53,7 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
      * @param type
      *            {@link ResourceRecordSet#getType() type} of the rrset
      * @param group
-     *            {@link Geo#getName() group name} of the rrset
+     *            {@link Geo#getGroup() group} of the rrset
      * 
      * @return present if a resource record exists with the same {@code name},
      *         {@code type}, and {@code group}
