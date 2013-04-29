@@ -3,6 +3,7 @@ package denominator.ultradns;
 import static com.google.common.base.Suppliers.ofInstance;
 import static com.google.common.io.Resources.getResource;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
+import static denominator.model.ResourceRecordSets.toProfile;
 import static java.lang.String.format;
 import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
 import static org.jclouds.util.Strings2.toStringAndClose;
@@ -26,6 +27,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Multimap;
 import com.google.inject.Module;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
@@ -234,6 +236,99 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     private String noDirectionalDNSRecordsForGroupResponse = "<soap:Envelope><soap:Body><ns1:getDirectionalDNSRecordsForGroupResponse /></soap:Body></soap:Envelope>";
 
     @Test
+    public void applyRegionsToNameTypeAndGroupWhenTTLMatches() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponseEurope));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(noDirectionalDNSRecordsForGroupResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
+        server.play();
+
+        try {
+            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io.");
+
+            Multimap<String, String> regions = toProfile(Geo.class).apply(europe).getRegions();
+            api.applyRegionsToNameTypeAndGroup(regions, "srv.denominator.io.", "CNAME", "Europe");
+
+            assertEquals(server.getRequestCount(), 4);
+
+            RecordedRequest getAvailableRegions = server.takeRequest();
+            assertEquals(getAvailableRegions.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAvailableRegions.getBody()), this.getAvailableRegions);
+
+            RecordedRequest getDirectionalDNSRecordsForGroupEuropeIPV4 = server.takeRequest();
+            assertEquals(getDirectionalDNSRecordsForGroupEuropeIPV4.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getDirectionalDNSRecordsForGroupEuropeIPV4.getBody()), this.getDirectionalDNSRecordsForGroupEuropeIPV4);
+
+            RecordedRequest getDirectionalDNSRecordsForGroupEuropeIPV6 = server.takeRequest();
+            assertEquals(getDirectionalDNSRecordsForGroupEuropeIPV6.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getDirectionalDNSRecordsForGroupEuropeIPV6.getBody()), this.getDirectionalDNSRecordsForGroupEuropeIPV6);
+            
+            RecordedRequest getDirectionalDNSGroupDetails = server.takeRequest();
+            assertEquals(getDirectionalDNSGroupDetails.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getDirectionalDNSGroupDetails.getBody()),
+                    format(this.getDirectionalDNSGroupDetails, "C000000000000001"));
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    private String updateDirectionalPoolRecordTemplate = format(
+            SOAP_TEMPLATE,
+            "<v01:updateDirectionalPoolRecord><transactionID /><UpdateDirectionalRecordData directionalPoolRecordId=\"%s\"><DirectionalRecordConfiguration TTL=\"%s\" ><InfoValues Info1Value=\"%s\" /></DirectionalRecordConfiguration>%s</UpdateDirectionalRecordData></v01:updateDirectionalPoolRecord>");
+
+    private String updateDirectionalPoolRecordRegions = format(
+            updateDirectionalPoolRecordTemplate,
+            "A000000000000001",
+            300,
+            "srv-000000001.eu-west-1.elb.amazonaws.com.",
+            "<GeolocationGroupDetails groupName=\"Europe\" ><GeolocationGroupDefinitionData regionName=\"Europe\" territoryNames=\"Aland Islands\" /></GeolocationGroupDetails>");
+
+    @Test
+    public void applyRegionsToNameTypeAndGroupWhenRegionsDiffer() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponseEurope));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(noDirectionalDNSRecordsForGroupResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(updateDirectionalPoolRecordResponse));
+        server.play();
+
+        try {
+            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io.");
+
+            Multimap<String, String> regions = ImmutableMultimap.of("Europe", "Aland Islands");
+            api.applyRegionsToNameTypeAndGroup(regions, "srv.denominator.io.", "CNAME", "Europe");
+
+            assertEquals(server.getRequestCount(), 5);
+
+            RecordedRequest getAvailableRegions = server.takeRequest();
+            assertEquals(getAvailableRegions.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAvailableRegions.getBody()), this.getAvailableRegions);
+
+            RecordedRequest getDirectionalDNSRecordsForGroupEuropeIPV4 = server.takeRequest();
+            assertEquals(getDirectionalDNSRecordsForGroupEuropeIPV4.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getDirectionalDNSRecordsForGroupEuropeIPV4.getBody()), this.getDirectionalDNSRecordsForGroupEuropeIPV4);
+
+            RecordedRequest getDirectionalDNSRecordsForGroupEuropeIPV6 = server.takeRequest();
+            assertEquals(getDirectionalDNSRecordsForGroupEuropeIPV6.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getDirectionalDNSRecordsForGroupEuropeIPV6.getBody()), this.getDirectionalDNSRecordsForGroupEuropeIPV6);
+
+            RecordedRequest getDirectionalDNSGroupDetails = server.takeRequest();
+            assertEquals(getDirectionalDNSGroupDetails.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getDirectionalDNSGroupDetails.getBody()),
+                    format(this.getDirectionalDNSGroupDetails, "C000000000000001"));
+
+            RecordedRequest updateDirectionalPoolRecordRegions = server.takeRequest();
+            assertEquals(updateDirectionalPoolRecordRegions.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(updateDirectionalPoolRecordRegions.getBody()), this.updateDirectionalPoolRecordRegions);
+
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    @Test
     public void applyTTLToNameTypeAndGroupWhenTTLMatches() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
@@ -265,12 +360,8 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         }
     }
 
-    private String updateDirectionalPoolRecordTemplate = format(
-            SOAP_TEMPLATE,
-            "<v01:updateDirectionalPoolRecord><transactionID /><UpdateDirectionalRecordData directionalPoolRecordId=\"%s\"><DirectionalRecordConfiguration TTL=\"%s\" ><InfoValues Info1Value=\"%s\" /></DirectionalRecordConfiguration></UpdateDirectionalRecordData></v01:updateDirectionalPoolRecord>");
     private String updateDirectionalPoolRecordTTL = format(updateDirectionalPoolRecordTemplate, "A000000000000001",
-            600, "srv-000000001.eu-west-1.elb.amazonaws.com.");
-    
+            600, "srv-000000001.eu-west-1.elb.amazonaws.com.", "");
     private String updateDirectionalPoolRecordResponse = "<soap:Envelope><soap:Body><ns1:updateDirectionalPoolRecordResponse></ns1:updateDirectionalPoolRecordResponse></soap:Body></soap:Envelope>";
 
     @Test
@@ -309,6 +400,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             server.shutdown();
         }
     }
+
     private static GeoResourceRecordSetApi mockedGeoApiForZone(MockWebServer server, String zoneName) {
         return ObjectGraph.create(new Mock(mockUltraDNSWSApi(server.getUrl("/").toString())))
                 .get(UltraDNSGeoResourceRecordSetApi.Factory.class).create(zoneName).get();
