@@ -116,17 +116,17 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
 
     @Override
     public Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type,
-            String groupName) {
+            String group) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        checkNotNull(groupName, "groupName");
+        checkNotNull(group, "group");
         Iterator<DirectionalPoolRecordDetail> records;
         if ("CNAME".equals(type)) {
             records = filter(
-                        concat(recordsForNameTypeAndGroup(name, "A", groupName),
-                               recordsForNameTypeAndGroup(name, "AAAA", groupName)), isCNAME);
+                        concat(recordsForNameTypeAndGroup(name, "A", group),
+                               recordsForNameTypeAndGroup(name, "AAAA", group)), isCNAME);
         } else {
-            records = recordsForNameTypeAndGroup(name, type, groupName);
+            records = recordsForNameTypeAndGroup(name, type, group);
         }
         Iterator<ResourceRecordSet<?>> iterator = iteratorFactory.create(records);
         if (iterator.hasNext())
@@ -134,14 +134,14 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
         return Optional.absent();
     }
 
-    private Iterator<DirectionalPoolRecordDetail> recordsForNameTypeAndGroup(String name, String type, String groupName) {
+    private Iterator<DirectionalPoolRecordDetail> recordsForNameTypeAndGroup(String name, String type, String group) {
         int typeValue = checkNotNull(new ResourceTypeToValue().get(type), "typeValue for %s", type);
-        DirectionalGroupCoordinates group = DirectionalGroupCoordinates.builder()
+        DirectionalGroupCoordinates coord = DirectionalGroupCoordinates.builder()
                                                                        .zoneName(zoneName)
                                                                        .recordName(name)
                                                                        .recordType(typeValue)
-                                                                       .groupName(groupName).build();
-        return groupApi.listRecordsByGroupCoordinates(group).iterator();
+                                                                       .groupName(group).build();
+        return groupApi.listRecordsByGroupCoordinates(coord).iterator();
     }
 
     private Iterator<ResourceRecordSet<?>> iteratorForDNameAndDirectionalType(String name, RecordType dirType) {

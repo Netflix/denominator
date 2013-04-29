@@ -101,7 +101,7 @@ class GeoResourceRecordSetCommands {
         @Override
         public String apply(ResourceRecordSet<?> geoRRS) {
             Geo geo = toProfile(Geo.class).apply(geoRRS);
-            StringBuilder suffix = new StringBuilder().append(geo.getName()).append(' ')
+            StringBuilder suffix = new StringBuilder().append(geo.getGroup()).append(' ')
                     .append(geo.getRegions());
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
             for (String line : Splitter.on('\n').split(ResourceRecordSetToString.INSTANCE.apply(geoRRS))) {
