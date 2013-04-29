@@ -14,33 +14,33 @@ public class Geos {
     }
 
     /**
-     * returns true if {@link Geo#getName() group name}, if equals the
-     * input {@code groupName};
+     * returns true if {@link Geo#getGroup() group}, if equals the
+     * input {@code group};
      * 
-     * @param groupName
+     * @param group
      *            expected name of the group. ex. {@code US-East}
      */
-    public static Predicate<Geo> nameEqualTo(String groupName) {
-        return new GroupNameEqualToPredicate(groupName);
+    public static Predicate<Geo> groupEqualTo(String group) {
+        return new GroupEqualToPredicate(group);
     }
 
-    private static final class GroupNameEqualToPredicate implements Predicate<Geo> {
-        private final String groupName;
+    private static final class GroupEqualToPredicate implements Predicate<Geo> {
+        private final String group;
 
-        private GroupNameEqualToPredicate(String groupName) {
-            this.groupName = checkNotNull(groupName, "groupName");
+        private GroupEqualToPredicate(String group) {
+            this.group = checkNotNull(group, "group");
         }
 
         @Override
         public boolean apply(Geo input) {
             if (input == null)
                 return false;
-            return groupName.equals(input.getName());
+            return group.equals(input.getGroup());
         }
 
         @Override
         public String toString() {
-            return "GroupNameEqualTo(" + groupName + ")";
+            return "GroupEqualTo(" + group + ")";
         }
     }
 }
