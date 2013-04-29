@@ -1,9 +1,11 @@
 package denominator.cli;
 
+import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
 import static denominator.model.ResourceRecordSets.toProfile;
 import static java.lang.String.format;
+import io.airlift.command.Arguments;
 import io.airlift.command.Command;
 import io.airlift.command.Option;
 import io.airlift.command.OptionType;
@@ -92,6 +94,46 @@ class GeoResourceRecordSetCommands {
             GeoResourceRecordSetApi api = mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get();
             Optional<ResourceRecordSet<?>> result = api.getByNameTypeAndGroup(name, type, group);
             return forArray(result.transform(GeoResourceRecordSetToString.INSTANCE).or(""));
+        }
+    }
+
+    @Command(name = "applyttl", description = "applies the ttl to the record record set by name, type and group, if present in this zone")
+    public static class GeoResourceRecordSetApplyTTL extends GeoResourceRecordSetCommand {
+        @Option(type = OptionType.COMMAND, required = true, name = { "-n", "--name" }, description = "name of the record set. ex. www.denominator.io.")
+        public String name;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-t", "--type" }, description = "type of the record set. ex. CNAME")
+        public String type;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-g", "--group" }, description = "geo group of the record set. ex. US")
+        public String group;
+
+        @Arguments(required = true, description = "time to live of the record set. ex. 300")
+        public int ttl;
+
+        public Iterator<String> doRun(final DNSApiManager mgr) {
+            String cmd = format(";; in zone %s applying ttl %d to rrset %s %s %s", zoneName, ttl, name, type, group);
+            return concat(forArray(cmd), new Iterator<String>() {
+                boolean done = false;
+
+                @Override
+                public boolean hasNext() {
+                    return !done;
+                }
+
+                @Override
+                public String next() {
+                    GeoResourceRecordSetApi api = mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get();
+                    api.applyTTLToNameTypeAndGroup(ttl, name, type, group);
+                    done = true;
+                    return ";; ok";
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            });
         }
     }
 

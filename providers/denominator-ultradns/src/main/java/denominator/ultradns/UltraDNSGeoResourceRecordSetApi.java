@@ -7,7 +7,6 @@ import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Iterators.transform;
 import static denominator.model.ResourceRecordSets.typeEqualTo;
 import static denominator.ultradns.UltraDNSPredicates.isGeolocationPool;
-import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType;
 import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType.IPV4;
 import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType.IPV6;
 
@@ -20,6 +19,8 @@ import javax.inject.Inject;
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.domain.DirectionalGroupCoordinates;
 import org.jclouds.ultradns.ws.domain.DirectionalPool;
+import org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType;
+import org.jclouds.ultradns.ws.domain.DirectionalPoolRecord;
 import org.jclouds.ultradns.ws.domain.DirectionalPoolRecordDetail;
 import org.jclouds.ultradns.ws.domain.IdAndName;
 import org.jclouds.ultradns.ws.features.DirectionalGroupApi;
@@ -117,6 +118,15 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
     @Override
     public Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type,
             String group) {
+        Iterator<DirectionalPoolRecordDetail> records = recordsByNameTypeAndGroupName(name, type, group);
+        Iterator<ResourceRecordSet<?>> iterator = iteratorFactory.create(records);
+        if (iterator.hasNext())
+            return Optional.<ResourceRecordSet<?>> of(iterator.next());
+        return Optional.absent();
+    }
+
+    private Iterator<DirectionalPoolRecordDetail> recordsByNameTypeAndGroupName(String name, String type,
+            String group) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
         checkNotNull(group, "group");
@@ -128,10 +138,7 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
         } else {
             records = recordsForNameTypeAndGroup(name, type, group);
         }
-        Iterator<ResourceRecordSet<?>> iterator = iteratorFactory.create(records);
-        if (iterator.hasNext())
-            return Optional.<ResourceRecordSet<?>> of(iterator.next());
-        return Optional.absent();
+        return records;
     }
 
     private Iterator<DirectionalPoolRecordDetail> recordsForNameTypeAndGroup(String name, String type, String group) {
@@ -142,6 +149,16 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
                                                                        .recordType(typeValue)
                                                                        .groupName(group).build();
         return groupApi.listRecordsByGroupCoordinates(coord).iterator();
+    }
+
+    @Override
+    public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
+        for (Iterator<DirectionalPoolRecordDetail> i = recordsByNameTypeAndGroupName(name, type, group); i.hasNext();) {
+            DirectionalPoolRecordDetail detail = i.next();
+            DirectionalPoolRecord record = detail.getRecord();
+            if (record.getTTL() != ttl)
+                poolApi.updateRecord(detail.getId(), record.toBuilder().ttl(ttl).build());
+        }
     }
 
     private Iterator<ResourceRecordSet<?>> iteratorForDNameAndDirectionalType(String name, RecordType dirType) {
