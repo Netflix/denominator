@@ -17,6 +17,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
+import org.jclouds.ultradns.ws.domain.DirectionalGroup;
 import org.jclouds.ultradns.ws.domain.DirectionalGroupCoordinates;
 import org.jclouds.ultradns.ws.domain.DirectionalPool;
 import org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType;
@@ -153,7 +154,15 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
 
     @Override
     public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
-        throw new UnsupportedOperationException();
+        for (Iterator<DirectionalPoolRecordDetail> i = recordsByNameTypeAndGroupName(name, type, group); i.hasNext();) {
+            DirectionalPoolRecordDetail detail = i.next();
+            DirectionalPoolRecord record = detail.getRecord();
+            DirectionalGroup directionalGroup = groupApi.get(detail.getGeolocationGroup().get().getId());
+            if (!regions.equals(directionalGroup.getRegionToTerritories())){
+                DirectionalGroup update = directionalGroup.toBuilder().regionToTerritories(regions).build();
+                poolApi.updateRecordAndGroup(detail.getId(), record, update);
+            }
+        }
     }
 
     @Override
