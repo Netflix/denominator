@@ -152,6 +152,11 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
     }
 
     @Override
+    public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
         for (Iterator<DirectionalPoolRecordDetail> i = recordsByNameTypeAndGroupName(name, type, group); i.hasNext();) {
             DirectionalPoolRecordDetail detail = i.next();
