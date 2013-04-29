@@ -59,7 +59,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
                 assertTrue(Iterators.elementsEqual(geoApi(zoneName).listByNameAndType(geoRRS.getName(), geoRRS.getType()), byNameAndType));
                 
                 Optional<ResourceRecordSet<?>> byNameTypeAndGroup = geoApi(zoneName)
-                        .getByNameTypeAndGroup(geoRRS.getName(), geoRRS.getType(), toProfile(Geo.class).apply(geoRRS).getName());
+                        .getByNameTypeAndGroup(geoRRS.getName(), geoRRS.getType(), toProfile(Geo.class).apply(geoRRS).getGroup());
                 assertTrue(byNameTypeAndGroup.isPresent(), "could not lookup by name, type, and group: " + geoRRS);
                 assertEquals(byNameTypeAndGroup.get(), geoRRS);
             }
@@ -70,7 +70,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     protected void checkGeoRRS(ResourceRecordSet<?> geoRRS) {
         assertFalse(geoRRS.getProfiles().isEmpty(), "Profile absent: " + geoRRS);
         Geo geo = toProfile(Geo.class).apply(geoRRS);
-        checkNotNull(geo.getName(), "GroupName: Geo %s", geoRRS);
+        checkNotNull(geo.getGroup(), "Group: Geo %s", geoRRS);
         assertTrue(!geo.getRegions().isEmpty(), "Regions empty on Geo: " + geoRRS);
         
         checkNotNull(geoRRS.getName(), "Name: ResourceRecordSet %s", geoRRS);
