@@ -1,8 +1,12 @@
 package denominator.cli;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
+import static com.google.common.collect.Sets.difference;
+import static com.google.common.collect.Sets.union;
+import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.model.ResourceRecordSets.toProfile;
 import static java.lang.String.format;
 import io.airlift.command.Arguments;
@@ -14,6 +18,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -21,6 +26,9 @@ import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Multimap;
 
 import denominator.DNSApiManager;
 import denominator.cli.Denominator.DenominatorCommand;
@@ -94,6 +102,122 @@ class GeoResourceRecordSetCommands {
             GeoResourceRecordSetApi api = mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get();
             Optional<ResourceRecordSet<?>> result = api.getByNameTypeAndGroup(name, type, group);
             return forArray(result.transform(GeoResourceRecordSetToString.INSTANCE).or(""));
+        }
+    }
+
+    public static abstract class ChangeRegionInRRSetGroup extends GeoResourceRecordSetCommand {
+        @Option(type = OptionType.COMMAND, required = true, name = { "-n", "--name" }, description = "name of the record set. ex. www.denominator.io.")
+        public String name;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-t", "--type" }, description = "type of the record set. ex. CNAME")
+        public String type;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-g", "--group" }, description = "geo group of the record set. ex. Failover")
+        public String group;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-r", "--region" }, description = "region in the group to update. ex. Africa")
+        public String region;
+
+        @Arguments(required = true, description = "semicolon delimited list of territories to remove.  Ex. Bouvet Island;French Southern Territories")
+        public String territories;
+
+        protected String command;
+
+        public Iterator<String> doRun(final DNSApiManager mgr) {
+            final Set<String> change = ImmutableSet.copyOf(Splitter.on(';').split(territories));
+            String cmd = format(";; in zone %s %s %s from region %s in rrset %s %s %s",
+                    zoneName, command, change, region, name, type, group);
+            return concat(forArray(cmd), new Iterator<String>() {
+                boolean done = false;
+
+                @Override
+                public boolean hasNext() {
+                    return !done;
+                }
+
+                @Override
+                public String next() {
+                    done =  updateIfNecessary(mgr, change);
+                    return ";; ok";
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            });
+        }
+
+        abstract boolean updateIfNecessary(final DNSApiManager mgr, final Set<String> change);
+
+        Geo getGeo(DNSApiManager mgr) {
+            Optional<ResourceRecordSet<?>> rrset = mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get()
+                    .getByNameTypeAndGroup(name, type, group);
+            checkArgument(rrset.isPresent(), "rrset %s %s %s not found!", name, type, group);
+            checkArgument(profileContainsType(Geo.class).apply(rrset.get()), "no geo profile found: %s", rrset);
+
+            return toProfile(Geo.class).apply(rrset.get());
+        }
+
+        void update(DNSApiManager mgr, Multimap<String, String> existingRegions, Set<String> difference) {
+            GeoResourceRecordSetApi api = mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get();
+            Multimap<String, String> update = LinkedHashMultimap.create(existingRegions);
+            if (difference.size() == 0)
+                update.removeAll(region);
+            else
+                update.replaceValues(region, difference);
+
+            api.applyRegionsToNameTypeAndGroup(update, name, type, group);
+        }
+    }
+
+    @Command(name = "add-to-region", description = "adds territories to a region in a geo group for a rrset, if present in this zone")
+    public static class GeoResourceRecordSetAddToRegion extends ChangeRegionInRRSetGroup {
+        public GeoResourceRecordSetAddToRegion() {
+            this.command = "adding";
+        }
+
+        @Override
+        boolean updateIfNecessary(DNSApiManager mgr, Set<String> change) {
+            Multimap<String, String> existingRegions = getGeo(mgr).getRegions();
+            
+            if (!existingRegions.containsKey(region)) {
+                update(mgr, existingRegions, change);
+                return true;
+            }
+
+            ImmutableSet<String> existing = ImmutableSet.copyOf(existingRegions.get(region));
+            ImmutableSet<String> union = union(existing, change).immutableCopy();
+            
+            if (existing.equals(union))
+                return false;
+
+            update(mgr, existingRegions, union);
+            return true;
+        }
+    }
+
+    @Command(name = "remove-from-region", description = "removes territories from a region in a geo group for a rrset, if present in this zone")
+    public static class GeoResourceRecordSetRemoveFromRegion extends ChangeRegionInRRSetGroup {
+        public GeoResourceRecordSetRemoveFromRegion() {
+            this.command = "removing";
+        }
+
+        @Override
+        boolean updateIfNecessary(DNSApiManager mgr, Set<String> change) {
+            Multimap<String, String> existingRegions = getGeo(mgr).getRegions();
+            
+            if (!existingRegions.containsKey(region))
+                return false;
+
+            ImmutableSet<String> existing = ImmutableSet.copyOf(existingRegions.get(region));
+            ImmutableSet<String> difference = difference(existing, change).immutableCopy();
+            
+            if (existing.equals(difference))
+                return false;
+
+            update(mgr, existingRegions, difference);
+            return true;
         }
     }
 

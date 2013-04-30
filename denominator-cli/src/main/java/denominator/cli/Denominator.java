@@ -23,9 +23,11 @@ import denominator.DNSApiManager;
 import denominator.Denominator.Version;
 import denominator.Provider;
 import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetAddToRegion;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetRemoveFromRegion;
 import denominator.cli.GeoResourceRecordSetCommands.GeoTypeList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetApplyTTL;
@@ -67,6 +69,8 @@ public class Denominator {
                .withCommand(GeoRegionList.class)
                .withCommand(GeoResourceRecordSetList.class)
                .withCommand(GeoResourceRecordSetGet.class)
+               .withCommand(GeoResourceRecordSetAddToRegion.class)
+               .withCommand(GeoResourceRecordSetRemoveFromRegion.class)
                .withCommand(GeoResourceRecordSetApplyTTL.class);
 
         Cli<Runnable> denominatorParser = builder.build();
