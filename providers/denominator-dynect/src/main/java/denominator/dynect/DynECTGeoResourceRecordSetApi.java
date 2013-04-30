@@ -89,6 +89,11 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     }
 
     @Override
+    public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
         throw new UnsupportedOperationException();
     }
