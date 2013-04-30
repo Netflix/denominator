@@ -55,6 +55,25 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
     }
 
     @Override
+    public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
+        checkNotNull(regions, "regions");
+        Optional<ResourceRecordSet<?>> existing = getByNameTypeAndGroup(name, type, group);
+        if (!existing.isPresent())
+            return;
+        ResourceRecordSet<?> rrset = existing.get();
+        Geo geo = toProfile(Geo.class).apply(rrset);
+        if (geo.getRegions().equals(regions))
+            return;
+        ResourceRecordSet<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>> builder()
+                                                                       .name(rrset.getName())
+                                                                       .type(rrset.getType())
+                                                                       .ttl(rrset.getTTL().orNull())
+                                                                       .addProfile(Geo.create(geo.getGroup(), regions))
+                                                                       .addAll(rrset).build();
+        replace(rrs);
+    }
+
+    @Override
     public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
         checkNotNull(ttl, "ttl");
         Optional<ResourceRecordSet<?>> existing = getByNameTypeAndGroup(name, type, group);
