@@ -1,3 +1,9 @@
+### Version 1.1.0
+* add ResourceRecordSet.getProfiles(): specifies server-side aspects such as visibility based on client origin, latency or server health.
+* add denominator.model.profile.Geo: rrsets with this profile are visible to the regions specified.
+* add GeoResourceRecordSetApi: list rrsets by geo group and change their region mappings.
+* add AllProfileResourceRecordSetApi: list all rrsets with or without server-side profiles.
+
 ### Version 1.0.2
 * updates to jclouds 1.6.0
 * add read-only implementation of Rackspace Cloud DNS (`clouddns`)
