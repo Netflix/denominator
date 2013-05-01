@@ -2,7 +2,7 @@
 
 # Portable control of DNS clouds
 
-Denominator is a portable Java library for manipulating DNS clouds.  Denominator has pluggable back-ends, initially including AWS Route53, Neustar Ultra, DynECT, Rackspace Cloud DNS, and a mock for testing.  We also ship a command line version so it's easy for anyone to try it out.  Denominator currently supports basic zone and record features, but will soon include GEO (aka Directional) support and advanced usage.  See [Netflix Tech Blog](http://techblog.netflix.com/2013/03/denominator-multi-vendor-interface-for.html) for an introduction.
+Denominator is a portable Java library for manipulating DNS clouds.  Denominator has pluggable back-ends, initially including AWS Route53, Neustar Ultra, DynECT, Rackspace Cloud DNS, and a mock for testing.  We also ship a command line version so it's easy for anyone to try it out.  Denominator currently supports basic zone and record features, as well GEO (aka Directional) profiles.  See [Netflix Tech Blog](http://techblog.netflix.com/2013/03/denominator-multi-vendor-interface-for.html) for an introduction.
 
 [![Build Status](https://netflixoss.ci.cloudbees.com/job/denominator-master/badge/icon)](https://netflixoss.ci.cloudbees.com/job/denominator-master/)
 
@@ -10,9 +10,9 @@ Denominator is a portable Java library for manipulating DNS clouds.  Denominator
 For your convenience, the denominator cli is a [single executable file](http://skife.org/java/unix/2011/06/20/really_executable_jars.html).  Under the hood, the cli uses [airline](https://github.com/airlift/airline) to look and feel like dig or git.
 
 ### Binaries
-Here's how to get denominator-cli `1.0.2` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
+Here's how to get denominator-cli `1.1.0` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
 
-1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.0.2/denominator?direct)
+1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.1.0/denominator?direct)
 2. Place it on your `$PATH`. (ex. `~/bin`)
 3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
 
@@ -61,7 +61,7 @@ Denominator exposes a portable [model](https://github.com/Netflix/denominator/wi
 
 ### Binaries
 
-The current version of denominator is `1.0.2`
+The current version of denominator is `1.1.0`
 
 Denominator can be resolved as maven dependencies, or equivalent in lein, gradle, etc.  Here are the coordinates, noting you only need to list the providers you use.
 ```xml
