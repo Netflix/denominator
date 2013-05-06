@@ -18,7 +18,7 @@ dependencies {
   compile      project(':providers:denominator-route53')
   compile      project(':providers:denominator-clouddns')
   // to quiet error messages, not as we are using it
-  compile     'org.slf4j:slf4j-jdk14:1.7.2'
+  compile     'org.slf4j:slf4j-jdk14:1.7.5'
   compile     'io.airlift:airline:0.5'
 }
 

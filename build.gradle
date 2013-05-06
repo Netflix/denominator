@@ -26,10 +26,10 @@ subprojects {
     }
 
     dependencies {
-	compile     'com.google.guava:guava:14.0'
-        compile     'org.slf4j:slf4j-api:1.7.2'
-        testCompile 'org.testng:testng:6.8'
-        testCompile 'ch.qos.logback:logback-classic:1.0.9'
-        testCompile     'com.google.mockwebserver:mockwebserver:20130403'
+	compile     'com.google.guava:guava:14.0.1'
+        compile     'org.slf4j:slf4j-api:1.7.5'
+        testCompile 'org.testng:testng:6.8.1'
+        testCompile 'ch.qos.logback:logback-classic:1.0.12'
+        testCompile     'com.google.mockwebserver:mockwebserver:20130505'
     }
 }
