@@ -25,7 +25,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
-import dagger.Module;
 import dagger.Provides;
 import denominator.Credentials.ListCredentials;
 import denominator.CredentialsConfiguration.CredentialsAsList;
@@ -81,24 +80,23 @@ public class DynamicCredentialsProviderExampleTest {
         }
     }
 
-    // incomplete as it requires credentials to be bound externally
-    @Module(entryPoints = DNSApiManager.class,
-               complete = false,
-               includes = { NothingToClose.class,
-                            GeoUnsupported.class,
-                            OnlyNormalResourceRecordSets.class } )
-    static class DynamicCredentialsProvider extends Provider {
-        @Provides
-        protected Provider provideThis() {
-            return this;
-        }
-
+    final static class DynamicCredentialsProvider extends BasicProvider {
+        
         /**
          * override name as default would be {@code dynamiccredentials} based on the class name.
          */
-        @Provides
+        @Override
         public String getName() {
             return "dynamic";
+        }
+
+        /**
+         * inform the user that we need credentials with 3 parameters.
+         */
+        @Override
+        public Multimap<String, String> getCredentialTypeToParameterNames() {
+            return ImmutableMultimap.<String, String> builder()
+                    .putAll("username", "customer", "username", "password").build();
         }
 
         /**
@@ -124,50 +122,62 @@ public class DynamicCredentialsProviderExampleTest {
                 }
             });
         }
-        /**
-         * wiring of the zone api requires a Supplier as otherwise credentials
-         * would not be able to dynamically update.
-         */
-        @Provides
-        @Singleton
-        ZoneApi provideZoneApi(Supplier<CustomerUsernamePassword> creds) {
-            return new DynamicCredentialsZoneApi(creds);
-        }
 
-        /**
-         * using mock as example case is made already with the zone api
-         */
-        @Provides
-        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
-            return in;
-        }
-
-        // wildcard types are not currently injectable in dagger
-        @SuppressWarnings("rawtypes")
-        @Provides
-        @Singleton
-        Multimap<String, ResourceRecordSet> provideData() {
-            return ImmutableMultimap.of();
-        }
-
-        /**
-         * avoid too much logic in the Module. For example, we've extracted the
-         * logic that implements a supplier of {@code CustomerUsernamePassword}
-         * to its own class.
-         */
-        @Provides
-        @Singleton
-        Supplier<CustomerUsernamePassword> useCorrectCredentials(CredentialsAsList supplier) {
-            return Suppliers.compose(new CustomerUsernamePasswordFromList(), supplier);
-        }
-
-        /**
-         * inform the user that we need credentials with 3 parameters.
-         */
         @Override
-        public Multimap<String, String> getCredentialTypeToParameterNames() {
-            return ImmutableMultimap.<String, String> builder()
-                    .putAll("username", "customer", "username", "password").build();
+        public Module module() {
+            return new Module();
+        }
+
+        // incomplete as it requires credentials to be bound externally
+        @dagger.Module(entryPoints = DNSApiManager.class,
+                       complete = false,
+                       includes = { NothingToClose.class,
+                                    GeoUnsupported.class,
+                                    OnlyNormalResourceRecordSets.class } )
+        final class Module implements Provider.Module {
+
+            @Override
+            @Provides
+            public Provider provider() {
+                return DynamicCredentialsProvider.this;
+            }
+
+            /**
+             * wiring of the zone api requires a Supplier as otherwise credentials
+             * would not be able to dynamically update.
+             */
+            @Provides
+            @Singleton
+            ZoneApi provideZoneApi(Supplier<CustomerUsernamePassword> creds) {
+                return new DynamicCredentialsZoneApi(creds);
+            }
+    
+            /**
+             * using mock as example case is made already with the zone api
+             */
+            @Provides
+            ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+                return in;
+            }
+    
+            // wildcard types are not currently injectable in dagger
+            @SuppressWarnings("rawtypes")
+            @Provides
+            @Singleton
+            Multimap<String, ResourceRecordSet> provideData() {
+                return ImmutableMultimap.of();
+            }
+    
+            /**
+             * avoid too much logic in the Module. For example, we've extracted the
+             * logic that implements a supplier of {@code CustomerUsernamePassword}
+             * to its own class.
+             */
+            @Provides
+            @Singleton
+            Supplier<CustomerUsernamePassword> useCorrectCredentials(CredentialsAsList supplier) {
+                return Suppliers.compose(new CustomerUsernamePasswordFromList(), supplier);
+            }
         }
 
         /**

@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableList.Builder;
 import dagger.ObjectGraph;
 import denominator.Credentials.AnonymousCredentials;
 import denominator.CredentialsConfiguration.CredentialsSupplier;
-import denominator.mock.MockProvider;
 
 public final class Denominator {
 
@@ -48,7 +47,7 @@ public final class Denominator {
 
     /**
      * creates a new manager for a provider using its type, such as
-     * {@link MockProvider}.
+     * {@link denominator.mock.MockProvider}.
      * 
      * ex.
      * 
@@ -60,7 +59,7 @@ public final class Denominator {
      * @see #listProviders
      */
     public static DNSApiManager create(Provider in, Object... modules) {
-        Builder<Object> modulesForGraph = ImmutableList.builder().add(in);
+        Builder<Object> modulesForGraph = ImmutableList.builder().add(in.module());
         List<Object> inputModules;
         if (modules == null || modules.length == 0) {
             inputModules = ImmutableList.of();
