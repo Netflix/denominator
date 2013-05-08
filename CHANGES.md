@@ -1,3 +1,7 @@
+### Version 1.1.1
+* internal refactoring in preparation for dagger 1.0 update
+* update library dependencies to most current versions
+
 ### Version 1.1.0
 * add ResourceRecordSet.getProfiles(): specifies server-side aspects such as visibility based on client origin, latency or server health.
 * add denominator.model.profile.Geo: rrsets with this profile are visible to the regions specified.
