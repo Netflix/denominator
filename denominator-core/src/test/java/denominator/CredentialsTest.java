@@ -35,7 +35,7 @@ public class CredentialsTest {
             return new Module();
         }
 
-        @dagger.Module(entryPoints = DNSApiManager.class,
+        @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
@@ -80,7 +80,7 @@ public class CredentialsTest {
             return new Module();
         }
 
-        @dagger.Module(entryPoints = DNSApiManager.class,
+        @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
@@ -125,7 +125,7 @@ public class CredentialsTest {
             return new Module();
         }
 
-        @dagger.Module(entryPoints = DNSApiManager.class,
+        @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
@@ -171,7 +171,7 @@ public class CredentialsTest {
             return new Module();
         }
 
-        @dagger.Module(entryPoints = DNSApiManager.class,
+        @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )

@@ -29,7 +29,7 @@ public class ProviderTest {
             return new Module();
         }
 
-        @dagger.Module(entryPoints = { Accessor.class, DNSApiManager.class }, 
+        @dagger.Module(injects = { Accessor.class, DNSApiManager.class }, 
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
@@ -97,7 +97,7 @@ public class ProviderTest {
             return new Module();
         }
 
-        @dagger.Module(entryPoints = DNSApiManager.class,
+        @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
@@ -147,7 +147,7 @@ public class ProviderTest {
             return new Module();
         }
 
-        @dagger.Module(entryPoints = DNSApiManager.class,
+        @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
@@ -198,7 +198,7 @@ public class ProviderTest {
             return new Module();
         }
 
-        @dagger.Module(entryPoints = DNSApiManager.class,
+        @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )

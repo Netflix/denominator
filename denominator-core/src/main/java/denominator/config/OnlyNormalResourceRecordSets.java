@@ -17,7 +17,7 @@ import denominator.model.ResourceRecordSet;
 /**
  * Used when the backend doesn't support any record types except normal ones.
  */
-@Module(entryPoints = DNSApiManager.class, complete = false)
+@Module(injects = DNSApiManager.class, complete = false)
 public class OnlyNormalResourceRecordSets {
 
     @Provides

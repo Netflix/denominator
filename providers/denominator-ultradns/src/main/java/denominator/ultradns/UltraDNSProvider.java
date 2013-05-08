@@ -42,7 +42,7 @@ public class UltraDNSProvider extends BasicProvider {
         return new Module();
     }
     
-    @dagger.Module(entryPoints = DNSApiManager.class,
+    @dagger.Module(injects = DNSApiManager.class,
                    includes = { UltraDNSGeoSupport.class,
                                 ConcatNormalAndGeoResourceRecordSets.class })
     final class Module implements Provider.Module {

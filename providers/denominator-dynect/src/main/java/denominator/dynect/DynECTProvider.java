@@ -41,7 +41,7 @@ public class DynECTProvider extends BasicProvider {
         return new Module();
     }
 
-    @dagger.Module(entryPoints = DNSApiManager.class, 
+    @dagger.Module(injects = DNSApiManager.class, 
                    includes = { DynECTGeoSupport.class, 
                                 ConcatNormalAndGeoResourceRecordSets.class })
     final class Module implements Provider.Module {
