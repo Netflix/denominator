@@ -129,7 +129,7 @@ public class DynamicCredentialsProviderExampleTest {
         }
 
         // incomplete as it requires credentials to be bound externally
-        @dagger.Module(entryPoints = DNSApiManager.class,
+        @dagger.Module(injects = DNSApiManager.class,
                        complete = false,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,

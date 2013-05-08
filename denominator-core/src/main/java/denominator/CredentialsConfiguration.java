@@ -66,7 +66,7 @@ public class CredentialsConfiguration {
      * is important to track the types of exceptions possible when calling
      * {@link Supplier#get()}, as these could otherwise surprise users. 
      */
-    @Module(entryPoints = DNSApiManager.class, complete = false)
+    @Module(injects = DNSApiManager.class, complete = false, library = true)
     static class CredentialsSupplier {
         private final Supplier<Credentials> creds;
 
