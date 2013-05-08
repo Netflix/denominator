@@ -1,3 +1,6 @@
+### Version 1.1.2
+* update dagger dependency to 1.0.0
+
 ### Version 1.1.1
 * internal refactoring in preparation for dagger 1.0 update
 * update library dependencies to most current versions
