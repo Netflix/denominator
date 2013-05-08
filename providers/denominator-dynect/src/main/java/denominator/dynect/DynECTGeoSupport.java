@@ -23,7 +23,7 @@ import dagger.Provides;
 import denominator.DNSApiManager;
 import denominator.profile.GeoResourceRecordSetApi;
 
-@Module(entryPoints = DNSApiManager.class, complete = false)
+@Module(injects = DNSApiManager.class, complete = false)
 public class DynECTGeoSupport {
 
     @Provides

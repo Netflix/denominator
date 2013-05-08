@@ -13,7 +13,7 @@ import denominator.DNSApiManager;
  * call them inside the {@link Closeable}. For example, shutting down thread
  * pools, or syncing disk write. In this case, there's nothing to close.
  */
-@Module(entryPoints = DNSApiManager.class, complete = false)
+@Module(injects = DNSApiManager.class, complete = false)
 public class NothingToClose implements Closeable {
     @Provides
     @Singleton

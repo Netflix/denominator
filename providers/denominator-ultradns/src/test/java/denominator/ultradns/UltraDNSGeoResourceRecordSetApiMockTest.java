@@ -402,12 +402,12 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     }
 
     private static GeoResourceRecordSetApi mockedGeoApiForZone(MockWebServer server, String zoneName) {
-        return ObjectGraph.create(new Mock(mockUltraDNSWSApi(server.getUrl("/").toString())))
+        return ObjectGraph.create(new Mock(mockUltraDNSWSApi(server.getUrl("/").toString())), new UltraDNSGeoSupport())
                 .get(UltraDNSGeoResourceRecordSetApi.Factory.class).create(zoneName).get();
     }
 
-    @dagger.Module(entryPoints = UltraDNSGeoResourceRecordSetApi.Factory.class, complete = false)
-    private static class Mock extends UltraDNSGeoSupport {
+    @dagger.Module(injects = UltraDNSGeoResourceRecordSetApi.Factory.class, complete = false)
+    private static class Mock {
         private final UltraDNSWSApi api;
 
         private Mock(UltraDNSWSApi api) {

@@ -258,12 +258,12 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     }
 
     private static GeoResourceRecordSetApi mockedGeoApiForZone(MockWebServer server, String zoneName) {
-        return ObjectGraph.create(new Mock(mockDynECTApi(server.getUrl("/").toString())))
+        return ObjectGraph.create(new Mock(mockDynECTApi(server.getUrl("/").toString())), new DynECTGeoSupport())
                 .get(DynECTGeoResourceRecordSetApi.Factory.class).create(zoneName).get();
     }
 
-    @dagger.Module(entryPoints = DynECTGeoResourceRecordSetApi.Factory.class, complete = false)
-    private static class Mock extends DynECTGeoSupport {
+    @dagger.Module(injects = DynECTGeoResourceRecordSetApi.Factory.class, complete = false)
+    private static class Mock {
         private final DynECTApi api;
 
         private Mock(DynECTApi api) {

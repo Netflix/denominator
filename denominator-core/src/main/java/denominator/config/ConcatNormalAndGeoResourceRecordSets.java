@@ -19,7 +19,7 @@ import denominator.profile.GeoResourceRecordSetApi;
 /**
  * Used when normal and geo resource record sets are distinct in the backend.
  */
-@Module(entryPoints = DNSApiManager.class, complete = false)
+@Module(injects = DNSApiManager.class, complete = false)
 public class ConcatNormalAndGeoResourceRecordSets {
 
     @Provides

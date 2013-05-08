@@ -42,7 +42,7 @@ public class MockProvider extends BasicProvider {
         return new Module();
     }
 
-    @dagger.Module(entryPoints = DNSApiManager.class, includes = NothingToClose.class)
+    @dagger.Module(injects = DNSApiManager.class, includes = NothingToClose.class)
     public class Module implements Provider.Module {
 
         @Override

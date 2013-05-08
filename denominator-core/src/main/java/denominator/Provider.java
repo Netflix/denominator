@@ -99,7 +99,7 @@ public interface Provider {
      * 
      * implement this, and annotate with the following:
      * 
-     * {@code  @dagger.Module(entryPoints = DNSApiManager.class) }
+     * {@code  @dagger.Module(injects = DNSApiManager.class) }
      * 
      * make sure your subclass has {@link Provides} methods for {@code String} (used
      * for toString), {@link DNSApi} and {@link Closer}

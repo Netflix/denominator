@@ -12,7 +12,7 @@ import denominator.profile.GeoResourceRecordSetApi;
 /**
  * Some providers do not yet support directional DNS.
  */
-@Module(entryPoints = DNSApiManager.class, complete = false)
+@Module(injects = DNSApiManager.class, complete = false)
 public class GeoUnsupported {
 
     @Provides
