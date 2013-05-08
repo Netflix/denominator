@@ -32,7 +32,7 @@ public class DenominatorTest {
 
     @Test(description = "denominator -p mock providers")
     public void listsAllProvidersWithCredentials() {
-        ImmutableList<Provider> providers = ImmutableList.of(new MockProvider(), new DynECTProvider(),
+        ImmutableList<Provider> providers = ImmutableList.<Provider> of(new MockProvider(), new DynECTProvider(),
                 new Route53Provider(), new UltraDNSProvider());
         assertEquals(ListProviders.providerAndCredentialsTable(providers), Joiner.on('\n').join(
                 "provider             credential type  credential arguments",

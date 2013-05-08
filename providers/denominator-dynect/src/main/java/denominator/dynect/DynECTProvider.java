@@ -19,8 +19,8 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 
-import dagger.Module;
 import dagger.Provides;
+import denominator.BasicProvider;
 import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.DNSApiManager;
 import denominator.Provider;
@@ -28,58 +28,67 @@ import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatNormalAndGeoResourceRecordSets;
 
-@Module(entryPoints = DNSApiManager.class, 
-           includes = { DynECTGeoSupport.class, 
-                        ConcatNormalAndGeoResourceRecordSets.class })
-public class DynECTProvider extends Provider {
-
-    @Provides
-    protected Provider provideThis() {
-        return this;
-    }
-
-    @Provides
-    @Singleton
-    Supplier<Credentials> toJcloudsCredentials(CredentialsAsList supplier) {
-        return compose(new ToJcloudsCredentials(), supplier);
-    }
-
+public class DynECTProvider extends BasicProvider {
+    
     @Override
     public Multimap<String, String> getCredentialTypeToParameterNames() {
         return ImmutableMultimap.<String, String> builder()
                 .putAll("password", "customer", "username", "password").build();
     }
 
+    @Override
+    public Module module() {
+        return new Module();
+    }
+
+    @dagger.Module(entryPoints = DNSApiManager.class, 
+                   includes = { DynECTGeoSupport.class, 
+                                ConcatNormalAndGeoResourceRecordSets.class })
+    final class Module implements Provider.Module {
+
+        @Override
+        @Provides
+        public Provider provider() {
+            return DynECTProvider.this;
+        }
+
+        @Provides
+        @Singleton
+        Supplier<Credentials> toJcloudsCredentials(CredentialsAsList supplier) {
+            return compose(new ToJcloudsCredentials(), supplier);
+        }
+
+        @Provides
+        @Singleton
+        ZoneApi provideZoneApi(DynECTApi api) {
+            return new DynECTZoneApi(api);
+        }
+
+        @Provides
+        @Singleton
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(DynECTApi api) {
+            return new DynECTResourceRecordSetApi.Factory(api);
+        }
+
+        @Provides
+        @Singleton
+        DynECTApi provideApi(Supplier<Credentials> credentials) {
+            return ContextBuilder.newBuilder(new DynECTProviderMetadata())
+                                 .credentialsSupplier(credentials)
+                                 .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
+                                 .buildApi(DynECTApi.class);
+        }
+
+        @Provides
+        @Singleton
+        Closeable provideCloseable(DynECTApi api) {
+            return api;
+        }
+    }
+
     private static class ToJcloudsCredentials implements Function<List<Object>, Credentials> {
         public Credentials apply(List<Object> creds) {
             return new Credentials(creds.get(0) + ":" + creds.get(1), creds.get(2).toString());
         }
-    }
-
-    @Provides
-    @Singleton
-    ZoneApi provideZoneApi(DynECTApi api) {
-        return new DynECTZoneApi(api);
-    }
-
-    @Provides
-    @Singleton
-    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(DynECTApi api) {
-        return new DynECTResourceRecordSetApi.Factory(api);
-    }
-
-    @Provides
-    @Singleton
-    DynECTApi provideApi(Supplier<Credentials> credentials) {
-        return ContextBuilder.newBuilder(new DynECTProviderMetadata())
-                             .credentialsSupplier(credentials)
-                             .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
-                             .buildApi(DynECTApi.class);
-    }
-
-    @Provides
-    @Singleton
-    Closeable provideCloseable(DynECTApi api) {
-        return api;
     }
 }
