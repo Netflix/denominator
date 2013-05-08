@@ -17,9 +17,9 @@ import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 
-import dagger.Module;
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
+import denominator.BasicProvider;
 import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.ResourceRecordSetApi;
@@ -35,112 +35,120 @@ import denominator.profile.GeoResourceRecordSetApi;
 /**
  * in-memory {@code Provider}, used for testing.
  */
-@Module(entryPoints = DNSApiManager.class, includes = NothingToClose.class)
-public class MockProvider extends Provider {
+public class MockProvider extends BasicProvider {
 
-    @Provides
-    protected Provider provideThis() {
-        return this;
+    @Override
+    public denominator.Provider.Module module() {
+        return new Module();
     }
 
-    @Provides
-    ZoneApi provideZoneApi(MockZoneApi in) {
-        return in;
-    }
+    @dagger.Module(entryPoints = DNSApiManager.class, includes = NothingToClose.class)
+    public class Module implements Provider.Module {
 
-    @Provides
-    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
-        return in;
-    }
+        @Override
+        @Provides
+        public Provider provider() {
+            return MockProvider.this;
+        }
 
-    @Provides
-    AllProfileResourceRecordSetApi.Factory provideAllProfileResourceRecordSetApiFactory(
-            MockAllProfileResourceRecordSetApi.Factory in) {
-        return in;
-    }
-
-    @Provides
-    GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(MockGeoResourceRecordSetApi.Factory in) {
-        return in;
-    }
-
-    // wildcard types are not currently injectable in dagger
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    @Provides
-    @Singleton
-    Multimap<String, ResourceRecordSet> provideRecords() {
-        String zoneName = "denominator.io.";
-        ListMultimap<String, ResourceRecordSet<?>> records = LinkedListMultimap.create();
-        records = synchronizedListMultimap(records);
-        records.put(zoneName, ResourceRecordSet.builder()
-                                            .type("SOA")
-                                            .name(zoneName)
-                                            .ttl(3600)
-                                            .add(SOAData.builder()
-                                                        .mname("ns1." + zoneName)
-                                                        .rname("admin." + zoneName)
-                                                        .serial(1)
-                                                        .refresh(3600)
-                                                        .retry(600)
-                                                        .expire(604800)
-                                                        .minimum(60).build()).build());
-        records.put(zoneName, ns(zoneName, 86400, "ns1." + zoneName));
-        records.put(zoneName, a("www1." + zoneName, 3600, ImmutableSet.of("192.0.2.1", "192.0.2.2")));
-        records.put(zoneName, a("www2." + zoneName, 3600, "198.51.100.1"));
-        records.put(zoneName, cname("www." + zoneName, 3600, "www1." + zoneName));
-        records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
-                .name("www2.geo.denominator.io.")
-                .type("A")
-                .ttl(300)
-                .add(AData.create("192.0.2.1"))
-                .addProfile(Geo.create("alazona", ImmutableMultimap.<String, String> builder()
-                        .putAll("United States (US)", ImmutableList.of("Alaska", "Arizona"))
-                        .build()))
-                .build());
-        records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
-                .name("www.geo.denominator.io.")
-                .type("CNAME")
-                .ttl(300)
-                .add(CNAMEData.create("a.denominator.io."))
-                .addProfile(Geo.create("alazona", ImmutableMultimap.<String, String> builder()
-                        .putAll("United States (US)", ImmutableList.of("Alaska", "Arizona"))
-                        .build()))
-                .build());
-        records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
-                .name("www.geo.denominator.io.")
-                .type("CNAME")
-                .ttl(86400)
-                .add(CNAMEData.create("b.denominator.io."))
-                .addProfile(Geo.create("columbador", ImmutableMultimap.<String, String> builder()
-                        .putAll("South America", ImmutableList.of("Colombia", "Ecuador"))
-                        .build()))
-                .build());
-        records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
-                .name("www.geo.denominator.io.")
-                .type("CNAME")
-                .ttl(0)
-                .add(CNAMEData.create("c.denominator.io."))
-                .addProfile(Geo.create("antarctica", ImmutableMultimap.<String, String> builder()
-                        .putAll("Antarctica", ImmutableList.<String> builder()
-                                                    .add("Bouvet Island")
-                                                    .add("French Southern Territories")
-                                                    .add("Antarctica").build()).build()))
-                .build());
-        return Multimap.class.cast(records);
-    }
-
-    @Provides
-    @Singleton
-    @denominator.config.profile.Geo
-    Set<String> provideSupportedGeoRecordTypes() {
-        return ImmutableSet.of("A", "CNAME");
-    }
-
-    @Provides
-    @Singleton
-    @denominator.config.profile.Geo
-    Multimap<String, String> provideRegions() {
-        return ImmutableMultimap.<String, String> builder()
+        @Provides
+        ZoneApi provideZoneApi(MockZoneApi in) {
+            return in;
+        }
+    
+        @Provides
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+            return in;
+        }
+    
+        @Provides
+        AllProfileResourceRecordSetApi.Factory provideAllProfileResourceRecordSetApiFactory(
+                MockAllProfileResourceRecordSetApi.Factory in) {
+            return in;
+        }
+    
+        @Provides
+        GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(MockGeoResourceRecordSetApi.Factory in) {
+            return in;
+        }
+    
+        // wildcard types are not currently injectable in dagger
+        @SuppressWarnings({ "rawtypes", "unchecked" })
+        @Provides
+        @Singleton
+        Multimap<String, ResourceRecordSet> provideRecords() {
+            String zoneName = "denominator.io.";
+            ListMultimap<String, ResourceRecordSet<?>> records = LinkedListMultimap.create();
+            records = synchronizedListMultimap(records);
+            records.put(zoneName, ResourceRecordSet.builder()
+                                                .type("SOA")
+                                                .name(zoneName)
+                                                .ttl(3600)
+                                                .add(SOAData.builder()
+                                                            .mname("ns1." + zoneName)
+                                                            .rname("admin." + zoneName)
+                                                            .serial(1)
+                                                            .refresh(3600)
+                                                            .retry(600)
+                                                            .expire(604800)
+                                                            .minimum(60).build()).build());
+            records.put(zoneName, ns(zoneName, 86400, "ns1." + zoneName));
+            records.put(zoneName, a("www1." + zoneName, 3600, ImmutableSet.of("192.0.2.1", "192.0.2.2")));
+            records.put(zoneName, a("www2." + zoneName, 3600, "198.51.100.1"));
+            records.put(zoneName, cname("www." + zoneName, 3600, "www1." + zoneName));
+            records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
+                    .name("www2.geo.denominator.io.")
+                    .type("A")
+                    .ttl(300)
+                    .add(AData.create("192.0.2.1"))
+                    .addProfile(Geo.create("alazona", ImmutableMultimap.<String, String> builder()
+                            .putAll("United States (US)", ImmutableList.of("Alaska", "Arizona"))
+                            .build()))
+                    .build());
+            records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
+                    .name("www.geo.denominator.io.")
+                    .type("CNAME")
+                    .ttl(300)
+                    .add(CNAMEData.create("a.denominator.io."))
+                    .addProfile(Geo.create("alazona", ImmutableMultimap.<String, String> builder()
+                            .putAll("United States (US)", ImmutableList.of("Alaska", "Arizona"))
+                            .build()))
+                    .build());
+            records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
+                    .name("www.geo.denominator.io.")
+                    .type("CNAME")
+                    .ttl(86400)
+                    .add(CNAMEData.create("b.denominator.io."))
+                    .addProfile(Geo.create("columbador", ImmutableMultimap.<String, String> builder()
+                            .putAll("South America", ImmutableList.of("Colombia", "Ecuador"))
+                            .build()))
+                    .build());
+            records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
+                    .name("www.geo.denominator.io.")
+                    .type("CNAME")
+                    .ttl(0)
+                    .add(CNAMEData.create("c.denominator.io."))
+                    .addProfile(Geo.create("antarctica", ImmutableMultimap.<String, String> builder()
+                            .putAll("Antarctica", ImmutableList.<String> builder()
+                                                        .add("Bouvet Island")
+                                                        .add("French Southern Territories")
+                                                        .add("Antarctica").build()).build()))
+                    .build());
+            return Multimap.class.cast(records);
+        }
+    
+        @Provides
+        @Singleton
+        @denominator.config.profile.Geo
+        Set<String> provideSupportedGeoRecordTypes() {
+            return ImmutableSet.of("A", "CNAME");
+        }
+    
+        @Provides
+        @Singleton
+        @denominator.config.profile.Geo
+        Multimap<String, String> provideRegions() {
+            return ImmutableMultimap.<String, String> builder()
                 .put("Anonymous Proxy (A1)", "Anonymous Proxy")
                 .put("Satellite Provider (A2)", "Satellite Provider")
                 .put("Unknown / Uncategorized IPs", "Unknown / Uncategorized IPs")
@@ -223,5 +231,6 @@ public class MockProvider extends Provider {
                                 "Tuvalu", "Undefined Australia / Oceania", "Vanuatu", "Wallis and Futuna"))
                 .putAll("Antarctica", ImmutableList.of("Antarctica", "Bouvet Island", "French Southern Territories"))
                 .build();
+        }
     }
 }

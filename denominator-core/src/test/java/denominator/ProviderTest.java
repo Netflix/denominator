@@ -10,7 +10,6 @@ import org.testng.annotations.Test;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
-import dagger.Module;
 import dagger.ObjectGraph;
 import dagger.Provides;
 import denominator.config.GeoUnsupported;
@@ -22,79 +21,43 @@ import denominator.model.ResourceRecordSet;
 
 @Test
 public class ProviderTest {
-    static final String moduleExceptionRegex = "add @Module\\(entryPoints = DNSApiManager.class\\) to denominator.ProviderTest.*";
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "add @Provides to provideThis\\(\\)")
-    public void testProvideThisRequiresProvidesAnnotation() {
-        new Provider() {
-            protected Provider provideThis() {
-                return this;
-            }
-        };
-    }
+    static class BareProvider extends BasicProvider {
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = moduleExceptionRegex)
-    public void testMustAnnotateClassWithModule() {
-        new Provider() {
+        @Override
+        public Module module() {
+            return new Module();
+        }
+
+        @dagger.Module(entryPoints = { Accessor.class, DNSApiManager.class }, 
+                       includes = { NothingToClose.class,
+                                    GeoUnsupported.class,
+                                    OnlyNormalResourceRecordSets.class } )
+        final class Module implements Provider.Module {
+
+            @Override
             @Provides
-            protected Provider provideThis() {
-                return this;
+            public Provider provider() {
+                return BareProvider.this;
             }
-        };
-    }
 
-    @Module
-    static class ProviderNoEntryPoints extends Provider {
-        @Provides
-        protected Provider provideThis() {
-            return this;
-        }
-    }
+            @Provides
+            ZoneApi provideZoneApi(MockZoneApi zoneApi) {
+                return zoneApi;
+            }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = moduleExceptionRegex)
-    public void testMustAnnotateClassWithEntryPoints() {
-        new ProviderNoEntryPoints();
-    }
+            @Provides
+            ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+                return in;
+            }
 
-    @Module(entryPoints = String.class)
-    static class ProviderWrongEntryPoint extends Provider {
-        @Provides
-        protected Provider provideThis() {
-            return this;
-        }
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = moduleExceptionRegex)
-    public void testMustAnnotateClassWithDNSApiManagerEntryPoint() {
-        new ProviderWrongEntryPoint();
-    }
-
-    @Module(entryPoints = { Accessor.class, DNSApiManager.class }, 
-               includes = { NothingToClose.class,
-                            GeoUnsupported.class,
-                            OnlyNormalResourceRecordSets.class } )
-    static class BareProvider extends Provider {
-        @Provides
-        protected Provider provideThis() {
-            return this;
-        }
-
-        @Provides
-        ZoneApi provideZoneApi(MockZoneApi zoneApi) {
-            return zoneApi;
-        }
-
-        @Provides
-        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
-            return in;
-        }
-
-        // wildcard types are not currently injectable in dagger
-        @SuppressWarnings("rawtypes")
-        @Provides
-        @Singleton
-        Multimap<String, ResourceRecordSet> provideData() {
-            return ImmutableMultimap.of();
+            // wildcard types are not currently injectable in dagger
+            @SuppressWarnings("rawtypes")
+            @Provides
+            @Singleton
+            Multimap<String, ResourceRecordSet> provideData() {
+                return ImmutableMultimap.of();
+            }
         }
     }
 
@@ -116,19 +79,11 @@ public class ProviderTest {
 
     public void testBindsProvider() {
         BareProvider provider = new BareProvider();
-        Accessor accessor = ObjectGraph.create(provider).get(Accessor.class);
+        Accessor accessor = ObjectGraph.create(provider.module()).get(Accessor.class);
         assertEquals(accessor.provider, provider);
     }
 
-    @Module(entryPoints = DNSApiManager.class,
-               includes = { NothingToClose.class,
-                            GeoUnsupported.class,
-                            OnlyNormalResourceRecordSets.class } )
-    static class ValidCredentialParametersProvider extends Provider {
-        @Provides
-        protected Provider provideThis() {
-            return this;
-        }
+    static class ValidCredentialParametersProvider extends BasicProvider {
 
         @Override
         public Multimap<String, String> getCredentialTypeToParameterNames() {
@@ -137,22 +92,40 @@ public class ProviderTest {
                     .putAll("stsSession", "accessKey", "secretKey", "sessionToken").build();
         }
 
-        @Provides
-        ZoneApi provideZoneApi(MockZoneApi zoneApi) {
-            return zoneApi;
+        @Override
+        public Module module() {
+            return new Module();
         }
 
-        @Provides
-        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
-            return in;
-        }
-
-        // wildcard types are not currently injectable in dagger
-        @SuppressWarnings("rawtypes")
-        @Provides
-        @Singleton
-        Multimap<String, ResourceRecordSet> provideData() {
-            return ImmutableMultimap.of();
+        @dagger.Module(entryPoints = DNSApiManager.class,
+                       includes = { NothingToClose.class,
+                                    GeoUnsupported.class,
+                                    OnlyNormalResourceRecordSets.class } )
+        final class Module implements Provider.Module {
+    
+            @Override
+            @Provides
+            public Provider provider() {
+                return ValidCredentialParametersProvider.this;
+            }
+    
+            @Provides
+            ZoneApi provideZoneApi(MockZoneApi zoneApi) {
+                return zoneApi;
+            }
+    
+            @Provides
+            ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+                return in;
+            }
+    
+            // wildcard types are not currently injectable in dagger
+            @SuppressWarnings("rawtypes")
+            @Provides
+            @Singleton
+            Multimap<String, ResourceRecordSet> provideData() {
+                return ImmutableMultimap.of();
+            }
         }
     }
 
@@ -160,15 +133,7 @@ public class ProviderTest {
         new ValidCredentialParametersProvider();
     }
 
-    @Module(entryPoints = DNSApiManager.class,
-               includes = { NothingToClose.class,
-                            GeoUnsupported.class,
-                            OnlyNormalResourceRecordSets.class } )
-    static class InvalidCredentialKeyProvider extends Provider {
-        @Provides
-        protected Provider provideThis() {
-            return this;
-        }
+    static class InvalidCredentialKeyProvider extends BasicProvider {
 
         @Override
         public Multimap<String, String> getCredentialTypeToParameterNames() {
@@ -177,22 +142,40 @@ public class ProviderTest {
                     .putAll("STS_SESSION", "accessKey", "secretKey", "sessionToken").build();
         }
 
-        @Provides
-        ZoneApi provideZoneApi(MockZoneApi zoneApi) {
-            return zoneApi;
+        @Override
+        public Module module() {
+            return new Module();
         }
 
-        @Provides
-        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
-            return in;
-        }
+        @dagger.Module(entryPoints = DNSApiManager.class,
+                       includes = { NothingToClose.class,
+                                    GeoUnsupported.class,
+                                    OnlyNormalResourceRecordSets.class } )
+        final class Module implements Provider.Module {
 
-        // wildcard types are not currently injectable in dagger
-        @SuppressWarnings("rawtypes")
-        @Provides
-        @Singleton
-        Multimap<String, ResourceRecordSet> provideData() {
-            return ImmutableMultimap.of();
+            @Override
+            @Provides
+            public Provider provider() {
+                return InvalidCredentialKeyProvider.this;
+            }
+
+            @Provides
+            ZoneApi provideZoneApi(MockZoneApi zoneApi) {
+                return zoneApi;
+            }
+
+            @Provides
+            ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+                return in;
+            }
+
+            // wildcard types are not currently injectable in dagger
+            @SuppressWarnings("rawtypes")
+            @Provides
+            @Singleton
+            Multimap<String, ResourceRecordSet> provideData() {
+                return ImmutableMultimap.of();
+            }
         }
     }
 
@@ -201,15 +184,7 @@ public class ProviderTest {
         new InvalidCredentialKeyProvider();
     }
 
-    @Module(entryPoints = DNSApiManager.class,
-             includes = { NothingToClose.class,
-                          GeoUnsupported.class,
-                          OnlyNormalResourceRecordSets.class } )
-    static class InvalidCredentialParameterProvider extends Provider {
-        @Provides
-        protected Provider provideThis() {
-            return this;
-        }
+    static class InvalidCredentialParameterProvider extends BasicProvider {
 
         @Override
         public Multimap<String, String> getCredentialTypeToParameterNames() {
@@ -218,22 +193,40 @@ public class ProviderTest {
                     .putAll("stsSession", "access.key", "secret.key", "session.token").build();
         }
 
-        @Provides
-        ZoneApi provideZoneApi(MockZoneApi zoneApi) {
-            return zoneApi;
+        @Override
+        public Module module() {
+            return new Module();
         }
 
-        @Provides
-        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
-            return in;
-        }
+        @dagger.Module(entryPoints = DNSApiManager.class,
+                       includes = { NothingToClose.class,
+                                    GeoUnsupported.class,
+                                    OnlyNormalResourceRecordSets.class } )
+        final class Module implements Provider.Module {
 
-        // wildcard types are not currently injectable in dagger
-        @SuppressWarnings("rawtypes")
-        @Provides
-        @Singleton
-        Multimap<String, ResourceRecordSet> provideData() {
-            return ImmutableMultimap.of();
+            @Override
+            @Provides
+            public Provider provider() {
+                return InvalidCredentialParameterProvider.this;
+            }
+
+            @Provides
+            ZoneApi provideZoneApi(MockZoneApi zoneApi) {
+                return zoneApi;
+            }
+
+            @Provides
+            ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
+                return in;
+            }
+
+            // wildcard types are not currently injectable in dagger
+            @SuppressWarnings("rawtypes")
+            @Provides
+            @Singleton
+            Multimap<String, ResourceRecordSet> provideData() {
+                return ImmutableMultimap.of();
+            }
         }
     }
 
