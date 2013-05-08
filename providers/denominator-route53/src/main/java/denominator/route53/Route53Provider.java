@@ -50,7 +50,7 @@ public class Route53Provider extends BasicProvider {
         return new Module();
     }
 
-    @dagger.Module(entryPoints = DNSApiManager.class,
+    @dagger.Module(injects = DNSApiManager.class,
                    includes = { GeoUnsupported.class, 
                                 OnlyNormalResourceRecordSets.class } )
     final class Module implements Provider.Module {

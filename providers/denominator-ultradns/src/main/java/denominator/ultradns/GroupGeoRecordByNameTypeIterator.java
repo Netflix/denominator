@@ -41,8 +41,7 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
         private final CacheLoader<String, Multimap<String, String>> getDirectionalGroup;
 
         @Inject
-        private Factory(
-                @denominator.config.profile.Geo CacheLoader<String, Multimap<String, String>> getDirectionalGroup) {
+        Factory(@denominator.config.profile.Geo CacheLoader<String, Multimap<String, String>> getDirectionalGroup) {
             this.getDirectionalGroup = getDirectionalGroup;
         }
 
