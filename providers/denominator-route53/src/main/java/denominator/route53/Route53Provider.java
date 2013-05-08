@@ -21,8 +21,8 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
 
-import dagger.Module;
 import dagger.Provides;
+import denominator.BasicProvider;
 import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.DNSApiManager;
 import denominator.Provider;
@@ -31,14 +31,13 @@ import denominator.ZoneApi;
 import denominator.config.GeoUnsupported;
 import denominator.config.OnlyNormalResourceRecordSets;
 
-@Module(entryPoints = DNSApiManager.class,
-           includes = { GeoUnsupported.class, 
-                        OnlyNormalResourceRecordSets.class } )
-public class Route53Provider extends Provider {
+public class Route53Provider extends BasicProvider {
 
-    @Provides
-    protected Provider provideThis() {
-        return this;
+    @Override
+    public Multimap<String, String> getCredentialTypeToParameterNames() {
+        return ImmutableMultimap.<String, String> builder()
+                .putAll("accessKey", "accessKey", "secretKey")
+                .putAll("session", "accessKey", "secretKey", "sessionToken").build();
     }
 
     @Override
@@ -46,17 +45,54 @@ public class Route53Provider extends Provider {
         return Optional.<Supplier<denominator.Credentials>> of(new InstanceProfileCredentialsSupplier());
     }
 
-    @Provides
-    @Singleton
-    Supplier<Credentials> toJcloudsCredentials(CredentialsAsList supplier) {
-        return compose(new ToJcloudsCredentials(), supplier);
+    @Override
+    public Module module() {
+        return new Module();
     }
 
-    @Override
-    public Multimap<String, String> getCredentialTypeToParameterNames() {
-        return ImmutableMultimap.<String, String> builder()
-                .putAll("accessKey", "accessKey", "secretKey")
-                .putAll("session", "accessKey", "secretKey", "sessionToken").build();
+    @dagger.Module(entryPoints = DNSApiManager.class,
+                   includes = { GeoUnsupported.class, 
+                                OnlyNormalResourceRecordSets.class } )
+    final class Module implements Provider.Module {
+    
+        @Override
+        @Provides
+        public Provider provider() {
+            return Route53Provider.this;
+        }
+
+        @Provides
+        @Singleton
+        Supplier<Credentials> toJcloudsCredentials(CredentialsAsList supplier) {
+            return compose(new ToJcloudsCredentials(), supplier);
+        }
+
+        @Provides
+        @Singleton
+        Route53Api provideApi(Supplier<Credentials> credentials) {
+            return ContextBuilder.newBuilder(new AWSRoute53ProviderMetadata())
+                                 .credentialsSupplier(credentials)
+                                 .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
+                                 .buildApi(Route53Api.class);
+        }
+
+        @Provides
+        @Singleton
+        ZoneApi provideZoneApi(Route53Api api) {
+            return new Route53ZoneApi(api);
+        }
+
+        @Provides
+        @Singleton
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(Route53Api api) {
+            return new Route53ResourceRecordSetApi.Factory(api);
+        }
+
+        @Provides
+        @Singleton
+        Closeable provideCloser(Route53Api api) {
+            return api;
+        }
     }
 
     private static class ToJcloudsCredentials implements Function<List<Object>, Credentials> {
@@ -69,32 +105,5 @@ public class Route53Provider extends Provider {
                                      .sessionToken(creds.get(2).toString())
                                      .build();
         }
-    }
-
-    @Provides
-    @Singleton
-    Route53Api provideApi(Supplier<Credentials> credentials) {
-        return ContextBuilder.newBuilder(new AWSRoute53ProviderMetadata())
-                             .credentialsSupplier(credentials)
-                             .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
-                             .buildApi(Route53Api.class);
-    }
-
-    @Provides
-    @Singleton
-    ZoneApi provideZoneApi(Route53Api api) {
-        return new Route53ZoneApi(api);
-    }
-
-    @Provides
-    @Singleton
-    ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(Route53Api api) {
-        return new Route53ResourceRecordSetApi.Factory(api);
-    }
-
-    @Provides
-    @Singleton
-    Closeable provideCloser(Route53Api api) {
-        return api;
     }
 }
