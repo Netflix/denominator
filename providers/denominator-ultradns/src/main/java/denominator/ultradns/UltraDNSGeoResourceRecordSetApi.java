@@ -12,6 +12,8 @@ import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType.IPV6;
 
 import java.util.EnumSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.inject.Inject;
@@ -32,6 +34,8 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ComparisonChain;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Ordering;
 
@@ -81,7 +85,7 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
     }
 
     private Iterator<ResourceRecordSet<?>> allByDName(final String dname) {
-        // TODO: remove when type "0" can be specified
+        // TODO: remove when type "0" can be specified (UMP-5738 Dodgers release of UltraDNS)
         return concat(transform(EnumSet.allOf(RecordType.class).iterator(),
                 new Function<RecordType, Iterator<ResourceRecordSet<?>>>() {
                     @Override
@@ -154,15 +158,29 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
 
     @Override
     public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
-        for (Iterator<DirectionalPoolRecordDetail> i = recordsByNameTypeAndGroupName(name, type, group); i.hasNext();) {
+        Iterator<DirectionalPoolRecordDetail> iterator = recordsByNameTypeAndGroupName(name, type, group);
+        Map<DirectionalPoolRecordDetail, DirectionalGroup> updates = groupsToUpdate(iterator, regions);
+        if (updates.isEmpty())
+            return;
+        for (Entry<DirectionalPoolRecordDetail, DirectionalGroup> update : updates.entrySet()) {
+            DirectionalPoolRecordDetail detail = update.getKey();
+            // TODO: ensure forceOverlapTransfer (Dodgers release of UltraDNS)
+            poolApi.updateRecordAndGroup(detail.getId(), detail.getRecord(), update.getValue());
+        }
+    }
+
+    private Map<DirectionalPoolRecordDetail, DirectionalGroup> groupsToUpdate(
+            Iterator<DirectionalPoolRecordDetail> iterator, Multimap<String, String> regions) {
+        Builder<DirectionalPoolRecordDetail, DirectionalGroup> toUpdate = ImmutableMap.builder();
+
+        for (Iterator<DirectionalPoolRecordDetail> i = iterator; i.hasNext();) {
             DirectionalPoolRecordDetail detail = i.next();
-            DirectionalPoolRecord record = detail.getRecord();
             DirectionalGroup directionalGroup = groupApi.get(detail.getGeolocationGroup().get().getId());
-            if (!regions.equals(directionalGroup.getRegionToTerritories())){
-                DirectionalGroup update = directionalGroup.toBuilder().regionToTerritories(regions).build();
-                poolApi.updateRecordAndGroup(detail.getId(), record, update);
+            if (!regions.equals(directionalGroup.getRegionToTerritories())) {
+                toUpdate.put(detail, directionalGroup.toBuilder().regionToTerritories(regions).build());
             }
         }
+        return toUpdate.build();
     }
 
     @Override
@@ -218,7 +236,7 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
         public Optional<GeoResourceRecordSetApi> create(String zoneName) {
             checkNotNull(zoneName, "zoneName was null");
             return Optional.<GeoResourceRecordSetApi> of(
-                    new UltraDNSGeoResourceRecordSetApi(types, regions.get(), 
+                    new UltraDNSGeoResourceRecordSetApi(types, regions.get(),
                             api.getDirectionalGroupApiForAccount(account.get().getId()),
                             api.getDirectionalPoolApiForZone(zoneName), iteratorFactory, zoneName));
         }
