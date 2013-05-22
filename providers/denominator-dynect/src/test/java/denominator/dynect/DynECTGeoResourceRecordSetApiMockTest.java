@@ -263,7 +263,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     }
 
     @dagger.Module(injects = DynECTGeoResourceRecordSetApi.Factory.class, complete = false)
-    private static class Mock {
+    static class Mock {
         private final DynECTApi api;
 
         private Mock(DynECTApi api) {

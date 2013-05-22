@@ -1,3 +1,6 @@
+### Version 1.1.3
+* support use as a Dagger library.  ex. `ObjectGraph.create(new UltraDNSProvider.Module(), credentials("username", "password"))`
+
 ### Version 1.1.2
 * update dagger dependency to 1.0.0
 

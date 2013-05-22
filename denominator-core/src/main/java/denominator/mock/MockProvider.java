@@ -38,17 +38,16 @@ import denominator.profile.GeoResourceRecordSetApi;
 public class MockProvider extends BasicProvider {
 
     @Override
-    public denominator.Provider.Module module() {
+    public Module module() {
         return new Module();
     }
 
     @dagger.Module(injects = DNSApiManager.class, includes = NothingToClose.class)
-    public class Module implements Provider.Module {
+    static class Module {
 
-        @Override
         @Provides
         public Provider provider() {
-            return MockProvider.this;
+            return new MockProvider();
         }
 
         @Provides

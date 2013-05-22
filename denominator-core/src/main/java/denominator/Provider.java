@@ -2,8 +2,6 @@ package denominator;
 
 import com.google.common.annotations.Beta;
 import com.google.common.base.CaseFormat;
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
 import com.google.common.collect.Multimap;
 import com.google.common.io.Closer;
 
@@ -71,28 +69,14 @@ public interface Provider {
      * The implementing provider should throw an
      * {@link IllegalArgumentException} if it is ever supplied with an incorrect
      * count of credential parts corresponding to this. The preferred mechanism
-     * for throwing exceptions is to employ
-     * {@link CredentialsConfiguration#firstValidCredentialsForProvider(java.util.Set, Provider)}
-     * . Providers who do not require credentials needn't throw an exception if
-     * supplied with them.
+     * to access credentials in a way that validates parameters is to use
+     * {@code Provider<Credentials>} bound by
+     * {@link CredentialsConfiguration}.
      * 
      * @return credential types to the labels of each part required. An empty
      *         multimap suggests the provider doesn't authenticate.
      */
     Multimap<String, String> getCredentialTypeToParameterNames();
-    
-    /**
-     * present when there is a provider-specific means to supply credentials,
-     * such as {@code IAM Instance Profile}
-     */
-    Optional<Supplier<Credentials>> defaultCredentialSupplier();
-
-    
-    /**
-     * how this provider is configured
-     * @see Module
-     */
-    Module module();
     
     /**
      * provides components that implement the {@link DNSApi}.
@@ -101,27 +85,8 @@ public interface Provider {
      * 
      * {@code  @dagger.Module(injects = DNSApiManager.class) }
      * 
-     * make sure your subclass has {@link Provides} methods for {@code String} (used
-     * for toString), {@link DNSApi} and {@link Closer}
+     * make sure your subclass has {@link Provides} methods for the current
+     * {@code Provider} (used for toString), {@link DNSApi} and {@link Closer}
      */
-    @Beta
-    public static interface Module {
-
-        /**
-         * binds the current provider, which is useful for injecting its name or
-         * {@link #getCredentialTypeToParameterNames}.
-         * 
-         * <h4>to implement</h4>
-         * 
-         * <pre>
-         * &#064;Override
-         * &#064;Provides
-         * public Provider provider() {
-         *     return MyProvider.this;
-         * }
-         * </pre>
-         * @see Provides
-         */
-        Provider provider();
-    }
+    Object module();
 }

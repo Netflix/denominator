@@ -12,18 +12,13 @@ import com.google.mockwebserver.MockWebServer;
 
 import denominator.Credentials;
 import denominator.Credentials.MapCredentials;
-import denominator.CredentialsConfiguration;
 import denominator.hook.InstanceMetadataHook;
-import denominator.route53.InstanceProfileCredentialsSupplier.ReadFirstInstanceProfileCredentialsOrNull;
+import denominator.route53.InstanceProfileCredentialsProvider.ReadFirstInstanceProfileCredentialsOrNull;
 
 @Test
-public class InstanceProfileCredentialsSupplierTest {
+public class InstanceProfileCredentialsProviderTest {
     Credentials sessionCredentials = MapCredentials.from(ImmutableMap.of("accessKey", "AAAAA", "secretKey", "SSSSSSS",
             "sessionToken", "TTTTTTT"));
-
-    public void sessionCredentialsValidForRoute53() {
-        CredentialsConfiguration.checkValidForProvider(sessionCredentials, new Route53Provider());
-    }
 
     public void whenInstanceProfileCredentialsInMetadataServiceReturnMapCredentials() throws Exception {
         String securityCredentialsJson = new String(ByteStreams.toByteArray(getClass().getResourceAsStream(
@@ -34,10 +29,9 @@ public class InstanceProfileCredentialsSupplierTest {
         server.play();
 
         try {
-
-            assertEquals(new InstanceProfileCredentialsSupplier(new ReadFirstInstanceProfileCredentialsOrNull(server
-                    .getUrl(InstanceMetadataHook.DEFAULT_URI.getPath()).toURI())).get(), sessionCredentials);
-
+            assertEquals(new InstanceProfileCredentialsProvider(new ReadFirstInstanceProfileCredentialsOrNull(server
+                    .getUrl(InstanceMetadataHook.DEFAULT_URI.getPath()).toURI())).get(new Route53Provider()),
+                    sessionCredentials);
         } finally {
             assertEquals(server.takeRequest().getRequestLine(),
                     "GET /latest/meta-data/iam/security-credentials/ HTTP/1.1");
@@ -106,23 +100,23 @@ public class InstanceProfileCredentialsSupplierTest {
     }
 
     public void testParseInstanceProfileCredentialsFromJsonWhenNull() {
-        assertEquals(InstanceProfileCredentialsSupplier.parseJson(null), ImmutableMap.of());
+        assertEquals(InstanceProfileCredentialsProvider.parseJson(null), ImmutableMap.of());
     }
 
     public void testParseInstanceProfileCredentialsFromJsonWhenWrongKeys() {
-        assertEquals(InstanceProfileCredentialsSupplier.parseJson("{\"Code\" : \"Failure\"}"), ImmutableMap.of());
+        assertEquals(InstanceProfileCredentialsProvider.parseJson("{\"Code\" : \"Failure\"}"), ImmutableMap.of());
     }
 
     public void testParseInstanceProfileCredentialsFromJsonWhenAccessAndSecretPresent() {
         assertEquals(
-                InstanceProfileCredentialsSupplier
+                InstanceProfileCredentialsProvider
                         .parseJson("{\"AccessKeyId\" : \"AAAAA\",\"SecretAccessKey\" : \"SSSSSSS\"}"),
                 ImmutableMap.of("accessKey", "AAAAA", "secretKey", "SSSSSSS"));
     }
 
     public void testParseInstanceProfileCredentialsFromJsonWhenAccessSecretAndTokenPresent() {
         assertEquals(
-                InstanceProfileCredentialsSupplier
+                InstanceProfileCredentialsProvider
                         .parseJson("{\"AccessKeyId\" : \"AAAAA\",\"SecretAccessKey\" : \"SSSSSSS\", \"Token\" : \"TTTTTTT\"}"),
                 ImmutableMap.of("accessKey", "AAAAA", "secretKey", "SSSSSSS", "sessionToken", "TTTTTTT"));
     }

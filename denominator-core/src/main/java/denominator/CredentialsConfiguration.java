@@ -1,12 +1,8 @@
 package denominator;
 
 import static com.google.common.base.Joiner.on;
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Suppliers.ofInstance;
 import static com.google.common.collect.Iterables.getOnlyElement;
-import static dagger.Provides.Type.SET;
-import static denominator.Credentials.ListCredentials.asList;
 
 import java.util.Collection;
 import java.util.List;
@@ -14,15 +10,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import javax.inject.Provider;
 
+import com.google.common.annotations.Beta;
 import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 
 import dagger.Module;
 import dagger.Provides;
-import dagger.Provides.Type;
 import denominator.Credentials.AnonymousCredentials;
 import denominator.Credentials.ListCredentials;
 
@@ -46,7 +40,7 @@ import denominator.Credentials.ListCredentials;
  * 
  * <pre>
  * final AWSCredentialsProvider provider = // from wherever
- * Supplier&lt;Credentials&gt; converter = new Supplier&lt;Credentials&gt;() {
+ * Provider&lt;Credentials&gt; converter = new Provider&lt;Credentials&gt;() {
  *     public Credentials get() {
  *         AWSCredentials awsCreds = provider.getCredentials();
  *         return credentials(awsCreds.getAWSAccessKeyId(), awsCreds.getAWSSecretKey());
@@ -62,30 +56,10 @@ public class CredentialsConfiguration {
     }
 
     /**
-     * Credential suppliers are {@link Type#SET} binding, and order matters. It
-     * is important to track the types of exceptions possible when calling
-     * {@link Supplier#get()}, as these could otherwise surprise users. 
-     */
-    @Module(injects = DNSApiManager.class, complete = false, library = true)
-    static class CredentialsSupplier {
-        private final Supplier<Credentials> creds;
-
-        private CredentialsSupplier(Supplier<Credentials> creds) {
-            this.creds = creds;
-        }
-
-        @Provides(type = SET)
-        @Singleton
-        Supplier<Credentials> supplyCredentials() {
-            return creds;
-        }
-    }
-
-    /**
      * used to set a base case where no credentials are available or needed.
      */
-    static CredentialsSupplier anonymous() {
-        return new CredentialsSupplier(Suppliers.<Credentials> ofInstance(AnonymousCredentials.INSTANCE));
+    public static Object anonymous() {
+        return credentials(AnonymousCredentials.INSTANCE);
     };
 
     /**
@@ -95,8 +69,8 @@ public class CredentialsConfiguration {
      * @param secondPart
      *            second part of credentials, such as a password or secretKey
      */
-    public static CredentialsSupplier credentials(Object firstPart, Object secondPart) {
-        return new CredentialsSupplier(ofInstance(ListCredentials.from(firstPart, secondPart)));
+    public static Object credentials(Object firstPart, Object secondPart) {
+        return credentials(ListCredentials.from(firstPart, secondPart));
     }
 
     /**
@@ -108,44 +82,113 @@ public class CredentialsConfiguration {
      * @param thirdPart
      *            third part of credentials, such as a password or secretKey
      */
-    public static CredentialsSupplier credentials(Object firstPart, Object secondPart, Object thirdPart) {
-        return new CredentialsSupplier(ofInstance(ListCredentials.from(firstPart, secondPart, thirdPart)));
+    public static Object credentials(Object firstPart, Object secondPart, Object thirdPart) {
+        return credentials(ListCredentials.from(firstPart, secondPart, thirdPart));
     }
 
     /**
      * @param credentials
      *            will always be used on the provider
      */
-    public static CredentialsSupplier credentials(Credentials credentials) {
-        return new CredentialsSupplier(ofInstance(credentials));
+    public static Object credentials(Credentials credentials) {
+        return new ConstantCredentialsProvider(credentials);
+    }
+
+    @Module(complete = false, 
+            // only used for dns services that authenticate
+            library = true,
+            // override any built-in credentials
+            overrides = true)
+    static final class ConstantCredentialsProvider {
+        private final Credentials creds;
+
+        private ConstantCredentialsProvider(Credentials creds) {
+            this.creds = checkNotNull(creds, "creds");
+        }
+
+        @Provides
+        public Credentials get(denominator.Provider provider) {
+            return checkValidForProvider(creds, provider);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof ConstantCredentialsProvider) {
+                ConstantCredentialsProvider that = ConstantCredentialsProvider.class.cast(obj);
+                return this.creds.equals(that.creds);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return creds.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ConstantCredentialsProvider(" + creds + ")";
+        }
+    }
+
+    /**
+     * @deprecated use {@link CredentialsConfiguration#credentials(Provider)}
+     *             instead.
+     */
+    @Deprecated
+    public static DynamicCredentialsProvider credentials(final Supplier<Credentials> credentials) {
+        return new DynamicCredentialsProvider(new Provider<Credentials>() {
+            @Override
+            public Credentials get() {
+                return credentials.get();
+            }
+        });
     }
 
     /**
      * @param credentials
-     *            {@link Supplier#get()} will be called each time credentials
+     *            {@link Provider#get()} will be called each time credentials
      *            are needed, facilitating runtime credential changes.
      */
-    public static CredentialsSupplier credentials(Supplier<Credentials> credentials) {
-        return new CredentialsSupplier(credentials);
+    public static DynamicCredentialsProvider credentials(Provider<Credentials> credentials) {
+        return new DynamicCredentialsProvider(credentials);
     }
 
-    /**
-     * returns the first configured credential for the provider from any
-     * supplier, falling back to {@link AnonymousCredentials} if supported.
-     * 
-     * @throws IllegalArgumentException
-     *             if one of the credentials returned is invalid for this
-     *             provider.
-     * @see CredentialsConfiguration#checkValidForProvider(Credentials,
-     *      Provider)
-     */
-    public static Credentials firstValidCredentialsForProvider(Set<Supplier<Credentials>> allSuppliers,
-            Provider provider) {
-        for (Supplier<Credentials> supplier : allSuppliers) {
-            Credentials credentials = supplier.get();
-            return checkValidForProvider(credentials, provider);
+    @Module(complete = false, 
+            // only used for dns services that authenticate
+            library = true,
+            // override any built-in credentials
+            overrides = true)
+    static final class DynamicCredentialsProvider {
+        private final Provider<Credentials> creds;
+
+        private DynamicCredentialsProvider(Provider<Credentials> creds) {
+            this.creds = checkNotNull(creds, "creds");
         }
-        return checkValidForProvider(AnonymousCredentials.INSTANCE, provider);
+
+        @Provides
+        public Credentials get(denominator.Provider provider) {
+            return checkValidForProvider(creds.get(), provider);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof DynamicCredentialsProvider) {
+                DynamicCredentialsProvider that = DynamicCredentialsProvider.class.cast(obj);
+                return this.creds.equals(that.creds);
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return creds.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "DynamicCredentialsProvider(" + creds + ")";
+        }
     }
 
     /**
@@ -181,10 +224,9 @@ public class CredentialsConfiguration {
      *         {@link AnonymousCredentials} if {@code input} was null and
      *         credentials are not needed.
      */
-    public static Credentials checkValidForProvider(Credentials creds, Provider provider) {
+    public static Credentials checkValidForProvider(Credentials creds, denominator.Provider provider) {
         checkNotNull(provider, "provider cannot be null");
-        if (isAnonymous(creds)) {
-            checkArgument(provider.getCredentialTypeToParameterNames().isEmpty(), exceptionMessage(null, provider));
+        if (isAnonymous(creds) && provider.getCredentialTypeToParameterNames().isEmpty()) {
             return AnonymousCredentials.INSTANCE;
         } else if (creds instanceof Map) {
             // check Map first as clojure Map implements List Map.Entry
@@ -209,23 +251,34 @@ public class CredentialsConfiguration {
         return false;
     }
 
-    private static boolean credentialConfigurationHasPartCount(Provider provider, int size) {
+    private static boolean credentialConfigurationHasPartCount(denominator.Provider provider, int size) {
         for (String credentialType : provider.getCredentialTypeToParameterNames().keySet())
             if (provider.getCredentialTypeToParameterNames().get(credentialType).size() == size)
                 return true;
         return false;
     }
 
-    private static boolean credentialConfigurationHasKeys(Provider provider, Set<?> keys) {
+    private static boolean credentialConfigurationHasKeys(denominator.Provider provider, Set<?> keys) {
         for (String credentialType : provider.getCredentialTypeToParameterNames().keySet())
             if (keys.containsAll(provider.getCredentialTypeToParameterNames().get(credentialType)))
                 return true;
         return false;
     }
 
-    private static String exceptionMessage(Credentials input, Provider provider) {
+    /**
+     * Use this method to generate a consistent error message when the
+     * credentials supplied are not valid for the provider. Typically, this will
+     * be the message of an {@code IllegalArgumentException}
+     * 
+     * @param input
+     *            nullable credentials you know are invalid
+     * @param provider
+     *            provider they are invalid for
+     */
+    @Beta
+    public static String exceptionMessage(Credentials input, denominator.Provider provider) {
         StringBuilder msg = new StringBuilder();
-        if (input == null)
+        if (input == null || input == AnonymousCredentials.INSTANCE)
             msg.append("no credentials supplied. ");
         else
             msg.append("incorrect credentials supplied. ");
@@ -244,28 +297,5 @@ public class CredentialsConfiguration {
             msg.setLength(msg.length() - 2);// remove last '; '
         }
         return msg.toString();
-    }
-
-    /**
-     * Credentials are coerced from
-     * {@link CredentialsConfiguration#firstValidCredentialsForProvider}, which
-     * can throw an {@code IllegalArgumentException}.
-     */
-    public static class CredentialsAsList implements Supplier<List<Object>> {
-
-        private final Provider provider;
-        private final Set<Supplier<Credentials>> sources;
-
-        // package private as we cannot inject private ctors in dagger, yet.
-        @Inject
-        CredentialsAsList(Provider provider, Set<Supplier<Credentials>> sources) {
-            this.provider = provider;
-            this.sources = sources;
-        }
-
-        @Override
-        public List<Object> get() {
-            return asList(firstValidCredentialsForProvider(sources, provider));
-        }
     }
 }
