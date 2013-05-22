@@ -407,7 +407,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     }
 
     @dagger.Module(injects = UltraDNSGeoResourceRecordSetApi.Factory.class, complete = false)
-    private static class Mock {
+    static class Mock {
         private final UltraDNSWSApi api;
 
         private Mock(UltraDNSWSApi api) {

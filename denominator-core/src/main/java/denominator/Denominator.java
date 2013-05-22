@@ -2,12 +2,7 @@ package denominator;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.instanceOf;
-import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Maps.uniqueIndex;
-import static denominator.CredentialsConfiguration.anonymous;
-import static denominator.CredentialsConfiguration.checkValidForProvider;
-import static denominator.CredentialsConfiguration.credentials;
 
 import java.util.List;
 import java.util.Map;
@@ -18,8 +13,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 
 import dagger.ObjectGraph;
-import denominator.Credentials.AnonymousCredentials;
-import denominator.CredentialsConfiguration.CredentialsSupplier;
 
 public final class Denominator {
 
@@ -66,16 +59,18 @@ public final class Denominator {
         } else {
             inputModules = ImmutableList.copyOf(modules);
         }
-        if (!any(inputModules, instanceOf(CredentialsSupplier.class))) {
-            if (in.defaultCredentialSupplier().isPresent()) {
-                modulesForGraph.add(credentials(in.defaultCredentialSupplier().get()));
-            } else {
-                checkValidForProvider(AnonymousCredentials.INSTANCE, in);
-                modulesForGraph.add(anonymous());
-            }
-        }
         modulesForGraph.addAll(inputModules);
-        return ObjectGraph.create(modulesForGraph.build().toArray()).get(DNSApiManager.class);
+        try {
+            return ObjectGraph.create(modulesForGraph.build().toArray()).get(DNSApiManager.class);
+        } catch (IllegalStateException e) {
+            // much simpler to special-case when a credential module is needed,
+            // but not supplied, than do too much magic.
+            if (e.getMessage().contains("No binding for denominator.Credentials")
+                    && !in.getCredentialTypeToParameterNames().isEmpty()) {
+                throw new IllegalArgumentException(CredentialsConfiguration.exceptionMessage(null, in));
+            }
+            throw e;
+        }
     }
 
     /**

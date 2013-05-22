@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
+import dagger.ObjectGraph;
 import denominator.DNSApiManager;
 import denominator.Provider;
 
@@ -52,5 +53,13 @@ public class Route53ProviderTest {
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. route53 requires one of the following forms: when type is accessKey: accessKey, secretKey; session: accessKey, secretKey, sessionToken")
     public void testCredentialsRequired() {
         create(PROVIDER).getApi().getZoneApi().list();
+    }
+
+    @Test
+    public void testViaDagger() {
+        DNSApiManager manager = ObjectGraph
+                .create(new Route53Provider.Module(), credentials("accesskey", "secretkey"))
+                .get(DNSApiManager.class);
+        assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
     }
 }

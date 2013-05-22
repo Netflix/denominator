@@ -1,19 +1,15 @@
 package denominator.clouddns;
 
-import static com.google.common.base.Suppliers.compose;
-
 import java.io.Closeable;
-import java.util.List;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jclouds.ContextBuilder;
-import org.jclouds.domain.Credentials;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.rackspace.clouddns.v1.CloudDNSApi;
 import org.jclouds.rackspace.clouddns.v1.CloudDNSApiMetadata;
 
-import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -21,7 +17,8 @@ import com.google.common.collect.Multimap;
 
 import dagger.Provides;
 import denominator.BasicProvider;
-import denominator.CredentialsConfiguration.CredentialsAsList;
+import denominator.Credentials;
+import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.ResourceRecordSetApi;
@@ -41,20 +38,14 @@ public class CloudDNSProvider extends BasicProvider {
     }
 
     @dagger.Module(injects = DNSApiManager.class,
+                   complete = false, // no built-in credentials provider
                    includes = { GeoUnsupported.class, 
                                 OnlyNormalResourceRecordSets.class } )
-    final class Module implements Provider.Module {
+    static final class Module {
 
-        @Override
         @Provides
         public Provider provider() {
-            return CloudDNSProvider.this;
-        }
-
-        @Provides
-        @Singleton
-        Supplier<Credentials> toJcloudsCredentials(CredentialsAsList supplier) {
-            return compose(new ToJcloudsCredentials(), supplier);
+            return new CloudDNSProvider();
         }
 
         @Provides
@@ -71,7 +62,7 @@ public class CloudDNSProvider extends BasicProvider {
 
         @Provides
         @Singleton
-        CloudDNSApi provideCloudDNSApi(Supplier<Credentials> credentials) {
+        CloudDNSApi provideCloudDNSApi(ConvertToJcloudsCredentials credentials) {
             return ContextBuilder.newBuilder(new CloudDNSApiMetadata())
                     .credentialsSupplier(credentials)
                     .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
@@ -85,9 +76,18 @@ public class CloudDNSProvider extends BasicProvider {
         }
     }
 
-    private static class ToJcloudsCredentials implements Function<List<Object>, Credentials> {
-        public Credentials apply(List<Object> creds) {
-            return new Credentials(creds.get(0).toString(), creds.get(1).toString());
+    static final class ConvertToJcloudsCredentials implements Supplier<org.jclouds.domain.Credentials> {
+        private javax.inject.Provider<Credentials> provider;
+
+        @Inject
+        ConvertToJcloudsCredentials(javax.inject.Provider<Credentials> provider) {
+            this.provider = provider;
+        }
+
+        @Override
+        public org.jclouds.domain.Credentials get() {
+            ListCredentials creds = ListCredentials.class.cast(provider.get());
+            return new org.jclouds.domain.Credentials(creds.get(0).toString(), creds.get(1).toString());
         }
     }
 }

@@ -1,19 +1,15 @@
 package denominator.dynect;
 
-import static com.google.common.base.Suppliers.compose;
-
 import java.io.Closeable;
-import java.util.List;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jclouds.ContextBuilder;
-import org.jclouds.domain.Credentials;
 import org.jclouds.dynect.v3.DynECTApi;
 import org.jclouds.dynect.v3.DynECTProviderMetadata;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 
-import com.google.common.base.Function;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -21,7 +17,8 @@ import com.google.common.collect.Multimap;
 
 import dagger.Provides;
 import denominator.BasicProvider;
-import denominator.CredentialsConfiguration.CredentialsAsList;
+import denominator.Credentials;
+import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.ResourceRecordSetApi;
@@ -42,20 +39,14 @@ public class DynECTProvider extends BasicProvider {
     }
 
     @dagger.Module(injects = DNSApiManager.class, 
+                   complete = false, // no built-in credentials provider
                    includes = { DynECTGeoSupport.class, 
                                 ConcatNormalAndGeoResourceRecordSets.class })
-    final class Module implements Provider.Module {
+    static final class Module {
 
-        @Override
         @Provides
         public Provider provider() {
-            return DynECTProvider.this;
-        }
-
-        @Provides
-        @Singleton
-        Supplier<Credentials> toJcloudsCredentials(CredentialsAsList supplier) {
-            return compose(new ToJcloudsCredentials(), supplier);
+            return new DynECTProvider();
         }
 
         @Provides
@@ -72,7 +63,7 @@ public class DynECTProvider extends BasicProvider {
 
         @Provides
         @Singleton
-        DynECTApi provideApi(Supplier<Credentials> credentials) {
+        DynECTApi provideApi(ConvertToJcloudsCredentials credentials) {
             return ContextBuilder.newBuilder(new DynECTProviderMetadata())
                                  .credentialsSupplier(credentials)
                                  .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
@@ -86,9 +77,18 @@ public class DynECTProvider extends BasicProvider {
         }
     }
 
-    private static class ToJcloudsCredentials implements Function<List<Object>, Credentials> {
-        public Credentials apply(List<Object> creds) {
-            return new Credentials(creds.get(0) + ":" + creds.get(1), creds.get(2).toString());
+    static final class ConvertToJcloudsCredentials implements Supplier<org.jclouds.domain.Credentials> {
+        private javax.inject.Provider<Credentials> provider;
+
+        @Inject
+        ConvertToJcloudsCredentials(javax.inject.Provider<Credentials> provider) {
+            this.provider = provider;
+        }
+
+        @Override
+        public org.jclouds.domain.Credentials get() {
+            ListCredentials creds = ListCredentials.class.cast(provider.get());
+            return new org.jclouds.domain.Credentials(creds.get(0) + ":" + creds.get(1), creds.get(2).toString());
         }
     }
 }
