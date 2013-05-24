@@ -33,7 +33,7 @@ public class DNSApiManager implements Closeable {
     /**
      * Get the provider associated with this instance
      */
-    public final Provider getProvider() {
+    public Provider getProvider() {
         return provider;
     }
     

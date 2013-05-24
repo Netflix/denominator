@@ -96,15 +96,11 @@ public class DynamicCredentialsProviderExampleTest {
         }
 
         @dagger.Module(injects = DNSApiManager.class,
+                       complete = false, // denominator.Provider is externally provided
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
         static class Module {
-
-            @Provides
-            public Provider provider() {
-                return new DynamicCredentialsProvider();
-            }
 
             /**
              * simulates remote credential management where credentials can change

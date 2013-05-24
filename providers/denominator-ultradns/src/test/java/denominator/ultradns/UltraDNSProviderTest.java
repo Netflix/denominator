@@ -3,6 +3,7 @@ package denominator.ultradns;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
 import static denominator.Denominator.listProviders;
+import static denominator.Denominator.provider;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -54,7 +55,7 @@ public class UltraDNSProviderTest {
     @Test
     public void testViaDagger() {
         DNSApiManager manager = ObjectGraph
-                .create(new UltraDNSProvider.Module(), credentials("username", "password"))
+                .create(provider(new UltraDNSProvider()), new UltraDNSProvider.Module(), credentials("username", "password"))
                 .get(DNSApiManager.class);
         assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
     }
