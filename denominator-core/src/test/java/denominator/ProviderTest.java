@@ -24,11 +24,6 @@ public class ProviderTest {
 
     static class BareProvider extends BasicProvider {
 
-        @Override
-        public Module module() {
-            return new Module();
-        }
-
         @dagger.Module(injects = { Accessor.class, DNSApiManager.class }, 
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
@@ -78,7 +73,7 @@ public class ProviderTest {
 
     public void testBindsProvider() {
         BareProvider provider = new BareProvider();
-        Accessor accessor = ObjectGraph.create(provider.module()).get(Accessor.class);
+        Accessor accessor = ObjectGraph.create(new BareProvider.Module()).get(Accessor.class);
         assertEquals(accessor.provider, provider);
     }
 
@@ -89,11 +84,6 @@ public class ProviderTest {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("accessKey", "accessKey", "secretKey")
                     .putAll("stsSession", "accessKey", "secretKey", "sessionToken").build();
-        }
-
-        @Override
-        public Module module() {
-            return new Module();
         }
 
         @dagger.Module(injects = DNSApiManager.class,
@@ -140,11 +130,6 @@ public class ProviderTest {
                     .putAll("STS_SESSION", "accessKey", "secretKey", "sessionToken").build();
         }
 
-        @Override
-        public Module module() {
-            return new Module();
-        }
-
         @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
@@ -188,11 +173,6 @@ public class ProviderTest {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("accessKey", "accessKey", "secretKey")
                     .putAll("stsSession", "access.key", "secret.key", "session.token").build();
-        }
-
-        @Override
-        public Module module() {
-            return new Module();
         }
 
         @dagger.Module(injects = DNSApiManager.class,

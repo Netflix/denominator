@@ -36,16 +36,11 @@ public class Route53Provider extends BasicProvider {
                 .putAll("session", "accessKey", "secretKey", "sessionToken").build();
     }
 
-    @Override
-    public Module module() {
-        return new Module();
-    }
-
     @dagger.Module(injects = DNSApiManager.class,
                    includes = { GeoUnsupported.class, 
                                 OnlyNormalResourceRecordSets.class,
                                 InstanceProfileCredentialsProvider.class })
-    static final class Module {
+    public static final class Module {
 
         @Provides
         public Provider provider() {

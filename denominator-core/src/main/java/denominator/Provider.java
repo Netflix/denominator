@@ -1,14 +1,30 @@
 package denominator;
 
-import com.google.common.annotations.Beta;
-import com.google.common.base.CaseFormat;
-import com.google.common.collect.Multimap;
-import com.google.common.io.Closer;
+import java.io.Closeable;
 
-import dagger.Provides;
+import com.google.common.annotations.Beta;
+import com.google.common.collect.Multimap;
 
 /**
- * components that all providers of {@link DNSApi} must expose.
+ * Represents a provider of DNS services.
+ * 
+ * <h3>Implementation Note</h3>
+ * 
+ * The current implementation of {@link Denominator#create(Provider, Object...)}
+ * expects all {@code Provider} implementations to expose a static inner class
+ * named {@code Module}.
+ * <p/>
+ * The inner class is expected to have a {@link dagger.Module} annotation such
+ * as below:
+ * 
+ * <pre>
+ * public class MockProvider extends BasicProvider {
+ * 
+ *     &#064;dagger.Module(injects = DNSApiManager.class, includes = NothingToClose.class)
+ *     public static final class Module {
+ * </pre>
+ * 
+ * @see denominator.mock.MockProvider for an example
  */
 @Beta
 public interface Provider {
@@ -61,7 +77,7 @@ public interface Provider {
      * <h3>Formatting</h3>
      * 
      * Both the keys and the values of this {@link Multimap Multimap} are in
-     * {@link CaseFormat#LOWER_CAMEL lowerCamel} case.
+     * {@link com.google.common.base.CaseFormat#LOWER_CAMEL lowerCamel} case.
      * 
      * 
      * <h3>Implementation Expectations</h3>
@@ -70,23 +86,10 @@ public interface Provider {
      * {@link IllegalArgumentException} if it is ever supplied with an incorrect
      * count of credential parts corresponding to this. The preferred mechanism
      * to access credentials in a way that validates parameters is to use
-     * {@code Provider<Credentials>} bound by
-     * {@link CredentialsConfiguration}.
+     * {@code Provider<Credentials>} bound by {@link CredentialsConfiguration}.
      * 
      * @return credential types to the labels of each part required. An empty
      *         multimap suggests the provider doesn't authenticate.
      */
     Multimap<String, String> getCredentialTypeToParameterNames();
-    
-    /**
-     * provides components that implement the {@link DNSApi}.
-     * 
-     * implement this, and annotate with the following:
-     * 
-     * {@code  @dagger.Module(injects = DNSApiManager.class) }
-     * 
-     * make sure your subclass has {@link Provides} methods for the current
-     * {@code Provider} (used for toString), {@link DNSApi} and {@link Closer}
-     */
-    Object module();
 }

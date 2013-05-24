@@ -23,11 +23,6 @@ public class CredentialsConfigurationTest {
 
     static final class OptionalProvider extends BasicProvider {
 
-        @Override
-        public Module module() {
-            return new Module();
-        }
-
         @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
@@ -65,11 +60,6 @@ public class CredentialsConfigurationTest {
         public Multimap<String, String> getCredentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("password", "username", "password").build();
-        }
-
-        @Override
-        public Module module() {
-            return new Module();
         }
 
         @dagger.Module(injects = DNSApiManager.class,
@@ -111,11 +101,6 @@ public class CredentialsConfigurationTest {
                     .putAll("password", "customer", "username", "password").build();
         }
 
-        @Override
-        public Module module() {
-            return new Module();
-        }
-
         @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
@@ -154,11 +139,6 @@ public class CredentialsConfigurationTest {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("accessKey", "accessKey", "secretKey")
                     .putAll("session", "accessKey", "secretKey", "sessionToken").build();
-        }
-
-        @Override
-        public Module module() {
-            return new Module();
         }
 
         @dagger.Module(injects = DNSApiManager.class,
