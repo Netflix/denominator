@@ -18,8 +18,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.concurrent.config.ExecutorServiceModule;
-import org.jclouds.rackspace.clouddns.us.CloudDNSUSProviderMetadata;
 import org.jclouds.rackspace.clouddns.v1.CloudDNSApi;
+import org.jclouds.rackspace.clouddns.v1.CloudDNSApiMetadata;
 import org.jclouds.rackspace.clouddns.v1.features.RecordApi;
 import org.testng.annotations.Test;
 
@@ -43,7 +43,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
         Properties overrides = new Properties();
         overrides.setProperty(PROPERTY_MAX_RETRIES, "1");
         
-        CloudDNSApi cloudDNSApi = ContextBuilder.newBuilder(new CloudDNSUSProviderMetadata())
+        CloudDNSApi cloudDNSApi = ContextBuilder.newBuilder(new CloudDNSApiMetadata())
                 .credentials("jclouds-joe", "letmein")
                 .modules(modules)
                 .endpoint(uri)
