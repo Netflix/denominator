@@ -37,13 +37,10 @@ import denominator.profile.GeoResourceRecordSetApi;
  */
 public class MockProvider extends BasicProvider {
 
-    @Override
-    public Module module() {
-        return new Module();
-    }
-
+    // normally, we'd set package private visibility, but this module is helpful
+    // in tests, so we mark it public
     @dagger.Module(injects = DNSApiManager.class, includes = NothingToClose.class)
-    static class Module {
+    public static final class Module {
 
         @Provides
         public Provider provider() {
