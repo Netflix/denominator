@@ -91,7 +91,7 @@ public class CredentialsConfiguration {
      *            will always be used on the provider
      */
     public static Object credentials(Credentials credentials) {
-        return new ConstantCredentialsProvider(credentials);
+        return new ConstantCredentials(credentials);
     }
 
     @Module(complete = false, 
@@ -99,10 +99,10 @@ public class CredentialsConfiguration {
             library = true,
             // override any built-in credentials
             overrides = true)
-    static final class ConstantCredentialsProvider {
+    static final class ConstantCredentials {
         private final Credentials creds;
 
-        private ConstantCredentialsProvider(Credentials creds) {
+        private ConstantCredentials(Credentials creds) {
             this.creds = checkNotNull(creds, "creds");
         }
 
@@ -113,8 +113,8 @@ public class CredentialsConfiguration {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof ConstantCredentialsProvider) {
-                ConstantCredentialsProvider that = ConstantCredentialsProvider.class.cast(obj);
+            if (obj instanceof ConstantCredentials) {
+                ConstantCredentials that = ConstantCredentials.class.cast(obj);
                 return this.creds.equals(that.creds);
             }
             return false;
@@ -127,31 +127,17 @@ public class CredentialsConfiguration {
 
         @Override
         public String toString() {
-            return "ConstantCredentialsProvider(" + creds + ")";
+            return "ConstantCredentials(" + creds + ")";
         }
     }
 
     /**
-     * @deprecated use {@link CredentialsConfiguration#credentials(Provider)}
-     *             instead.
-     */
-    @Deprecated
-    public static DynamicCredentialsProvider credentials(final Supplier<Credentials> credentials) {
-        return new DynamicCredentialsProvider(new Provider<Credentials>() {
-            @Override
-            public Credentials get() {
-                return credentials.get();
-            }
-        });
-    }
-
-    /**
      * @param credentials
-     *            {@link Provider#get()} will be called each time credentials
+     *            {@link Supplier#get()} will be called each time credentials
      *            are needed, facilitating runtime credential changes.
      */
-    public static DynamicCredentialsProvider credentials(Provider<Credentials> credentials) {
-        return new DynamicCredentialsProvider(credentials);
+    public static DynamicCredentials credentials(Supplier<Credentials> credentials) {
+        return new DynamicCredentials(credentials);
     }
 
     @Module(complete = false, 
@@ -159,10 +145,10 @@ public class CredentialsConfiguration {
             library = true,
             // override any built-in credentials
             overrides = true)
-    static final class DynamicCredentialsProvider {
-        private final Provider<Credentials> creds;
+    static final class DynamicCredentials {
+        private final Supplier<Credentials> creds;
 
-        private DynamicCredentialsProvider(Provider<Credentials> creds) {
+        private DynamicCredentials(Supplier<Credentials> creds) {
             this.creds = checkNotNull(creds, "creds");
         }
 
@@ -173,8 +159,8 @@ public class CredentialsConfiguration {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj instanceof DynamicCredentialsProvider) {
-                DynamicCredentialsProvider that = DynamicCredentialsProvider.class.cast(obj);
+            if (obj instanceof DynamicCredentials) {
+                DynamicCredentials that = DynamicCredentials.class.cast(obj);
                 return this.creds.equals(that.creds);
             }
             return false;
