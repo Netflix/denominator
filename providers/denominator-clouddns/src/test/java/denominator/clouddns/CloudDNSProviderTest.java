@@ -13,10 +13,9 @@ import org.testng.annotations.Test;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
+import dagger.ObjectGraph;
 import denominator.DNSApiManager;
 import denominator.Provider;
-import denominator.clouddns.CloudDNSProvider;
-import denominator.clouddns.CloudDNSZoneApi;
 
 public class CloudDNSProviderTest {
     private static final Provider PROVIDER = new CloudDNSProvider();
@@ -45,5 +44,13 @@ public class CloudDNSProviderTest {
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. clouddns requires username, apiKey")
     public void testCredentialsRequired() {
         create(PROVIDER).getApi().getZoneApi().list();
+    }
+
+    @Test
+    public void testViaDagger() {
+        DNSApiManager manager = ObjectGraph
+                .create(new CloudDNSProvider.Module(), credentials("username", "apiKey"))
+                .get(DNSApiManager.class);
+        assertEquals(manager.getApi().getZoneApi().getClass(), CloudDNSZoneApi.class);
     }
 }

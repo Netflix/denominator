@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
+import dagger.ObjectGraph;
 import denominator.DNSApiManager;
 import denominator.Provider;
 
@@ -48,5 +49,13 @@ public class DynECTProviderTest {
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. dynect requires customer, username, password")
     public void testThreePartCredentialsRequired() {
         create(PROVIDER, credentials("username", "password")).getApi().getZoneApi().list();
+    }
+
+    @Test
+    public void testViaDagger() {
+        DNSApiManager manager = ObjectGraph
+                .create(new DynECTProvider.Module(), credentials("customer", "username", "password"))
+                .get(DNSApiManager.class);
+        assertEquals(manager.getApi().getZoneApi().getClass(), DynECTZoneApi.class);
     }
 }

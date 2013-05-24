@@ -3,6 +3,7 @@ package denominator;
 import static com.google.common.base.Functions.toStringFunction;
 import static com.google.common.collect.Lists.transform;
 import static denominator.CredentialsConfiguration.anonymous;
+import static denominator.CredentialsConfiguration.checkValidForProvider;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
 import static org.testng.Assert.assertEquals;
@@ -17,17 +18,12 @@ import javax.inject.Singleton;
 
 import org.testng.annotations.Test;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
 import dagger.Provides;
 import denominator.Credentials.ListCredentials;
-import denominator.CredentialsConfiguration.CredentialsAsList;
 import denominator.config.GeoUnsupported;
 import denominator.config.NothingToClose;
 import denominator.config.OnlyNormalResourceRecordSets;
@@ -56,13 +52,13 @@ public class DynamicCredentialsProviderExampleTest {
      * each invocation.
      */
     static class DynamicCredentialsZoneApi implements ZoneApi {
-        private final Supplier<CustomerUsernamePassword> creds;
+        private final javax.inject.Provider<CustomerUsernamePassword> creds;
 
         /**
          * Supplier facilitates dynamic credentials.
          */
         @Inject
-        DynamicCredentialsZoneApi(Supplier<CustomerUsernamePassword> creds) {
+        DynamicCredentialsZoneApi(javax.inject.Provider<CustomerUsernamePassword> creds) {
             this.creds = creds;
         }
 
@@ -99,30 +95,6 @@ public class DynamicCredentialsProviderExampleTest {
                     .putAll("username", "customer", "username", "password").build();
         }
 
-        /**
-         * simulates remote credential management where credentials can change
-         * across requests, or accidentally return null.
-         */
-        @Override
-        public Optional<Supplier<Credentials>> defaultCredentialSupplier() {
-            return Optional.<Supplier<Credentials>> of(new Supplier<Credentials>() {
-
-                AtomicInteger credentialIndex = new AtomicInteger();
-                List<List<String>> credentials = ImmutableList.<List<String>> builder()
-                        .add(ImmutableList.of("acme", "wily", "coyote"))
-                        .add(ImmutableList.of("acme", "road", "runner"))
-                        .build();
-
-                public Credentials get() {
-                    int index = credentialIndex.getAndIncrement();
-                    if (credentials.size() < (index + 1))
-                        return null; // simulate no credentials
-                    List<String> current = credentials.get(index);
-                    return ListCredentials.from(current);
-                }
-            });
-        }
-
         @Override
         public Module module() {
             return new Module();
@@ -130,17 +102,34 @@ public class DynamicCredentialsProviderExampleTest {
 
         // incomplete as it requires credentials to be bound externally
         @dagger.Module(injects = DNSApiManager.class,
-                       complete = false,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
-        final class Module implements Provider.Module {
+        static class Module {
 
-            @Override
             @Provides
             public Provider provider() {
-                return DynamicCredentialsProvider.this;
+                return new DynamicCredentialsProvider();
             }
+
+            /**
+             * simulates remote credential management where credentials can change
+             * across requests, or accidentally return null.
+             */
+            @Provides
+            Credentials dynamicCredentials() {
+                int index = credentialIndex.getAndIncrement();
+                if (credentials.size() < (index + 1))
+                    return null; // simulate no credentials
+                List<String> current = credentials.get(index);
+                return ListCredentials.from(current);
+            }
+
+            final AtomicInteger credentialIndex = new AtomicInteger();
+            final List<List<String>> credentials = ImmutableList.<List<String>> builder()
+                    .add(ImmutableList.of("acme", "wily", "coyote"))
+                    .add(ImmutableList.of("acme", "road", "runner"))
+                    .build();
 
             /**
              * wiring of the zone api requires a Supplier as otherwise credentials
@@ -148,7 +137,7 @@ public class DynamicCredentialsProviderExampleTest {
              */
             @Provides
             @Singleton
-            ZoneApi provideZoneApi(Supplier<CustomerUsernamePassword> creds) {
+            ZoneApi provideZoneApi(javax.inject.Provider<CustomerUsernamePassword> creds) {
                 return new DynamicCredentialsZoneApi(creds);
             }
     
@@ -169,24 +158,15 @@ public class DynamicCredentialsProviderExampleTest {
             }
     
             /**
-             * avoid too much logic in the Module. For example, we've extracted the
-             * logic that implements a supplier of {@code CustomerUsernamePassword}
-             * to its own class.
+             * @param credsProvider
+             *            expected to return customer, username, and password in
+             *            correct order
              */
             @Provides
-            @Singleton
-            Supplier<CustomerUsernamePassword> useCorrectCredentials(CredentialsAsList supplier) {
-                return Suppliers.compose(new CustomerUsernamePasswordFromList(), supplier);
-            }
-        }
-
-        /**
-         * assured by {@link CredentialsAsList}, we have customer, username, and
-         * password in correct order.
-         */
-        static class CustomerUsernamePasswordFromList implements Function<List<Object>, CustomerUsernamePassword> {
-            public CustomerUsernamePassword apply(List<Object> creds) {
-                List<String> strings = transform(creds, toStringFunction());
+            CustomerUsernamePassword fromListCredentials(Provider provider,
+                    javax.inject.Provider<denominator.Credentials> credsProvider) {
+                Credentials creds = checkValidForProvider(credsProvider.get(), provider);
+                List<String> strings = transform(ListCredentials.class.cast(creds), toStringFunction());
                 return new CustomerUsernamePassword(strings.get(0), strings.get(1), strings.get(2));
             }
         }

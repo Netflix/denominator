@@ -13,6 +13,7 @@ import org.testng.annotations.Test;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
+import dagger.ObjectGraph;
 import denominator.DNSApiManager;
 import denominator.Provider;
 
@@ -48,5 +49,13 @@ public class UltraDNSProviderTest {
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. ultradns requires username, password")
     public void testTwoPartCredentialsRequired() {
         create(PROVIDER, credentials("customer", "username", "password")).getApi().getZoneApi().list();
+    }
+
+    @Test
+    public void testViaDagger() {
+        DNSApiManager manager = ObjectGraph
+                .create(new UltraDNSProvider.Module(), credentials("username", "password"))
+                .get(DNSApiManager.class);
+        assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
     }
 }

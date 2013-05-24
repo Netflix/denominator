@@ -1,21 +1,16 @@
 package denominator.route53;
 
-import static com.google.common.base.Suppliers.compose;
-
 import java.io.Closeable;
-import java.util.List;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.aws.domain.SessionCredentials;
 import org.jclouds.aws.route53.AWSRoute53ProviderMetadata;
-import org.jclouds.domain.Credentials;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.route53.Route53Api;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
@@ -23,7 +18,8 @@ import com.google.common.collect.Multimap;
 
 import dagger.Provides;
 import denominator.BasicProvider;
-import denominator.CredentialsConfiguration.CredentialsAsList;
+import denominator.Credentials;
+import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.ResourceRecordSetApi;
@@ -41,35 +37,24 @@ public class Route53Provider extends BasicProvider {
     }
 
     @Override
-    public Optional<Supplier<denominator.Credentials>> defaultCredentialSupplier() {
-        return Optional.<Supplier<denominator.Credentials>> of(new InstanceProfileCredentialsSupplier());
-    }
-
-    @Override
     public Module module() {
         return new Module();
     }
 
     @dagger.Module(injects = DNSApiManager.class,
                    includes = { GeoUnsupported.class, 
-                                OnlyNormalResourceRecordSets.class } )
-    final class Module implements Provider.Module {
-    
-        @Override
+                                OnlyNormalResourceRecordSets.class,
+                                InstanceProfileCredentialsProvider.class })
+    static final class Module {
+
         @Provides
         public Provider provider() {
-            return Route53Provider.this;
+            return new Route53Provider();
         }
 
         @Provides
         @Singleton
-        Supplier<Credentials> toJcloudsCredentials(CredentialsAsList supplier) {
-            return compose(new ToJcloudsCredentials(), supplier);
-        }
-
-        @Provides
-        @Singleton
-        Route53Api provideApi(Supplier<Credentials> credentials) {
+        Route53Api provideApi(ConvertToJcloudsCredentials credentials) {
             return ContextBuilder.newBuilder(new AWSRoute53ProviderMetadata())
                                  .credentialsSupplier(credentials)
                                  .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
@@ -95,10 +80,19 @@ public class Route53Provider extends BasicProvider {
         }
     }
 
-    private static class ToJcloudsCredentials implements Function<List<Object>, Credentials> {
-        public Credentials apply(List<Object> creds) {
+    static final class ConvertToJcloudsCredentials implements Supplier<org.jclouds.domain.Credentials> {
+        private javax.inject.Provider<Credentials> provider;
+
+        @Inject
+        ConvertToJcloudsCredentials(javax.inject.Provider<Credentials> provider) {
+            this.provider = provider;
+        }
+
+        @Override
+        public org.jclouds.domain.Credentials get() {
+            ListCredentials creds = ListCredentials.class.cast(provider.get());
             if (creds.size() == 2)
-                return new Credentials(creds.get(0).toString(), creds.get(1).toString());
+                return new org.jclouds.domain.Credentials(creds.get(0).toString(), creds.get(1).toString());
             return SessionCredentials.builder()
                                      .accessKeyId(creds.get(0).toString())
                                      .secretAccessKey(creds.get(1).toString())
