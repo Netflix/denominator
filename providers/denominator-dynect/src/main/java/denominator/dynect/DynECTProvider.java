@@ -33,16 +33,11 @@ public class DynECTProvider extends BasicProvider {
                 .putAll("password", "customer", "username", "password").build();
     }
 
-    @Override
-    public Module module() {
-        return new Module();
-    }
-
     @dagger.Module(injects = DNSApiManager.class, 
                    complete = false, // no built-in credentials provider
                    includes = { DynECTGeoSupport.class, 
                                 ConcatNormalAndGeoResourceRecordSets.class })
-    static final class Module {
+    public static final class Module {
 
         @Provides
         public Provider provider() {

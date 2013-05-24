@@ -32,16 +32,11 @@ public class CloudDNSProvider extends BasicProvider {
         return ImmutableMultimap.<String, String> builder().putAll("apiKey", "username", "apiKey").build();
     }
 
-    @Override
-    public Module module() {
-        return new Module();
-    }
-
     @dagger.Module(injects = DNSApiManager.class,
                    complete = false, // no built-in credentials provider
                    includes = { GeoUnsupported.class, 
                                 OnlyNormalResourceRecordSets.class } )
-    static final class Module {
+    public static final class Module {
 
         @Provides
         public Provider provider() {
