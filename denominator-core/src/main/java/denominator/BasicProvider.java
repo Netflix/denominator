@@ -9,8 +9,6 @@ import java.util.regex.Pattern;
 
 import com.google.common.annotations.Beta;
 import com.google.common.base.Objects;
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
@@ -48,11 +46,6 @@ public abstract class BasicProvider implements Provider {
     @Override
     public Multimap<String, String> getCredentialTypeToParameterNames() {
         return ImmutableMultimap.of();
-    }
-
-    @Override
-    public Optional<Supplier<Credentials>> defaultCredentialSupplier() {
-        return Optional.absent();
     }
 
     @Override

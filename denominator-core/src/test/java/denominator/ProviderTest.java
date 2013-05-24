@@ -33,12 +33,11 @@ public class ProviderTest {
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
-        final class Module implements Provider.Module {
+        static class Module {
 
-            @Override
             @Provides
             public Provider provider() {
-                return BareProvider.this;
+                return new BareProvider();
             }
 
             @Provides
@@ -101,12 +100,11 @@ public class ProviderTest {
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
-        final class Module implements Provider.Module {
+        static class Module {
     
-            @Override
             @Provides
             public Provider provider() {
-                return ValidCredentialParametersProvider.this;
+                return new ValidCredentialParametersProvider();
             }
     
             @Provides
@@ -151,12 +149,11 @@ public class ProviderTest {
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
-        final class Module implements Provider.Module {
+        static class Module {
 
-            @Override
             @Provides
             public Provider provider() {
-                return InvalidCredentialKeyProvider.this;
+                return new InvalidCredentialKeyProvider();
             }
 
             @Provides
@@ -202,12 +199,11 @@ public class ProviderTest {
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
                                     OnlyNormalResourceRecordSets.class } )
-        final class Module implements Provider.Module {
+        static class Module {
 
-            @Override
             @Provides
             public Provider provider() {
-                return InvalidCredentialParameterProvider.this;
+                return new InvalidCredentialParameterProvider();
             }
 
             @Provides

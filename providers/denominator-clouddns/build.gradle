@@ -19,6 +19,7 @@ test {
 
 dependencies {
   compile      project(':denominator-core')
+  provided    'com.squareup.dagger:dagger-compiler:1.0.0'
   testCompile  project(':denominator-core').sourceSets.test.output
   compile     'org.jclouds.provider:rackspace-clouddns-us:1.6.0'
   compile     'org.jclouds.provider:rackspace-clouddns-uk:1.6.0'

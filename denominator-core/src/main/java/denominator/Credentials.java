@@ -112,10 +112,7 @@ public interface Credentials {
         /**
          * Make it very easy on providers who only accept a single credentials
          * type. The following will coerce anything that implements {@code Map}
-         * or {@code List} to {@code ListCredentials}. It is suggested to use
-         * {@link CredentialsConfiguration#firstValidCredentialsForProvider(java.util.Set, Provider)}
-         * prior to calling this, as otherwise the resulting credentials may not
-         * be valid for the provider.
+         * or {@code List} to {@code ListCredentials}.
          * 
          * <h4>Example</h4> The following example is how this could be used from
          * within a method in {@link Provider} to simplify credential conversion
@@ -133,7 +130,7 @@ public interface Credentials {
          *             empty.
          *             
          */
-        public static List<Object> asList(Credentials in) {
+        public static List<Object> asList(Credentials in) throws IllegalArgumentException {
             checkNotNull(in, "credentials");
             if (in instanceof ListCredentials) {
                 return ListCredentials.class.cast(in);

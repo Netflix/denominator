@@ -1,43 +1,54 @@
 package denominator.route53;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.CredentialsConfiguration.checkValidForProvider;
 
 import java.net.URI;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.inject.Provider;
+
 import com.google.common.base.Splitter;
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 
+import dagger.Module;
+import dagger.Provides;
 import denominator.Credentials;
 import denominator.Credentials.MapCredentials;
 import denominator.hook.InstanceMetadataHook;
+import denominator.route53.Route53Provider.ConvertToJcloudsCredentials;
 
 /**
  * Credentials supplier implementation that loads credentials from the Amazon
  * EC2 Instance Metadata Service.
  */
-public class InstanceProfileCredentialsSupplier implements Supplier<Credentials> {
-    private final Supplier<String> iipJsonSupplier;
+@Module(injects = ConvertToJcloudsCredentials.class, complete = false)
+public class InstanceProfileCredentialsProvider {
+    private final Provider<String> iipJsonProvider;
 
-    public InstanceProfileCredentialsSupplier() {
+    public InstanceProfileCredentialsProvider() {
         this(new ReadFirstInstanceProfileCredentialsOrNull());
     }
 
-    public InstanceProfileCredentialsSupplier(URI baseUri) {
+    public InstanceProfileCredentialsProvider(URI baseUri) {
         this(new ReadFirstInstanceProfileCredentialsOrNull(baseUri));
     }
 
-    public InstanceProfileCredentialsSupplier(Supplier<String> iipJsonSupplier) {
-        this.iipJsonSupplier = checkNotNull(iipJsonSupplier, "iipJsonSupplier");
+    public InstanceProfileCredentialsProvider(Provider<String> iipJsonProvider) {
+        this.iipJsonProvider = checkNotNull(iipJsonProvider, "iipJsonProvider");
+    }
+
+    @Provides
+    Credentials get(denominator.Provider provider) {
+        return checkValidForProvider(MapCredentials.from(parseJson(iipJsonProvider.get())), provider);
     }
 
     @Override
-    public Credentials get() {
-        return MapCredentials.from(parseJson(iipJsonSupplier.get()));
+    public String toString() {
+        return "ParseIIPJsonFrom(" + iipJsonProvider + ")";
     }
 
     private static final Map<String, String> keyMap = ImmutableMap.of("AccessKeyId", "accessKey", "SecretAccessKey",
@@ -81,7 +92,7 @@ public class InstanceProfileCredentialsSupplier implements Supplier<Credentials>
     /**
      * default means to grab instance credentials, or return null
      */
-    static class ReadFirstInstanceProfileCredentialsOrNull implements Supplier<String> {
+    static class ReadFirstInstanceProfileCredentialsOrNull implements Provider<String> {
         private final URI baseUri;
 
         public ReadFirstInstanceProfileCredentialsOrNull() {
