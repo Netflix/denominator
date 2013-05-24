@@ -3,6 +3,7 @@ package denominator.route53;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
 import static denominator.Denominator.listProviders;
+import static denominator.Denominator.provider;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -58,7 +59,7 @@ public class Route53ProviderTest {
     @Test
     public void testViaDagger() {
         DNSApiManager manager = ObjectGraph
-                .create(new Route53Provider.Module(), credentials("accesskey", "secretkey"))
+                .create(provider(new Route53Provider()), new Route53Provider.Module(), credentials("accesskey", "secretkey"))
                 .get(DNSApiManager.class);
         assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
     }

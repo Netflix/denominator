@@ -6,7 +6,6 @@ import org.testng.annotations.Test;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
-import dagger.Provides;
 import denominator.Credentials.AnonymousCredentials;
 import denominator.Credentials.ListCredentials;
 import denominator.mock.MockProvider;
@@ -16,12 +15,8 @@ public class CredentialsConfigurationTest {
 
     static final class OptionalProvider extends BasicProvider {
 
-        @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, overrides = true)
+        @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)
         static class Module {
-            @Provides
-            public Provider provider() {
-                return new OptionalProvider();
-            }
         }
     }
 
@@ -33,12 +28,8 @@ public class CredentialsConfigurationTest {
                     .putAll("password", "username", "password").build();
         }
 
-        @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, overrides = true)
+        @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)
         static class Module {
-            @Provides
-            public Provider provider() {
-                return new TwoPartProvider();
-            }
         }
     }
 
@@ -50,12 +41,8 @@ public class CredentialsConfigurationTest {
                     .putAll("password", "customer", "username", "password").build();
         }
 
-        @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, overrides = true)
+        @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)
         static class Module {
-            @Provides
-            public Provider provider() {
-                return new ThreePartProvider();
-            }
         }
     }
 
@@ -68,12 +55,8 @@ public class CredentialsConfigurationTest {
                     .putAll("session", "accessKey", "secretKey", "sessionToken").build();
         }
 
-        @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, overrides = true)
+        @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)
         static class Module {
-            @Provides
-            public Provider provider() {
-                return new MultiPartProvider();
-            }
         }
     }
 

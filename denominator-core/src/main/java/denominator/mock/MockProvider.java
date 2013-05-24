@@ -1,5 +1,6 @@
 package denominator.mock;
 
+import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.collect.Multimaps.synchronizedListMultimap;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.cname;
@@ -21,7 +22,6 @@ import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.BasicProvider;
 import denominator.DNSApiManager;
-import denominator.Provider;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.NothingToClose;
@@ -36,16 +36,32 @@ import denominator.profile.GeoResourceRecordSetApi;
  * in-memory {@code Provider}, used for testing.
  */
 public class MockProvider extends BasicProvider {
+    private final String url;
+
+    public MockProvider() {
+        this(null);
+    }
+
+    /**
+     * @param url
+     *            if empty or null use default
+     */
+    public MockProvider(String url) {
+        url = emptyToNull(url);
+        this.url = url != null ? url : "mem:mock";
+    }
+
+    @Override
+    public String getUrl() {
+        return url;
+    }
 
     // normally, we'd set package private visibility, but this module is helpful
     // in tests, so we mark it public
-    @dagger.Module(injects = DNSApiManager.class, includes = NothingToClose.class)
+    @dagger.Module(injects = DNSApiManager.class, 
+                   complete = false, // denominator.Provider
+                   includes = NothingToClose.class)
     public static final class Module {
-
-        @Provides
-        public Provider provider() {
-            return new MockProvider();
-        }
 
         @Provides
         ZoneApi provideZoneApi(MockZoneApi in) {
