@@ -34,16 +34,11 @@ public class UltraDNSProvider extends BasicProvider {
         return ImmutableMultimap.<String, String> builder().putAll("password", "username", "password").build();
     }
 
-    @Override
-    public Module module() {
-        return new Module();
-    }
-    
     @dagger.Module(injects = DNSApiManager.class,
                    complete = false, // no built-in credentials provider
                    includes = { UltraDNSGeoSupport.class,
                                 ConcatNormalAndGeoResourceRecordSets.class })
-    static final class Module {
+    public static final class Module {
 
         @Provides
         public Provider provider() {
