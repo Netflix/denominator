@@ -95,7 +95,6 @@ public class DynamicCredentialsProviderExampleTest {
                     .putAll("username", "customer", "username", "password").build();
         }
 
-        // incomplete as it requires credentials to be bound externally
         @dagger.Module(injects = DNSApiManager.class,
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
