@@ -1,11 +1,19 @@
 package denominator.ultradns;
 
+import static com.google.common.base.Strings.emptyToNull;
+import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
+import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
+
 import java.io.Closeable;
+import java.net.URI;
+import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jclouds.ContextBuilder;
+import org.jclouds.concurrent.config.ExecutorServiceModule;
+import org.jclouds.location.suppliers.ProviderURISupplier;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.UltraDNSWSProviderMetadata;
@@ -28,6 +36,25 @@ import denominator.ZoneApi;
 import denominator.config.ConcatNormalAndGeoResourceRecordSets;
 
 public class UltraDNSProvider extends BasicProvider {
+    private final String url;
+
+    public UltraDNSProvider() {
+        this(null);
+    }
+
+    /**
+     * @param url
+     *            if empty or null use default
+     */
+    public UltraDNSProvider(String url) {
+        url = emptyToNull(url);
+        this.url = url != null ? url : new UltraDNSWSProviderMetadata().getEndpoint();
+    }
+
+    @Override
+    public String getUrl() {
+        return url;
+    }
 
     @Override
     public Multimap<String, String> getCredentialTypeToParameterNames() {
@@ -35,22 +62,45 @@ public class UltraDNSProvider extends BasicProvider {
     }
 
     @dagger.Module(injects = DNSApiManager.class,
-                   complete = false, // no built-in credentials provider
+                   complete = false, // denominator.Provider and denominator.Credentials
                    includes = { UltraDNSGeoSupport.class,
                                 ConcatNormalAndGeoResourceRecordSets.class })
     public static final class Module {
 
         @Provides
-        public Provider provider() {
-            return new UltraDNSProvider();
-        }
-
-        @Provides
         @Singleton
-        UltraDNSWSApi provideApi(ConvertToJcloudsCredentials credentials) {
+        // Dynamic name updates are not currently possible in jclouds.
+        UltraDNSWSApi provideApi(ConvertToJcloudsCredentials credentials, final Provider provider) {
+            Properties overrides = new Properties();
+            // disable url caching
+            overrides.setProperty(PROPERTY_SESSION_INTERVAL, "0");
             return ContextBuilder.newBuilder(new UltraDNSWSProviderMetadata())
+                                 .name(provider.getName())
                                  .credentialsSupplier(credentials)
-                                 .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
+                                 .overrides(overrides)
+                                 .modules(ImmutableSet.<com.google.inject.Module> builder()
+                                                      .add(new SLF4JLoggingModule())
+                                                      .add(new ExecutorServiceModule(sameThreadExecutor(),
+                                                                                     sameThreadExecutor()))
+                                                      .add(new com.google.inject.AbstractModule() {
+
+                                                          @Override
+                                                          protected void configure() {
+                                                              bind(ProviderURISupplier.class).toInstance(new ProviderURISupplier() {
+
+                                                                  @Override
+                                                                  public URI get() {
+                                                                      return URI.create(provider.getUrl());
+                                                                  }
+
+                                                                  @Override
+                                                                  public String toString() {
+                                                                      return "DynamicURIFrom(" + provider + ")";
+                                                                  }
+                                                              });
+                                                          }
+                                                      })
+                                                      .build())
                                  .buildApi(UltraDNSWSApi.class);
         }
 

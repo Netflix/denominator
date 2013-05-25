@@ -5,15 +5,18 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Maps.uniqueIndex;
 
 import java.lang.reflect.Constructor;
-import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
+import javax.inject.Singleton;
 
+import com.google.common.base.Function;
+import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableList;
+
+import dagger.Module;
 import dagger.ObjectGraph;
+import dagger.Provides;
 
 /**
  * Entry-point to create instances of {@link DNSApiManager}
@@ -21,6 +24,10 @@ import dagger.ObjectGraph;
  * ex.
  * 
  * <pre>
+ * import static denominator.CredentialsConfiguration.credentials;
+ * 
+ * ...
+ * 
  * ultraDns = Denominator.create(new UltraDNSProvider(), credentials(username, password));
  * </pre>
  * 
@@ -33,12 +40,18 @@ import dagger.ObjectGraph;
  * ex.
  * 
  * <pre>
- * ultraDns = ObjectGraph.create(new UltraDNSProvider.Module(), credentials(username, password)).get(DNSApiManager.class);
+ * import static denominator.CredentialsConfiguration.credentials;
+ * import static denominator.Denominator.provider;
+ * 
+ * ...
+ * 
+ * ultraDns = ObjectGraph.create(provider(new UltraDNSProvider()),
+ *                               new UltraDNSProvider.Module(),
+ *                               credentials(username, password)).get(DNSApiManager.class);
  * </pre>
  * 
  */
 public final class Denominator {
-
     public static enum Version {
         INSTANCE;
 
@@ -86,16 +99,13 @@ public final class Denominator {
      *             credentials.
      */
     public static DNSApiManager create(Provider in, Object... modules) {
-        Builder<Object> modulesForGraph = ImmutableList.builder().add(instantiateModule(in));
-        List<Object> inputModules;
-        if (modules == null || modules.length == 0) {
-            inputModules = ImmutableList.of();
-        } else {
-            inputModules = ImmutableList.copyOf(modules);
-        }
-        modulesForGraph.addAll(inputModules);
+        Object[] modulesForGraph = ImmutableList.builder()
+                                                .add(provider(in))
+                                                .add(instantiateModule(in))
+                                                .add(Optional.fromNullable(modules).or(new Object[]{}))
+                                                .build().toArray();
         try {
-            return ObjectGraph.create(modulesForGraph.build().toArray()).get(DNSApiManager.class);
+            return ObjectGraph.create(modulesForGraph).get(DNSApiManager.class);
         } catch (IllegalStateException e) {
             // much simpler to special-case when a credential module is needed,
             // but not supplied, than do too much magic.
@@ -108,7 +118,12 @@ public final class Denominator {
     }
 
     private static Object instantiateModule(Provider in) throws IllegalArgumentException {
-        String moduleClassName = in.getClass().getName() + "$Module";
+        String moduleClassName;
+        if (in.getClass().isAnonymousClass()) {
+            moduleClassName = in.getClass().getSuperclass().getName() + "$Module";
+        } else {
+            moduleClassName = in.getClass().getName() + "$Module";
+        }
         Class<?> moduleClass;
         try {
             moduleClass = Class.forName(moduleClassName);
@@ -160,4 +175,51 @@ public final class Denominator {
         return create(allProvidersByName.get(providerName), modules);
     }
 
+    /**
+     * Use this when building {@link DNSApiManager} via Dagger.
+     * 
+     * ex. when no runtime changes to the provider are necessary:
+     * <pre>
+     * ultraDns = ObjectGraph.create(provider(new UltraDNSProvider()),
+     *                               new UltraDNSProvider.Module(),
+     *                               credentials(username, password)).get(DNSApiManager.class);
+     * </pre>
+     * 
+     * ex. for dynamic provider
+     * 
+     * <pre>
+     * Provider fromDiscovery = new UltraDNSProvider() {
+     *     public String getUrl() {
+     *         return discovery.getUrlFor("ultradns");
+     *     }
+     * };
+     * 
+     * ultraDns = ObjectGraph.create(provider(fromDiscovery),
+     *                               new UltraDNSProvider.Module(),
+     *                               credentials(username, password)).get(DNSApiManager.class);
+     * </pre>
+     */
+    public static Object provider(denominator.Provider provider) {
+        return new ProvideProvider(provider);
+    }
+
+    @Module(injects = DNSApiManager.class, complete = false)
+    static final class ProvideProvider implements javax.inject.Provider<Provider> {
+        private final denominator.Provider provider;
+
+        private ProvideProvider(denominator.Provider provider) {
+            this.provider = checkNotNull(provider, "provider");
+        }
+
+        @Provides
+        @Singleton
+        public Provider get() {
+            return provider;
+        }
+
+        @Override
+        public String toString() {
+            return "Provides(" + provider + ")";
+        }
+    }
 }

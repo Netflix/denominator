@@ -1,31 +1,22 @@
 package denominator.dynect;
 
-import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
-import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
+import static denominator.CredentialsConfiguration.credentials;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Iterator;
-import java.util.Properties;
-import java.util.Set;
 
-import org.jclouds.ContextBuilder;
-import org.jclouds.concurrent.config.ExecutorServiceModule;
-import org.jclouds.dynect.v3.DynECTApi;
 import org.jclouds.util.Strings2;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
-import com.google.inject.Module;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
-import com.google.mockwebserver.RecordedRequest;
 
-import dagger.ObjectGraph;
-import dagger.Provides;
+import denominator.Denominator;
 import denominator.model.ResourceRecordSet;
 import denominator.model.profile.Geo;
 import denominator.model.rdata.CNAMEData;
@@ -87,22 +78,17 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io");
-                         
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
             Iterator<ResourceRecordSet<?>> iterator = api.list();
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
             assertEquals(iterator.next(), fallback);
             assertFalse(iterator.hasNext());
 
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-
-            RecordedRequest listGeos = server.takeRequest();
-            assertEquals(listGeos.getRequestLine(), "GET /Geo HTTP/1.1");
-
-            RecordedRequest getGeo = server.takeRequest();
-            assertEquals(getGeo.getRequestLine(), "GET /Geo/CCS HTTP/1.1");
-
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo/CCS HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -117,21 +103,17 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io");
-                                                    
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
             Iterator<ResourceRecordSet<?>> iterator = api.listByName("srv.denominator.io");
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
             assertEquals(iterator.next(), fallback);
             assertFalse(iterator.hasNext());
 
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-
-            RecordedRequest listGeos = server.takeRequest();
-            assertEquals(listGeos.getRequestLine(), "GET /Geo HTTP/1.1");
-
-            RecordedRequest getGeo = server.takeRequest();
-            assertEquals(getGeo.getRequestLine(), "GET /Geo/CCS HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo/CCS HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -145,15 +127,12 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io");
-
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
             assertFalse(api.listByName("www.denominator.io").hasNext());
-            
+
+            assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-
-            RecordedRequest listGeos = server.takeRequest();
-            assertEquals(listGeos.getRequestLine(), "GET /Geo HTTP/1.1");
-
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -168,21 +147,17 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io");
-            
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
             Iterator<ResourceRecordSet<?>> iterator = api.listByNameAndType("srv.denominator.io", "CNAME");
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
             assertEquals(iterator.next(), fallback);
             assertFalse(iterator.hasNext());
 
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-
-            RecordedRequest listGeos = server.takeRequest();
-            assertEquals(listGeos.getRequestLine(), "GET /Geo HTTP/1.1");
-
-            RecordedRequest getGeo = server.takeRequest();
-            assertEquals(getGeo.getRequestLine(), "GET /Geo/CCS HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo/CCS HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -196,15 +171,12 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io");
-
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
             assertFalse(api.listByNameAndType("www.denominator.io", "A").hasNext());
 
+            assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-
-            RecordedRequest listGeos = server.takeRequest();
-            assertEquals(listGeos.getRequestLine(), "GET /Geo HTTP/1.1");
-
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -219,17 +191,13 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io");
-            
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
             assertEquals(api.getByNameTypeAndGroup("srv.denominator.io", "CNAME", "Fallback").get(), fallback);
 
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-
-            RecordedRequest listGeos = server.takeRequest();
-            assertEquals(listGeos.getRequestLine(), "GET /Geo HTTP/1.1");
-
-            RecordedRequest getGeo = server.takeRequest();
-            assertEquals(getGeo.getRequestLine(), "GET /Geo/CCS HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo/CCS HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -243,50 +211,24 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io");
-
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
             assertFalse(api.getByNameTypeAndGroup("www.denominator.io", "A", "Fallback").isPresent());
 
+            assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-
-            RecordedRequest listGeos = server.takeRequest();
-            assertEquals(listGeos.getRequestLine(), "GET /Geo HTTP/1.1");
-
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
         } finally {
             server.shutdown();
         }
     }
 
-    private static GeoResourceRecordSetApi mockedGeoApiForZone(MockWebServer server, String zoneName) {
-        return ObjectGraph.create(new Mock(mockDynECTApi(server.getUrl("/").toString())), new DynECTGeoSupport())
-                .get(DynECTGeoResourceRecordSetApi.Factory.class).create(zoneName).get();
+    private static GeoResourceRecordSetApi mockApi(final URL url) {
+        return Denominator.create(new DynECTProvider() {
+            @Override
+            public String getUrl() {
+                return url.toString();
+            }
+        }, credentials("jclouds", "joe", "letmein")).getApi()
+                                                    .getGeoResourceRecordSetApiForZone("denominator.io").get();
     }
-
-    @dagger.Module(injects = DynECTGeoResourceRecordSetApi.Factory.class, complete = false)
-    static class Mock {
-        private final DynECTApi api;
-
-        private Mock(DynECTApi api) {
-            this.api = api;
-        }
-
-        @Provides
-        DynECTApi provideApi() {
-            return api;
-        }
-    }
-
-    private static DynECTApi mockDynECTApi(String uri) {
-        Properties overrides = new Properties();
-        overrides.setProperty(PROPERTY_MAX_RETRIES, "1");
-        return ContextBuilder.newBuilder("dynect")
-                             .credentials("jclouds:joe", "letmein")
-                             .endpoint(uri)
-                             .overrides(overrides)
-                             .modules(modules)
-                             .buildApi(DynECTApi.class);
-    }
-
-    private static Set<Module> modules = ImmutableSet.<Module> of(
-            new ExecutorServiceModule(sameThreadExecutor(), sameThreadExecutor()));
 }

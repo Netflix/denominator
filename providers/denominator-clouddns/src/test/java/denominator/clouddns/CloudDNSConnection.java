@@ -16,7 +16,8 @@ public class CloudDNSConnection {
         String username = emptyToNull(getProperty("clouddns.username"));
         String apiKey = emptyToNull(getProperty("clouddns.apiKey"));
         if (username != null && apiKey != null) {
-            manager = Denominator.create(new CloudDNSProvider(), credentials(username, apiKey));
+            CloudDNSProvider provider = new CloudDNSProvider(emptyToNull(getProperty("clouddns.url")));
+            manager = Denominator.create(provider, credentials(username, apiKey));
         } else {
             manager = null;
         }

@@ -44,6 +44,11 @@ public abstract class BasicProvider implements Provider {
     }
 
     @Override
+    public String getUrl() {
+        return "mem:" + getName();
+    }
+
+    @Override
     public Multimap<String, String> getCredentialTypeToParameterNames() {
         return ImmutableMultimap.of();
     }
@@ -59,11 +64,12 @@ public abstract class BasicProvider implements Provider {
             return true;
         if (obj == null || getClass() != obj.getClass())
             return false;
-        return equal(this.getName(), BasicProvider.class.cast(obj).getName());
+        return equal(this.getName(), BasicProvider.class.cast(obj).getName())
+                && equal(this.getUrl(), BasicProvider.class.cast(obj).getUrl());
     }
 
     @Override
     public String toString() {
-        return toStringHelper(this).add("name", getName()).toString();
+        return toStringHelper(this).add("name", getName()).add("url", getUrl()).toString();
     }
 }
