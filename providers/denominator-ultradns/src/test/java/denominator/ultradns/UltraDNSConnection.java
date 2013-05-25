@@ -22,7 +22,8 @@ public class UltraDNSConnection {
         String username = emptyToNull(getProperty("ultradns.username"));
         String password = emptyToNull(getProperty("ultradns.password"));
         if (username != null && password != null) {
-            manager = Denominator.create(new UltraDNSProvider(), credentials(username, password));
+            UltraDNSProvider provider = new UltraDNSProvider(emptyToNull(getProperty("ultradns.url")));
+            manager = Denominator.create(provider, credentials(username, password));
         } else {
             manager = null;
         }

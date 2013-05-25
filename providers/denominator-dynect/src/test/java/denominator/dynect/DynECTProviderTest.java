@@ -3,6 +3,7 @@ package denominator.dynect;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
 import static denominator.Denominator.listProviders;
+import static denominator.Denominator.provider;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -54,7 +55,7 @@ public class DynECTProviderTest {
     @Test
     public void testViaDagger() {
         DNSApiManager manager = ObjectGraph
-                .create(new DynECTProvider.Module(), credentials("customer", "username", "password"))
+                .create(provider(new DynECTProvider()), new DynECTProvider.Module(), credentials("customer", "username", "password"))
                 .get(DNSApiManager.class);
         assertEquals(manager.getApi().getZoneApi().getClass(), DynECTZoneApi.class);
     }

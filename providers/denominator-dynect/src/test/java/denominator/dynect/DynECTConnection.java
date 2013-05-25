@@ -16,7 +16,8 @@ public class DynECTConnection {
         String username = emptyToNull(getProperty("dynect.username"));
         String password = emptyToNull(getProperty("dynect.password"));
         if (customer != null && username != null && password != null) {
-            manager = Denominator.create(new DynECTProvider(), credentials(customer, username, password));
+            DynECTProvider provider = new DynECTProvider(emptyToNull(getProperty("dynect.url")));
+            manager = Denominator.create(provider, credentials(customer, username, password));
         } else {
             manager = null;
         }

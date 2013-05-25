@@ -1,15 +1,23 @@
 package denominator.route53;
 
+import static com.google.common.base.Strings.emptyToNull;
+import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
+import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
+
 import java.io.Closeable;
+import java.net.URI;
+import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.aws.domain.SessionCredentials;
-import org.jclouds.aws.route53.AWSRoute53ProviderMetadata;
+import org.jclouds.concurrent.config.ExecutorServiceModule;
+import org.jclouds.location.suppliers.ProviderURISupplier;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.route53.Route53Api;
+import org.jclouds.route53.Route53ApiMetadata;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
@@ -28,6 +36,25 @@ import denominator.config.GeoUnsupported;
 import denominator.config.OnlyNormalResourceRecordSets;
 
 public class Route53Provider extends BasicProvider {
+    private final String url;
+
+    public Route53Provider() {
+        this(null);
+    }
+
+    /**
+     * @param url
+     *            if empty or null use default
+     */
+    public Route53Provider(String url) {
+        url = emptyToNull(url);
+        this.url = url != null ? url : new Route53ApiMetadata().getDefaultEndpoint().get();
+    }
+
+    @Override
+    public String getUrl() {
+        return url;
+    }
 
     @Override
     public Multimap<String, String> getCredentialTypeToParameterNames() {
@@ -37,22 +64,46 @@ public class Route53Provider extends BasicProvider {
     }
 
     @dagger.Module(injects = DNSApiManager.class,
+                   complete = false, // denominator.Provider
                    includes = { GeoUnsupported.class, 
                                 OnlyNormalResourceRecordSets.class,
                                 InstanceProfileCredentialsProvider.class })
     public static final class Module {
 
         @Provides
-        public Provider provider() {
-            return new Route53Provider();
-        }
-
-        @Provides
         @Singleton
-        Route53Api provideApi(ConvertToJcloudsCredentials credentials) {
-            return ContextBuilder.newBuilder(new AWSRoute53ProviderMetadata())
+        // Dynamic name updates are not currently possible in jclouds.
+        Route53Api provideApi(ConvertToJcloudsCredentials credentials, final Provider provider) {
+            Properties overrides = new Properties();
+            // disable url caching
+            overrides.setProperty(PROPERTY_SESSION_INTERVAL, "0");
+            return ContextBuilder.newBuilder(new Route53ApiMetadata())
+                                 .name(provider.getName())
                                  .credentialsSupplier(credentials)
-                                 .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
+                                 .overrides(overrides)
+                                 .modules(ImmutableSet.<com.google.inject.Module> builder()
+                                                      .add(new SLF4JLoggingModule())
+                                                      .add(new ExecutorServiceModule(sameThreadExecutor(),
+                                                                                     sameThreadExecutor()))
+                                                      .add(new com.google.inject.AbstractModule() {
+
+                                                          @Override
+                                                          protected void configure() {
+                                                              bind(ProviderURISupplier.class).toInstance(new ProviderURISupplier() {
+
+                                                                  @Override
+                                                                  public URI get() {
+                                                                      return URI.create(provider.getUrl());
+                                                                  }
+
+                                                                  @Override
+                                                                  public String toString() {
+                                                                      return "DynamicURIFrom(" + provider + ")";
+                                                                  }
+                                                              });
+                                                          }
+                                                      })
+                                                      .build())
                                  .buildApi(Route53Api.class);
         }
 

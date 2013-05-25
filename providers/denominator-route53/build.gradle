@@ -12,6 +12,7 @@ eclipse {
 }
 
 test {
+  systemProperty 'route53.url', System.getProperty('route53.url', '')
   systemProperty 'route53.accesskey', System.getProperty('route53.accesskey', '')
   systemProperty 'route53.secretkey', System.getProperty('route53.secretkey', '')
   systemProperty 'route53.zone', System.getProperty('route53.zone', '')
@@ -21,7 +22,7 @@ dependencies {
   compile      project(':denominator-core')
   provided    'com.squareup.dagger:dagger-compiler:1.0.0'
   testCompile  project(':denominator-core').sourceSets.test.output
-  compile     'org.jclouds.provider:aws-route53:1.6.0'
+  compile     'org.jclouds.api:route53:1.6.0'
   compile     'org.jclouds.driver:jclouds-slf4j:1.6.0'
 }
 

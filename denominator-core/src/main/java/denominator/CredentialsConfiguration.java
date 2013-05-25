@@ -40,7 +40,7 @@ import denominator.Credentials.ListCredentials;
  * 
  * <pre>
  * final AWSCredentialsProvider provider = // from wherever
- * Provider&lt;Credentials&gt; converter = new Provider&lt;Credentials&gt;() {
+ * Supplier&lt;Credentials&gt; converter = new Supplier&lt;Credentials&gt;() {
  *     public Credentials get() {
  *         AWSCredentials awsCreds = provider.getCredentials();
  *         return credentials(awsCreds.getAWSAccessKeyId(), awsCreds.getAWSSecretKey());
@@ -173,7 +173,7 @@ public class CredentialsConfiguration {
 
         @Override
         public String toString() {
-            return "DynamicCredentialsProvider(" + creds + ")";
+            return "DynamicCredentials(" + creds + ")";
         }
     }
 

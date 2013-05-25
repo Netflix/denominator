@@ -1,40 +1,27 @@
 package denominator.ultradns;
 
-import static com.google.common.base.Suppliers.ofInstance;
 import static com.google.common.io.Resources.getResource;
-import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
+import static denominator.CredentialsConfiguration.credentials;
 import static denominator.model.ResourceRecordSets.toProfile;
 import static java.lang.String.format;
-import static org.jclouds.Constants.PROPERTY_MAX_RETRIES;
 import static org.jclouds.util.Strings2.toStringAndClose;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Iterator;
-import java.util.Properties;
-import java.util.Set;
 
-import javax.inject.Singleton;
-
-import org.jclouds.ContextBuilder;
-import org.jclouds.concurrent.config.ExecutorServiceModule;
-import org.jclouds.ultradns.ws.UltraDNSWSApi;
-import org.jclouds.ultradns.ws.domain.IdAndName;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
-import com.google.inject.Module;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 
-import dagger.ObjectGraph;
-import dagger.Provides;
+import denominator.Denominator;
 import denominator.model.ResourceRecordSet;
 import denominator.model.profile.Geo;
 import denominator.model.rdata.CNAMEData;
@@ -149,6 +136,8 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                                 .putAll("Antarctica", "Antarctica", "Bouvet Island", "French Southern Territories")
                                 .build())).build();
 
+    private String getAccountsListOfUser = format(SOAP_TEMPLATE, "<v01:getAccountsListOfUser/>");
+    private String getAccountsListOfUserResponse = "<soap:Envelope><soap:Body><ns1:getAccountsListOfUserResponse><AccountsList><ns2:AccountDetailsData accountID=\"AAAAAAAAAAAAAAAA\" accountName=\"denominator\" /></AccountsList></ns1:getAccountsListOfUserResponse></soap:Body></soap:Envelope>";
     private String getAvailableRegions = format(SOAP_TEMPLATE, "<v01:getAvailableRegions/>");
     private String getAvailableRegionsResponse;
     private String getDirectionalDNSGroupDetails = format(SOAP_TEMPLATE,
@@ -184,6 +173,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     public void listByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForHostIPV4Response));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noDirectionalDNSRecordsForHostResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
@@ -192,7 +182,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io.");
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
                          
             Iterator<ResourceRecordSet<?>> iterator = api.listByNameAndType("srv.denominator.io.", "CNAME");
             assertEquals(iterator.next().toString(), europe.toString());
@@ -200,9 +190,15 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             assertEquals(iterator.next().toString(), us.toString());
             assertFalse(iterator.hasNext());
 
+            assertEquals(server.getRequestCount(), 7);
+
             RecordedRequest getAvailableRegions = server.takeRequest();
             assertEquals(getAvailableRegions.getRequestLine(), "POST / HTTP/1.1");
             assertEquals(new String(getAvailableRegions.getBody()), this.getAvailableRegions);
+
+            RecordedRequest getAccountsListOfUser = server.takeRequest();
+            assertEquals(getAccountsListOfUser.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAccountsListOfUser.getBody()), this.getAccountsListOfUser);
             
             RecordedRequest getDirectionalDNSRecordsForHostIPV4 = server.takeRequest();
             assertEquals(getDirectionalDNSRecordsForHostIPV4.getRequestLine(), "POST / HTTP/1.1");
@@ -239,22 +235,27 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     public void applyRegionsToNameTypeAndGroupWhenTTLMatches() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponseEurope));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noDirectionalDNSRecordsForGroupResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io.");
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
 
             Multimap<String, String> regions = toProfile(Geo.class).apply(europe).getRegions();
             api.applyRegionsToNameTypeAndGroup(regions, "srv.denominator.io.", "CNAME", "Europe");
 
-            assertEquals(server.getRequestCount(), 4);
+            assertEquals(server.getRequestCount(), 5);
 
             RecordedRequest getAvailableRegions = server.takeRequest();
             assertEquals(getAvailableRegions.getRequestLine(), "POST / HTTP/1.1");
             assertEquals(new String(getAvailableRegions.getBody()), this.getAvailableRegions);
+
+            RecordedRequest getAccountsListOfUser = server.takeRequest();
+            assertEquals(getAccountsListOfUser.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAccountsListOfUser.getBody()), this.getAccountsListOfUser);
 
             RecordedRequest getDirectionalDNSRecordsForGroupEuropeIPV4 = server.takeRequest();
             assertEquals(getDirectionalDNSRecordsForGroupEuropeIPV4.getRequestLine(), "POST / HTTP/1.1");
@@ -288,6 +289,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     public void applyRegionsToNameTypeAndGroupWhenRegionsDiffer() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponseEurope));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noDirectionalDNSRecordsForGroupResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
@@ -295,16 +297,20 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io.");
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
 
             Multimap<String, String> regions = ImmutableMultimap.of("Europe", "Aland Islands");
             api.applyRegionsToNameTypeAndGroup(regions, "srv.denominator.io.", "CNAME", "Europe");
 
-            assertEquals(server.getRequestCount(), 5);
+            assertEquals(server.getRequestCount(), 6);
 
             RecordedRequest getAvailableRegions = server.takeRequest();
             assertEquals(getAvailableRegions.getRequestLine(), "POST / HTTP/1.1");
             assertEquals(new String(getAvailableRegions.getBody()), this.getAvailableRegions);
+
+            RecordedRequest getAccountsListOfUser = server.takeRequest();
+            assertEquals(getAccountsListOfUser.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAccountsListOfUser.getBody()), this.getAccountsListOfUser);
 
             RecordedRequest getDirectionalDNSRecordsForGroupEuropeIPV4 = server.takeRequest();
             assertEquals(getDirectionalDNSRecordsForGroupEuropeIPV4.getRequestLine(), "POST / HTTP/1.1");
@@ -332,20 +338,25 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     public void applyTTLToNameTypeAndGroupWhenTTLMatches() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponseEurope));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noDirectionalDNSRecordsForGroupResponse));
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io.");
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
 
             api.applyTTLToNameTypeAndGroup(300, "srv.denominator.io.", "CNAME", "Europe");
 
-            assertEquals(server.getRequestCount(), 3);
+            assertEquals(server.getRequestCount(), 4);
 
             RecordedRequest getAvailableRegions = server.takeRequest();
             assertEquals(getAvailableRegions.getRequestLine(), "POST / HTTP/1.1");
             assertEquals(new String(getAvailableRegions.getBody()), this.getAvailableRegions);
+
+            RecordedRequest getAccountsListOfUser = server.takeRequest();
+            assertEquals(getAccountsListOfUser.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAccountsListOfUser.getBody()), this.getAccountsListOfUser);
 
             RecordedRequest getDirectionalDNSRecordsForGroupEuropeIPV4 = server.takeRequest();
             assertEquals(getDirectionalDNSRecordsForGroupEuropeIPV4.getRequestLine(), "POST / HTTP/1.1");
@@ -368,21 +379,26 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     public void applyTTLToNameTypeAndGroupWhenTTLDiffers() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponseEurope));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noDirectionalDNSRecordsForGroupResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(updateDirectionalPoolRecordResponse));
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockedGeoApiForZone(server, "denominator.io.");
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
 
             api.applyTTLToNameTypeAndGroup(600, "srv.denominator.io.", "CNAME", "Europe");
 
-            assertEquals(server.getRequestCount(), 4);
+            assertEquals(server.getRequestCount(), 5);
 
             RecordedRequest getAvailableRegions = server.takeRequest();
             assertEquals(getAvailableRegions.getRequestLine(), "POST / HTTP/1.1");
             assertEquals(new String(getAvailableRegions.getBody()), this.getAvailableRegions);
+
+            RecordedRequest getAccountsListOfUser = server.takeRequest();
+            assertEquals(getAccountsListOfUser.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAccountsListOfUser.getBody()), this.getAccountsListOfUser);
 
             RecordedRequest getDirectionalDNSRecordsForGroupEuropeIPV4 = server.takeRequest();
             assertEquals(getDirectionalDNSRecordsForGroupEuropeIPV4.getRequestLine(), "POST / HTTP/1.1");
@@ -401,44 +417,14 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         }
     }
 
-    private static GeoResourceRecordSetApi mockedGeoApiForZone(MockWebServer server, String zoneName) {
-        return ObjectGraph.create(new Mock(mockUltraDNSWSApi(server.getUrl("/").toString())), new UltraDNSGeoSupport())
-                .get(UltraDNSGeoResourceRecordSetApi.Factory.class).create(zoneName).get();
+    private static GeoResourceRecordSetApi mockApi(final URL url) {
+        return Denominator.create(new UltraDNSProvider() {
+            @Override
+            public String getUrl() {
+                return url.toString();
+            }
+        }, credentials("joe", "letmein")).getApi().getGeoResourceRecordSetApiForZone("denominator.io.").get();
     }
-
-    @dagger.Module(injects = UltraDNSGeoResourceRecordSetApi.Factory.class, complete = false)
-    static class Mock {
-        private final UltraDNSWSApi api;
-
-        private Mock(UltraDNSWSApi api) {
-            this.api = api;
-        }
-
-        @Provides
-        @Singleton
-        Supplier<IdAndName> account() {
-            return ofInstance(IdAndName.create("AAAAAAAAAAAAAAAA", "denominator"));
-        }
-
-        @Provides
-        UltraDNSWSApi provideApi() {
-            return api;
-        }
-    }
-
-    private static UltraDNSWSApi mockUltraDNSWSApi(String uri) {
-        Properties overrides = new Properties();
-        overrides.setProperty(PROPERTY_MAX_RETRIES, "1");
-        return ContextBuilder.newBuilder("ultradns-ws")
-                             .credentials("joe", "letmein")
-                             .endpoint(uri)
-                             .overrides(overrides)
-                             .modules(modules)
-                             .buildApi(UltraDNSWSApi.class);
-    }
-
-    private static Set<Module> modules = ImmutableSet.<Module> of(
-            new ExecutorServiceModule(sameThreadExecutor(), sameThreadExecutor()));
 
     private static final String SOAP_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body>%s</soapenv:Body></soapenv:Envelope>";
 }

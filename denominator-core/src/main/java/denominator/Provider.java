@@ -1,14 +1,14 @@
 package denominator;
 
-import java.io.Closeable;
+import javax.inject.Singleton;
 
 import com.google.common.annotations.Beta;
 import com.google.common.collect.Multimap;
 
 /**
- * Represents a provider of DNS services.
+ * Metadata about a provider of DNS services.
  * 
- * <h3>Implementation Note</h3>
+ * <h3>Writing a Provider</h3>
  * 
  * The current implementation of {@link Denominator#create(Provider, Object...)}
  * expects all {@code Provider} implementations to expose a static inner class
@@ -20,13 +20,21 @@ import com.google.common.collect.Multimap;
  * <pre>
  * public class MockProvider extends BasicProvider {
  * 
- *     &#064;dagger.Module(injects = DNSApiManager.class, includes = NothingToClose.class)
+ *     &#064;dagger.Module(injects = DNSApiManager.class, complete = false, includes = NothingToClose.class)
  *     public static final class Module {
  * </pre>
  * 
- * @see denominator.mock.MockProvider for an example
+ * Look at {@link denominator.mock.MockProvider.Module} for an example of a
+ * valid provider module.
+ * 
+ * <h3>Expected Use</h3>
+ * Provider instances are bound in {@link javax.inject.Singleton} scope.
+ * However, results of all methods are permitted to change at runtime. For
+ * example, a change to the value returned by {@link #getUrl()} should affect
+ * the remote connection to the DNS provider.
  */
 @Beta
+@Singleton
 public interface Provider {
 
     /**
@@ -34,6 +42,14 @@ public interface Provider {
      * {@code hopper}.
      */
     String getName();
+
+    /**
+     * The base API URL of the DNS Provider. Typically, a http url, such as
+     * {@code https://api/v2}. For in-memory providers, we expect the scheme to
+     * be {@code mem}. For example, {@code mem://mock}. Encoding credentials in
+     * the URL is neither expected nor supported.
+     */
+    String getUrl();
 
     /**
      * Description of the credential parameters needed for this provider by

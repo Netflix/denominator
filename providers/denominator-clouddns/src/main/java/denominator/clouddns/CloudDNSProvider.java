@@ -1,11 +1,19 @@
 package denominator.clouddns;
 
+import static com.google.common.base.Strings.emptyToNull;
+import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
+import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
+
 import java.io.Closeable;
+import java.net.URI;
+import java.util.Properties;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.jclouds.ContextBuilder;
+import org.jclouds.concurrent.config.ExecutorServiceModule;
+import org.jclouds.location.suppliers.ProviderURISupplier;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.rackspace.clouddns.v1.CloudDNSApi;
 import org.jclouds.rackspace.clouddns.v1.CloudDNSApiMetadata;
@@ -25,7 +33,27 @@ import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.GeoUnsupported;
 import denominator.config.OnlyNormalResourceRecordSets;
+
 public class CloudDNSProvider extends BasicProvider {
+    private final String url;
+
+    public CloudDNSProvider() {
+        this(null);
+    }
+
+    /**
+     * @param url
+     *            if empty or null use default
+     */
+    public CloudDNSProvider(String url) {
+        url = emptyToNull(url);
+        this.url = url != null ? url : new CloudDNSApiMetadata().getDefaultEndpoint().get();
+    }
+
+    @Override
+    public String getUrl() {
+        return url;
+    }
 
     @Override
     public Multimap<String, String> getCredentialTypeToParameterNames() {
@@ -33,15 +61,10 @@ public class CloudDNSProvider extends BasicProvider {
     }
 
     @dagger.Module(injects = DNSApiManager.class,
-                   complete = false, // no built-in credentials provider
+                   complete = false, // denominator.Provider and denominator.Credentials
                    includes = { GeoUnsupported.class, 
                                 OnlyNormalResourceRecordSets.class } )
     public static final class Module {
-
-        @Provides
-        public Provider provider() {
-            return new CloudDNSProvider();
-        }
 
         @Provides
         @Singleton
@@ -57,11 +80,39 @@ public class CloudDNSProvider extends BasicProvider {
 
         @Provides
         @Singleton
-        CloudDNSApi provideCloudDNSApi(ConvertToJcloudsCredentials credentials) {
+        // Dynamic name updates are not currently possible in jclouds.
+        CloudDNSApi provideCloudDNSApi(ConvertToJcloudsCredentials credentials, final Provider provider) {
+            Properties overrides = new Properties();
+            // disable url caching
+            overrides.setProperty(PROPERTY_SESSION_INTERVAL, "0");
             return ContextBuilder.newBuilder(new CloudDNSApiMetadata())
-                    .credentialsSupplier(credentials)
-                    .modules(ImmutableSet.<com.google.inject.Module> of(new SLF4JLoggingModule()))
-                    .buildApi(CloudDNSApi.class);
+                                 .name(provider.getName())
+                                 .credentialsSupplier(credentials)
+                                 .overrides(overrides)
+                                 .modules(ImmutableSet.<com.google.inject.Module> builder()
+                                                      .add(new SLF4JLoggingModule())
+                                                      .add(new ExecutorServiceModule(sameThreadExecutor(),
+                                                                                     sameThreadExecutor()))
+                                                      .add(new com.google.inject.AbstractModule() {
+
+                                                          @Override
+                                                          protected void configure() {
+                                                              bind(ProviderURISupplier.class).toInstance(new ProviderURISupplier() {
+
+                                                                  @Override
+                                                                  public URI get() {
+                                                                      return URI.create(provider.getUrl());
+                                                                  }
+
+                                                                  @Override
+                                                                  public String toString() {
+                                                                      return "DynamicURIFrom(" + provider + ")";
+                                                                  }
+                                                              });
+                                                          }
+                                                      })
+                                                      .build())
+                                 .buildApi(CloudDNSApi.class);
         }
 
         @Provides

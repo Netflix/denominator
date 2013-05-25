@@ -3,6 +3,7 @@ package denominator.clouddns;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
 import static denominator.Denominator.listProviders;
+import static denominator.Denominator.provider;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -49,7 +50,7 @@ public class CloudDNSProviderTest {
     @Test
     public void testViaDagger() {
         DNSApiManager manager = ObjectGraph
-                .create(new CloudDNSProvider.Module(), credentials("username", "apiKey"))
+                .create(provider(new CloudDNSProvider()), new CloudDNSProvider.Module(), credentials("username", "apiKey"))
                 .get(DNSApiManager.class);
         assertEquals(manager.getApi().getZoneApi().getClass(), CloudDNSZoneApi.class);
     }

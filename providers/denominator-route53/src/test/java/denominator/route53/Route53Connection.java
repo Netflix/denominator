@@ -15,7 +15,8 @@ public class Route53Connection {
         String accesskey = emptyToNull(getProperty("route53.accesskey"));
         String secretkey = emptyToNull(getProperty("route53.secretkey"));
         if (accesskey != null && secretkey != null) {
-            manager = Denominator.create(new Route53Provider(), credentials(accesskey, secretkey));
+            Route53Provider provider = new Route53Provider(emptyToNull(getProperty("route53.url")));
+            manager = Denominator.create(provider, credentials(accesskey, secretkey));
         } else {
             manager = null;
         }

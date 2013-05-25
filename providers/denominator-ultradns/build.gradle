@@ -12,6 +12,7 @@ eclipse {
 }
 
 test {
+  systemProperty 'ultradns.url', System.getProperty('ultradns.url', '')
   systemProperty 'ultradns.username', System.getProperty('ultradns.username', '')
   systemProperty 'ultradns.password', System.getProperty('ultradns.password', '')
   systemProperty 'ultradns.zone', System.getProperty('ultradns.zone', '')
