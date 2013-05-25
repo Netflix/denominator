@@ -32,19 +32,6 @@ import denominator.model.rdata.SOAData;
 
 @Test(singleThreaded = true)
 public class GroupByRecordNameAndTypeIteratorMockTest {
-    static Set<Module> modules = ImmutableSet.<Module> of(new ExecutorServiceModule(sameThreadExecutor(),
-            sameThreadExecutor()));
-
-    static DynECTApi mockDynECTApi(String uri) {
-        Properties overrides = new Properties();
-        overrides.setProperty(PROPERTY_MAX_RETRIES, "1");
-        return ContextBuilder.newBuilder("dynect")
-                             .credentials("jclouds:joe", "letmein")
-                             .endpoint(uri)
-                             .overrides(overrides)
-                             .modules(modules)
-                             .buildApi(DynECTApi.class);
-    }
 
     Builder<?> builder = recordIdBuilder().zone("denominator.io").fqdn("denominator.io");
 
@@ -88,12 +75,28 @@ public class GroupByRecordNameAndTypeIteratorMockTest {
                                                                        .minimum(60).build()).build().toString());
             assertEquals(iterator.next(), ns("denominator.io", 86400, ImmutableList.of("ns4.p28.dynect.net.", "ns4.p28.dynect.net.")));
             assertFalse(iterator.hasNext());
-        } finally {
+
+            assertEquals(server.getRequestCount(), 4);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /SOARecord/denominator.io/denominator.io/50976579 HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /NSRecord/denominator.io/denominator.io/50976580 HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /NSRecord/denominator.io/denominator.io/50976580 HTTP/1.1");
+        } finally {
             server.shutdown();
         }
+    }
+
+    static Set<Module> modules = ImmutableSet.<Module> of(new ExecutorServiceModule(sameThreadExecutor(),
+            sameThreadExecutor()));
+
+    static DynECTApi mockDynECTApi(String uri) {
+        Properties overrides = new Properties();
+        overrides.setProperty(PROPERTY_MAX_RETRIES, "1");
+        return ContextBuilder.newBuilder("dynect")
+                             .credentials("jclouds:joe", "letmein")
+                             .endpoint(uri)
+                             .overrides(overrides)
+                             .modules(modules)
+                             .buildApi(DynECTApi.class);
     }
 }
