@@ -3,9 +3,9 @@
 The denominator CLI is a git-like-cli based on the [airline](https://github.com/airlift/airline) project.  It is packaged as a [really executable jar](http://skife.org/java/unix/2011/06/20/really_executable_jars.html) which means you can do `./denominator` without any of the `java -jar` stuff.
 
 ### Binaries
-Here's how to get denominator-cli `1.1.2` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
+Here's how to get denominator-cli `1.1.3` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
 
-1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.1.2/denominator?direct)
+1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.1.3/denominator?direct)
 2. Place it on your `$PATH`. (ex. `~/bin`)
 3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
 
@@ -25,28 +25,33 @@ denominator.io.                                    NS    86400  ns1.denominator.
 ```
 
 ### Providers
-Different providers need different credentials.  First step is to run `./denominator providers` to see how many `-c` args you need and what values they should have:
+Different providers connect to different urls and need different credentials.  First step is to run `./denominator providers` to see how many `-c` args you need and what values they should have:
 
 ```bash
 $ denominator providers
-provider             credential type  credential arguments
-mock
-dynect               password         customer username password
-ultradns             password         username password
-route53              accessKey        accessKey secretKey
-route53              session          accessKey secretKey sessionToken
-clouddns             apiKey           username apiKey
+provider   url                                                  credentialType credentialArgs
+mock       mem:mock
+clouddns   https://identity.api.rackspacecloud.com/v2.0/        apiKey         username apiKey
+dynect     https://api2.dynect.net/REST                         password       customer username password
+route53    https://route53.amazonaws.com                        accessKey      accessKey secretKey
+route53    https://route53.amazonaws.com                        session        accessKey secretKey sessionToken
+ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01  password       username password
 ```
 
 The first field says the type, if any.  If there's no type listed, it needs no credentials.  If there is a type listed, the following fields are credential args.  Say for example, you were using `ultradns`.  
 
 ```
-ultradns        password        username password
+ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01  password       username password
 ```
-This says the provider `ultradns` supports `password` authentication, which needs two `-c` parameters: `username` and `password`.  To put it together, you'd specify the following to do a zone list:
-```
+This says the provider `ultradns` connects by default to `https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01` and supports `password` authentication, which needs two `-c` parameters: `username` and `password`.  To put it together, you'd specify the following to do a zone list:
+```bash
 ./denominator -p ultradns -c myusername -c mypassword zone list
 ```
+If you need to connect to an alternate url, pass the `-u` parameter:
+```bash
+./denominator -p ultradns -u https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01-BETA -c myusername -c mypassword zone list
+```
+
 ### Zone
 `zone list` returns the zones names in your account.  Ex.
 ```bash
