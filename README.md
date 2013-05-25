@@ -123,7 +123,7 @@ mxData.get("preference");
 ```
 
 ### Use via Dagger
-Soem users may wish to use Denominator as a Dagger library.  Here's one way to achieve that:
+Some users may wish to use Denominator as a Dagger library.  Here's one way to achieve that:
 ```java
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Dagger.provider;
