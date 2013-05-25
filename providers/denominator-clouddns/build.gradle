@@ -22,6 +22,9 @@ dependencies {
   compile      project(':denominator-core')
   provided    'com.squareup.dagger:dagger-compiler:1.0.0'
   testCompile  project(':denominator-core').sourceSets.test.output
-  compile     'org.jclouds.api:rackspace-clouddns:1.6.0'
+  compile('org.apache.jclouds.api:rackspace-clouddns:1.6.1-SNAPSHOT') {
+    exclude group: 'org.apache.jclouds'
+  }
+  compile     'org.jclouds.api:rackspace-cloudidentity:1.6.0'
   compile     'org.jclouds.driver:jclouds-slf4j:1.6.0'
 }
