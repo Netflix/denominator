@@ -10,9 +10,9 @@ Denominator is a portable Java library for manipulating DNS clouds.  Denominator
 For your convenience, the denominator cli is a [single executable file](http://skife.org/java/unix/2011/06/20/really_executable_jars.html).  Under the hood, the cli uses [airline](https://github.com/airlift/airline) to look and feel like dig or git.
 
 ### Binaries
-Here's how to get denominator-cli `1.1.2` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
+Here's how to get denominator-cli `1.1.3` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
 
-1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.1.2/denominator?direct)
+1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.1.3/denominator?direct)
 2. Place it on your `$PATH`. (ex. `~/bin`)
 3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
 
@@ -29,17 +29,17 @@ denominator.io.                                    SOA   3600   ns1.denominator.
 denominator.io.                                    NS    86400  ns1.denominator.io.
 ```
 
-Different providers need different credentials.  First step is to run `./denominator providers` to see how many `-c` args you need and what values they should have:
+Different providers connect to different urls and need different credentials.  First step is to run `./denominator providers` to see how many `-c` args you need and what values they should have:
 
 ```bash
 $ denominator providers
-provider             credential type  credential arguments
-mock                
-dynect               password         customer username password
-ultradns             password         username password
-route53              accessKey        accessKey secretKey
-route53              session          accessKey secretKey sessionToken
-clouddns             apiKey           username apiKey
+provider   url                                                  credentialType credentialArgs
+mock       mem:mock
+clouddns   https://identity.api.rackspacecloud.com/v2.0/        apiKey         username apiKey
+dynect     https://api2.dynect.net/REST                         password       customer username password
+route53    https://route53.amazonaws.com                        accessKey      accessKey secretKey
+route53    https://route53.amazonaws.com                        session        accessKey secretKey sessionToken
+ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01  password       username password
 ```
 
 Now, you can list your zones or records.
@@ -57,11 +57,11 @@ email.netflix.com.                                 A     3600   192.0.2.1
 
 ## Code
 
-Denominator exposes a portable [model](https://github.com/Netflix/denominator/wiki/Models) implemented by pluggable `Provider`s such as `route53`, `ultradns`, `dynect`, or `mock`.  Under the covers, providers are [Dagger](http://square.github.com/dagger/) modules.  Except for the mock, all current providers bind to [jclouds](https://github.com/jclouds/jclouds) libraries.  That said, denominator has no core dependencies outside guava and dagger, so developers are free to implement providers however they choose.
+Denominator exposes a portable [model](https://github.com/Netflix/denominator/wiki/Models) implemented by pluggable `Provider`s such as `route53`, `ultradns`, `dynect`, `clouddns`, or `mock`.  Under the covers, providers are [Dagger](http://square.github.com/dagger/) modules.  Except for the mock, all current providers bind to [jclouds](https://github.com/jclouds/jclouds) libraries.  That said, denominator has no core dependencies outside guava and dagger, so developers are free to implement providers however they choose.
 
 ### Binaries
 
-The current version of denominator is `1.1.2`
+The current version of denominator is `1.1.3`
 
 Denominator can be resolved as maven dependencies, or equivalent in lein, gradle, etc.  Here are the coordinates, noting you only need to list the providers you use.
 ```xml
@@ -69,6 +69,11 @@ Denominator can be resolved as maven dependencies, or equivalent in lein, gradle
   <dependency>
     <groupId>com.netflix.denominator</groupId>
     <artifactId>denominator-core</artifactId>
+    <version>${denominator.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>com.netflix.denominator</groupId>
+    <artifactId>denominator-clouddns</artifactId>
     <version>${denominator.version}</version>
   </dependency>
   <dependency>
@@ -115,6 +120,28 @@ For example, the following are identical:
 ```java
 mxData.getPreference();
 mxData.get("preference");
+```
+
+### Use via Dagger
+Soem users may wish to use Denominator as a Dagger library.  Here's one way to achieve that:
+```java
+import static denominator.CredentialsConfiguration.credentials;
+import static denominator.Dagger.provider;
+...
+// this shows how to facilitate runtime url updates
+Provider fromDiscovery = new UltraDNSProvider() {
+  public String getUrl() {
+    return discovery.getUrlFor("ultradns");
+  }
+};
+// this shows how to facilitate runtime credential updates
+Supplier<Credentials> fromEncryptedStore = new Supplier<Credentials>() {
+  public Credentials get() {
+    return encryptedStore.getCredentialsFor("ultradns");
+  }
+}
+DNSApiManager manager = ObjectGraph.create(provider(fromDiscovery), new UltraDNSProvider.Module(), credentials(fromEncryptedStore))
+                                   .get(DNSApiManager.java);
 ```
 
 ## Build
