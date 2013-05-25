@@ -2,8 +2,7 @@ package denominator.cli;
 import static com.google.common.io.Closeables.closeQuietly;
 import static denominator.Credentials.ListCredentials.from;
 import static denominator.CredentialsConfiguration.credentials;
-import static denominator.Denominator.create;
-import static denominator.Denominator.listProviders;
+import static denominator.Denominator.provider;
 import static java.lang.String.format;
 import io.airlift.command.Cli;
 import io.airlift.command.Cli.CliBuilder;
@@ -18,7 +17,10 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
 
+import dagger.ObjectGraph;
 import denominator.DNSApiManager;
 import denominator.Denominator.Version;
 import denominator.Provider;
@@ -34,6 +36,11 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
+import denominator.clouddns.CloudDNSProvider;
+import denominator.dynect.DynECTProvider;
+import denominator.mock.MockProvider;
+import denominator.route53.Route53Provider;
+import denominator.ultradns.UltraDNSProvider;
 
 public class Denominator {
     public static void main(String[] args) {
@@ -89,26 +96,23 @@ public class Denominator {
 
     @Command(name = "providers", description = "List the providers and their expected credentials")
     public static class ListProviders implements Runnable {
+        final static String table = "%-10s %-52s %-14s %s%n";
+
         public void run() {
             System.out.println(providerAndCredentialsTable());
         }
 
-        final static String table = "%-20s %-16s %s%n";
-
         public static String providerAndCredentialsTable() {
-            return providerAndCredentialsTable(listProviders());
-        }
-
-        public static String providerAndCredentialsTable(Iterable<Provider> providers) {
             StringBuilder builder = new StringBuilder();
             
-            builder.append(format(table, "provider", "credential type", "credential arguments"));
-            for (Provider provider : providers) {
+            builder.append(format(table, "provider", "url", "credentialType", "credentialArgs"));
+            for (Provider provider : listProviders()) {
                 if (provider.getCredentialTypeToParameterNames().isEmpty())
-                    builder.append(format("%-20s%n", provider.getName()));
+                    builder.append(format("%-10s %-52s%n", provider.getName(), provider.getUrl()));
                 for (Entry<String, Collection<String>> entry : provider.getCredentialTypeToParameterNames().asMap()
                         .entrySet()) {
-                    builder.append(format(table, provider.getName(), entry.getKey(), Joiner.on(' ').join(entry.getValue())));
+                    String parameters = Joiner.on(' ').join(entry.getValue());
+                    builder.append(format(table, provider.getName(), provider.getUrl(), entry.getKey(), parameters));
                 }
             }
             return builder.toString();
@@ -119,27 +123,89 @@ public class Denominator {
         @Option(type = OptionType.GLOBAL, required = true, name = { "-p", "--provider" }, description = "provider to affect")
         public String providerName;
 
+        @Option(type = OptionType.GLOBAL, name = { "-u", "--url" }, description = "alternative api url to connect to")
+        public String url;
+
         @Option(type = OptionType.GLOBAL, name = { "-c", "--credential" }, description = "adds a credential argument (execute denominator providers for what these are)")
         public List<String> credentialArgs;
 
         public void run() {
+            Builder<Object> modulesForGraph = ImmutableList.builder().add(provider(newProvider())).add(newModule());
+            if (credentialArgs != null)
+                modulesForGraph.add(credentials(from(credentialArgs)));
             DNSApiManager mgr = null;
             try {
-                if (credentialArgs == null)
-                    mgr = create(providerName);
-                else
-                    mgr = create(providerName, credentials(from(credentialArgs)));
+                mgr = ObjectGraph.create(modulesForGraph.build().toArray()).get(DNSApiManager.class);
                 for (Iterator<String> i = doRun(mgr); i.hasNext();)
                     System.out.println(i.next());
             } finally {
                 closeQuietly(mgr);
             }
+            
         }
 
         /**
          * return a lazy iterator where possible to improve the perceived responsiveness of the cli
          */
         protected abstract Iterator<String> doRun(DNSApiManager mgr);
+
+        /**
+         * This avoids service loader lookup which adds runtime and build
+         * complexity.
+         * 
+         * <h3>Note</h3>
+         * 
+         * update this code block when adding new providers to the CLI.
+         */
+        // TODO: consider generating this method at compile time
+        protected Provider newProvider() {
+            if ("mock".equals(providerName)) {
+                return new MockProvider(url);
+            } else if ("clouddns".equals(providerName)) {
+                return new CloudDNSProvider(url);
+            } else if ("dynect".equals(providerName)) {
+                return new DynECTProvider(url);
+            } else if ("route53".equals(providerName)) {
+                return new Route53Provider(url);
+            } else if ("ultradns".equals(providerName)) {
+                return new UltraDNSProvider(url);
+            }
+            throw new IllegalArgumentException("provider " + providerName
+                    + " unsupported.  Please execute \"denominator providers\" to list configured providers.");
+        }
+
+        protected Object newModule() {
+            if ("mock".equals(providerName)) {
+                return new MockProvider.Module();
+            } else if ("clouddns".equals(providerName)) {
+                return new CloudDNSProvider.Module();
+            } else if ("dynect".equals(providerName)) {
+                return new DynECTProvider.Module();
+            } else if ("route53".equals(providerName)) {
+                return new Route53Provider.Module();
+            } else if ("ultradns".equals(providerName)) {
+                return new UltraDNSProvider.Module();
+            }
+            throw new IllegalArgumentException("provider " + providerName
+                    + " unsupported.  Please execute \"denominator providers\" to list configured providers.");
+        }
+    }
+
+    /**
+     * Lazy to avoid loading the classes unless they are requested.
+     * 
+     * <h3>Note</h3>
+     * 
+     * update this code block when adding new providers to the CLI.
+     */
+    // TODO: consider generating this method at compile time
+    private static Iterable<Provider> listProviders() {
+        return ImmutableList.<Provider> builder()
+                            .add(new MockProvider())
+                            .add(new CloudDNSProvider())
+                            .add(new DynECTProvider())
+                            .add(new Route53Provider())
+                            .add(new UltraDNSProvider()).build();
     }
 
     @Command(name = "list", description = "Lists the zone names present in this provider")
@@ -148,4 +214,5 @@ public class Denominator {
             return mgr.getApi().getZoneApi().list();
         }
     }
+
 }

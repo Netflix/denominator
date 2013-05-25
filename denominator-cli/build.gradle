@@ -28,11 +28,8 @@ dependencies {
 task fatJar(dependsOn: classes, type: Jar) { 
   classifier 'fat'
 
-  // merge provider files together
-  // http://java.dzone.com/articles/jar-deps-dont-meta
+  // exclude service provider lookup as updating denominator.cli.Denominator is no big deal
   def providerFile = "META-INF/services/denominator.Provider"
-
-  def mergeDir = "${buildDir}/merge"
 
   doFirst {
     // Delay evaluation until the compile configuration is ready
@@ -41,24 +38,9 @@ task fatJar(dependsOn: classes, type: Jar) {
     }
   }
 
-  doFirst {
-    new File(mergeDir).delete()
-    def mergedFile = new File(mergeDir, providerFile)
-    new File(mergedFile.parent).mkdirs()
-
-    def depProjects = configurations.runtime.allDependencies.withType(ProjectDependency)*.dependencyProject
-    depProjects.collect { it.sourceSets.main.resources }*.matching { include "**/${providerFile}" }*.each { 
-        mergedFile << it.bytes
-    }
-
-    from(mergeDir)  
-
-  }
-
   from (sourceSets*.output.classesDir) {
-    exclude providerFile
+    exclude "**/${providerFile}"
   }
-
 
   // really executable jar
   // http://skife.org/java/unix/2011/06/20/really_executable_jars.html
@@ -67,7 +49,6 @@ task fatJar(dependsOn: classes, type: Jar) {
     attributes 'Main-Class': 'denominator.cli.Denominator'
     attributes("Implementation-Title": "Denominator", "Specification-Version": version, "Implementation-Version": version)
   }
-
 
   // for convenience, we make a file in the build dir named denominator with no extension
   doLast {
