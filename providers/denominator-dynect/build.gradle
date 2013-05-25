@@ -12,6 +12,7 @@ eclipse {
 }
 
 test {
+  systemProperty 'dynect.url', System.getProperty('dynect.url', '')
   systemProperty 'dynect.customer', System.getProperty('dynect.customer', '')
   systemProperty 'dynect.username', System.getProperty('dynect.username', '')
   systemProperty 'dynect.password', System.getProperty('dynect.password', '')
