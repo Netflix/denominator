@@ -2,13 +2,15 @@ package denominator.cli;
 
 import static org.testng.Assert.assertEquals;
 
+import java.util.Iterator;
+
 import org.testng.annotations.Test;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterators;
 
 import denominator.DNSApiManager;
-import denominator.Provider;
 import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
@@ -23,24 +25,21 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
-import denominator.dynect.DynECTProvider;
 import denominator.mock.MockProvider;
-import denominator.route53.Route53Provider;
-import denominator.ultradns.UltraDNSProvider;
+
 @Test
 public class DenominatorTest {
 
     @Test(description = "denominator -p mock providers")
     public void listsAllProvidersWithCredentials() {
-        ImmutableList<Provider> providers = ImmutableList.<Provider> of(new MockProvider(), new DynECTProvider(),
-                new Route53Provider(), new UltraDNSProvider());
-        assertEquals(ListProviders.providerAndCredentialsTable(providers), Joiner.on('\n').join(
-                "provider             credential type  credential arguments",
-                "mock                ",
-                "dynect               password         customer username password",
-                "route53              accessKey        accessKey secretKey",
-                "route53              session          accessKey secretKey sessionToken",
-                "ultradns             password         username password", ""));
+        assertEquals(ListProviders.providerAndCredentialsTable(), Joiner.on('\n').join(
+                "provider   url                                                  credentialType credentialArgs",
+                "mock       mem:mock                                            ",
+                "clouddns   https://identity.api.rackspacecloud.com/v2.0/        apiKey         username apiKey",
+                "dynect     https://api2.dynect.net/REST                         password       customer username password",
+                "route53    https://route53.amazonaws.com                        accessKey      accessKey secretKey",
+                "route53    https://route53.amazonaws.com                        session        accessKey secretKey sessionToken",
+                "ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01  password       username password", ""));
     }
 
     DNSApiManager mgr = denominator.Denominator.create(new MockProvider());
@@ -48,6 +47,20 @@ public class DenominatorTest {
     @Test(description = "denominator -p mock zone list")
     public void testZoneList() {
         assertEquals(Joiner.on('\n').join(new ZoneList().doRun(mgr)), "denominator.io.");
+    }
+
+    @Test(description = "denominator -u mem:mock2 -p mock zone list")
+    public void testUrlArg() {
+        ZoneList zoneList = new ZoneList() {
+            @Override
+            public Iterator<String> doRun(DNSApiManager mgr) {
+                assertEquals(mgr.getProvider().getUrl(), "mem:mock2");
+                return Iterators.emptyIterator();
+            }
+        };
+        zoneList.providerName = "mock";
+        zoneList.url = "mem:mock2";
+        zoneList.run();
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. list")
