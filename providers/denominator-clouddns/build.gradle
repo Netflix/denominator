@@ -12,6 +12,7 @@ eclipse {
 }
 
 test {
+  systemProperty 'clouddns.url', System.getProperty('clouddns.url', '')
   systemProperty 'clouddns.username', System.getProperty('clouddns.username', '')
   systemProperty 'clouddns.apiKey', System.getProperty('clouddns.apiKey', '')
   systemProperty 'clouddns.zone', System.getProperty('clouddns.zone', '')

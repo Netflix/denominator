@@ -12,6 +12,7 @@ eclipse {
 }
 
 test {
+  systemProperty 'route53.url', System.getProperty('route53.url', '')
   systemProperty 'route53.accesskey', System.getProperty('route53.accesskey', '')
   systemProperty 'route53.secretkey', System.getProperty('route53.secretkey', '')
   systemProperty 'route53.zone', System.getProperty('route53.zone', '')
