@@ -18,6 +18,8 @@ import org.jclouds.location.suppliers.ProviderURISupplier;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.rackspace.clouddns.v1.CloudDNSApi;
 import org.jclouds.rackspace.clouddns.v1.CloudDNSApiMetadata;
+import org.jclouds.rackspace.clouddns.v1.functions.RecordsToPagedIterable;
+import org.jclouds.rest.internal.GeneratedHttpRequest;
 
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
@@ -98,6 +100,8 @@ public class CloudDNSProvider extends BasicProvider {
 
                                                           @Override
                                                           protected void configure() {
+                                                              bind(RecordsToPagedIterable.class)
+                                                               .to(PaginationFixRecordsToPagedIterable.class);
                                                               bind(ProviderURISupplier.class).toInstance(new ProviderURISupplier() {
 
                                                                   @Override
@@ -120,6 +124,19 @@ public class CloudDNSProvider extends BasicProvider {
         @Singleton
         Closeable provideCloseable(CloudDNSApi api) {
             return api;
+        }
+    }
+
+    // fixed in jclouds 1.6.1
+    static class PaginationFixRecordsToPagedIterable extends RecordsToPagedIterable {
+        @Inject
+        protected PaginationFixRecordsToPagedIterable(CloudDNSApi api) {
+            super(api);
+        }
+
+        @Override
+        protected List<Object> getArgs(GeneratedHttpRequest request) {
+            return request.getCaller().get().getArgs();
         }
     }
 
