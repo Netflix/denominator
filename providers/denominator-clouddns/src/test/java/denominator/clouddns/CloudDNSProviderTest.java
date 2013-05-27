@@ -11,12 +11,14 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
 import dagger.ObjectGraph;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.Credentials.MapCredentials;
 
 public class CloudDNSProviderTest {
     private static final Provider PROVIDER = new CloudDNSProvider();
@@ -39,6 +41,10 @@ public class CloudDNSProviderTest {
         DNSApiManager manager = create(PROVIDER, credentials("username", "apiKey"));
         assertEquals(manager.getApi().getZoneApi().getClass(), CloudDNSZoneApi.class);
         manager = create("clouddns", credentials("username", "apiKey"));
+        assertEquals(manager.getApi().getZoneApi().getClass(), CloudDNSZoneApi.class);
+        manager = create("clouddns", credentials(MapCredentials.from(ImmutableMap.<String, String> builder()
+                                                               .put("username", "U")
+                                                               .put("apiKey", "K").build())));
         assertEquals(manager.getApi().getZoneApi().getClass(), CloudDNSZoneApi.class);
     }
 

@@ -6,6 +6,7 @@ import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
 
 import java.io.Closeable;
 import java.net.URI;
+import java.util.List;
 import java.util.Properties;
 
 import javax.inject.Inject;
@@ -132,7 +133,7 @@ public class CloudDNSProvider extends BasicProvider {
 
         @Override
         public org.jclouds.domain.Credentials get() {
-            ListCredentials creds = ListCredentials.class.cast(provider.get());
+            List<Object> creds = ListCredentials.asList(provider.get());
             return new org.jclouds.domain.Credentials(creds.get(0).toString(), creds.get(1).toString());
         }
     }
