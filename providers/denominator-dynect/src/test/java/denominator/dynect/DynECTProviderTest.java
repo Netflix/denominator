@@ -11,12 +11,14 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
 import dagger.ObjectGraph;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.Credentials.MapCredentials;
 
 public class DynECTProviderTest {
     private static final Provider PROVIDER = new DynECTProvider();
@@ -39,6 +41,11 @@ public class DynECTProviderTest {
         DNSApiManager manager = create(PROVIDER, credentials("customer", "username", "password"));
         assertEquals(manager.getApi().getZoneApi().getClass(), DynECTZoneApi.class);
         manager = create("dynect", credentials("customer", "username", "password"));
+        assertEquals(manager.getApi().getZoneApi().getClass(), DynECTZoneApi.class);
+        manager = create("dynect", credentials(MapCredentials.from(ImmutableMap.<String, String> builder()
+                                                             .put("customer", "C")
+                                                             .put("username", "U")
+                                                             .put("password", "P").build())));
         assertEquals(manager.getApi().getZoneApi().getClass(), DynECTZoneApi.class);
     }
 
