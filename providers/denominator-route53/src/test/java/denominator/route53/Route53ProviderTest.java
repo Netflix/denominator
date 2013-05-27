@@ -11,12 +11,14 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
 import dagger.ObjectGraph;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.Credentials.MapCredentials;
 
 public class Route53ProviderTest {
     private static final Provider PROVIDER = new Route53Provider();
@@ -40,6 +42,10 @@ public class Route53ProviderTest {
         DNSApiManager manager = create(PROVIDER, credentials("accesskey", "secretkey"));
         assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
         manager = create("route53", credentials("accesskey", "secretkey"));
+        assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
+        manager = create("route53", credentials(MapCredentials.from(ImmutableMap.<String, String> builder()
+                                                              .put("accesskey", "A")
+                                                              .put("secretkey", "S").build())));
         assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
     }
 
