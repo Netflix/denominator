@@ -1,9 +1,14 @@
 package denominator.cli;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
+import java.io.IOException;
+import java.net.URL;
 import java.util.Iterator;
+import java.util.Map;
 
+import denominator.Credentials;
 import org.testng.annotations.Test;
 
 import com.google.common.base.Joiner;
@@ -26,6 +31,7 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.mock.MockProvider;
+import org.yaml.snakeyaml.Yaml;
 
 @Test
 public class DenominatorTest {
@@ -61,6 +67,109 @@ public class DenominatorTest {
         zoneList.providerName = "mock";
         zoneList.url = "mem:mock2";
         zoneList.run();
+    }
+
+    @Test
+    public void testCredentialsFromYaml() {
+        String yaml = getTestYaml();
+        ZoneList zoneList = new ZoneList();
+        zoneList.name = "blah1";
+        Map<String, ?> credentials = (Map<String, ?>) zoneList.getConfigFromYaml(yaml).get("credentials");
+        assertEquals(credentials.get("accessKey"), "foo1");
+        assertEquals(credentials.get("secretKey"), "foo2");
+    }
+
+    private String getTestYaml() {
+        return "name: blah1\n" +
+            "provider: route53\n" +
+            "credentials:\n" +
+            "  accessKey: foo1\n" +
+            "  secretKey: foo2\n" +
+            "---\n" +
+            "name: blah2\n" +
+            "provider: mock\n" +
+            "credentials:\n" +
+            "  accessKey: foo3\n" +
+            "  secretKey: foo4\n" +
+            "  sessionToken: foo5\n" +
+            "\n";
+    }
+
+    @Test
+    public void testFileContentsFromPath() {
+        ZoneList zoneList = new ZoneList();
+        String contents = null;
+        try {
+            contents = zoneList.getFileContentsFromPath(getTestConfigPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        assertEquals(contents, getTestYaml());
+    }
+
+    @Test(description = "denominator -C test-config.yml -n blah2 zone list")
+    public void testConfigArgMock() {
+        ZoneList zoneList = new ZoneList() {
+            @Override
+            public Iterator<String> doRun(DNSApiManager mgr) {
+                assertEquals(configPath, getTestConfigPath());
+                Map<String, ?> configFromFile = getConfigFromFile();
+                assertEquals(configFromFile.get("provider"), "mock");
+                Map<String, String> credentials = (Map<String, String>) configFromFile.get("credentials");
+                assertEquals(credentials.get("accessKey"), "foo3");
+                assertEquals(credentials.get("secretKey"), "foo4");
+                assertEquals(credentials.get("sessionToken"), "foo5");
+                return Iterators.emptyIterator();
+            }
+        };
+        zoneList.name = "blah2";
+        zoneList.configPath = getTestConfigPath();
+        zoneList.run();
+    }
+
+    @Test(description = "denominator -C test-config.yml -n blah1 zone list")
+    public void testConfigArgRoute53() {
+        ZoneList zoneList = new ZoneList() {
+            @Override
+            public Iterator<String> doRun(DNSApiManager mgr) {
+                assertEquals(configPath, getTestConfigPath());
+                Map<String, ?> configFromFile = getConfigFromFile();
+                assertEquals(configFromFile.get("provider"), "route53");
+                Map<String, String> credentials = (Map<String, String>) configFromFile.get("credentials");
+                assertEquals(credentials.get("accessKey"), "foo1");
+                assertEquals(credentials.get("secretKey"), "foo2");
+                return Iterators.emptyIterator();
+            }
+        };
+        zoneList.name = "blah1";
+        zoneList.configPath = getTestConfigPath();
+        zoneList.run();
+    }
+
+    @Test(description = "denominator -C test-config.yml -p route53 -c user pass -n blah1 zone list")
+    public void testConfigArgWithCliOverride() {
+        ZoneList zoneList = new ZoneList() {
+            @Override
+            public Iterator<String> doRun(DNSApiManager mgr) {
+                assertEquals(credentialArgs.get(0), "user");
+                assertEquals(credentialArgs.get(1), "pass");
+                // CLI credential args should override config file args
+                assertTrue(credentials instanceof Credentials.ListCredentials);
+                assertEquals(Credentials.ListCredentials.class.cast(credentials).get(0), "user");
+                assertEquals(Credentials.ListCredentials.class.cast(credentials).get(1), "pass");
+                return Iterators.emptyIterator();
+            }
+        };
+        zoneList.name = "blah1";
+        zoneList.providerName = "route53";
+        zoneList.configPath = getTestConfigPath();
+        zoneList.credentialArgs = ImmutableList.of("user", "pass").asList();
+        zoneList.run();
+    }
+
+    private String getTestConfigPath() {
+        URL res = getClass().getClassLoader().getResource("test-config.yml");
+        return res != null ? res.getFile() : null;
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. list")
