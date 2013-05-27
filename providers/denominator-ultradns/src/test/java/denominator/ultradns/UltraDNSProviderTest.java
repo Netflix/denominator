@@ -11,10 +11,12 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
 import dagger.ObjectGraph;
+import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
 
@@ -39,6 +41,10 @@ public class UltraDNSProviderTest {
         DNSApiManager manager = create(PROVIDER, credentials("username", "password"));
         assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
         manager = create("ultradns", credentials("username", "password"));
+        assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
+        manager = create("ultradns", credentials(MapCredentials.from(ImmutableMap.<String, String> builder()
+                                                               .put("username", "U")
+                                                               .put("password", "P").build())));
         assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
     }
 
