@@ -4,13 +4,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.transform;
 import static denominator.model.ResourceRecordSets.typeEqualTo;
 import static denominator.ultradns.UltraDNSPredicates.isGeolocationPool;
 import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType.IPV4;
 import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType.IPV6;
 
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -79,44 +77,33 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
                 .transform(new Function<DirectionalPool, Iterator<ResourceRecordSet<?>>>() {
                     @Override
                     public Iterator<ResourceRecordSet<?>> apply(DirectionalPool pool) {
-                        return allByDName(pool.getDName());
+                        return iteratorForDNameAndDirectionalType(pool.getDName(), 0);
                     }
                 }).iterator());
     }
 
-    private Iterator<ResourceRecordSet<?>> allByDName(final String dname) {
-        // TODO: remove when type "0" can be specified (UMP-5738 Dodgers release of UltraDNS)
-        return concat(transform(EnumSet.allOf(RecordType.class).iterator(),
-                new Function<RecordType, Iterator<ResourceRecordSet<?>>>() {
-                    @Override
-                    public Iterator<ResourceRecordSet<?>> apply(RecordType input) {
-                        return iteratorForDNameAndDirectionalType(dname, input);
-                    }
-                }));
-    }
-
     @Override
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        return allByDName(checkNotNull(name, "name"));
+        return iteratorForDNameAndDirectionalType(checkNotNull(name, "name"), 0);
     }
 
     @Override
-    public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, final String type) {
+    public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
         if ("CNAME".equals(type)) {
             // retain original type (this will filter out A, AAAA)
             return filter(
-                    concat(iteratorForDNameAndDirectionalType(name, IPV4), 
-                           iteratorForDNameAndDirectionalType(name, IPV6)),
+                    concat(iteratorForDNameAndDirectionalType(name, IPV4.getCode()), 
+                           iteratorForDNameAndDirectionalType(name, IPV6.getCode())),
                     typeEqualTo(type));
         } else if ("A".equals(type) || "AAAA".equals(type)) {
             RecordType dirType = "AAAA".equals(type) ? IPV6 : IPV4;
-            Iterator<ResourceRecordSet<?>> iterator = iteratorForDNameAndDirectionalType(name, dirType);
+            Iterator<ResourceRecordSet<?>> iterator = iteratorForDNameAndDirectionalType(name, dirType.getCode());
             // retain original type (this will filter out CNAMEs)
             return filter(iterator, typeEqualTo(type));
         } else {
-            return iteratorForDNameAndDirectionalType(name, RecordType.valueOf(type));
+            return iteratorForDNameAndDirectionalType(name, RecordType.valueOf(type).getCode());
         }
     }
 
@@ -193,8 +180,8 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
         }
     }
 
-    private Iterator<ResourceRecordSet<?>> iteratorForDNameAndDirectionalType(String name, RecordType dirType) {
-        return iteratorFactory.create(poolApi.listRecordsByDNameAndType(name, dirType.getCode())
+    private Iterator<ResourceRecordSet<?>> iteratorForDNameAndDirectionalType(String name, int dirType) {
+        return iteratorFactory.create(poolApi.listRecordsByDNameAndType(name, dirType)
                                              .toSortedList(byTypeAndGeoGroup).iterator());
     }
 

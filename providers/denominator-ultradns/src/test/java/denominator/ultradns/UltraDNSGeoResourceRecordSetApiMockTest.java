@@ -140,11 +140,15 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     private String getAccountsListOfUserResponse = "<soap:Envelope><soap:Body><ns1:getAccountsListOfUserResponse><AccountsList><ns2:AccountDetailsData accountID=\"AAAAAAAAAAAAAAAA\" accountName=\"denominator\" /></AccountsList></ns1:getAccountsListOfUserResponse></soap:Body></soap:Envelope>";
     private String getAvailableRegions = format(SOAP_TEMPLATE, "<v01:getAvailableRegions/>");
     private String getAvailableRegionsResponse;
+    private String getDirectionalPoolsOfZone = format(SOAP_TEMPLATE, "<v01:getDirectionalPoolsOfZone><zoneName>denominator.io.</zoneName></v01:getDirectionalPoolsOfZone>");
+    private String getDirectionalPoolsOfZoneResponse;
     private String getDirectionalDNSGroupDetails = format(SOAP_TEMPLATE,
             "<v01:getDirectionalDNSGroupDetails><GroupId>%s</GroupId></v01:getDirectionalDNSGroupDetails>");
     private String getDirectionalDNSRecordsForHostTemplate = format(
             SOAP_TEMPLATE,
             "<v01:getDirectionalDNSRecordsForHost><zoneName>%s</zoneName><hostName>%s</hostName><poolRecordType>%s</poolRecordType></v01:getDirectionalDNSRecordsForHost>");
+    private String getDirectionalDNSRecordsForHost = format(getDirectionalDNSRecordsForHostTemplate,
+            "denominator.io.", "srv.denominator.io.", 0);
     private String getDirectionalDNSRecordsForHostIPV4 = format(getDirectionalDNSRecordsForHostTemplate,
             "denominator.io.", "srv.denominator.io.", 1);
     private String getDirectionalDNSRecordsForHostIPV4Response;
@@ -154,6 +158,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
 
     UltraDNSGeoResourceRecordSetApiMockTest() throws IOException {
         getAvailableRegionsResponse = toStringAndClose(getResource("getAvailableRegionsResponse.xml").openStream());
+        getDirectionalPoolsOfZoneResponse = toStringAndClose(getResource("getDirectionalPoolsOfZoneResponse.xml").openStream());
         getDirectionalDNSRecordsForHostIPV4Response = toStringAndClose(getResource(
                 "getDirectionalDNSRecordsForHostResponse.xml").openStream());
         getDirectionalDNSGroupDetailsResponseEurope = toStringAndClose(getResource(
@@ -168,7 +173,104 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
 
     private String getDirectionalDNSRecordsForHostIPV6 = format(getDirectionalDNSRecordsForHostTemplate, "denominator.io.", "srv.denominator.io.", 28);
     private String noDirectionalDNSRecordsForHostResponse = "<soap:Envelope><soap:Body><ns1:getDirectionalDNSRecordsForHostResponse /></soap:Body></soap:Envelope>";
-    
+
+    @Test
+    public void listWhenPresent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalPoolsOfZoneResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForHostIPV4Response));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEverywhereElse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseUS));
+        server.play();
+
+        try {
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
+                         
+            Iterator<ResourceRecordSet<?>> iterator = api.list();
+            assertEquals(iterator.next().toString(), europe.toString());
+            assertEquals(iterator.next().toString(), everywhereElse.toString());
+            assertEquals(iterator.next().toString(), us.toString());
+            assertFalse(iterator.hasNext());
+
+            assertEquals(server.getRequestCount(), 7);
+
+            RecordedRequest getAvailableRegions = server.takeRequest();
+            assertEquals(getAvailableRegions.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAvailableRegions.getBody()), this.getAvailableRegions);
+
+            RecordedRequest getAccountsListOfUser = server.takeRequest();
+            assertEquals(getAccountsListOfUser.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAccountsListOfUser.getBody()), this.getAccountsListOfUser);
+
+            RecordedRequest getDirectionalPoolsOfZone = server.takeRequest();
+            assertEquals(getAccountsListOfUser.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getDirectionalPoolsOfZone.getBody()), this.getDirectionalPoolsOfZone);
+
+            RecordedRequest getDirectionalDNSRecordsForHostIPV4 = server.takeRequest();
+            assertEquals(getDirectionalDNSRecordsForHostIPV4.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getDirectionalDNSRecordsForHostIPV4.getBody()), this.getDirectionalDNSRecordsForHost);
+
+            for (String groupId : ImmutableList.of("C000000000000001", "C000000000000003", "C000000000000002")) {
+                RecordedRequest getDirectionalDNSGroupDetails = server.takeRequest();
+                assertEquals(getDirectionalDNSGroupDetails.getRequestLine(), "POST / HTTP/1.1");
+                assertEquals(new String(getDirectionalDNSGroupDetails.getBody()),
+                        format(this.getDirectionalDNSGroupDetails, groupId));
+            }
+
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void listByNameWhenPresent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForHostIPV4Response));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEverywhereElse));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseUS));
+        server.play();
+
+        try {
+            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
+                         
+            Iterator<ResourceRecordSet<?>> iterator = api.listByName("srv.denominator.io.");
+            assertEquals(iterator.next().toString(), europe.toString());
+            assertEquals(iterator.next().toString(), everywhereElse.toString());
+            assertEquals(iterator.next().toString(), us.toString());
+            assertFalse(iterator.hasNext());
+
+            assertEquals(server.getRequestCount(), 6);
+
+            RecordedRequest getAvailableRegions = server.takeRequest();
+            assertEquals(getAvailableRegions.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAvailableRegions.getBody()), this.getAvailableRegions);
+
+            RecordedRequest getAccountsListOfUser = server.takeRequest();
+            assertEquals(getAccountsListOfUser.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getAccountsListOfUser.getBody()), this.getAccountsListOfUser);
+            
+            RecordedRequest getDirectionalDNSRecordsForHostIPV4 = server.takeRequest();
+            assertEquals(getDirectionalDNSRecordsForHostIPV4.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getDirectionalDNSRecordsForHostIPV4.getBody()), this.getDirectionalDNSRecordsForHost);
+
+            for (String groupId : ImmutableList.of("C000000000000001", "C000000000000003", "C000000000000002")) {
+                RecordedRequest getDirectionalDNSGroupDetails = server.takeRequest();
+                assertEquals(getDirectionalDNSGroupDetails.getRequestLine(), "POST / HTTP/1.1");
+                assertEquals(new String(getDirectionalDNSGroupDetails.getBody()),
+                        format(this.getDirectionalDNSGroupDetails, groupId));
+            }
+
+        } finally {
+            server.shutdown();
+        }
+    }
+
     @Test
     public void listByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
