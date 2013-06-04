@@ -1,9 +1,12 @@
 package denominator.cli;
+import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.io.Closeables.closeQuietly;
-import static denominator.Credentials.ListCredentials.from;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.provider;
 import static java.lang.String.format;
+
+import com.google.common.base.Strings;
+import denominator.Credentials;
 import io.airlift.command.Cli;
 import io.airlift.command.Cli.CliBuilder;
 import io.airlift.command.Command;
@@ -11,14 +14,21 @@ import io.airlift.command.Help;
 import io.airlift.command.Option;
 import io.airlift.command.OptionType;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.io.Files;
 
 import dagger.ObjectGraph;
 import denominator.DNSApiManager;
@@ -41,6 +51,8 @@ import denominator.dynect.DynECTProvider;
 import denominator.mock.MockProvider;
 import denominator.route53.Route53Provider;
 import denominator.ultradns.UltraDNSProvider;
+
+import org.yaml.snakeyaml.Yaml;
 
 public class Denominator {
     public static void main(String[] args) {
@@ -120,7 +132,7 @@ public class Denominator {
     }
 
     public static abstract class DenominatorCommand implements Runnable {
-        @Option(type = OptionType.GLOBAL, required = true, name = { "-p", "--provider" }, description = "provider to affect")
+        @Option(type = OptionType.GLOBAL, name = { "-p", "--provider" }, description = "provider to affect")
         public String providerName;
 
         @Option(type = OptionType.GLOBAL, name = { "-u", "--url" }, description = "alternative api url to connect to")
@@ -129,10 +141,27 @@ public class Denominator {
         @Option(type = OptionType.GLOBAL, name = { "-c", "--credential" }, description = "adds a credential argument (execute denominator providers for what these are)")
         public List<String> credentialArgs;
 
+        @Option(type = OptionType.GLOBAL, name = { "-C", "--config" }, description = "path to configuration file (used to store credentials)")
+        public String configPath;
+
+        @Option(type = OptionType.GLOBAL, name = { "-n", "--name" }, description = "unique name of provider configuration")
+        public String name;
+
+        protected Credentials credentials;
+
         public void run() {
+            if (providerName != null && credentialArgs != null) {
+                credentials = Credentials.ListCredentials.from(credentialArgs);
+            } else if (configPath != null) {
+                Map<String, ?> configFromFile = getConfigFromFile();
+                if (configFromFile != null) {
+                    credentials = Credentials.MapCredentials.from((Map<String, ?>) configFromFile.get("credentials"));
+                    providerName = (String) configFromFile.get("provider");
+                }
+            }
             Builder<Object> modulesForGraph = ImmutableList.builder().add(provider(newProvider())).add(newModule());
-            if (credentialArgs != null)
-                modulesForGraph.add(credentials(from(credentialArgs)));
+            if (credentials != null)
+                modulesForGraph.add(credentials(credentials));
             DNSApiManager mgr = null;
             try {
                 mgr = ObjectGraph.create(modulesForGraph.build().toArray()).get(DNSApiManager.class);
@@ -141,7 +170,40 @@ public class Denominator {
             } finally {
                 closeQuietly(mgr);
             }
-            
+        }
+
+        /**
+         * Load configuration for given name from a YAML configuration file.
+         */
+        Map<String, ?> getConfigFromFile() {
+            if (configPath == null)
+                return null;
+            String configFileContent = null;
+            try {
+                configFileContent = getFileContentsFromPath(configPath);
+            } catch (IOException e) {
+                System.err.println("configuration file not found: " + e.getMessage());
+                System.exit(1);
+            }
+            return getConfigFromYaml(configFileContent);
+        }
+
+        Map<String, ?> getConfigFromYaml(String yamlAsString) {
+            Yaml yaml = new Yaml();
+            Iterable<Object> configs = yaml.loadAll(yamlAsString);
+            Object providerConf = FluentIterable.from(configs).firstMatch(new Predicate<Object>() {
+                @Override
+                public boolean apply(Object input) {
+                    return name.equals(Map.class.cast(input).get("name"));
+                }
+            }).get();
+            return Map.class.cast(providerConf);
+        }
+
+        String getFileContentsFromPath(String path) throws IOException {
+            if (path.startsWith("~"))
+                path = System.getProperty("user.home") + path.substring(1);
+            return Files.toString(new File(path), Charsets.UTF_8);
         }
 
         /**

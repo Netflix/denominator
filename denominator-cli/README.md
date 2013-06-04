@@ -12,6 +12,30 @@ Here's how to get denominator-cli `1.1.3` from [bintray](https://bintray.com/pkg
 ## Building
 To build the cli, execute `./gradlew clean test install` from the root of your denominator clone.  The binary will end up at `/denominator-cli/build/denominator`
 
+## Configuring
+
+You may optionally use a configuration file in YAML format to define named providers and credentials for each.
+
+Here's an example of a configuration file:
+
+```
+name: route53-test
+provider: route53
+credentials:
+  accessKey: foo1
+  secretKey: foo2
+---
+name: ultradns-prod
+provider: ultradns
+credentials:
+  username: your_username
+  password: your_password
+```
+
+Then use the `-C` arg to define the path to the configuration file and the `-n` arg to select the named provider.
+
+For example, `./denominator -C /path/to/config.yml -n route53-test zone`
+
 ## Running
 denominator will print out a help statement, but here's the gist.
 
