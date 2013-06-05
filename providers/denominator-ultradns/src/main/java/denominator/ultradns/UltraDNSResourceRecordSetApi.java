@@ -2,10 +2,7 @@ package denominator.ultradns;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.Lists.newArrayList;
-import static denominator.model.ResourceRecordSets.nameEqualTo;
-import static denominator.model.ResourceRecordSets.typeEqualTo;
 import static denominator.ultradns.UltraDNSFunctions.toRdataMap;
 
 import java.util.Iterator;
@@ -20,9 +17,7 @@ import org.jclouds.ultradns.ws.domain.ResourceRecordDetail;
 import org.jclouds.ultradns.ws.features.ResourceRecordApi;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
 
 import denominator.ResourceRecordSetApi;
@@ -30,21 +25,6 @@ import denominator.ResourceTypeToValue;
 import denominator.model.ResourceRecordSet;
 
 public final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSetApi {
-    static final class Factory implements denominator.ResourceRecordSetApi.Factory {
-
-        private final UltraDNSWSApi api;
-
-        @Inject
-        Factory(UltraDNSWSApi api) {
-            this.api = api;
-        }
-
-        @Override
-        public ResourceRecordSetApi create(final String zoneName) {
-            return new UltraDNSResourceRecordSetApi(api.getResourceRecordApiForZone(zoneName),
-                    new UltraDNSRoundRobinPoolApi(api.getRoundRobinPoolApiForZone(zoneName)));
-        }
-    }
 
     private final ResourceRecordApi api;
     private final UltraDNSRoundRobinPoolApi roundRobinPoolApi;
@@ -64,31 +44,27 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     @Override
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
         checkNotNull(name, "name");
-        // TODO: temporary until listByNameAndType() works with NS records where
-        // name = zoneName
-        return Iterators.filter(list(), nameEqualTo(name));
+        Iterator<ResourceRecordDetail> orderedRecords = api.listByName(name)
+                .toSortedList(byNameTypeAndCreateDate).iterator();
+        return new GroupByRecordNameAndTypeIterator(orderedRecords);
     }
 
     @Override
     public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        // TODO: temporary until listByNameAndType() works with NS records where
-        // name = zoneName
-        return Iterators.tryFind(list(), and(nameEqualTo(name), typeEqualTo(type)));
+        Iterator<ResourceRecordDetail> orderedRecords = referencesByNameAndType(name, type).iterator();
+        Iterator<ResourceRecordSet<?>> rrset = new GroupByRecordNameAndTypeIterator(orderedRecords);
+        if (rrset.hasNext())
+            return Optional.<ResourceRecordSet<?>> of(rrset.next());
+        return Optional.<ResourceRecordSet<?>> absent();
     }
 
-    private List<ResourceRecordDetail> referencesByNameAndType(final String name, String type) {
+    private List<ResourceRecordDetail> referencesByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        final int typeValue = checkNotNull(new ResourceTypeToValue().get(type), "typeValue for %s", type);
-        // TODO: temporary until listByNameAndType() works with NS records where
-        // name = zoneName
-        return api.list().filter(new Predicate<ResourceRecordDetail>() {
-            public boolean apply(ResourceRecordDetail in) {
-                return name.equals(in.getRecord().getName()) && typeValue == in.getRecord().getType();
-            }
-        }).toSortedList(byNameTypeAndCreateDate);
+        int typeValue = checkNotNull(new ResourceTypeToValue().get(type), "typeValue for %s", type);
+        return api.listByNameAndType(name, typeValue).toSortedList(byNameTypeAndCreateDate);
     }
 
     private static final int defaultTTL = 300;
@@ -225,9 +201,31 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
             return ComparisonChain.start()
                                   .compare(left.getRecord().getName(), right.getRecord().getName())
                                   .compare(left.getRecord().getType(), right.getRecord().getType())
+                                  // insertion order attempt
                                   .compare(left.getCreated(), right.getCreated())
+                                  // UMP-5803 the order returned in getResourceRecordsOfZoneResponse 
+                                  // is different than getResourceRecordsOfDNameByTypeResponse.
+                                  // We fallback to ordering by rdata to ensure consistent ordering.
+                                  .compare(left.getRecord().getRData().toString(),
+                                          right.getRecord().getRData().toString())
                                   .result();
         }
 
     };
+
+    static final class Factory implements denominator.ResourceRecordSetApi.Factory {
+
+        private final UltraDNSWSApi api;
+
+        @Inject
+        Factory(UltraDNSWSApi api) {
+            this.api = api;
+        }
+
+        @Override
+        public ResourceRecordSetApi create(final String zoneName) {
+            return new UltraDNSResourceRecordSetApi(api.getResourceRecordApiForZone(zoneName),
+                    new UltraDNSRoundRobinPoolApi(api.getRoundRobinPoolApiForZone(zoneName)));
+        }
+    }
 }

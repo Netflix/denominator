@@ -23,14 +23,39 @@ import denominator.ResourceRecordSetApi;
 
 @Test(singleThreaded = true)
 public class UltraDNSResourceRecordSetApiMockTest {
-
-    private String getResourceRecordsOfZone = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:getResourceRecordsOfZone><zoneName>denominator.io.</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone></soapenv:Body></soapenv:Envelope>";
+    private String getResourceRecordsOfZone = format(SOAP_TEMPLATE, "<v01:getResourceRecordsOfZone><zoneName>denominator.io.</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone>");
 
     private String getResourceRecordsOfZoneResponseHeader = "<?xml version=\"1.0\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:getResourceRecordsOfZoneResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><ResourceRecordList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">";
     private String getResourceRecordsOfZoneResponseFooter = "</ResourceRecordList></ns1:getResourceRecordsOfZoneResponse></soap:Body></soap:Envelope>";
 
     private String noRecords = new StringBuilder(getResourceRecordsOfZoneResponseHeader)
                                     .append(getResourceRecordsOfZoneResponseFooter).toString();
+
+    @Test
+    public void listWhenNoneMatch() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
+        server.play();
+
+        try {
+            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            assertFalse(api.list().hasNext());
+
+            assertEquals(server.getRequestCount(), 1);
+
+            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
+            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    private String getResourceRecordsOfDNameByTypeTemplate = format(
+            SOAP_TEMPLATE,
+            "<v01:getResourceRecordsOfDNameByType><zoneName>denominator.io.</zoneName><hostName>%s</hostName><rrType>%s</rrType></v01:getResourceRecordsOfDNameByType>");
+    private String getResourceRecordsOfDNameByTypeAll = format(getResourceRecordsOfDNameByTypeTemplate,
+            "www.denominator.io.", 0);
 
     @Test
     public void listByNameWhenNoneMatch() throws IOException, InterruptedException {
@@ -46,7 +71,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeAll);
         } finally {
             server.shutdown();
         }
@@ -74,7 +99,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeAll);
         } finally {
             server.shutdown();
         }
@@ -93,7 +118,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
         } finally {
             server.shutdown();
         }
@@ -113,24 +138,23 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
         } finally {
             server.shutdown();
         }
     }
 
-    private String getLoadBalancingPoolsByZone = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:getLoadBalancingPoolsByZone><zoneName>denominator.io.</zoneName><lbPoolType>RR</lbPoolType></v01:getLoadBalancingPoolsByZone></soapenv:Body></soapenv:Envelope>";
-
+    private String getLoadBalancingPoolsByZone = format(SOAP_TEMPLATE, "<v01:getLoadBalancingPoolsByZone><zoneName>denominator.io.</zoneName><lbPoolType>RR</lbPoolType></v01:getLoadBalancingPoolsByZone>");
     private String getLoadBalancingPoolsByZoneResponseHeader = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:getLoadBalancingPoolsByZoneResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><LBPoolList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">";
     private String getLoadBalancingPoolsByZoneResponseFooter = "</LBPoolList></ns1:getLoadBalancingPoolsByZoneResponse></soap:Body></soap:Envelope>";
 
     private String noPools = new StringBuilder(getLoadBalancingPoolsByZoneResponseHeader).append(
             getLoadBalancingPoolsByZoneResponseFooter).toString();
 
-    private String addRRLBPoolTemplate = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:addRRLBPool><transactionID /><zoneName>denominator.io.</zoneName><hostName>www.denominator.io.</hostName><description>%s</description><poolRecordType>%s</poolRecordType><rrGUID /></v01:addRRLBPool></soapenv:Body></soapenv:Envelope>";
+    private String addRRLBPoolTemplate = format(SOAP_TEMPLATE, "<v01:addRRLBPool><transactionID /><zoneName>denominator.io.</zoneName><hostName>www.denominator.io.</hostName><description>%s</description><poolRecordType>%s</poolRecordType><rrGUID /></v01:addRRLBPool>");
     private String addRRLBPoolResponseTemplate = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:addRRLBPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><RRPoolID xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">%s</RRPoolID></ns1:addRRLBPoolResponse></soap:Body></soap:Envelope>";
 
-    private String addRecordToRRPoolTemplate = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:addRecordToRRPool><transactionID /><roundRobinRecord lbPoolID=\"%s\" info1Value=\"%s\" ZoneName=\"denominator.io.\" Type=\"%s\" TTL=\"%s\"/></v01:addRecordToRRPool></soapenv:Body></soapenv:Envelope>";
+    private String addRecordToRRPoolTemplate = format(SOAP_TEMPLATE, "<v01:addRecordToRRPool><transactionID /><roundRobinRecord lbPoolID=\"%s\" info1Value=\"%s\" ZoneName=\"denominator.io.\" Type=\"%s\" TTL=\"%s\"/></v01:addRecordToRRPool>");
     private String addRecordToRRPoolResponseTemplate = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:addRecordToRRPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><guid xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">%s</guid></ns1:addRecordToRRPoolResponse></soap:Body></soap:Envelope>";
 
     @Test
@@ -151,7 +175,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
 
             RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
             assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
@@ -169,6 +193,9 @@ public class UltraDNSResourceRecordSetApiMockTest {
             server.shutdown();
         }
     }
+
+    private String getResourceRecordsOfDNameByTypeA = format(getResourceRecordsOfDNameByTypeTemplate,
+            "www.denominator.io.", 1);
 
     private String poolNameAndIDTemplate = "<ns2:LBPoolData zoneid=\"0000000000000001\"><ns2:PoolData description=\"%s\" PoolId=\"%s\" PoolType=\"RD\" PoolDName=\"www.denominator.io.\" ResponseMethod=\"RR\"/></ns2:LBPoolData>";
     private String poolsForAandAAAA = new StringBuilder(getLoadBalancingPoolsByZoneResponseHeader)
@@ -193,7 +220,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
 
             RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
             assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
@@ -212,8 +239,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
             .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "192.0.2.1"))
             .append(getResourceRecordsOfZoneResponseFooter).toString();
 
-    private String getRRPoolRecordsTemplate = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:getRRPoolRecords><lbPoolId>%s</lbPoolId></v01:getRRPoolRecords></soapenv:Body></soapenv:Envelope>";
-
+    private String getRRPoolRecordsTemplate = format(SOAP_TEMPLATE, "<v01:getRRPoolRecords><lbPoolId>%s</lbPoolId></v01:getRRPoolRecords>");
     private String getRRPoolRecordsResponseHeader = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:getRRPoolRecordsResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><ResourceRecordList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">";
     private String getRRPoolRecordsResponseFooter = "</ResourceRecordList></ns1:getRRPoolRecordsResponse></soap:Body></soap:Envelope>";
 
@@ -221,10 +247,10 @@ public class UltraDNSResourceRecordSetApiMockTest {
             .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "192.0.2.1"))
             .append(getRRPoolRecordsResponseFooter).toString();
 
-    private String deleteRecordOfRRPoolTemplate = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:deleteRecordOfRRPool><transactionID /><guid>%s</guid></v01:deleteRecordOfRRPool></soapenv:Body></soapenv:Envelope>";
+    private String deleteRecordOfRRPoolTemplate = format(SOAP_TEMPLATE, "<v01:deleteRecordOfRRPool><transactionID /><guid>%s</guid></v01:deleteRecordOfRRPool>");
     private String deleteRecordOfRRPoolResponse = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:deleteRecordOfRRPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result></ns1:deleteRecordOfRRPoolResponse></soap:Body></soap:Envelope>";
 
-    private String deleteLBPoolTemplate = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body><v01:deleteLBPool><transactionID /><lbPoolID>%s</lbPoolID><DeleteAll>Yes</DeleteAll><retainRecordId /></v01:deleteLBPool></soapenv:Body></soapenv:Envelope>";
+    private String deleteLBPoolTemplate = format(SOAP_TEMPLATE, "<v01:deleteLBPool><transactionID /><lbPoolID>%s</lbPoolID><DeleteAll>Yes</DeleteAll><retainRecordId /></v01:deleteLBPool>");
     private String deleteLBPoolResponse = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:deleteLBPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result></ns1:deleteLBPoolResponse></soap:Body></soap:Envelope>";
 
     @Test
@@ -246,7 +272,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
 
             RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
             assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
@@ -289,7 +315,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
 
             RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
             assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
@@ -303,6 +329,9 @@ public class UltraDNSResourceRecordSetApiMockTest {
             server.shutdown();
         }
     }
+
+    private String getResourceRecordsOfDNameByTypeAAAA = format(getResourceRecordsOfDNameByTypeTemplate,
+            "www.denominator.io.", 28);
 
     @Test
     public void addFirstAAAACreatesRoundRobinPoolThenAddsRecordToIt() throws IOException, InterruptedException {
@@ -323,7 +352,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeAAAA);
 
             RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
             assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
@@ -360,7 +389,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
             RecordedRequest getResourceRecordsOfZone = server.takeRequest();
             assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeAAAA);
 
             RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
             assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
@@ -385,4 +414,6 @@ public class UltraDNSResourceRecordSetApiMockTest {
             }
         }, credentials("joe", "letmein")).getApi().getResourceRecordSetApiForZone("denominator.io.");
     }
+
+    private static final String SOAP_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body>%s</soapenv:Body></soapenv:Envelope>";
 }
