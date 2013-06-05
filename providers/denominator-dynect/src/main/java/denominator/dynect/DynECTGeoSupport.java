@@ -8,8 +8,6 @@ import java.util.Set;
 
 import javax.inject.Singleton;
 
-import org.jclouds.dynect.v3.domain.GeoRegionGroup;
-
 import com.google.common.base.Function;
 import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableMap;
@@ -105,8 +103,8 @@ public class DynECTGeoSupport {
     }
 
     /**
-     * {@link GeoRegionGroup#getCountries()} isn't organized, so we need a
-     * lookup table.
+     * {@link org.jclouds.dynect.v3.domain.GeoRegionGroup#getCountries()} isn't
+     * organized, so we need a lookup table.
      */
     @Provides
     @Singleton

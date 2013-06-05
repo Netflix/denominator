@@ -1,0 +1,55 @@
+{"status": "success",
+    "data": {
+        "cname_records": [],
+        "cert_records": [],
+        "dname_records": [],
+        "aaaa_records": [],
+        "ipseckey_records": [],
+        "loc_records": [],
+        "ptr_records": [],
+        "soa_records": [],
+        "kx_records": [],
+        "dnskey_records": [],
+        "naptr_records": [],
+        "rp_records": [],
+        "mx_records": [],
+        "key_records": [],
+        "px_records": [],
+        "ds_records": [],
+        "sshfp_records": [],
+        "ns_records": [],
+        "dhcid_records": [],
+        "srv_records": [],
+        "nsap_records": [],
+        "txt_records": [],
+        "spf_records": [],
+        "a_records": [{
+                "zone": "denominator.io",
+                "ttl": 3600,
+                "fqdn": "www.denominator.io",
+                "record_type": "A",
+                "rdata": {
+                    "address": "192.0.2.1"
+                },
+                "record_id": 1
+            }, {
+                "zone": "denominator.io",
+                "ttl": 3600,
+                "fqdn": "www.denominator.io",
+                "record_type": "A",
+                "rdata": {
+                    "address": "198.51.100.1"
+                },
+                "record_id": 2
+            }]
+        }
+    },
+    "job_id": 371281087,
+    "msgs": [{
+            "INFO": "get_tree: Here is your zone tree",
+            "SOURCE": "BLL",
+            "ERR_CD": null,
+            "LVL": "INFO"
+        }
+    ]
+}
