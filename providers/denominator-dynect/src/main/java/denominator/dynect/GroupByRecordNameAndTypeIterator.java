@@ -6,8 +6,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.jclouds.dynect.v3.domain.Record;
-import org.jclouds.dynect.v3.domain.RecordId;
-import org.jclouds.dynect.v3.features.RecordApi;
 
 import com.google.common.collect.PeekingIterator;
 
@@ -16,11 +14,9 @@ import denominator.model.ResourceRecordSet.Builder;
 
 class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>> {
 
-    private final PeekingIterator<RecordId> peekingIterator;
-    private final RecordApi api;
+    private final PeekingIterator<Record<?>> peekingIterator;
 
-    public GroupByRecordNameAndTypeIterator(RecordApi api, Iterator<RecordId> sortedIterator) {
-        this.api = api;
+    public GroupByRecordNameAndTypeIterator(Iterator<Record<?>> sortedIterator) {
         this.peekingIterator = peekingIterator(sortedIterator);
     }
 
@@ -31,21 +27,19 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
 
     @Override
     public ResourceRecordSet<?> next() {
-        Record<?> record = getRecord(api, peekingIterator.next());
-        // it is possible that the record was deleted between the list and the get
-        if (record == null)
-            return null;
+        Record<?> record = peekingIterator.next();
+
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
                                                                 .name(record.getFQDN())
                                                                 .type(record.getType())
                                                                 .ttl(record.getTTL())
                                                                 .add(record.getRData());
         while (hasNext()) {
-            RecordId next = peekingIterator.peek();
+            Record<?> next = peekingIterator.peek();
             if (next == null)
                 continue;
             if (fqdnAndTypeEquals(next, record)) {
-                builder.add(getRecord(api, peekingIterator.next()).getRData());
+                builder.add(peekingIterator.next().getRData());
             } else {
                 break;
             }
@@ -53,38 +47,12 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
         return builder.build();
     }
 
-    static Record<? extends Map<String, Object>> getRecord(RecordApi api, RecordId recordId) {
-        if ("A".equals(recordId.getType())) {
-            return api.getA(recordId.getFQDN(), recordId.getId());
-        } else if ("AAAA".equals(recordId.getType())) {
-            return api.getAAAA(recordId.getFQDN(), recordId.getId());
-        } else if ("CNAME".equals(recordId.getType())) {
-            return api.getCNAME(recordId.getFQDN(), recordId.getId());
-        } else if ("MX".equals(recordId.getType())) {
-            return api.getMX(recordId.getFQDN(), recordId.getId());
-        } else if ("NS".equals(recordId.getType())) {
-            return api.getNS(recordId.getFQDN(), recordId.getId());
-        } else if ("PTR".equals(recordId.getType())) {
-            return api.getPTR(recordId.getFQDN(), recordId.getId());
-        } else if ("SOA".equals(recordId.getType())) {
-            return api.getSOA(recordId.getFQDN(), recordId.getId());
-        } else if ("SRV".equals(recordId.getType())) {
-            return api.getSRV(recordId.getFQDN(), recordId.getId());
-        } else if ("SSHFP".equals(recordId.getType())) {
-            return api.getSSHFP(recordId.getFQDN(), recordId.getId());
-        } else if ("TXT".equals(recordId.getType())) {
-            return api.getTXT(recordId.getFQDN(), recordId.getId());
-        } else {
-            return api.get(recordId);
-        }
-    }
-
     @Override
     public void remove() {
         throw new UnsupportedOperationException();
     }
 
-    private static boolean fqdnAndTypeEquals(RecordId actual, RecordId expected) {
+    private static boolean fqdnAndTypeEquals(Record<?> actual, Record<?> expected) {
         return actual.getFQDN().equals(expected.getFQDN()) && actual.getType().equals(expected.getType());
     }
 }
