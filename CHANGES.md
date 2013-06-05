@@ -1,3 +1,10 @@
+### Version 1.1.4
+* New -C/--config commandline arg specifying the path to your provider configuration.
+* When changing geo groups in UltraDNS, territories are implicitly moved from other groups as necessary.
+* Better performance in UltraDNS when listing directional record sets.
+* Significant performance increase in DynECT list operations when zones have many records.
+* Fix pagination bug in Rackspace CloudDNS.
+
 ### Version 1.1.3
 * support use as a Dagger library.  ex. `ObjectGraph.create(provider(new UltraDNSProvider()), new UltraDNSProvider.Module(), credentials("username", "password"))`
 * expose Provider.getUrl and support dynamic url updates
