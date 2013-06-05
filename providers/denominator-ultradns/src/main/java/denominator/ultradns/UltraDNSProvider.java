@@ -7,6 +7,7 @@ import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
 import java.io.Closeable;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.inject.Inject;
@@ -14,10 +15,12 @@ import javax.inject.Singleton;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.concurrent.config.ExecutorServiceModule;
+import org.jclouds.http.HttpRequest;
 import org.jclouds.location.suppliers.ProviderURISupplier;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
 import org.jclouds.ultradns.ws.UltraDNSWSProviderMetadata;
+import org.jclouds.ultradns.ws.binders.DirectionalRecordAndGeoGroupToXML;
 import org.jclouds.ultradns.ws.domain.IdAndName;
 
 import com.google.common.base.Supplier;
@@ -87,6 +90,8 @@ public class UltraDNSProvider extends BasicProvider {
 
                                                           @Override
                                                           protected void configure() {
+                                                              bind(DirectionalRecordAndGeoGroupToXML.class)
+                                                               .to(ForceOverlapTransferDirectionalRecordAndGeoGroupToXML.class);
                                                               bind(ProviderURISupplier.class).toInstance(new ProviderURISupplier() {
 
                                                                   @Override
@@ -103,6 +108,21 @@ public class UltraDNSProvider extends BasicProvider {
                                                       })
                                                       .build())
                                  .buildApi(UltraDNSWSApi.class);
+        }
+
+        // JCLOUDS-110
+        private static class ForceOverlapTransferDirectionalRecordAndGeoGroupToXML extends
+                DirectionalRecordAndGeoGroupToXML {
+            @SuppressWarnings("unchecked")
+            @Override
+            public <R extends HttpRequest> R bindToRequest(R request, Map<String, Object> postParams) {
+                request = super.bindToRequest(request, postParams);
+                String patched = String.class
+                        .cast(request.getPayload().getRawContent())
+                        .replace("</GeolocationGroupDetails></UpdateDirectionalRecordData>",
+                                 "</GeolocationGroupDetails><forceOverlapTransfer>true</forceOverlapTransfer></UpdateDirectionalRecordData>");
+                return (R) request.toBuilder().payload(patched).build();
+            }
         }
 
         @Provides
