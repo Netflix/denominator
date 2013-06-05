@@ -1,0 +1,13 @@
+name: blah1
+provider: route53
+credentials:
+  accessKey: foo1
+  secretKey: foo2
+---
+name: blah2
+provider: mock
+credentials:
+  accessKey: foo3
+  secretKey: foo4
+  sessionToken: foo5
+

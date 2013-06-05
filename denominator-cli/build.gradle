@@ -20,6 +20,7 @@ dependencies {
   // to quiet error messages, not as we are using it
   compile     'org.slf4j:slf4j-jdk14:1.7.5'
   compile     'io.airlift:airline:0.5'
+  compile     'org.yaml:snakeyaml:1.12'
 }
 
 // create a self-contained jar that is executable
