@@ -385,7 +385,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             "A000000000000001",
             300,
             "srv-000000001.eu-west-1.elb.amazonaws.com.",
-            "<GeolocationGroupDetails groupName=\"Europe\" ><GeolocationGroupDefinitionData regionName=\"Europe\" territoryNames=\"Aland Islands\" /></GeolocationGroupDetails>");
+            "<GeolocationGroupDetails groupName=\"Europe\" ><GeolocationGroupDefinitionData regionName=\"Europe\" territoryNames=\"Aland Islands\" /></GeolocationGroupDetails><forceOverlapTransfer>true</forceOverlapTransfer>");
 
     @Test
     public void applyRegionsToNameTypeAndGroupWhenRegionsDiffer() throws IOException, InterruptedException {
