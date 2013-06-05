@@ -10,7 +10,6 @@ import java.util.Set;
 
 import javax.inject.Inject;
 
-import org.jclouds.dynect.v3.DynECTApi;
 import org.jclouds.dynect.v3.domain.GeoService;
 import org.jclouds.dynect.v3.domain.Node;
 
@@ -20,6 +19,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Multimap;
 
+import denominator.dynect.DynECTProvider.ReadOnlyApi;
 import denominator.model.ResourceRecordSet;
 import denominator.profile.GeoResourceRecordSetApi;
 
@@ -27,11 +27,11 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
 
     private final Set<String> types;
     private final Multimap<String, String> regions;
-    private final DynECTApi api;
+    private final ReadOnlyApi api;
     private final GeoServiceToResourceRecordSets geoToRRSets;
     private final String zoneFQDN;
 
-    DynECTGeoResourceRecordSetApi(Set<String> types, Multimap<String, String> regions, DynECTApi api,
+    DynECTGeoResourceRecordSetApi(Set<String> types, Multimap<String, String> regions, ReadOnlyApi api,
             GeoServiceToResourceRecordSets geoToRRSets, String zoneFQDN) {
         this.types = types;
         this.regions = regions;
@@ -82,10 +82,9 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
      * results.
      */
     private FluentIterable<GeoService> geoServices(final Predicate<Node> nodeFilter) {
-        return api.getGeoServiceApi().list()
-                                     .transform(getGeoService)
-                                     .filter(nodesMatching(nodeFilter))
-                                     .transform(retainNodes(nodeFilter));
+        return api.geos()
+                  .filter(nodesMatching(nodeFilter))
+                  .transform(retainNodes(nodeFilter));
     }
 
     @Override
@@ -97,13 +96,6 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
         throw new UnsupportedOperationException();
     }
-
-    private final Function<String, GeoService> getGeoService = new Function<String, GeoService>() {
-        @Override
-        public GeoService apply(String input) {
-            return api.getGeoServiceApi().get(input);
-        }
-    };
 
     private Function<GeoService, GeoService> retainNodes(final Predicate<Node> nodeFilter) {
         return new Function<GeoService, GeoService>() {
@@ -137,12 +129,12 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     static final class Factory implements GeoResourceRecordSetApi.Factory {
         private final Set<String> types;
         private final Multimap<String, String> regions;
-        private final DynECTApi api;
+        private final ReadOnlyApi api;
         private final GeoServiceToResourceRecordSets geoToRRSets;
 
         @Inject
         Factory(@denominator.config.profile.Geo Set<String> types,
-                @denominator.config.profile.Geo Multimap<String, String> regions, DynECTApi api,
+                @denominator.config.profile.Geo Multimap<String, String> regions, ReadOnlyApi api,
                 GeoServiceToResourceRecordSets geoToRRSets) {
             this.types = types;
             this.regions = regions;

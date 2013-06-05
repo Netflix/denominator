@@ -51,8 +51,8 @@ public class DynECTProviderDynamicUpdateMockTest {
 
             assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /alt/ARecord/denominator.io/www.denominator.io HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /alt/ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -88,9 +88,9 @@ public class DynECTProviderDynamicUpdateMockTest {
 
             assertEquals(server.getRequestCount(), 4);
             assertEquals(new String(server.takeRequest().getBody()), "{\"customer_name\":\"customer\",\"user_name\":\"joe\",\"password\":\"letmein\"}");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
             assertEquals(new String(server.takeRequest().getBody()), "{\"customer_name\":\"customer2\",\"user_name\":\"bob\",\"password\":\"comeon\"}");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
