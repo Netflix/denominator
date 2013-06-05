@@ -28,7 +28,6 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.3.8\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
     String noGeoServices = "{\"status\": \"success\", \"data\": [] }";
-    String geoServices = "{\"status\": \"success\", \"data\": [\"/REST/Geo/CCS/\"] }";
     String geoService;
 
     DynECTGeoResourceRecordSetApiMockTest() throws IOException{
@@ -73,7 +72,6 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void listWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(geoServices));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
         server.play();
 
@@ -85,10 +83,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             assertEquals(iterator.next(), fallback);
             assertFalse(iterator.hasNext());
 
-            assertEquals(server.getRequestCount(), 3);
+            assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo/CCS HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -98,7 +95,6 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void listByNameWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(geoServices));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
         server.play();
 
@@ -110,10 +106,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             assertEquals(iterator.next(), fallback);
             assertFalse(iterator.hasNext());
 
-            assertEquals(server.getRequestCount(), 3);
+            assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo/CCS HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -132,7 +127,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -142,7 +137,6 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void listByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(geoServices));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
         server.play();
 
@@ -154,10 +148,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             assertEquals(iterator.next(), fallback);
             assertFalse(iterator.hasNext());
 
-            assertEquals(server.getRequestCount(), 3);
+            assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo/CCS HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -176,7 +169,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -186,7 +179,6 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void getByNameTypeAndGroupWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(geoServices));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
         server.play();
 
@@ -194,10 +186,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
             assertEquals(api.getByNameTypeAndGroup("srv.denominator.io", "CNAME", "Fallback").get(), fallback);
 
-            assertEquals(server.getRequestCount(), 3);
+            assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo/CCS HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -216,7 +207,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }

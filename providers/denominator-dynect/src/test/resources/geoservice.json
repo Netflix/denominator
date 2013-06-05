@@ -1,5 +1,4 @@
-{"status": "success",
-    "data": {
+{"status": "success", "data": [{
         "active": "Y",
         "nodes": [{
                 "fqdn": "srv.denominator.io",
@@ -247,13 +246,4 @@
             }
         ],
         "ttl": 30
-    },
-    "job_id": 321488519,
-    "msgs": [{
-            "INFO": "detail: Here is your service",
-            "SOURCE": "BLL",
-            "ERR_CD": null,
-            "LVL": "INFO"
-        }
-    ]
-}
+    }], "job_id": 371281086, "msgs": [{"INFO": "GET: Found 1 services", "SOURCE": "BLL", "ERR_CD": null, "LVL": "INFO"}]}"

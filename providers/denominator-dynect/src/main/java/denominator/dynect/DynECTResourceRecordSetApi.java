@@ -2,10 +2,7 @@ package denominator.dynect;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.notNull;
-import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Ordering.usingToString;
-import static denominator.dynect.GroupByRecordNameAndTypeIterator.getRecord;
 
 import java.util.Iterator;
 import java.util.List;
@@ -18,53 +15,58 @@ import org.jclouds.dynect.v3.domain.CreateRecord;
 import org.jclouds.dynect.v3.domain.Record;
 import org.jclouds.dynect.v3.domain.RecordId;
 
-import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import denominator.ResourceRecordSetApi;
+import denominator.dynect.DynECTProvider.ReadOnlyApi;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 
 public final class DynECTResourceRecordSetApi implements denominator.ResourceRecordSetApi {
     static final class Factory implements denominator.ResourceRecordSetApi.Factory {
         private final DynECTApi api;
+        private final ReadOnlyApi roApi;
 
         @Inject
-        Factory(DynECTApi api) {
+        Factory(DynECTApi api, ReadOnlyApi roApi) {
             this.api = api;
+            this.roApi = roApi;
         }
 
         @Override
         public ResourceRecordSetApi create(String zoneName) {
             checkNotNull(zoneName, "zoneName was null");
-            return new DynECTResourceRecordSetApi(api, zoneName);
+            return new DynECTResourceRecordSetApi(api, roApi, zoneName);
         }
     }
 
     private final DynECTApi api;
+    private final ReadOnlyApi roApi;
     private final String zoneFQDN;
 
-    DynECTResourceRecordSetApi(DynECTApi api, String zoneFQDN) {
+    DynECTResourceRecordSetApi(DynECTApi api, ReadOnlyApi roApi, String zoneFQDN) {
         this.api = api;
+        this.roApi = roApi;
         this.zoneFQDN = zoneFQDN;
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
-        return groupByRecordNameAndType(api.getRecordApiForZone(zoneFQDN).list());
+        return groupByRecordNameAndType(FluentIterable.from(roApi.recordsInZone(zoneFQDN).values()));
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> listByName(String fqdn) {
         checkNotNull(fqdn, "fqdn was null");
-        return groupByRecordNameAndType(api.getRecordApiForZone(zoneFQDN).listByFQDN(fqdn));
+        return groupByRecordNameAndType(FluentIterable.from(roApi.recordsInZoneByName(zoneFQDN, fqdn).values()));
     }
 
     @Override
     public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
-        List<Record<?>> existingRecords = existingRecordsByNameAndType(name, type);
+        List<Record<?>> existingRecords = existing(name, type);
         if (existingRecords.isEmpty())
             return Optional.absent();
         
@@ -88,7 +90,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
         Optional<Integer> ttlToApply = rrset.getTTL();
 
-        List<Record<?>> existingRecords = existingRecordsByNameAndType(rrset.getName(), rrset.getType());
+        List<Record<?>> existingRecords = existing(rrset.getName(), rrset.getType());
 
         List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset);
 
@@ -123,7 +125,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     public void applyTTLToNameAndType(int ttl, String name, String type) {
         checkNotNull(ttl, "ttl");
 
-        List<Record<?>> existingRecords = existingRecordsByNameAndType(name, type);
+        List<Record<?>> existingRecords = existing(name, type);
         if (existingRecords.isEmpty())
             return;
 
@@ -155,7 +157,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
         int ttlToApply = rrset.getTTL().or(0);
 
-        List<Record<?>> existingRecords = existingRecordsByNameAndType(rrset.getName(), rrset.getType());
+        List<Record<?>> existingRecords = existing(rrset.getName(), rrset.getType());
 
         List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset);
 
@@ -180,45 +182,36 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         }
     }
 
-    private List<Record<?>> existingRecordsByNameAndType(String name, String type) {
-        return exisingRecordIdsByNameAndType(name, type).transform(new Function<RecordId, Record<?>>() {
-            public Record<?> apply(RecordId in) {
-                return getRecord(api.getRecordApiForZone(zoneFQDN), in);
-            }
-
-            public String toString() {
-                return "getRecord()";
-            }
-        }).filter(notNull()).toSortedList(usingToString());
-    }
-
     @Override
     public void remove(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
 
-        List<RecordId> keys = exisingRecordIdsByNameAndType(rrset.getName(), rrset.getType()).toList();
-        if (keys.isEmpty())
+        List<Record<?>> existingRecords = existing(rrset.getName(), rrset.getType());
+        if (existingRecords.isEmpty())
             return;
         boolean shouldPublish = false;
-        for (RecordId key : keys) {
-            Record<? extends Map<String, Object>> toEvaluate = getRecord(api.getRecordApiForZone(zoneFQDN), key);
+        for (Record<? extends Map<String, Object>> toEvaluate : existingRecords) {
             if (toEvaluate != null && rrset.contains(toEvaluate.getRData())) {
                 shouldPublish = true;
-                api.getRecordApiForZone(zoneFQDN).scheduleDelete(key);
+                api.getRecordApiForZone(zoneFQDN).scheduleDelete(toEvaluate);
             }
         }
         if (shouldPublish)
             api.getZoneApi().publish(zoneFQDN);
     }
 
+    ImmutableList<Record<? extends Map<String, Object>>> existing(String name, String type) {
+        return roApi.recordsInZoneByNameAndType(zoneFQDN, name, type).toList();
+    }
+
     @Override
     public void deleteByNameAndType(String name, String type) {
-        List<RecordId> keys = exisingRecordIdsByNameAndType(name, type).toList();
-        if (keys.isEmpty())
+        List<Record<?>> existingRecords = existing(name, type);
+        if (existingRecords.isEmpty())
             return;
         boolean shouldPublish = false;
-        for (RecordId key : keys) {
+        for (RecordId key : existingRecords) {
             shouldPublish = true;
             api.getRecordApiForZone(zoneFQDN).scheduleDelete(key);
         }
@@ -226,14 +219,8 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
             api.getZoneApi().publish(zoneFQDN);
     }
 
-    private Iterator<ResourceRecordSet<?>> groupByRecordNameAndType(FluentIterable<RecordId> recordIds) {
-        Iterator<RecordId> orderedKeys = recordIds.toSortedList(usingToString()).iterator();
-        return filter(new GroupByRecordNameAndTypeIterator(api.getRecordApiForZone(zoneFQDN), orderedKeys), notNull());
-    }
-
-    private FluentIterable<RecordId> exisingRecordIdsByNameAndType(String name, String type) {
-        checkNotNull(name, "name");
-        checkNotNull(type, "type");
-        return api.getRecordApiForZone(zoneFQDN).listByFQDNAndType(name, type);
+    private Iterator<ResourceRecordSet<?>> groupByRecordNameAndType(FluentIterable<Record<?>> records) {
+        Iterator<Record<?>> ordered = records.toSortedList(usingToString()).iterator();
+        return new GroupByRecordNameAndTypeIterator(ordered);
     }
 }
