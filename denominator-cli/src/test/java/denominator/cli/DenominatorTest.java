@@ -8,13 +8,13 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
 
-import denominator.Credentials;
 import org.testng.annotations.Test;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
 
+import denominator.Credentials;
 import denominator.DNSApiManager;
 import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
@@ -31,7 +31,6 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.mock.MockProvider;
-import org.yaml.snakeyaml.Yaml;
 
 @Test
 public class DenominatorTest {
@@ -74,7 +73,7 @@ public class DenominatorTest {
         String yaml = getTestYaml();
         ZoneList zoneList = new ZoneList();
         zoneList.name = "blah1";
-        Map<String, ?> credentials = (Map<String, ?>) zoneList.getConfigFromYaml(yaml).get("credentials");
+        Map<?, ?> credentials = Map.class.cast(zoneList.getConfigFromYaml(yaml).get("credentials"));
         assertEquals(credentials.get("accessKey"), "foo1");
         assertEquals(credentials.get("secretKey"), "foo2");
     }
@@ -113,9 +112,9 @@ public class DenominatorTest {
             @Override
             public Iterator<String> doRun(DNSApiManager mgr) {
                 assertEquals(configPath, getTestConfigPath());
-                Map<String, ?> configFromFile = getConfigFromFile();
+                Map<?, ?> configFromFile = getConfigFromFile();
                 assertEquals(configFromFile.get("provider"), "mock");
-                Map<String, String> credentials = (Map<String, String>) configFromFile.get("credentials");
+                Map<?, ?> credentials = Map.class.cast(configFromFile.get("credentials"));
                 assertEquals(credentials.get("accessKey"), "foo3");
                 assertEquals(credentials.get("secretKey"), "foo4");
                 assertEquals(credentials.get("sessionToken"), "foo5");
@@ -133,9 +132,9 @@ public class DenominatorTest {
             @Override
             public Iterator<String> doRun(DNSApiManager mgr) {
                 assertEquals(configPath, getTestConfigPath());
-                Map<String, ?> configFromFile = getConfigFromFile();
+                Map<?, ?> configFromFile = getConfigFromFile();
                 assertEquals(configFromFile.get("provider"), "route53");
-                Map<String, String> credentials = (Map<String, String>) configFromFile.get("credentials");
+                Map<?, ?> credentials = Map.class.cast(configFromFile.get("credentials"));
                 assertEquals(credentials.get("accessKey"), "foo1");
                 assertEquals(credentials.get("secretKey"), "foo2");
                 return Iterators.emptyIterator();
