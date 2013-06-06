@@ -1,12 +1,8 @@
 package denominator.cli;
-import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.io.Closeables.closeQuietly;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.provider;
 import static java.lang.String.format;
-
-import com.google.common.base.Strings;
-import denominator.Credentials;
 import io.airlift.command.Cli;
 import io.airlift.command.Cli.CliBuilder;
 import io.airlift.command.Command;
@@ -22,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.yaml.snakeyaml.Yaml;
+
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -31,6 +29,8 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.io.Files;
 
 import dagger.ObjectGraph;
+import denominator.Credentials;
+import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.Denominator.Version;
 import denominator.Provider;
@@ -51,8 +51,6 @@ import denominator.dynect.DynECTProvider;
 import denominator.mock.MockProvider;
 import denominator.route53.Route53Provider;
 import denominator.ultradns.UltraDNSProvider;
-
-import org.yaml.snakeyaml.Yaml;
 
 public class Denominator {
     public static void main(String[] args) {
@@ -149,14 +147,15 @@ public class Denominator {
 
         protected Credentials credentials;
 
+        @SuppressWarnings("unchecked")
         public void run() {
             if (providerName != null && credentialArgs != null) {
                 credentials = Credentials.ListCredentials.from(credentialArgs);
             } else if (configPath != null) {
-                Map<String, ?> configFromFile = getConfigFromFile();
+                Map<?, ?> configFromFile = getConfigFromFile();
                 if (configFromFile != null) {
-                    credentials = Credentials.MapCredentials.from((Map<String, ?>) configFromFile.get("credentials"));
-                    providerName = (String) configFromFile.get("provider");
+                    credentials = MapCredentials.from(Map.class.cast(configFromFile.get("credentials")));
+                    providerName = configFromFile.get("provider").toString();
                 }
             }
             Builder<Object> modulesForGraph = ImmutableList.builder().add(provider(newProvider())).add(newModule());
@@ -175,7 +174,7 @@ public class Denominator {
         /**
          * Load configuration for given name from a YAML configuration file.
          */
-        Map<String, ?> getConfigFromFile() {
+        Map<?, ?> getConfigFromFile() {
             if (configPath == null)
                 return null;
             String configFileContent = null;
@@ -188,7 +187,7 @@ public class Denominator {
             return getConfigFromYaml(configFileContent);
         }
 
-        Map<String, ?> getConfigFromYaml(String yamlAsString) {
+        Map<?, ?> getConfigFromYaml(String yamlAsString) {
             Yaml yaml = new Yaml();
             Iterable<Object> configs = yaml.loadAll(yamlAsString);
             Object providerConf = FluentIterable.from(configs).firstMatch(new Predicate<Object>() {
