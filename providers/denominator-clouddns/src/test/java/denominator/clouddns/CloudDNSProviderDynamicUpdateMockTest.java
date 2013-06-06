@@ -35,16 +35,18 @@ public class CloudDNSProviderDynamicUpdateMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        String initialPath = "/";
-        String updatedPath = "/alt/";
+        String initialPath = "";
+        String updatedPath = "alt";
         URL mockUrl = server.getUrl(initialPath);
         final AtomicReference<URL> dynamicUrl = new AtomicReference<URL>(mockUrl);
         server.setDispatcher(getURLReplacingQueueDispatcher(dynamicUrl));
 
         server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode())); // no domains
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode())); // no domains
-
+        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+                "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
+        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+                "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         try {
             DNSApi api = Denominator.create(new CloudDNSProvider() {
                 @Override
@@ -57,10 +59,11 @@ public class CloudDNSProviderDynamicUpdateMockTest {
             dynamicUrl.set(new URL(mockUrl, updatedPath));
             assertFalse(api.zones().iterator().hasNext());
 
-            assertEquals(server.getRequestCount(), 3);
+            assertEquals(server.getRequestCount(), 4);
             assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /alt/domains HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /alt/tokens HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /alt/v1.0/123123/domains HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -71,24 +74,26 @@ public class CloudDNSProviderDynamicUpdateMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        final URL mockUrl = server.getUrl("/");
+        final URL mockUrl = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(new AtomicReference<URL>(mockUrl)));
 
         server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode())); // no domains
+        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+                "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode())); // no domains
-
+        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+                "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         try {
 
-            final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(ListCredentials.from("jclouds-joe", "letmein"));
+            final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(
+                    ListCredentials.from("jclouds-joe", "letmein"));
 
             DNSApi api = Denominator.create(new CloudDNSProvider() {
                 @Override
                 public String url() {
                     return mockUrl.toString();
                 }
-            }, credentials(new Supplier<Credentials>(){
+            }, credentials(new Supplier<Credentials>() {
                 @Override
                 public Credentials get() {
                     return dynamicCredentials.get();
@@ -100,37 +105,40 @@ public class CloudDNSProviderDynamicUpdateMockTest {
             assertFalse(api.zones().iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 4);
-            assertEquals(new String(server.takeRequest().getBody()), "{\"auth\":{\"RAX-KSKEY:apiKeyCredentials\":{\"username\":\"jclouds-joe\",\"apiKey\":\"letmein\"}}}");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains HTTP/1.1");
-            assertEquals(new String(server.takeRequest().getBody()), "{\"auth\":{\"RAX-KSKEY:apiKeyCredentials\":{\"username\":\"jclouds-bob\",\"apiKey\":\"comeon\"}}}");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains HTTP/1.1");
+            assertEquals(new String(server.takeRequest().getBody()),
+                    "{\"auth\":{\"RAX-KSKEY:apiKeyCredentials\":{\"username\":\"jclouds-joe\",\"apiKey\":\"letmein\"}}}");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains HTTP/1.1");
+            assertEquals(new String(server.takeRequest().getBody()),
+                    "{\"auth\":{\"RAX-KSKEY:apiKeyCredentials\":{\"username\":\"jclouds-bob\",\"apiKey\":\"comeon\"}}}");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains HTTP/1.1");
         } finally {
             server.shutdown();
         }
     }
 
     /**
-     * there's no built-in way to defer evaluation of a response header, hence this
-     * method, which allows us to send back links to the mock server.
+     * there's no built-in way to defer evaluation of a response header, hence
+     * this method, which allows us to send back links to the mock server.
      */
     private QueueDispatcher getURLReplacingQueueDispatcher(final AtomicReference<URL> dynamicUrl) {
-       return new QueueDispatcher() {
-          protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<MockResponse>();
+        return new QueueDispatcher() {
+            protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<MockResponse>();
 
-          @Override
-          public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-             MockResponse response = responseQueue.take();
-             if (response.getBody() != null) {
-                String newBody = new String(response.getBody()).replace("URL", dynamicUrl.get().toString());
-                response = response.setBody(newBody);
-             }
-             return response;
-          }
+            @Override
+            public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+                MockResponse response = responseQueue.take();
+                if (response.getBody() != null) {
+                    String newBody = new String(response.getBody()).replace(":\"URL", ":\""
+                            + dynamicUrl.get().toString());
+                    response = response.setBody(newBody);
+                }
+                return response;
+            }
 
-          @Override
-          public void enqueueResponse(MockResponse response) {
-             responseQueue.add(response);
-          }
-       };
+            @Override
+            public void enqueueResponse(MockResponse response) {
+                responseQueue.add(response);
+            }
+        };
     }
 }

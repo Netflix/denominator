@@ -1,28 +1,13 @@
 package denominator.clouddns;
 
 import static com.google.common.base.Strings.emptyToNull;
-import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
-import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
 
-import java.io.Closeable;
-import java.net.URI;
-import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.Set;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import org.jclouds.ContextBuilder;
-import org.jclouds.concurrent.config.ExecutorServiceModule;
-import org.jclouds.location.suppliers.ProviderURISupplier;
-import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.rackspace.clouddns.v1.CloudDNSApi;
-import org.jclouds.rackspace.clouddns.v1.CloudDNSApiMetadata;
-import org.jclouds.rackspace.clouddns.v1.functions.RecordsToPagedIterable;
-import org.jclouds.rest.internal.GeneratedHttpRequest;
-
-import com.google.common.base.Supplier;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -31,15 +16,23 @@ import com.google.common.collect.SetMultimap;
 
 import dagger.Provides;
 import denominator.BasicProvider;
-import denominator.Credentials;
-import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
-import denominator.Provider;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
+import denominator.clouddns.RackspaceApis.CloudDNS;
+import denominator.clouddns.RackspaceApis.CloudIdentity;
+import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
+import denominator.clouddns.RackspaceDecoders.DomainListDecoder;
+import denominator.clouddns.RackspaceDecoders.RecordListDecoder;
 import denominator.config.GeoUnsupported;
+import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
+import feign.Feign;
+import feign.Feign.Defaults;
+import feign.ReflectiveFeign;
+import feign.Target.HardCodedTarget;
+import feign.codec.Decoder;
 
 public class CloudDNSProvider extends BasicProvider {
     private final String url;
@@ -54,7 +47,7 @@ public class CloudDNSProvider extends BasicProvider {
      */
     public CloudDNSProvider(String url) {
         url = emptyToNull(url);
-        this.url = url != null ? url : new CloudDNSApiMetadata().getDefaultEndpoint().get();
+        this.url = url != null ? url : "https://identity.api.rackspacecloud.com/v2.0";
     }
 
     @Override
@@ -82,99 +75,62 @@ public class CloudDNSProvider extends BasicProvider {
 
     @Override
     public Multimap<String, String> credentialTypeToParameterNames() {
-        return ImmutableMultimap.<String, String> builder().putAll("apiKey", "username", "apiKey").build();
+        return ImmutableMultimap.<String, String> builder()
+                                .putAll("apiKey", "username", "apiKey").build();
     }
 
-    @dagger.Module(injects = DNSApiManager.class,
-                   complete = false, // denominator.Provider and denominator.Credentials
-                   includes = { GeoUnsupported.class, 
-                                WeightedUnsupported.class,
-                                OnlyBasicResourceRecordSets.class } )
+    @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, //
+    includes = { NothingToClose.class,//
+            GeoUnsupported.class,//
+            WeightedUnsupported.class, //
+            OnlyBasicResourceRecordSets.class,//
+            Defaults.class,//
+            ReflectiveFeign.Module.class })
     public static final class Module {
 
         @Provides
         @Singleton
-        ZoneApi provideZoneApi(CloudDNSApi api) {
+        ZoneApi provideZoneApi(CloudDNS api) {
             return new CloudDNSZoneApi(api);
         }
 
         @Provides
         @Singleton
-        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(CloudDNSApi api) {
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(CloudDNS api) {
             return new CloudDNSResourceRecordSetApi.Factory(api);
         }
 
         @Provides
         @Singleton
-        // Dynamic name updates are not currently possible in jclouds.
-        CloudDNSApi provideCloudDNSApi(ConvertToJcloudsCredentials credentials, final Provider provider) {
-            Properties overrides = new Properties();
-            // disable url caching
-            overrides.setProperty(PROPERTY_SESSION_INTERVAL, "0");
-            return ContextBuilder.newBuilder(new CloudDNSApiMetadata())
-                                 .name(provider.name())
-                                 .credentialsSupplier(credentials)
-                                 .overrides(overrides)
-                                 .modules(ImmutableSet.<com.google.inject.Module> builder()
-                                                      .add(new SLF4JLoggingModule())
-                                                      .add(new ExecutorServiceModule(sameThreadExecutor(),
-                                                                                     sameThreadExecutor()))
-                                                      .add(new com.google.inject.AbstractModule() {
-
-                                                          @Override
-                                                          protected void configure() {
-                                                              bind(RecordsToPagedIterable.class)
-                                                               .to(PaginationFixRecordsToPagedIterable.class);
-                                                              bind(ProviderURISupplier.class).toInstance(new ProviderURISupplier() {
-
-                                                                  @Override
-                                                                  public URI get() {
-                                                                      return URI.create(provider.url());
-                                                                  }
-
-                                                                  @Override
-                                                                  public String toString() {
-                                                                      return "DynamicURIFrom(" + provider + ")";
-                                                                  }
-                                                              });
-                                                          }
-                                                      })
-                                                      .build())
-                                 .buildApi(CloudDNSApi.class);
+        CloudDNS cloudDNS(Feign feign, CloudDNSTarget target) {
+            return feign.newInstance(target);
         }
 
         @Provides
         @Singleton
-        Closeable provideCloseable(CloudDNSApi api) {
-            return api;
-        }
-    }
-
-    // fixed in jclouds 1.6.1
-    static class PaginationFixRecordsToPagedIterable extends RecordsToPagedIterable {
-        @Inject
-        protected PaginationFixRecordsToPagedIterable(CloudDNSApi api) {
-            super(api);
+        CloudIdentity cloudIdentity(Feign feign) {
+            return feign.newInstance(new HardCodedTarget<CloudIdentity>(CloudIdentity.class, "cloudidentity",
+                    "http://invalid"));
         }
 
-        @Override
-        protected List<Object> getArgs(GeneratedHttpRequest request) {
-            return request.getCaller().get().getArgs();
+        @Provides
+        @Singleton
+        Map<String, Decoder> decoders() {
+            ImmutableMap.Builder<String, Decoder> decoders = ImmutableMap.<String, Decoder> builder();
+            decoders.put("CloudIdentity", new KeystoneAccessDecoder("rax:dns"));
+            Decoder domainListDecoder = new DomainListDecoder();
+            decoders.put("CloudDNS#domains(URI)", domainListDecoder);
+            decoders.put("CloudDNS#domains()", domainListDecoder);
+            Decoder recordListDecoder = new RecordListDecoder();
+            decoders.put("CloudDNS#records(URI)", recordListDecoder);
+            decoders.put("CloudDNS#records(int)", recordListDecoder);
+            decoders.put("CloudDNS#recordsByNameAndType(int,String,String)", recordListDecoder);
+            return decoders.build();
         }
-    }
 
-    static final class ConvertToJcloudsCredentials implements Supplier<org.jclouds.domain.Credentials> {
-        private javax.inject.Provider<Credentials> provider;
-
-        @Inject
-        ConvertToJcloudsCredentials(javax.inject.Provider<Credentials> provider) {
-            this.provider = provider;
-        }
-
-        @Override
-        public org.jclouds.domain.Credentials get() {
-            List<Object> creds = ListCredentials.asList(provider.get());
-            return new org.jclouds.domain.Credentials(creds.get(0).toString(), creds.get(1).toString());
+        @Provides
+        public TokenIdAndPublicURL urlAndToken(InvalidatableAuthSupplier supplier) {
+            return supplier.get();
         }
     }
 }

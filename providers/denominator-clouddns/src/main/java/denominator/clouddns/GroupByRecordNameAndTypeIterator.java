@@ -5,14 +5,12 @@ import static com.google.common.collect.Iterators.peekingIterator;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.jclouds.rackspace.clouddns.v1.domain.Record;
-import org.jclouds.rackspace.clouddns.v1.domain.RecordDetail;
-
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.PeekingIterator;
 
+import denominator.clouddns.RackspaceApis.Record;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 import denominator.model.rdata.AAAAData;
@@ -26,9 +24,9 @@ import denominator.model.rdata.TXTData;
 
 class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>> {
 
-    private final PeekingIterator<RecordDetail> peekingIterator;
+    private final PeekingIterator<Record> peekingIterator;
 
-    public GroupByRecordNameAndTypeIterator(Iterator<RecordDetail> sortedIterator) {
+    public GroupByRecordNameAndTypeIterator(Iterator<Record> sortedIterator) {
         this.peekingIterator = peekingIterator(sortedIterator);
     }
 
@@ -39,22 +37,18 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
 
     @Override
     public ResourceRecordSet<?> next() {
-        RecordDetail recordDetail = peekingIterator.next();
-        // it is possible that the record was deleted between the list and the get
-        if (recordDetail == null)
-            return null;
-
+        Record recordDetail = peekingIterator.next();
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
-                                                                .name(recordDetail.getName())
-                                                                .type(recordDetail.getType())
-                                                                .ttl(recordDetail.getTTL())
-                                                                .add(toRData(recordDetail.getRecord()));
+                                                                .name(recordDetail.name)
+                                                                .type(recordDetail.type)
+                                                                .ttl(recordDetail.ttl)
+                                                                .add(toRData(recordDetail));
         while (hasNext()) {
-            RecordDetail next = peekingIterator.peek();
+            Record next = peekingIterator.peek();
             if (next == null)
                 continue;
             if (nameAndTypeEquals(next, recordDetail)) {
-                builder.add(toRData(peekingIterator.next().getRecord()));
+                builder.add(toRData(peekingIterator.next()));
             } else {
                 break;
             }
@@ -67,35 +61,35 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
         throw new UnsupportedOperationException();
     }
 
-    private static boolean nameAndTypeEquals(RecordDetail actual, RecordDetail expected) {
-        return actual.getName().equals(expected.getName()) && actual.getType().equals(expected.getType());
+    private static boolean nameAndTypeEquals(Record actual, Record expected) {
+        return actual.name.equals(expected.name) && actual.type.equals(expected.type);
     }
 
     static Map<String, Object> toRData(Record record) {
-        if ("A".equals(record.getType())) {
-            return AData.create(record.getData());
-        } else if ("AAAA".equals(record.getType())) {
-            return AAAAData.create(record.getData());
-        } else if ("CNAME".equals(record.getType())) {
-            return CNAMEData.create(record.getData());
-        } else if ("MX".equals(record.getType())) {
-            return MXData.create(record.getPriority(), record.getData());
-        } else if ("NS".equals(record.getType())) {
-            return NSData.create(record.getData());
-        } else if ("PTR".equals(record.getType())) {
-            return PTRData.create(record.getData());
-        } else if ("SRV".equals(record.getType())) {
-            ImmutableList<String> parts = split(record.getData());
+        if ("A".equals(record.type)) {
+            return AData.create(record.data);
+        } else if ("AAAA".equals(record.type)) {
+            return AAAAData.create(record.data);
+        } else if ("CNAME".equals(record.type)) {
+            return CNAMEData.create(record.data);
+        } else if ("MX".equals(record.type)) {
+            return MXData.create(record.priority, record.data);
+        } else if ("NS".equals(record.type)) {
+            return NSData.create(record.data);
+        } else if ("PTR".equals(record.type)) {
+            return PTRData.create(record.data);
+        } else if ("SRV".equals(record.type)) {
+            ImmutableList<String> parts = split(record.data);
             
             return SRVData.builder()
-                          .priority(record.getPriority())
+                          .priority(record.priority)
                           .weight(Integer.valueOf(parts.get(0)))
                           .port(Integer.valueOf(parts.get(1)))
                           .target(parts.get(2)).build();
-        } else if ("TXT".equals(record.getType())) {
-            return TXTData.create(record.getData());
+        } else if ("TXT".equals(record.type)) {
+            return TXTData.create(record.data);
         } else {
-            return ImmutableMap.<String, Object> of("rdata", record.getData());
+            return ImmutableMap.<String, Object> of("rdata", record.data);
         }
     }
 
