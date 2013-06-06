@@ -76,6 +76,7 @@ public class CloudDNSProvider extends BasicProvider {
     @Override
     public Multimap<String, String> credentialTypeToParameterNames() {
         return ImmutableMultimap.<String, String> builder()
+                                .putAll("password", "username", "password")
                                 .putAll("apiKey", "username", "apiKey").build();
     }
 

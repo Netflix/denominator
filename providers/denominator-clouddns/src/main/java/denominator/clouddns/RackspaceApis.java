@@ -30,6 +30,13 @@ class RackspaceApis {
         @Produces(APPLICATION_JSON)
         TokenIdAndPublicURL apiKeyAuth(URI endpoint, @FormParam("username") String username,
                 @FormParam("apiKey") String apiKey);
+
+        @POST
+        @Path("/tokens")
+        @Body("%7B\"auth\":%7B\"passwordCredentials\":%7B\"username\":\"{username}\",\"password\":\"{password}\"%7D%7D%7D")
+        @Produces(APPLICATION_JSON)
+        TokenIdAndPublicURL passwordAuth(URI endpoint, @FormParam("username") String username,
+                @FormParam("password") String password);
     }
 
     static class TokenIdAndPublicURL {

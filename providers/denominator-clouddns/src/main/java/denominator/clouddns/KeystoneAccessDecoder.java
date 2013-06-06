@@ -32,7 +32,7 @@ class KeystoneAccessDecoder extends Decoder {
     }
 
     @Override
-    protected TokenIdAndPublicURL decode(String methodKey, Reader reader, TypeToken<?> type) throws Throwable {
+    public TokenIdAndPublicURL decode(String methodKey, Reader reader, TypeToken<?> type) throws Throwable {
         Matcher matcher = pattern.matcher(CharStreams.toString(reader));
         if (matcher.find()) {
             TokenIdAndPublicURL record = new TokenIdAndPublicURL();

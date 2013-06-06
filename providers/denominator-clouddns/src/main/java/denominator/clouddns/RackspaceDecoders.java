@@ -74,7 +74,7 @@ class RackspaceDecoders {
         protected abstract X build(JsonReader reader) throws IOException;
 
         @Override
-        protected ListWithNext<X> decode(String methodKey, Reader ireader, TypeToken<?> type) throws Throwable {
+        public ListWithNext<X> decode(String methodKey, Reader ireader, TypeToken<?> type) throws Throwable {
             Builder<X> builder = ImmutableList.<X> builder();
             String nextUrl = null;
             JsonReader reader = new JsonReader(ireader);

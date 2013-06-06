@@ -80,6 +80,7 @@ class InvalidatableAuthSupplier implements Supplier<TokenIdAndPublicURL> {
             if (mapCreds.containsKey("apiKey")) {
                 return identityService.apiKeyAuth(url, username, mapCreds.get("apiKey"));
             }
+            return identityService.passwordAuth(url, username, mapCreds.get("password"));
         }
         List<Object> listCreds = ListCredentials.asList(currentCreds);
         return identityService.apiKeyAuth(url, listCreds.get(0).toString(), listCreds.get(1).toString());
