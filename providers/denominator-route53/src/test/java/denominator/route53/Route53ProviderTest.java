@@ -25,8 +25,9 @@ public class Route53ProviderTest {
 
     @Test
     public void testMockMetadata() {
-        assertEquals(PROVIDER.getName(), "route53");
-        assertEquals(PROVIDER.getCredentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
+        assertEquals(PROVIDER.name(), "route53");
+        assertEquals(PROVIDER.supportsDuplicateZoneNames(), true);
+        assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
                 .putAll("accessKey", "accessKey", "secretKey")
                 .putAll("session", "accessKey", "secretKey", "sessionToken").build());
     }
@@ -40,26 +41,26 @@ public class Route53ProviderTest {
     @Test
     public void testProviderWiresRoute53ZoneApiWithAccessKeyCredentials() {
         DNSApiManager manager = create(PROVIDER, credentials("accesskey", "secretkey"));
-        assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
         manager = create("route53", credentials("accesskey", "secretkey"));
-        assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
         manager = create("route53", credentials(MapCredentials.from(ImmutableMap.<String, String> builder()
                                                               .put("accesskey", "A")
                                                               .put("secretkey", "S").build())));
-        assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
     }
 
     @Test
     public void testProviderWiresRoute53ZoneApiWithSessionCredentials() {
         DNSApiManager manager = create(PROVIDER, credentials("accesskey", "secretkey", "sessionToken"));
-        assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
         manager = create("route53", credentials("accesskey", "secretkey", "sessionToken"));
-        assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. route53 requires one of the following forms: when type is accessKey: accessKey, secretKey; session: accessKey, secretKey, sessionToken")
     public void testCredentialsRequired() {
-        create(PROVIDER).getApi().getZoneApi().list();
+        create(PROVIDER).api().zones().iterator();
     }
 
     @Test
@@ -67,6 +68,6 @@ public class Route53ProviderTest {
         DNSApiManager manager = ObjectGraph
                 .create(provider(new Route53Provider()), new Route53Provider.Module(), credentials("accesskey", "secretkey"))
                 .get(DNSApiManager.class);
-        assertEquals(manager.getApi().getZoneApi().getClass(), Route53ZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
     }
 }
