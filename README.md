@@ -12,9 +12,9 @@ For your convenience, the denominator cli is a [single executable file](http://s
 ### Binaries
 If you are using OSX, [Homebrew](http://mxcl.github.io/homebrew/) has a built-in installer for denominator.
 
-Here's how to get denominator-cli `1.1.4` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
+Here's how to get denominator-cli `1.2.0` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
 
-1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.1.4/denominator?direct)
+1. [Download denominator](http://dl.bintray.com/content/netflixoss/denominator/denominator-cli/release/1.2.0/denominator?direct)
 2. Place it on your `$PATH`. (ex. `~/bin`)
 3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
 
@@ -63,7 +63,7 @@ Denominator exposes a portable [model](https://github.com/Netflix/denominator/wi
 
 ### Binaries
 
-The current version of denominator is `1.1.4`
+The current version of denominator is `1.2.0`
 
 Denominator can be resolved as maven dependencies, or equivalent in lein, gradle, etc.  Here are the coordinates, noting you only need to list the providers you use.
 ```xml
