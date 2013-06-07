@@ -71,7 +71,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
 
     /**
      * server-side profiles of the record set, often controls visibility based on
-     * client origin, latency or server health. If empty, this is a normal record,
+     * client origin, latency or server health. If empty, this is a basic record,
      * visible to all resolvers.
      * 
      * For example, if this record set is intended for resolvers in Utah,
