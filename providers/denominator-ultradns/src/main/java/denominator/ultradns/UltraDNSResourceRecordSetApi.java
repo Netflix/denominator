@@ -34,9 +34,15 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         this.roundRobinPoolApi = roundRobinPoolApi;
     }
 
+    @Deprecated
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
-        // this will list all normal or RR pool records.
+        return iterator();
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterator() {
+        // this will list all basic or RR pool records.
         Iterator<ResourceRecordDetail> orderedRecords = api.list().toSortedList(byNameTypeAndCreateDate).iterator();
         return new GroupByRecordNameAndTypeIterator(orderedRecords);
     }
@@ -113,7 +119,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
 
         for (ResourceRecordDetail reference : references) {
             ResourceRecord updateTTL = reference.getRecord().toBuilder().ttl(ttl).build();
-            // this will update normal or RR pool records.
+            // this will update basic or RR pool records.
             api.update(reference.getGuid(), updateTTL);
         }
     }
@@ -150,7 +156,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     private void create(String name, String type, int ttl, List<Map<String, Object>> rdatas) {
         if (rdatas.size() > 0) {
             // adding requires the use of a special RR pool api, however we can
-            // update them using the normal one..
+            // update them using the basic one..
             if (roundRobinPoolApi.isPoolType(type)) {
                 roundRobinPoolApi.add(name, type, ttl, rdatas);
             } else {
@@ -223,9 +229,9 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
         }
 
         @Override
-        public ResourceRecordSetApi create(final String zoneName) {
-            return new UltraDNSResourceRecordSetApi(api.getResourceRecordApiForZone(zoneName),
-                    new UltraDNSRoundRobinPoolApi(api.getRoundRobinPoolApiForZone(zoneName)));
+        public ResourceRecordSetApi create(final String idOrName) {
+            return new UltraDNSResourceRecordSetApi(api.getResourceRecordApiForZone(idOrName),
+                    new UltraDNSRoundRobinPoolApi(api.getRoundRobinPoolApiForZone(idOrName)));
         }
     }
 }

@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 
 import denominator.BaseReadOnlyLiveTest;
 import denominator.model.ResourceRecordSet;
+import denominator.model.Zone;
 
 @Test
 public class UltraDNSReadOnlyLiveTest extends BaseReadOnlyLiveTest {
@@ -18,9 +19,9 @@ public class UltraDNSReadOnlyLiveTest extends BaseReadOnlyLiveTest {
     }
 
     @Override
-    protected void checkListByNameAndTypeConsistent(String zoneName, ResourceRecordSet<?> rrs) {
+    protected void checkListByNameAndTypeConsistent(Zone zone, ResourceRecordSet<?> rrs) {
         try {
-            super.checkListByNameAndTypeConsistent(zoneName, rrs);
+            super.checkListByNameAndTypeConsistent(zone, rrs);
         } catch (UltraDNSWSResponseException e) {
             assertEquals(e.getError().getCode(), 2114);
             getAnonymousLogger().warning("invalid hostname in record set: " + rrs);

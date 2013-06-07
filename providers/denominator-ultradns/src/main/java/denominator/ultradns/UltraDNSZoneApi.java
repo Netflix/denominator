@@ -1,5 +1,8 @@
 package denominator.ultradns;
 
+import static com.google.common.collect.Iterators.transform;
+import static denominator.model.Zones.toZone;
+
 import java.util.Iterator;
 
 import javax.inject.Inject;
@@ -34,5 +37,10 @@ public final class UltraDNSZoneApi implements denominator.ZoneApi {
     @Override
     public Iterator<String> list() {
         return api.getZoneApi().listByAccount(account.get().getId()).transform(ZoneName.INSTANCE).iterator();
+    }
+
+    @Override
+    public Iterator<denominator.model.Zone> iterator() {
+        return transform(list(), toZone());
     }
 }
