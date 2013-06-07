@@ -26,6 +26,7 @@ import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.NothingToClose;
 import denominator.model.ResourceRecordSet;
+import denominator.model.Zone;
 import denominator.model.profile.Geo;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
@@ -52,7 +53,7 @@ public class MockProvider extends BasicProvider {
     }
 
     @Override
-    public String getUrl() {
+    public String url() {
         return url;
     }
 
@@ -88,27 +89,28 @@ public class MockProvider extends BasicProvider {
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Provides
         @Singleton
-        Multimap<String, ResourceRecordSet> provideRecords() {
-            String zoneName = "denominator.io.";
-            ListMultimap<String, ResourceRecordSet<?>> records = LinkedListMultimap.create();
+        Multimap<Zone, ResourceRecordSet> provideRecords() {
+            String idOrName = "denominator.io.";
+            Zone zone = Zone.create(idOrName);
+            ListMultimap<Zone, ResourceRecordSet<?>> records = LinkedListMultimap.create();
             records = synchronizedListMultimap(records);
-            records.put(zoneName, ResourceRecordSet.builder()
-                                                .type("SOA")
-                                                .name(zoneName)
-                                                .ttl(3600)
-                                                .add(SOAData.builder()
-                                                            .mname("ns1." + zoneName)
-                                                            .rname("admin." + zoneName)
-                                                            .serial(1)
-                                                            .refresh(3600)
-                                                            .retry(600)
-                                                            .expire(604800)
-                                                            .minimum(60).build()).build());
-            records.put(zoneName, ns(zoneName, 86400, "ns1." + zoneName));
-            records.put(zoneName, a("www1." + zoneName, 3600, ImmutableSet.of("192.0.2.1", "192.0.2.2")));
-            records.put(zoneName, a("www2." + zoneName, 3600, "198.51.100.1"));
-            records.put(zoneName, cname("www." + zoneName, 3600, "www1." + zoneName));
-            records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
+            records.put(zone, ResourceRecordSet.builder()
+                                               .type("SOA")
+                                               .name(idOrName)
+                                               .ttl(3600)
+                                               .add(SOAData.builder()
+                                                           .mname("ns1." + idOrName)
+                                                           .rname("admin." + idOrName)
+                                                           .serial(1)
+                                                           .refresh(3600)
+                                                           .retry(600)
+                                                           .expire(604800)
+                                                           .minimum(60).build()).build());
+            records.put(zone, ns(idOrName, 86400, "ns1." + idOrName));
+            records.put(zone, a("www1." + idOrName, 3600, ImmutableSet.of("192.0.2.1", "192.0.2.2")));
+            records.put(zone, a("www2." + idOrName, 3600, "198.51.100.1"));
+            records.put(zone, cname("www." + idOrName, 3600, "www1." + idOrName));
+            records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
                     .name("www2.geo.denominator.io.")
                     .type("A")
                     .ttl(300)
@@ -117,7 +119,7 @@ public class MockProvider extends BasicProvider {
                             .putAll("United States (US)", ImmutableList.of("Alaska", "Arizona"))
                             .build()))
                     .build());
-            records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
+            records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
                     .name("www.geo.denominator.io.")
                     .type("CNAME")
                     .ttl(300)
@@ -126,7 +128,7 @@ public class MockProvider extends BasicProvider {
                             .putAll("United States (US)", ImmutableList.of("Alaska", "Arizona"))
                             .build()))
                     .build());
-            records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
+            records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
                     .name("www.geo.denominator.io.")
                     .type("CNAME")
                     .ttl(86400)
@@ -135,7 +137,7 @@ public class MockProvider extends BasicProvider {
                             .putAll("South America", ImmutableList.of("Colombia", "Ecuador"))
                             .build()))
                     .build());
-            records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
+            records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
                     .name("www.geo.denominator.io.")
                     .type("CNAME")
                     .ttl(0)

@@ -50,8 +50,14 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
         return regions;
     }
 
+    @Deprecated
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
+        return iterator();
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterator() {
         return geoServices(inZone).transformAndConcat(geoToRRSets).iterator();
     }
 
@@ -143,10 +149,10 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
         }
 
         @Override
-        public Optional<GeoResourceRecordSetApi> create(String zoneName) {
-            checkNotNull(zoneName, "zoneName was null");
+        public Optional<GeoResourceRecordSetApi> create(String idOrName) {
+            checkNotNull(idOrName, "idOrName was null");
             return Optional.<GeoResourceRecordSetApi> of(
-                    new DynECTGeoResourceRecordSetApi(types, regions, api, geoToRRSets, zoneName));
+                    new DynECTGeoResourceRecordSetApi(types, regions, api, geoToRRSets, idOrName));
         }
     }
 }

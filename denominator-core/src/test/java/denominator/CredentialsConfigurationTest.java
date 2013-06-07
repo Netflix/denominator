@@ -23,7 +23,7 @@ public class CredentialsConfigurationTest {
     static final class TwoPartProvider extends BasicProvider {
 
         @Override
-        public Multimap<String, String> getCredentialTypeToParameterNames() {
+        public Multimap<String, String> credentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("password", "username", "password").build();
         }
@@ -36,7 +36,7 @@ public class CredentialsConfigurationTest {
     static final class ThreePartProvider extends BasicProvider {
 
         @Override
-        public Multimap<String, String> getCredentialTypeToParameterNames() {
+        public Multimap<String, String> credentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("password", "customer", "username", "password").build();
         }
@@ -49,7 +49,7 @@ public class CredentialsConfigurationTest {
     static final class MultiPartProvider extends BasicProvider {
 
         @Override
-        public Multimap<String, String> getCredentialTypeToParameterNames() {
+        public Multimap<String, String> credentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("accessKey", "accessKey", "secretKey")
                     .putAll("session", "accessKey", "secretKey", "sessionToken").build();

@@ -11,6 +11,6 @@ public class DynECTRecordSetLiveTest extends BaseRecordSetLiveTest {
     private void setUp() {
         DynECTConnection connection = new DynECTConnection();
         manager = connection.manager;
-        mutableZone = connection.mutableZone;
+        setMutableZoneIfPresent(connection.mutableZone);
     }
 }

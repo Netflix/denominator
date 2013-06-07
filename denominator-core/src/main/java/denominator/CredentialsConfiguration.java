@@ -181,11 +181,11 @@ public class CredentialsConfiguration {
      * checks that the supplied input is valid, or throws an
      * {@code IllegalArgumentException} if not. Users of this are guaranteed
      * that the {@code input} matches the count of parameters of a credential
-     * type listed in {@link Provider#getCredentialTypeToParameterNames()}.
+     * type listed in {@link Provider#credentialTypeToParameterNames()}.
      * 
      * <h4>Coercion to {@code AnonymousCredentials}</h4>
      * 
-     * if {@link Provider#getCredentialTypeToParameterNames()} is empty, then no
+     * if {@link Provider#credentialTypeToParameterNames()} is empty, then no
      * credentials are required. When this is true, the following cases will
      * return {@code AnonymousCredentials}.
      * <ul>
@@ -212,7 +212,7 @@ public class CredentialsConfiguration {
      */
     public static Credentials checkValidForProvider(Credentials creds, denominator.Provider provider) {
         checkNotNull(provider, "provider cannot be null");
-        if (isAnonymous(creds) && provider.getCredentialTypeToParameterNames().isEmpty()) {
+        if (isAnonymous(creds) && provider.credentialTypeToParameterNames().isEmpty()) {
             return AnonymousCredentials.INSTANCE;
         } else if (creds instanceof Map) {
             // check Map first as clojure Map implements List Map.Entry
@@ -238,15 +238,15 @@ public class CredentialsConfiguration {
     }
 
     private static boolean credentialConfigurationHasPartCount(denominator.Provider provider, int size) {
-        for (String credentialType : provider.getCredentialTypeToParameterNames().keySet())
-            if (provider.getCredentialTypeToParameterNames().get(credentialType).size() == size)
+        for (String credentialType : provider.credentialTypeToParameterNames().keySet())
+            if (provider.credentialTypeToParameterNames().get(credentialType).size() == size)
                 return true;
         return false;
     }
 
     private static boolean credentialConfigurationHasKeys(denominator.Provider provider, Set<?> keys) {
-        for (String credentialType : provider.getCredentialTypeToParameterNames().keySet())
-            if (keys.containsAll(provider.getCredentialTypeToParameterNames().get(credentialType)))
+        for (String credentialType : provider.credentialTypeToParameterNames().keySet())
+            if (keys.containsAll(provider.credentialTypeToParameterNames().get(credentialType)))
                 return true;
         return false;
     }
@@ -268,9 +268,9 @@ public class CredentialsConfiguration {
             msg.append("no credentials supplied. ");
         else
             msg.append("incorrect credentials supplied. ");
-        msg.append(provider.getName()).append(" requires ");
+        msg.append(provider.name()).append(" requires ");
 
-        Map<String, Collection<String>> credentialTypeToParameterNames = provider.getCredentialTypeToParameterNames()
+        Map<String, Collection<String>> credentialTypeToParameterNames = provider.credentialTypeToParameterNames()
                 .asMap();
         if (credentialTypeToParameterNames.size() == 1) {
             msg.append(on(", ").join(getOnlyElement(credentialTypeToParameterNames.values())));

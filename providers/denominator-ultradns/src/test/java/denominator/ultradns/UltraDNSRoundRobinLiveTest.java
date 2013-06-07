@@ -11,6 +11,6 @@ public class UltraDNSRoundRobinLiveTest extends BaseRoundRobinLiveTest {
     private void setUp() {
         UltraDNSConnection connection = new UltraDNSConnection();
         manager = connection.manager;
-        mutableZone = connection.mutableZone;
+        setMutableZoneIfPresent(connection.mutableZone);
     }
 }

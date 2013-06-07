@@ -19,8 +19,9 @@ public class MockProviderTest {
 
     @Test
     public void testMockMetadata() {
-        assertEquals(PROVIDER.getName(), "mock");
-        assertEquals(PROVIDER.getCredentialTypeToParameterNames(), ImmutableMultimap.of());
+        assertEquals(PROVIDER.name(), "mock");
+        assertEquals(PROVIDER.supportsDuplicateZoneNames(), false);
+        assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMultimap.of());
     }
 
     @Test
@@ -31,7 +32,7 @@ public class MockProviderTest {
 
     @Test
     public void testProviderWiresMockZoneApi() {
-        assertEquals(create(PROVIDER).getApi().getZoneApi().getClass(), MockZoneApi.class);
-        assertEquals(create("mock").getApi().getZoneApi().getClass(), MockZoneApi.class);
+        assertEquals(create(PROVIDER).api().zones().getClass(), MockZoneApi.class);
+        assertEquals(create("mock").api().zones().getClass(), MockZoneApi.class);
     }
 }

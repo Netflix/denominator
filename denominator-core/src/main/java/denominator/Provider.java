@@ -5,6 +5,8 @@ import javax.inject.Singleton;
 import com.google.common.annotations.Beta;
 import com.google.common.collect.Multimap;
 
+import denominator.model.Zone;
+
 /**
  * Metadata about a provider of DNS services.
  * 
@@ -36,12 +38,23 @@ import com.google.common.collect.Multimap;
 @Beta
 @Singleton
 public interface Provider {
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use {@link #name}
+     */
+    @Deprecated
+    String getName();
 
     /**
      * configuration key associated with this {@link DNSApi}. For example,
      * {@code hopper}.
      */
-    String getName();
+    String name();
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use {@link #url}
+     */
+    @Deprecated
+    String getUrl();
 
     /**
      * The base API URL of the DNS Provider. Typically, a http url, such as
@@ -49,7 +62,27 @@ public interface Provider {
      * be {@code mem}. For example, {@code mem://mock}. Encoding credentials in
      * the URL is neither expected nor supported.
      */
-    String getUrl();
+    String url();
+
+    /**
+     * Certain providers support multiple zones with the same
+     * {@link Zone#name name}. These are served by different name servers and
+     * used to provide different internal vs external views, environment testing
+     * or smoother zone transfers for the same name.
+     * 
+     * @return true when {@link Zone#id() zone id} is present and
+     *         {@link Zone#idOrName()} returns the {@link Zone#id() zone id}.
+     *         If false, {@link Zone#idOrName()} will returns
+     *         {@link Zone#name zone name}.
+     */
+    boolean supportsDuplicateZoneNames();
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #credentialTypeToParameterNames}
+     */
+    @Deprecated
+    Multimap<String, String> getCredentialTypeToParameterNames();
 
     /**
      * Description of the credential parameters needed for this provider by
@@ -107,5 +140,5 @@ public interface Provider {
      * @return credential types to the labels of each part required. An empty
      *         multimap suggests the provider doesn't authenticate.
      */
-    Multimap<String, String> getCredentialTypeToParameterNames();
+    Multimap<String, String> credentialTypeToParameterNames();
 }

@@ -25,8 +25,9 @@ public class UltraDNSProviderTest {
 
     @Test
     public void testMockMetadata() {
-        assertEquals(PROVIDER.getName(), "ultradns");
-        assertEquals(PROVIDER.getCredentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
+        assertEquals(PROVIDER.name(), "ultradns");
+        assertEquals(PROVIDER.supportsDuplicateZoneNames(), false);
+        assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
                 .putAll("password", "username", "password").build());
     }
 
@@ -39,23 +40,23 @@ public class UltraDNSProviderTest {
     @Test
     public void testProviderWiresUltraDNSZoneApi() {
         DNSApiManager manager = create(PROVIDER, credentials("username", "password"));
-        assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
         manager = create("ultradns", credentials("username", "password"));
-        assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
         manager = create("ultradns", credentials(MapCredentials.from(ImmutableMap.<String, String> builder()
                                                                .put("username", "U")
                                                                .put("password", "P").build())));
-        assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. ultradns requires username, password")
     public void testCredentialsRequired() {
-        create(PROVIDER).getApi().getZoneApi().list();
+        create(PROVIDER).api().zones().iterator();
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. ultradns requires username, password")
     public void testTwoPartCredentialsRequired() {
-        create(PROVIDER, credentials("customer", "username", "password")).getApi().getZoneApi().list();
+        create(PROVIDER, credentials("customer", "username", "password")).api().zones().iterator();
     }
 
     @Test
@@ -63,6 +64,6 @@ public class UltraDNSProviderTest {
         DNSApiManager manager = ObjectGraph
                 .create(provider(new UltraDNSProvider()), new UltraDNSProvider.Module(), credentials("username", "password"))
                 .get(DNSApiManager.class);
-        assertEquals(manager.getApi().getZoneApi().getClass(), UltraDNSZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
     }
 }

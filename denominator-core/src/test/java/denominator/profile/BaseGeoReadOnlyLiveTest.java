@@ -28,6 +28,7 @@ import com.google.common.collect.Lists;
 
 import denominator.BaseProviderLiveTest;
 import denominator.model.ResourceRecordSet;
+import denominator.model.Zone;
 import denominator.model.profile.Geo;
 
 /**
@@ -38,27 +39,26 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     @Test
     public void testListZones() {
         skipIfNoCredentials();
-        int zoneCount = size(zoneApi().list());
+        int zoneCount = size(zones().iterator());
         getAnonymousLogger().info(format("%s ::: zones: %s", manager, zoneCount));
     }
 
     @Test
     private void testListRRSs() {
         skipIfNoCredentials();
-        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
-            String zoneName = zone.next();
-            for (Iterator<ResourceRecordSet<?>> geoRRSIterator = geoApi(zoneName).list(); geoRRSIterator.hasNext();) {
+        for (Zone zone : zones()) {
+            for (Iterator<ResourceRecordSet<?>> geoRRSIterator = geoApi(zone).iterator(); geoRRSIterator.hasNext();) {
                 ResourceRecordSet<?> geoRRS = geoRRSIterator.next();
                 checkGeoRRS(geoRRS);
                 getAnonymousLogger().info(format("%s ::: geoRRS: %s", manager, geoRRS));
                 recordTypeCounts.getUnchecked(geoRRS.getType()).addAndGet(geoRRS.size());
                 geoRecordCounts.getUnchecked(toProfile(Geo.class).apply(geoRRS)).addAndGet(geoRRS.size());
                 
-                Iterator<ResourceRecordSet<?>> byNameAndType = geoApi(zoneName).listByNameAndType(geoRRS.getName(), geoRRS.getType());
+                Iterator<ResourceRecordSet<?>> byNameAndType = geoApi(zone).listByNameAndType(geoRRS.getName(), geoRRS.getType());
                 assertTrue(byNameAndType.hasNext(), "could not list by name and type: " + geoRRS);
-                assertTrue(Iterators.elementsEqual(geoApi(zoneName).listByNameAndType(geoRRS.getName(), geoRRS.getType()), byNameAndType));
+                assertTrue(Iterators.elementsEqual(geoApi(zone).listByNameAndType(geoRRS.getName(), geoRRS.getType()), byNameAndType));
                 
-                Optional<ResourceRecordSet<?>> byNameTypeAndGroup = geoApi(zoneName)
+                Optional<ResourceRecordSet<?>> byNameTypeAndGroup = geoApi(zone)
                         .getByNameTypeAndGroup(geoRRS.getName(), geoRRS.getType(), toProfile(Geo.class).apply(geoRRS).getGroup());
                 assertTrue(byNameTypeAndGroup.isPresent(), "could not lookup by name, type, and group: " + geoRRS);
                 assertEquals(byNameTypeAndGroup.get(), geoRRS);
@@ -82,9 +82,8 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     @Test
     private void testListByName() {
         skipIfNoCredentials();
-        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
-            String zoneName = zone.next();
-            Iterator<ResourceRecordSet<?>> geoRRSIterator = geoApi(zoneName).list();
+        for (Zone zone : zones()) {
+            Iterator<ResourceRecordSet<?>> geoRRSIterator = geoApi(zone).iterator();
             if (!geoRRSIterator.hasNext())
                 continue;
             ResourceRecordSet<?> geoRRSet = geoRRSIterator.next();
@@ -97,7 +96,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
                         break;
                 withName.add(geoRRSet);
             }
-            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(geoApi(zoneName).listByName(name));
+            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(geoApi(zone).listByName(name));
             assertEquals(usingToString().immutableSortedCopy(fromApi), usingToString().immutableSortedCopy(withName));
             break;
         }
@@ -106,9 +105,8 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     @Test
     private void testListByNameWhenNotFound() {
         skipIfNoCredentials();
-        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
-            String zoneName = zone.next();
-            assertFalse(geoApi(zoneName).listByName("ARGHH." + zoneName).hasNext());
+        for (Zone zone : zones()) {
+            assertFalse(geoApi(zone).listByName("ARGHH." + zone.name()).hasNext());
             break;
         }
     }
@@ -116,9 +114,8 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     @Test
     private void testListByNameAndTypeWhenNone() {
         skipIfNoCredentials();
-        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
-            String zoneName = zone.next();
-            assertFalse(geoApi(zoneName).listByNameAndType("ARGHH." + zoneName, "TXT").hasNext());
+        for (Zone zone : zones()) {
+            assertFalse(geoApi(zone).listByNameAndType("ARGHH." + zone.name(), "TXT").hasNext());
             break;
         }
     }
@@ -126,9 +123,8 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     @Test
     private void testGetByNameTypeAndGroupWhenAbsent() {
         skipIfNoCredentials();
-        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
-            String zoneName = zone.next();
-            assertEquals(geoApi(zoneName).getByNameTypeAndGroup("ARGHH." + zoneName, "TXT", "Mars"), Optional.absent());
+        for (Zone zone : zones()) {
+            assertEquals(geoApi(zone).getByNameTypeAndGroup("ARGHH." + zone.name(), "TXT", "Mars"), Optional.absent());
             break;
         }
     }
@@ -156,10 +152,10 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
                 }
             });
 
-    protected GeoResourceRecordSetApi geoApi(String zoneName) {
-        Optional<GeoResourceRecordSetApi> geoOption = manager.getApi().getGeoResourceRecordSetApiForZone(zoneName);
+    protected GeoResourceRecordSetApi geoApi(Zone zone) {
+        Optional<GeoResourceRecordSetApi> geoOption = manager.api().geoRecordSetsInZone(zone.idOrName());
         if (!geoOption.isPresent())
-            throw new SkipException("geo not available or not available in zone " + zoneName);
+            throw new SkipException("geo not available or not available in zone " + zone);
         return geoOption.get();
     }
 
