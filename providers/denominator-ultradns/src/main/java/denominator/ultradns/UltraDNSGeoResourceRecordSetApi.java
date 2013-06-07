@@ -71,8 +71,14 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
         return regions;
     }
 
+    @Deprecated
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
+        return iterator();
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterator() {
         return concat(poolApi.list().filter(isGeolocationPool())
                 .transform(new Function<DirectionalPool, Iterator<ResourceRecordSet<?>>>() {
                     @Override
@@ -220,12 +226,12 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
         }
 
         @Override
-        public Optional<GeoResourceRecordSetApi> create(String zoneName) {
-            checkNotNull(zoneName, "zoneName was null");
+        public Optional<GeoResourceRecordSetApi> create(String idOrName) {
+            checkNotNull(idOrName, "idOrName was null");
             return Optional.<GeoResourceRecordSetApi> of(
                     new UltraDNSGeoResourceRecordSetApi(types, regions.get(),
                             api.getDirectionalGroupApiForAccount(account.get().getId()),
-                            api.getDirectionalPoolApiForZone(zoneName), iteratorFactory, zoneName));
+                            api.getDirectionalPoolApiForZone(idOrName), iteratorFactory, idOrName));
         }
     }
 

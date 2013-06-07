@@ -189,7 +189,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
                          
-            Iterator<ResourceRecordSet<?>> iterator = api.list();
+            Iterator<ResourceRecordSet<?>> iterator = api.iterator();
             assertEquals(iterator.next().toString(), europe.toString());
             assertEquals(iterator.next().toString(), everywhereElse.toString());
             assertEquals(iterator.next().toString(), us.toString());
@@ -522,10 +522,10 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     private static GeoResourceRecordSetApi mockApi(final URL url) {
         return Denominator.create(new UltraDNSProvider() {
             @Override
-            public String getUrl() {
+            public String url() {
                 return url.toString();
             }
-        }, credentials("joe", "letmein")).getApi().getGeoResourceRecordSetApiForZone("denominator.io.").get();
+        }, credentials("joe", "letmein")).api().geoRecordSetsInZone("denominator.io.").get();
     }
 
     private static final String SOAP_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body>%s</soapenv:Body></soapenv:Envelope>";
