@@ -25,8 +25,9 @@ public class DynECTProviderTest {
 
     @Test
     public void testMockMetadata() {
-        assertEquals(PROVIDER.getName(), "dynect");
-        assertEquals(PROVIDER.getCredentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
+        assertEquals(PROVIDER.name(), "dynect");
+        assertEquals(PROVIDER.supportsDuplicateZoneNames(), false);
+        assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
                 .putAll("password", "customer", "username", "password").build());
     }
 
@@ -39,24 +40,24 @@ public class DynECTProviderTest {
     @Test
     public void testProviderWiresDynECTZoneApi() {
         DNSApiManager manager = create(PROVIDER, credentials("customer", "username", "password"));
-        assertEquals(manager.getApi().getZoneApi().getClass(), DynECTZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), DynECTZoneApi.class);
         manager = create("dynect", credentials("customer", "username", "password"));
-        assertEquals(manager.getApi().getZoneApi().getClass(), DynECTZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), DynECTZoneApi.class);
         manager = create("dynect", credentials(MapCredentials.from(ImmutableMap.<String, String> builder()
                                                              .put("customer", "C")
                                                              .put("username", "U")
                                                              .put("password", "P").build())));
-        assertEquals(manager.getApi().getZoneApi().getClass(), DynECTZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), DynECTZoneApi.class);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. dynect requires customer, username, password")
     public void testCredentialsRequired() {
-        create(PROVIDER).getApi().getZoneApi().list();
+        create(PROVIDER).api().zones().iterator();
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. dynect requires customer, username, password")
     public void testThreePartCredentialsRequired() {
-        create(PROVIDER, credentials("username", "password")).getApi().getZoneApi().list();
+        create(PROVIDER, credentials("username", "password")).api().zones().iterator();
     }
 
     @Test
@@ -64,6 +65,6 @@ public class DynECTProviderTest {
         DNSApiManager manager = ObjectGraph
                 .create(provider(new DynECTProvider()), new DynECTProvider.Module(), credentials("customer", "username", "password"))
                 .get(DNSApiManager.class);
-        assertEquals(manager.getApi().getZoneApi().getClass(), DynECTZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), DynECTZoneApi.class);
     }
 }

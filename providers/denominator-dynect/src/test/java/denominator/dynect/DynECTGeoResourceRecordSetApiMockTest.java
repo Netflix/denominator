@@ -77,7 +77,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            Iterator<ResourceRecordSet<?>> iterator = api.list();
+            Iterator<ResourceRecordSet<?>> iterator = api.iterator();
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
             assertEquals(iterator.next(), fallback);
@@ -216,10 +216,10 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     private static GeoResourceRecordSetApi mockApi(final URL url) {
         return Denominator.create(new DynECTProvider() {
             @Override
-            public String getUrl() {
+            public String url() {
                 return url.toString();
             }
-        }, credentials("jclouds", "joe", "letmein")).getApi()
-                                                    .getGeoResourceRecordSetApiForZone("denominator.io").get();
+        }, credentials("jclouds", "joe", "letmein")).api()
+                                                    .geoRecordSetsInZone("denominator.io").get();
     }
 }
