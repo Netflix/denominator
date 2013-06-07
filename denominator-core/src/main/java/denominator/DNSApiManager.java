@@ -24,19 +24,37 @@ public class DNSApiManager implements Closeable {
     }
 
     /**
-     * the currently configured {@link DNSApi}
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #api}
      */
+    @Deprecated
     public DNSApi getApi() {
         return api;
     }
 
     /**
-     * Get the provider associated with this instance
+     * the currently configured {@link DNSApi}
      */
+    public DNSApi api() {
+        return api;
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #provider}
+     */
+    @Deprecated
     public Provider getProvider() {
         return provider;
     }
-    
+
+    /**
+     * Get the provider associated with this instance
+     */
+    public Provider provider() {
+        return provider;
+    }
+
     /**
      * closes resources associated with the connections, such as thread pools or
      * open files.

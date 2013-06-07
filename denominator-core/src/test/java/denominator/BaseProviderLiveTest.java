@@ -2,12 +2,12 @@ package denominator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
+import static com.google.common.collect.Iterables.tryFind;
 import static com.google.common.collect.Iterators.any;
 import static com.google.common.io.Closeables.close;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.aaaa;
 import static denominator.model.ResourceRecordSets.cname;
-import static denominator.model.ResourceRecordSets.nameEqualTo;
 import static denominator.model.ResourceRecordSets.ns;
 import static denominator.model.ResourceRecordSets.ptr;
 import static denominator.model.ResourceRecordSets.spf;
@@ -31,6 +31,9 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Iterators;
 
 import denominator.model.ResourceRecordSet;
+import denominator.model.ResourceRecordSets;
+import denominator.model.Zone;
+import denominator.model.Zones;
 import denominator.model.rdata.MXData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.SSHFPData;
@@ -41,8 +44,8 @@ import denominator.model.rdata.SSHFPData;
 public abstract class BaseProviderLiveTest {
 
     protected Map<String, ResourceRecordSet<?>> stockRRSets() {
-        String zoneName = skipIfNoMutableZone();
-        String recordSuffix =  recordPrefix + "." + zoneName;
+        Zone zone = skipIfNoMutableZone();
+        String recordSuffix =  recordPrefix + "." + zone.name();
         Builder<String, ResourceRecordSet<?>> builder = ImmutableMap.<String, ResourceRecordSet<?>> builder();
         builder.put("AAAA", aaaa("ipv6-" + recordSuffix, ImmutableList.of("2001:0DB8:85A3:0000:0000:8A2E:0370:7334",
                 "2001:0DB8:85A3:0000:0000:8A2E:0370:7335", "2001:0DB8:85A3:0000:0000:8A2E:0370:7336")));
@@ -94,7 +97,7 @@ public abstract class BaseProviderLiveTest {
             + getProperty("user.name").replace('.', '-');
 
     protected DNSApiManager manager;
-    protected String mutableZone;
+    protected Zone mutableZone;
 
     protected void checkRRS(ResourceRecordSet<?> rrs) {
         checkNotNull(rrs.getName(), "Name: ResourceRecordSet %s", rrs);
@@ -103,16 +106,16 @@ public abstract class BaseProviderLiveTest {
         assertTrue(!rrs.isEmpty(), "Values absent on ResourceRecordSet: " + rrs);
     }
 
-    protected void skipIfRRSetExists(String zoneName, String name, String type) {
-        if (any(rrsApi(zoneName).list(), and(nameEqualTo(name), typeEqualTo(type))))
-            throw new SkipException(format("recordset with name %s and type %s already exists", name, type));
+    protected void skipIfRRSetExists(Zone zone, String name, String type) {
+        if (any(rrsApi(zone).iterator(), and(ResourceRecordSets.nameEqualTo(name), typeEqualTo(type))))
+            throw new SkipException(format("recordset(%s, %s) already exists in %s", name, type, zone));
     }
 
-    protected void assertPresent(Optional<ResourceRecordSet<?>> rrs, String zoneName, String recordName,
+    protected void assertPresent(Optional<ResourceRecordSet<?>> rrs, Zone zone, String recordName,
             String recordType) {
         if (!rrs.isPresent()) {
-            throw new AssertionError(format("recordset(%s, %s) not present in zone(%s); rrsets: %s", recordName,
-                    recordType, zoneName, Iterators.toString(rrsApi(zoneName).list())));
+            throw new AssertionError(format("recordset(%s, %s) not present in %s; rrsets: %s", recordName,
+                    recordType, zone, Iterators.toString(rrsApi(zone).iterator())));
         }
     }
 
@@ -126,17 +129,27 @@ public abstract class BaseProviderLiveTest {
             throw new SkipException("manager not configured");
     }
 
-    protected String skipIfNoMutableZone() {
+    protected Zone skipIfNoMutableZone() {
         if (mutableZone == null)
             throw new SkipException("mutable zone not configured");
         return mutableZone;
     }
 
-    protected ZoneApi zoneApi() {
-        return manager.getApi().getZoneApi();
+    protected void setMutableZoneIfPresent(String mutableZone) {
+        if (mutableZone != null) {
+            ImmutableList<Zone> zones = ImmutableList.copyOf(manager.api().zones());
+            Optional<Zone> zone = tryFind(zones, Zones.nameEqualTo(mutableZone));
+            if (!zone.isPresent())
+                throw new SkipException(format("zone(%s) doesn't exist in %s", mutableZone, zones));
+            this.mutableZone = zone.get();
+        }
     }
 
-    protected ResourceRecordSetApi rrsApi(String zoneName) {
-        return manager.getApi().getResourceRecordSetApiForZone(zoneName);
+    protected ZoneApi zones() {
+        return manager.api().zones();
+    }
+
+    protected ResourceRecordSetApi rrsApi(Zone zone) {
+        return manager.api().basicRecordSetsInZone(zone.idOrName());
     }
 }

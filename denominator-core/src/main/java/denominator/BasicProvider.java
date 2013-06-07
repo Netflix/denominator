@@ -21,7 +21,7 @@ public abstract class BasicProvider implements Provider {
 
     // protected to ensure subclassed
     protected BasicProvider() {
-        checkLowerCamel(getCredentialTypeToParameterNames());
+        checkLowerCamel(credentialTypeToParameterNames());
     }
 
     /**
@@ -38,24 +38,47 @@ public abstract class BasicProvider implements Provider {
         }
     }
 
+    @Deprecated
     @Override
     public String getName() {
+        return name();
+    }
+
+    @Override
+    public String name() {
         return getClass().getSimpleName().toLowerCase().replace("provider", "");
     }
 
+    @Deprecated
     @Override
     public String getUrl() {
-        return "mem:" + getName();
+        return url();
     }
 
     @Override
+    public String url() {
+        return "mem:" + name();
+    }
+
+    @Override
+    public boolean supportsDuplicateZoneNames() {
+        return false;
+    }
+
+    @Deprecated
+    @Override
     public Multimap<String, String> getCredentialTypeToParameterNames() {
+        return credentialTypeToParameterNames();
+    }
+
+    @Override
+    public Multimap<String, String> credentialTypeToParameterNames() {
         return ImmutableMultimap.of();
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(getName());
+        return Objects.hashCode(name(), url());
     }
 
     @Override
@@ -64,12 +87,12 @@ public abstract class BasicProvider implements Provider {
             return true;
         if (obj == null || getClass() != obj.getClass())
             return false;
-        return equal(this.getName(), BasicProvider.class.cast(obj).getName())
-                && equal(this.getUrl(), BasicProvider.class.cast(obj).getUrl());
+        return equal(this.name(), BasicProvider.class.cast(obj).name())
+                && equal(this.url(), BasicProvider.class.cast(obj).url());
     }
 
     @Override
     public String toString() {
-        return toStringHelper(this).add("name", getName()).add("url", getUrl()).toString();
+        return toStringHelper(this).add("name", name()).add("url", url()).toString();
     }
 }

@@ -22,6 +22,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import denominator.model.ResourceRecordSet;
+import denominator.model.Zone;
 
 /**
  * extend this and initialize manager {@link BeforeClass}
@@ -31,20 +32,19 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     @Test
     private void testListRRSs() {
         skipIfNoCredentials();
-        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
-            String zoneName = zone.next();
-            for (Iterator<ResourceRecordSet<?>> rrsIterator = roApi(zoneName).list(); rrsIterator.hasNext();) {
+        for (Zone zone : zones()) {
+            for (Iterator<ResourceRecordSet<?>> rrsIterator = roApi(zone).iterator(); rrsIterator.hasNext();) {
                 ResourceRecordSet<?> rrs = rrsIterator.next();
                 recordTypeCounts.getUnchecked(rrs.getType()).addAndGet(rrs.size());
                 checkRRS(rrs);
-                checkListByNameAndTypeConsistent(zoneName, rrs);
+                checkListByNameAndTypeConsistent(zone, rrs);
             }
         }
         logRecordSummary();
     }
 
-    protected void checkListByNameAndTypeConsistent(String zoneName, ResourceRecordSet<?> rrs) {
-        List<ResourceRecordSet<?>> byNameAndType = ImmutableList.copyOf(roApi(zoneName)
+    protected void checkListByNameAndTypeConsistent(Zone zone, ResourceRecordSet<?> rrs) {
+        List<ResourceRecordSet<?>> byNameAndType = ImmutableList.copyOf(roApi(zone)
                 .listByNameAndType(rrs.getName(), rrs.getType()));
         assertFalse(byNameAndType.isEmpty(), "could not lookup by name and type: " + rrs);
         assertTrue(byNameAndType.contains(rrs), rrs + " not found in list by name and type: " + byNameAndType);
@@ -53,9 +53,8 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     @Test
     private void testListByName() {
         skipIfNoCredentials();
-        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
-            String zoneName = zone.next();
-            Iterator<ResourceRecordSet<?>> rrsIterator = roApi(zoneName).list();
+        for (Zone zone : zones()) {
+            Iterator<ResourceRecordSet<?>> rrsIterator = roApi(zone).iterator();
             if (!rrsIterator.hasNext())
                 continue;
             ResourceRecordSet<?> rrset = rrsIterator.next();
@@ -68,7 +67,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
                         break;
                 withName.add(rrset);
             }
-            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(roApi(zoneName).listByName(name));
+            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(roApi(zone).listByName(name));
             assertEquals(usingToString().immutableSortedCopy(fromApi), usingToString().immutableSortedCopy(withName));
             break;
         }
@@ -77,9 +76,8 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     @Test
     private void testListByNameWhenNotFound() {
         skipIfNoCredentials();
-        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
-            String zoneName = zone.next();
-            assertFalse(roApi(zoneName).listByName("ARGHH." + zoneName).hasNext());
+        for (Zone zone : zones()) {
+            assertFalse(roApi(zone).listByName("ARGHH." + zone.name()).hasNext());
             break;
         }
     }
@@ -87,9 +85,8 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     @Test
     private void testListByNameAndTypeWhenEmpty() {
         skipIfNoCredentials();
-        for (Iterator<String> zone = zoneApi().list(); zone.hasNext();) {
-            String zoneName = zone.next();
-            assertFalse(roApi(zoneName).listByNameAndType("ARGHH." + zoneName, "TXT").hasNext());
+        for (Zone zone : zones()) {
+            assertFalse(roApi(zone).listByNameAndType("ARGHH." + zone.name(), "TXT").hasNext());
             break;
         }
     }
@@ -107,7 +104,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
                 }
             });
 
-    private AllProfileResourceRecordSetApi roApi(String zoneName) {
-        return manager.getApi().getAllProfileResourceRecordSetApiForZone(zoneName);
+    private AllProfileResourceRecordSetApi roApi(Zone zone) {
+        return manager.api().recordSetsInZone(zone.idOrName());
     }
 }
