@@ -39,14 +39,14 @@ public class Route53ProviderDynamicUpdateMockTest {
         try {
             DNSApi api = Denominator.create(new Route53Provider() {
                 @Override
-                public String getUrl() {
+                public String url() {
                     return dynamicUrl.get().toString();
                 }
-            }, credentials("accessKey", "secretKey")).getApi();
+            }, credentials("accessKey", "secretKey")).api();
 
-            assertFalse(api.getZoneApi().list().hasNext());
+            assertFalse(api.zones().iterator().hasNext());
             dynamicUrl.set(new URL(mockUrl, updatedPath));
-            assertFalse(api.getZoneApi().list().hasNext());
+            assertFalse(api.zones().iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "GET /2012-02-29/hostedzone HTTP/1.1");
@@ -69,7 +69,7 @@ public class Route53ProviderDynamicUpdateMockTest {
 
             DNSApi api = Denominator.create(new Route53Provider() {
                 @Override
-                public String getUrl() {
+                public String url() {
                     return server.getUrl("/").toString();
                 }
             }, credentials(new Supplier<Credentials>(){
@@ -77,11 +77,11 @@ public class Route53ProviderDynamicUpdateMockTest {
                 public Credentials get() {
                     return dynamicCredentials.get();
                 }
-            })).getApi();
+            })).api();
 
-            assertFalse(api.getZoneApi().list().hasNext());
+            assertFalse(api.zones().iterator().hasNext());
             dynamicCredentials.set(ListCredentials.from("accessKey2", "secretKey2"));
-            assertFalse(api.getZoneApi().list().hasNext());
+            assertFalse(api.zones().iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 2);
             assertTrue(server.takeRequest().getHeader("X-Amzn-Authorization").startsWith("AWS3-HTTPS AWSAccessKeyId=accessKey,Algorithm=HmacSHA256,Signature="));

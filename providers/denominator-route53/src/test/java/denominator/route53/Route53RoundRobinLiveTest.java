@@ -17,7 +17,7 @@ public class Route53RoundRobinLiveTest extends BaseRoundRobinLiveTest {
     private void setUp() {
         Route53Connection connection = new Route53Connection();
         manager = connection.manager;
-        mutableZone = connection.mutableZone;
+        setMutableZoneIfPresent(connection.mutableZone);
         supportedRecordTypes = ImmutableList.copyOf(filter(supportedRecordTypes, not(equalTo("SSHFP"))));
     }
 }
