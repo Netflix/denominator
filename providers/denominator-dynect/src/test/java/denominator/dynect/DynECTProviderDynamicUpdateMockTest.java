@@ -40,14 +40,14 @@ public class DynECTProviderDynamicUpdateMockTest {
 
             DNSApi api = Denominator.create(new DynECTProvider() {
                 @Override
-                public String getUrl() {
+                public String url() {
                     return dynamicUrl.get().toString();
                 }
-            }, credentials("customer", "joe", "letmein")).getApi();
+            }, credentials("customer", "joe", "letmein")).api();
 
-            assertEquals(api.getResourceRecordSetApiForZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
             dynamicUrl.set(new URL(mockUrl, updatedPath));
-            assertEquals(api.getResourceRecordSetApiForZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
 
             assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
@@ -72,7 +72,7 @@ public class DynECTProviderDynamicUpdateMockTest {
 
             DNSApi api = Denominator.create(new DynECTProvider() {
                 @Override
-                public String getUrl() {
+                public String url() {
                     return server.getUrl("/").toString();
                 }
             }, credentials(new Supplier<Credentials>(){
@@ -80,11 +80,11 @@ public class DynECTProviderDynamicUpdateMockTest {
                 public Credentials get() {
                     return dynamicCredentials.get();
                 }
-            })).getApi();
+            })).api();
 
-            assertEquals(api.getResourceRecordSetApiForZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
             dynamicCredentials.set(ListCredentials.from("customer2", "bob", "comeon"));
-            assertEquals(api.getResourceRecordSetApiForZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
 
             assertEquals(server.getRequestCount(), 4);
             assertEquals(new String(server.takeRequest().getBody()), "{\"customer_name\":\"customer\",\"user_name\":\"joe\",\"password\":\"letmein\"}");

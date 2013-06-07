@@ -51,7 +51,7 @@ import denominator.DNSApiManager;
 import denominator.Provider;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
-import denominator.config.ConcatNormalAndGeoResourceRecordSets;
+import denominator.config.ConcatBasicAndGeoResourceRecordSets;
 
 public class DynECTProvider extends BasicProvider {
     private final String url;
@@ -70,12 +70,12 @@ public class DynECTProvider extends BasicProvider {
     }
 
     @Override
-    public String getUrl() {
+    public String url() {
         return url;
     }
 
     @Override
-    public Multimap<String, String> getCredentialTypeToParameterNames() {
+    public Multimap<String, String> credentialTypeToParameterNames() {
         return ImmutableMultimap.<String, String> builder()
                 .putAll("password", "customer", "username", "password").build();
     }
@@ -83,7 +83,7 @@ public class DynECTProvider extends BasicProvider {
     @dagger.Module(injects = DNSApiManager.class, 
                    complete = false, // denominator.Provider and denominator.Credentials
                    includes = { DynECTGeoSupport.class, 
-                                ConcatNormalAndGeoResourceRecordSets.class })
+                                ConcatBasicAndGeoResourceRecordSets.class })
     public static final class Module {
 
         @Provides
@@ -106,7 +106,7 @@ public class DynECTProvider extends BasicProvider {
             // disable url caching
             overrides.setProperty(PROPERTY_SESSION_INTERVAL, "0");
             return ContextBuilder.newBuilder(new DynECTProviderMetadata())
-                                 .name(provider.getName())
+                                 .name(provider.name())
                                  .credentialsSupplier(credentials)
                                  .overrides(overrides)
                                  .modules(ImmutableSet.<com.google.inject.Module> builder()
@@ -122,7 +122,7 @@ public class DynECTProvider extends BasicProvider {
 
                                                                   @Override
                                                                   public URI get() {
-                                                                      return URI.create(provider.getUrl());
+                                                                      return URI.create(provider.url());
                                                                   }
 
                                                                   @Override
@@ -138,7 +138,7 @@ public class DynECTProvider extends BasicProvider {
 
         @Provides
         @Singleton
-        DynECTApi provideNormalApi(Injector injector) {
+        DynECTApi provideBasicApi(Injector injector) {
            return injector.getInstance(DynECTApi.class);
         }
 

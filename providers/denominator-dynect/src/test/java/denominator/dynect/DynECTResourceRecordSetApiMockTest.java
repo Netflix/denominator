@@ -299,7 +299,7 @@ public class DynECTResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            Iterator<ResourceRecordSet<?>> iterator = api.list();
+            Iterator<ResourceRecordSet<?>> iterator = api.iterator();
             iterator.next();
             iterator.next();
             assertEquals(iterator.next(),
@@ -322,7 +322,7 @@ public class DynECTResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertFalse(api.list().hasNext());
+            assertFalse(api.iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
@@ -534,9 +534,9 @@ public class DynECTResourceRecordSetApiMockTest {
     private static ResourceRecordSetApi mockApi(final URL url) {
         return Denominator.create(new DynECTProvider() {
             @Override
-            public String getUrl() {
+            public String url() {
                 return url.toString();
             }
-        }, credentials("jclouds", "joe", "letmein")).getApi().getResourceRecordSetApiForZone("denominator.io");
+        }, credentials("jclouds", "joe", "letmein")).api().basicRecordSetsInZone("denominator.io");
     }
 }

@@ -37,9 +37,9 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         }
 
         @Override
-        public ResourceRecordSetApi create(String zoneName) {
-            checkNotNull(zoneName, "zoneName was null");
-            return new DynECTResourceRecordSetApi(api, roApi, zoneName);
+        public ResourceRecordSetApi create(String idOrName) {
+            checkNotNull(idOrName, "idOrName was null");
+            return new DynECTResourceRecordSetApi(api, roApi, idOrName);
         }
     }
 
@@ -53,8 +53,14 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         this.zoneFQDN = zoneFQDN;
     }
 
+    @Deprecated
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
+        return iterator();
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterator() {
         return groupByRecordNameAndType(FluentIterable.from(roApi.recordsInZone(zoneFQDN).values()));
     }
 
