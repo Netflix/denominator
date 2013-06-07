@@ -11,6 +11,6 @@ public class DynECTRoundRobinLiveTest extends BaseRoundRobinLiveTest {
     private void setUp() {
         DynECTConnection connection = new DynECTConnection();
         manager = connection.manager;
-        mutableZone = connection.mutableZone;
+        setMutableZoneIfPresent(connection.mutableZone);
     }
 }

@@ -34,7 +34,7 @@ import denominator.Provider;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.GeoUnsupported;
-import denominator.config.OnlyNormalResourceRecordSets;
+import denominator.config.OnlyBasicResourceRecordSets;
 
 public class Route53Provider extends BasicProvider {
     private final String url;
@@ -53,12 +53,17 @@ public class Route53Provider extends BasicProvider {
     }
 
     @Override
-    public String getUrl() {
+    public String url() {
         return url;
     }
 
     @Override
-    public Multimap<String, String> getCredentialTypeToParameterNames() {
+    public boolean supportsDuplicateZoneNames() {
+        return true;
+    }
+
+    @Override
+    public Multimap<String, String> credentialTypeToParameterNames() {
         return ImmutableMultimap.<String, String> builder()
                 .putAll("accessKey", "accessKey", "secretKey")
                 .putAll("session", "accessKey", "secretKey", "sessionToken").build();
@@ -67,7 +72,7 @@ public class Route53Provider extends BasicProvider {
     @dagger.Module(injects = DNSApiManager.class,
                    complete = false, // denominator.Provider
                    includes = { GeoUnsupported.class, 
-                                OnlyNormalResourceRecordSets.class,
+                                OnlyBasicResourceRecordSets.class,
                                 InstanceProfileCredentialsProvider.class })
     public static final class Module {
 
@@ -79,7 +84,7 @@ public class Route53Provider extends BasicProvider {
             // disable url caching
             overrides.setProperty(PROPERTY_SESSION_INTERVAL, "0");
             return ContextBuilder.newBuilder(new Route53ApiMetadata())
-                                 .name(provider.getName())
+                                 .name(provider.name())
                                  .credentialsSupplier(credentials)
                                  .overrides(overrides)
                                  .modules(ImmutableSet.<com.google.inject.Module> builder()
@@ -94,7 +99,7 @@ public class Route53Provider extends BasicProvider {
 
                                                                   @Override
                                                                   public URI get() {
-                                                                      return URI.create(provider.getUrl());
+                                                                      return URI.create(provider.url());
                                                                   }
 
                                                                   @Override

@@ -58,14 +58,14 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
      * @return present if a resource record exists with the same {@code name},
      *         {@code type}, and {@code group}
      * @throws IllegalArgumentException
-     *             if the {@code zoneName} is not found.
+     *             if the zone {@code idOrName} is not found.
      */
     Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type, String group);
 
     /**
      * Ensures the supplied {@code regions} are uniform for all record sets with
      * the supplied {@link ResourceRecordSet#getName() name},
-     * {@link ResourceRecordSet#getType() type}, and {@link Geo#getName() group}
+     * {@link ResourceRecordSet#getType() type}, and {@link Geo#toName() group}
      * . Returns without error if there are no record sets of the specified
      * name, type, and group.
      * 
@@ -85,7 +85,7 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
     /**
      * Ensures the supplied {@code ttl} is uniform for all record sets with the
      * supplied {@link ResourceRecordSet#getName() name},
-     * {@link ResourceRecordSet#getType() type}, and {@link Geo#getName() group}
+     * {@link ResourceRecordSet#getType() type}, and {@link Geo#toName() group}
      * . Returns without error if there are no record sets of the specified
      * name, type, and group.
      * 
@@ -101,6 +101,6 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
     void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group);
 
     static interface Factory {
-        Optional<GeoResourceRecordSetApi> create(String zoneName);
+        Optional<GeoResourceRecordSetApi> create(String idOrName);
     }
 }

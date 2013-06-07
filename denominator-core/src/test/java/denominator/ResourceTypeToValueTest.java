@@ -17,7 +17,7 @@ public class ResourceTypeToValueTest {
     }
 
     @Test
-    public void testNormalCase() {
+    public void testBasicCase() {
         assertEquals(new ResourceTypeToValue().apply("AAAA"), "28");
     }
 }

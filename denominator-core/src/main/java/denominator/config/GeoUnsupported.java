@@ -21,7 +21,7 @@ public class GeoUnsupported {
         return new GeoResourceRecordSetApi.Factory() {
 
             @Override
-            public Optional<GeoResourceRecordSetApi> create(String zoneName) {
+            public Optional<GeoResourceRecordSetApi> create(String idOrName) {
                 return Optional.absent();
             }
 

@@ -20,19 +20,19 @@ public class ProviderTest {
 
     public void testDefaultProviderNameIsLowercase() {
         BareProvider provider = new BareProvider();
-        assertEquals(provider.getName(), "bare");
-        assertEquals(provider.getCredentialTypeToParameterNames(), ImmutableMultimap.of());
+        assertEquals(provider.name(), "bare");
+        assertEquals(provider.credentialTypeToParameterNames(), ImmutableMultimap.of());
     }
 
     public void testCredentialTypeToParameterNamesDefaultsToEmpty() {
         BareProvider provider = new BareProvider();
-        assertEquals(provider.getCredentialTypeToParameterNames(), ImmutableMultimap.of());
+        assertEquals(provider.credentialTypeToParameterNames(), ImmutableMultimap.of());
     }
 
     static class ValidCredentialParametersProvider extends BasicProvider {
 
         @Override
-        public Multimap<String, String> getCredentialTypeToParameterNames() {
+        public Multimap<String, String> credentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("accessKey", "accessKey", "secretKey")
                     .putAll("stsSession", "accessKey", "secretKey", "sessionToken").build();
@@ -50,7 +50,7 @@ public class ProviderTest {
     static class InvalidCredentialKeyProvider extends BasicProvider {
 
         @Override
-        public Multimap<String, String> getCredentialTypeToParameterNames() {
+        public Multimap<String, String> credentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("accessKey", "accessKey", "secretKey")
                     .putAll("STS_SESSION", "accessKey", "secretKey", "sessionToken").build();
@@ -69,7 +69,7 @@ public class ProviderTest {
     static class InvalidCredentialParameterProvider extends BasicProvider {
 
         @Override
-        public Multimap<String, String> getCredentialTypeToParameterNames() {
+        public Multimap<String, String> credentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("accessKey", "accessKey", "secretKey")
                     .putAll("stsSession", "access.key", "secret.key", "session.token").build();

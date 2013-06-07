@@ -1,6 +1,5 @@
 package denominator.clouddns;
 
-import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
 
@@ -9,11 +8,9 @@ import java.util.Iterator;
 import javax.inject.Inject;
 
 import org.jclouds.rackspace.clouddns.v1.CloudDNSApi;
-import org.jclouds.rackspace.clouddns.v1.domain.Domain;
 import org.jclouds.rackspace.clouddns.v1.features.RecordApi;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterators;
 
 import denominator.ResourceRecordSetApi;
@@ -27,8 +24,14 @@ public final class CloudDNSResourceRecordSetApi implements denominator.ResourceR
         this.api = recordApi;
     }
 
+    @Deprecated
     @Override
     public Iterator<ResourceRecordSet<?>> list() {
+        return iterator();
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterator() {
         // assumes these are sorted, which might be bad
         return new GroupByRecordNameAndTypeIterator(api.list().concat().iterator());
     }
@@ -36,7 +39,7 @@ public final class CloudDNSResourceRecordSetApi implements denominator.ResourceR
     @Override
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
         checkNotNull(name, "name was null");
-        return Iterators.filter(list(), nameEqualTo(name));
+        return Iterators.filter(iterator(), nameEqualTo(name));
     }
 
     @Override
@@ -58,24 +61,9 @@ public final class CloudDNSResourceRecordSetApi implements denominator.ResourceR
         }
 
         @Override
-        public ResourceRecordSetApi create(final String domainName) {
-            Optional<Domain> domain = api.getDomainApi().list().concat().firstMatch(domainNameEquals(domainName));
-            checkArgument(domain.isPresent(), "domain %s not found", domainName);
-            return new CloudDNSResourceRecordSetApi(api.getRecordApiForDomain(domain.get().getId()));
+        public ResourceRecordSetApi create(final String id) {
+            return new CloudDNSResourceRecordSetApi(api.getRecordApiForDomain(Integer.parseInt(id)));
         }
-    }
-
-    /**
-     * Rackspace domains are addressed by id, not by name.
-     */
-    private static final Predicate<Domain> domainNameEquals(final String domainName) {
-        checkNotNull(domainName, "domainName");
-        return new Predicate<Domain>() {
-            @Override
-            public boolean apply(Domain input) {
-                return input.getName().equals(domainName);
-            }
-        };
     }
 
     @Override

@@ -3,6 +3,7 @@ package denominator.cli;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
+import static denominator.cli.Denominator.idOrName;
 import static denominator.model.ResourceRecordSets.toProfile;
 import static java.lang.String.format;
 import io.airlift.command.Arguments;
@@ -32,15 +33,15 @@ import denominator.profile.GeoResourceRecordSetApi;
 class GeoResourceRecordSetCommands {
 
     private static abstract class GeoResourceRecordSetCommand extends DenominatorCommand {
-        @Option(type = OptionType.GROUP, required = true, name = { "-z", "--zone" }, description = "zone name to affect. ex. denominator.io.")
-        public String zoneName;
+        @Option(type = OptionType.GROUP, required = true, name = { "-z", "--zone" }, description = "zone name (or id if ambiguous) to affect. ex. denominator.io. or EXFHEDD")
+        public String zoneIdOrName;
     }
 
     @Command(name = "types", description = "Lists the record types that support geo profile in this zone")
     public static class GeoTypeList extends GeoResourceRecordSetCommand {
         @Override
         protected Iterator<String> doRun(DNSApiManager mgr) {
-            return mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get().getSupportedTypes().iterator();
+            return mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().getSupportedTypes().iterator();
         }
     }
 
@@ -49,7 +50,7 @@ class GeoResourceRecordSetCommands {
         @Override
         protected Iterator<String> doRun(DNSApiManager mgr) {
             return FluentIterable
-                    .from(mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get().getSupportedRegions().asMap()
+                    .from(mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().getSupportedRegions().asMap()
                             .entrySet()).transform(new Function<Map.Entry<String, Collection<String>>, String>() {
                         @Override
                         public String apply(Entry<String, Collection<String>> input) {
@@ -68,14 +69,14 @@ class GeoResourceRecordSetCommands {
         public String type;
 
         public Iterator<String> doRun(DNSApiManager mgr) {
-            Iterator<ResourceRecordSet<?>> list;
+            Iterator<ResourceRecordSet<?>> iterator;
             if (name != null && type != null)
-                list = mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get().listByNameAndType(name, type);
+                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().listByNameAndType(name, type);
             if (name != null)
-                list = mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get().listByName(name);
+                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().listByName(name);
             else
-                list = mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get().list();
-            return transform(list, GeoResourceRecordSetToString.INSTANCE);
+                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().iterator();
+            return transform(iterator, GeoResourceRecordSetToString.INSTANCE);
         }
     }
 
@@ -91,7 +92,7 @@ class GeoResourceRecordSetCommands {
         public String group;
 
         public Iterator<String> doRun(DNSApiManager mgr) {
-            GeoResourceRecordSetApi api = mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get();
+            GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get();
             Optional<ResourceRecordSet<?>> result = api.getByNameTypeAndGroup(name, type, group);
             return forArray(result.transform(GeoResourceRecordSetToString.INSTANCE).or(""));
         }
@@ -112,7 +113,7 @@ class GeoResourceRecordSetCommands {
         public int ttl;
 
         public Iterator<String> doRun(final DNSApiManager mgr) {
-            String cmd = format(";; in zone %s applying ttl %d to rrset %s %s %s", zoneName, ttl, name, type, group);
+            String cmd = format(";; in zone %s applying ttl %d to rrset %s %s %s", zoneIdOrName, ttl, name, type, group);
             return concat(forArray(cmd), new Iterator<String>() {
                 boolean done = false;
 
@@ -123,7 +124,7 @@ class GeoResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    GeoResourceRecordSetApi api = mgr.getApi().getGeoResourceRecordSetApiForZone(zoneName).get();
+                    GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get();
                     api.applyTTLToNameTypeAndGroup(ttl, name, type, group);
                     done = true;
                     return ";; ok";

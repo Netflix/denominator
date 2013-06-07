@@ -13,7 +13,7 @@ import com.google.common.collect.Iterables;
 /**
  * Abstractly encapsulates credentials used by a Provider. Descriptions of what
  * type of Credentials a Provider can use are found via
- * {@link Provider#getCredentialTypeToParameterNames()}.
+ * {@link Provider#credentialTypeToParameterNames()}.
  * 
  * <h4>All Credentials are Anonymous, implement Map or List</h4>
  * 
@@ -23,13 +23,13 @@ import com.google.common.collect.Iterables;
  * <h4>Validation Rules</h4>
  * <ul>
  * <li>{@link AnonymousCredentials}, null, or empty credentials are permitted
- * when {@link Provider#getCredentialTypeToParameterNames()} is empty</li>
+ * when {@link Provider#credentialTypeToParameterNames()} is empty</li>
  * <li>{@link ListCredentials} or {@code Credentials} which implement
  * {@code List} are permitted when its {@code size} match the size of an entry
- * in {@link Provider#getCredentialTypeToParameterNames()}</li>
+ * in {@link Provider#credentialTypeToParameterNames()}</li>
  * <li>{@link MapCredentials} or {@code Credentials} which implement {@code Map}
  * are permitted when its keys match the values of an entry in
- * {@link Provider#getCredentialTypeToParameterNames()}</li>
+ * {@link Provider#credentialTypeToParameterNames()}</li>
  * </ul>
  * 
  * <h4>Parameters</h4>
@@ -77,7 +77,7 @@ public interface Credentials {
      * ["AAFF12AA", "BB34FF", "FFFeeeEE"]
      * </pre>
      * 
-     * @see Provider#getCredentialTypeToParameterNames()
+     * @see Provider#credentialTypeToParameterNames()
      */
     public static abstract class ListCredentials extends ForwardingList<Object> implements Credentials {
 
@@ -170,7 +170,7 @@ public interface Credentials {
      * {"accessKey": "AAFF12AA", "secretKey": "BB34FF"}
      * </pre>
      * 
-     * @see Provider#getCredentialTypeToParameterNames()
+     * @see Provider#credentialTypeToParameterNames()
      */
     public static abstract class MapCredentials extends ForwardingMap<String, Object> implements Credentials {
 
