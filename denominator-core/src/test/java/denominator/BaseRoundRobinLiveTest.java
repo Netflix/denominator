@@ -20,6 +20,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
 import denominator.model.ResourceRecordSet;
+import denominator.model.Zone;
 
 /**
  * extend this and initialize manager {@link BeforeClass}
@@ -45,20 +46,20 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
     @Test(dataProvider = "roundRobinRecords")
     private void createNewRRS(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
-        String zoneName = skipIfNoMutableZone();
+        Zone zone = skipIfNoMutableZone();
 
-        skipIfRRSetExists(zoneName, recordSet.getName(), recordSet.getType());
+        skipIfRRSetExists(zone, recordSet.getName(), recordSet.getType());
 
-        rrsApi(zoneName).add(ResourceRecordSet.<Map<String, Object>> builder()
+        rrsApi(zone).add(ResourceRecordSet.<Map<String, Object>> builder()
                                               .name(recordSet.getName())
                                               .type(recordSet.getType())
                                               .ttl(1800)
                                               .add(recordSet.get(0)).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName)
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
                 .getByNameAndType(recordSet.getName(), recordSet.getType());
 
-        assertPresent(rrs, zoneName, recordSet.getName(), recordSet.getType());
+        assertPresent(rrs, zone, recordSet.getName(), recordSet.getType());
 
         checkRRS(rrs.get());
         assertEquals(rrs.get().getName(), recordSet.getName());
@@ -71,17 +72,17 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
     @Test(dependsOnMethods = "createNewRRS", dataProvider = "roundRobinRecords")
     private void addRecordToExistingRRS(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
-        String zoneName = skipIfNoMutableZone();
+        Zone zone = skipIfNoMutableZone();
 
-        rrsApi(zoneName).add(ResourceRecordSet.<Map<String, Object>> builder()
+        rrsApi(zone).add(ResourceRecordSet.<Map<String, Object>> builder()
                                               .name(recordSet.getName())
                                               .type(recordSet.getType())
                                               .add(recordSet.get(1)).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName)
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
                 .getByNameAndType(recordSet.getName(), recordSet.getType());
 
-        assertPresent(rrs, zoneName, recordSet.getName(), recordSet.getType());
+        assertPresent(rrs, zone, recordSet.getName(), recordSet.getType());
 
         checkRRS(rrs.get());
         assertEquals(rrs.get().getName(), recordSet.getName());
@@ -94,14 +95,14 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
     @Test(dependsOnMethods = "addRecordToExistingRRS", dataProvider = "roundRobinRecords")
     private void applyTTL(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
-        String zoneName = skipIfNoMutableZone();
+        Zone zone = skipIfNoMutableZone();
 
-        rrsApi(zoneName).applyTTLToNameAndType(200000, recordSet.getName(), recordSet.getType());
+        rrsApi(zone).applyTTLToNameAndType(200000, recordSet.getName(), recordSet.getType());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName)
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
                 .getByNameAndType(recordSet.getName(), recordSet.getType());
 
-        assertPresent(rrs, zoneName, recordSet.getName(), recordSet.getType());
+        assertPresent(rrs, zone, recordSet.getName(), recordSet.getType());
 
         checkRRS(rrs.get());
         assertEquals(rrs.get().getName(), recordSet.getName());
@@ -115,19 +116,19 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
     @Test(dependsOnMethods = "applyTTL", dataProvider = "roundRobinRecords")
     private void replaceExistingRRSUpdatingTTL(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
-        String zoneName = skipIfNoMutableZone();
+        Zone zone = skipIfNoMutableZone();
 
-        rrsApi(zoneName).replace(ResourceRecordSet.<Map<String, Object>> builder()
+        rrsApi(zone).replace(ResourceRecordSet.<Map<String, Object>> builder()
                                                   .name(recordSet.getName())
                                                   .type(recordSet.getType())
                                                   .ttl(10000)
                                                   .add(recordSet.get(0))
                                                   .add(recordSet.get(2)).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName)
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
                 .getByNameAndType(recordSet.getName(), recordSet.getType());
 
-        assertPresent(rrs, zoneName, recordSet.getName(), recordSet.getType());
+        assertPresent(rrs, zone, recordSet.getName(), recordSet.getType());
 
         checkRRS(rrs.get());
         assertEquals(rrs.get().getName(), recordSet.getName());
@@ -141,17 +142,17 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
     @Test(dependsOnMethods = "replaceExistingRRSUpdatingTTL", dataProvider = "roundRobinRecords")
     private void removeRecordFromExistingRRS(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
-        String zoneName = skipIfNoMutableZone();
+        Zone zone = skipIfNoMutableZone();
 
-        rrsApi(zoneName).remove(ResourceRecordSet.<Map<String, Object>> builder()
+        rrsApi(zone).remove(ResourceRecordSet.<Map<String, Object>> builder()
                                                  .name(recordSet.getName())
                                                  .type(recordSet.getType())
                                                  .add(recordSet.get(2)).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName)
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
                 .getByNameAndType(recordSet.getName(), recordSet.getType());
 
-        assertPresent(rrs, zoneName, recordSet.getName(), recordSet.getType());
+        assertPresent(rrs, zone, recordSet.getName(), recordSet.getType());
 
         checkRRS(rrs.get());
         assertEquals(rrs.get().getName(), recordSet.getName());
@@ -163,47 +164,44 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
     @Test(dependsOnMethods = "removeRecordFromExistingRRS", dataProvider = "roundRobinRecords")
     private void removeLastRecordFromExistingRRSRemovesRRS(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
-        String zoneName = skipIfNoMutableZone();
+        Zone zone = skipIfNoMutableZone();
 
-        rrsApi(zoneName).remove(ResourceRecordSet.<Map<String, Object>> builder()
+        rrsApi(zone).remove(ResourceRecordSet.<Map<String, Object>> builder()
                                                  .name(recordSet.getName())
                                                  .type(recordSet.getType())
                                                  .add(recordSet.get(0)).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName)
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
                 .getByNameAndType(recordSet.getName(), recordSet.getType());
 
-        assertFalse(
-                rrs.isPresent(),
-                format("recordset(%s, %s) still present in zone(%s)", recordSet.getName(), recordSet.getType(),
-                        zoneName));
+        assertFalse(rrs.isPresent(),
+                format("recordset(%s, %s) still present in %s", recordSet.getName(), recordSet.getType(), zone));
     }
 
     @Test(dataProvider = "roundRobinRecords")
     private void deleteRRS(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
-        String zoneName = skipIfNoMutableZone();
-        String recordName = recordSet.getName().replace("." + zoneName, "-delete." + zoneName);
+        Zone zone = skipIfNoMutableZone();
+        String recordName = recordSet.getName().replace("." + zone.name(), "-delete." + zone.name());
 
-        skipIfRRSetExists(zoneName, recordName, recordSet.getType());
+        skipIfRRSetExists(zone, recordName, recordSet.getType());
 
-        rrsApi(zoneName).add(
+        rrsApi(zone).add(
                 ResourceRecordSet.<Map<String, Object>> builder().name(recordName).type(recordSet.getType())
                         .addAll(recordSet).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zoneName).getByNameAndType(recordName, recordSet.getType());
+        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone).getByNameAndType(recordName, recordSet.getType());
 
-        assertPresent(rrs, zoneName, recordSet.getName(), recordSet.getType());
+        assertPresent(rrs, zone, recordSet.getName(), recordSet.getType());
 
-        rrsApi(zoneName).deleteByNameAndType(recordName, recordSet.getType());
+        rrsApi(zone).deleteByNameAndType(recordName, recordSet.getType());
 
-        String failureMessage = format("recordset(%s, %s) still exists in zone(%s)", recordName, recordSet.getType(),
-                zoneName);
-        assertFalse(rrsApi(zoneName).getByNameAndType(recordName, recordSet.getType()).isPresent(), failureMessage);
-        assertFalse(any(rrsApi(zoneName).list(), and(nameEqualTo(recordName), typeEqualTo(recordSet.getType()))),
+        String failureMessage = format("recordset(%s, %s) still exists in %s", recordName, recordSet.getType(), zone);
+        assertFalse(rrsApi(zone).getByNameAndType(recordName, recordSet.getType()).isPresent(), failureMessage);
+        assertFalse(any(rrsApi(zone).iterator(), and(nameEqualTo(recordName), typeEqualTo(recordSet.getType()))),
                 failureMessage);
 
         // test no exception if re-applied
-        rrsApi(zoneName).deleteByNameAndType(recordName, recordSet.getType());
+        rrsApi(zone).deleteByNameAndType(recordName, recordSet.getType());
     }
 }

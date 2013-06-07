@@ -19,43 +19,49 @@ import java.util.Map;
 import javax.inject.Inject;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Multimap;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
+import denominator.model.Zone;
 
 
 public final class MockResourceRecordSetApi implements denominator.ResourceRecordSetApi {
 
-    private final Multimap<String, ResourceRecordSet<?>> records;
-    private final String zoneName;
+    private final Multimap<Zone, ResourceRecordSet<?>> records;
+    private final Zone zone;
 
-    MockResourceRecordSetApi(Multimap<String, ResourceRecordSet<?>> records, String zoneName) {
+    MockResourceRecordSetApi(Multimap<Zone, ResourceRecordSet<?>> records, Zone zone) {
         this.records = records;
-        this.zoneName = zoneName;
+        this.zone = zone;
+    }
+
+    @Deprecated
+    @Override
+    public Iterator<ResourceRecordSet<?>> list() {
+        return iterator();
     }
 
     /**
      * sorted to help tests from breaking
      */
     @Override
-    public Iterator<ResourceRecordSet<?>> list() {
-        return FluentIterable.from(records.get(zoneName)).toSortedList(usingToString()).iterator();
+    public Iterator<ResourceRecordSet<?>> iterator() {
+        return usingToString().immutableSortedCopy(records.get(zone)).iterator();
     }
 
     @Override
     public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        return from(records.get(zoneName)).firstMatch(and(nameEqualTo(name), typeEqualTo(type)));
+        return from(records.get(zone)).firstMatch(and(nameEqualTo(name), typeEqualTo(type)));
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
         checkNotNull(name, "name");
-        return from(records.get(zoneName)).filter(nameEqualTo(name)).iterator();
+        return from(records.get(zone)).filter(nameEqualTo(name)).iterator();
     }
 
     @Override
@@ -86,11 +92,11 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
         if (rrsMatch.isPresent()) {
             rrs.addAll(rrsMatch.get());
             rrs.addAll(filter(rrset, not(in(rrsMatch.get()))));
-            records.remove(zoneName, rrsMatch.get());
+            records.remove(zone, rrsMatch.get());
         } else {
             rrs.addAll(rrset);
         }
-        records.put(zoneName, rrs.build());
+        records.put(zone, rrs.build());
     }
 
     @Override
@@ -98,9 +104,9 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
         checkNotNull(rrset, "rrset was null");
         Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.getName(), rrset.getType());
         if (rrsMatch.isPresent()) {
-            records.remove(zoneName, rrsMatch.get());
+            records.remove(zone, rrsMatch.get());
         }
-        records.put(zoneName, rrset);
+        records.put(zone, rrset);
     }
 
     @Override
@@ -108,9 +114,9 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
         checkNotNull(rrset, "rrset was null");
         Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.getName(), rrset.getType());
         if (rrsMatch.isPresent()) {
-            records.remove(zoneName, rrsMatch.get());
+            records.remove(zone, rrsMatch.get());
             if (rrsMatch.get().size() > 1) {
-                records.put(zoneName, ResourceRecordSet.<Map<String, Object>> builder()
+                records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
                                                     .name(rrset.getName())
                                                     .type(rrset.getType())
                                                     .ttl(rrsMatch.get().getTTL().get())
@@ -124,25 +130,26 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     public void deleteByNameAndType(String name, String type) {
         Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(name, type);
         if (rrsMatch.isPresent()) {
-            records.remove(zoneName, rrsMatch.get());
+            records.remove(zone, rrsMatch.get());
         }
     }
 
     public static final class Factory implements denominator.ResourceRecordSetApi.Factory {
 
-        private final Multimap<String, ResourceRecordSet<?>> records;
+        private final Multimap<Zone, ResourceRecordSet<?>> records;
 
         // wildcard types are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
-        Factory(Multimap<String, ResourceRecordSet> records) {
+        Factory(Multimap<Zone, ResourceRecordSet> records) {
             this.records = Multimap.class.cast(filterValues(Multimap.class.cast(records), withoutProfile()));
         }
 
         @Override
-        public ResourceRecordSetApi create(String zoneName) {
-            checkArgument(records.keySet().contains(zoneName), "zone %s not found", zoneName);
-            return new MockResourceRecordSetApi(records, zoneName);
+        public ResourceRecordSetApi create(String idOrName) {
+            Zone zone = Zone.create(idOrName);
+            checkArgument(records.keySet().contains(zone), "zone %s not found", idOrName);
+            return new MockResourceRecordSetApi(records, zone);
         }
     }
 }

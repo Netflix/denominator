@@ -81,7 +81,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         if (mutableGeoRRSet == null)
             throw new SkipException("mutable rrset not configured");
         Optional<GeoResourceRecordSetApi> option = 
-                manager.getApi().getGeoResourceRecordSetApiForZone(mutableGeoRRSet.zone);
+                manager.api().geoRecordSetsInZone(mutableGeoRRSet.zone);
         if (!option.isPresent())
             throw new SkipException("geo not supported or not supported on zone " + mutableGeoRRSet.zone);
         Optional<ResourceRecordSet<?>> rrset = 
@@ -103,6 +103,6 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
     protected MutableGeoRRSet mutableGeoRRSet;
 
     protected GeoResourceRecordSetApi geoApi() {
-        return manager.getApi().getGeoResourceRecordSetApiForZone(mutableGeoRRSet.zone).get();
+        return manager.api().geoRecordSetsInZone(mutableGeoRRSet.zone).get();
     }
 }

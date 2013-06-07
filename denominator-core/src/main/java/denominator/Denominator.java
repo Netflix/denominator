@@ -110,7 +110,7 @@ public final class Denominator {
             // much simpler to special-case when a credential module is needed,
             // but not supplied, than do too much magic.
             if (e.getMessage().contains("No binding for denominator.Credentials")
-                    && !in.getCredentialTypeToParameterNames().isEmpty()) {
+                    && !in.credentialTypeToParameterNames().isEmpty()) {
                 throw new IllegalArgumentException(CredentialsConfiguration.exceptionMessage(null, in));
             }
             throw e;
@@ -132,7 +132,7 @@ public final class Denominator {
                     + " should have a static inner class named Module", e);
         } catch (Exception e) {
             throw new IllegalArgumentException("exception attempting to instantiate " + moduleClassName
-                    + " for provider " + in.getName(), e);
+                    + " for provider " + in.name(), e);
         }
         try {
             Constructor<?> ctor = moduleClass.getDeclaredConstructor();
@@ -143,7 +143,7 @@ public final class Denominator {
             throw new IllegalArgumentException("ensure " + moduleClassName + " has a no-args constructor", e);
         } catch (Exception e) {
             throw new IllegalArgumentException("exception attempting to instantiate " + moduleClassName
-                    + " for provider " + in.getName(), e);
+                    + " for provider " + in.name(), e);
         }
     }
 
@@ -157,7 +157,7 @@ public final class Denominator {
      * route53 = Denominator.create(&quot;route53&quot;, credentials(accesskey, secretkey));
      * </pre>
      * 
-     * @see Provider#getName()
+     * @see Provider#name()
      * @see CredentialsConfiguration
      * @throws IllegalArgumentException
      *             if the providerName is not configured, or its corresponding
@@ -167,7 +167,7 @@ public final class Denominator {
         checkNotNull(providerName, "providerName");
         Map<String, Provider> allProvidersByName = uniqueIndex(listProviders(), new Function<Provider, String>() {
             public String apply(Provider input) {
-                return input.getName();
+                return input.name();
             }
         });
         checkArgument(allProvidersByName.containsKey(providerName),

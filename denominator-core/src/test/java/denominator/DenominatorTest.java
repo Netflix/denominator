@@ -47,7 +47,7 @@ public class DenominatorTest {
 
     @Test
     public void providerBindsProperly() {
-        Provider provider = Denominator.create(new FooProvider()).getProvider();
+        Provider provider = Denominator.create(new FooProvider()).provider();
         assertEquals(provider, new FooProvider());
     }
 
@@ -56,23 +56,23 @@ public class DenominatorTest {
         FooProvider provider = new FooProvider();
         DNSApiManager mgr = ObjectGraph.create(provider(provider), new FooProvider.Module()).get(
                 DNSApiManager.class);
-        assertSame(mgr.getProvider(), provider);
+        assertSame(mgr.provider(), provider);
     }
 
     @Test
     public void anonymousProviderPermitted() {
         Provider provider = Denominator.create(new FooProvider() {
             @Override
-            public String getName() {
+            public String name() {
                 return "bar";
             }
 
             @Override
-            public String getUrl() {
+            public String url() {
                 return "http://bar";
             }
-        }).getProvider();
-        assertEquals(provider.getName(), "bar");
-        assertEquals(provider.getUrl(), "http://bar");
+        }).provider();
+        assertEquals(provider.name(), "bar");
+        assertEquals(provider.url(), "http://bar");
     }
 }

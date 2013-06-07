@@ -17,31 +17,36 @@ import com.google.common.collect.Multimap;
 
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
+import denominator.model.Zone;
 
 public class MockAllProfileResourceRecordSetApi implements denominator.AllProfileResourceRecordSetApi {
 
-    protected final Multimap<String, ResourceRecordSet<?>> records;
-    protected final String zoneName;
+    protected final Multimap<Zone, ResourceRecordSet<?>> records;
+    protected final Zone zone;
 
-    MockAllProfileResourceRecordSetApi(Multimap<String, ResourceRecordSet<?>> records, String zoneName) {
+    MockAllProfileResourceRecordSetApi(Multimap<Zone, ResourceRecordSet<?>> records, Zone zone) {
         this.records = records;
-        this.zoneName = zoneName;
+        this.zone = zone;
+    }
+
+    @Deprecated
+    @Override
+    public Iterator<ResourceRecordSet<?>> list() {
+        return iterator();
     }
 
     /**
      * sorted to help tests from breaking
      */
     @Override
-    public Iterator<ResourceRecordSet<?>> list() {
-        return from(records.get(zoneName))
-                .toSortedList(usingToString())
-                .iterator();
+    public Iterator<ResourceRecordSet<?>> iterator() {
+        return usingToString().immutableSortedCopy(records.get(zone)).iterator();
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
         checkNotNull(name, "name");
-        return from(records.get(zoneName))
+        return from(records.get(zone))
                 .filter(nameEqualTo(name))
                 .toSortedList(usingToString())
                 .iterator();
@@ -51,7 +56,7 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
     public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        return from(records.get(zoneName))
+        return from(records.get(zone))
                 .filter(nameAndTypeEqualTo(name, type))
                 .toSortedList(usingToString())
                 .iterator();
@@ -63,19 +68,20 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
 
     static class Factory implements denominator.AllProfileResourceRecordSetApi.Factory {
 
-        private final Multimap<String, ResourceRecordSet<?>> records;
+        private final Multimap<Zone, ResourceRecordSet<?>> records;
 
         // wildcard types are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
-        Factory(Multimap<String, ResourceRecordSet> records) {
+        Factory(Multimap<Zone, ResourceRecordSet> records) {
             this.records = Multimap.class.cast(records);
         }
 
         @Override
-        public AllProfileResourceRecordSetApi create(String zoneName) {
-            checkArgument(records.keySet().contains(zoneName), "zone %s not found", zoneName);
-            return new MockAllProfileResourceRecordSetApi(records, zoneName);
+        public AllProfileResourceRecordSetApi create(String idOrName) {
+            Zone zone = Zone.create(idOrName);
+            checkArgument(records.keySet().contains(zone), "zone %s not found", idOrName);
+            return new MockAllProfileResourceRecordSetApi(records, zone);
         }
     }
 }

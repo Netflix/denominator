@@ -11,6 +11,6 @@ public class MockLoadBalancedCNAMELiveTest extends BaseLoadBalancedCNAMELiveTest
     private void setUp() {
         MockConnection connection = new MockConnection();
         manager = connection.manager;
-        mutableZone = connection.mutableZone;
+        mutableZone = manager.api().zones().iterator().next();
     }
 }

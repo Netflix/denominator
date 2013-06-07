@@ -12,6 +12,6 @@ import denominator.model.ResourceRecordSet;
 public interface AllProfileResourceRecordSetApi extends ReadOnlyResourceRecordSetApi {
 
     static interface Factory {
-        AllProfileResourceRecordSetApi create(String zoneName);
+        AllProfileResourceRecordSetApi create(String idOrName);
     }
 }

@@ -1,3 +1,10 @@
+### Version 1.2.0
+* Added `Zone` type, allowing disambiguation when `Provider.supportsMultipleZoneNames`.
+* Added zone id to commandline `zone list` output when present. 
+* Made all Zone and RecordSet apis implement Iterable for convenience.
+* Deprecated naming conventions such as `getResourceRecordSetApiForZone` in favor of shorter forms like `basicRecordSetsInZone`.
+* Deprecated naming conventions in `Provider` such as `getUrl()` in favor of those matching Feign's `Target`, like `url()`.
+
 ### Version 1.1.4
 * New -C/--config commandline arg specifying the path to your provider configuration.
 * When changing geo groups in UltraDNS, territories are implicitly moved from other groups as necessary.
