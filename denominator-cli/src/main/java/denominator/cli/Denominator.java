@@ -1,4 +1,6 @@
 package denominator.cli;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Iterators.tryFind;
 import static com.google.common.io.Closeables.closeQuietly;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.provider;
@@ -21,12 +23,16 @@ import java.util.Map.Entry;
 import org.yaml.snakeyaml.Yaml;
 
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.Iterators;
 import com.google.common.io.Files;
+import com.google.common.net.InternetDomainName;
 
 import dagger.ObjectGraph;
 import denominator.Credentials;
@@ -49,6 +55,8 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.clouddns.CloudDNSProvider;
 import denominator.dynect.DynECTProvider;
 import denominator.mock.MockProvider;
+import denominator.model.Zone;
+import denominator.model.Zones;
 import denominator.route53.Route53Provider;
 import denominator.ultradns.UltraDNSProvider;
 
@@ -104,9 +112,9 @@ public class Denominator {
         }
     }
 
-    @Command(name = "providers", description = "List the providers and their expected credentials")
+    @Command(name = "providers", description = "List the providers and their metadata ")
     public static class ListProviders implements Runnable {
-        final static String table = "%-10s %-52s %-14s %s%n";
+        final static String table = "%-10s %-51s %-14s %-14s %s%n";
 
         public void run() {
             System.out.println(providerAndCredentialsTable());
@@ -115,14 +123,16 @@ public class Denominator {
         public static String providerAndCredentialsTable() {
             StringBuilder builder = new StringBuilder();
             
-            builder.append(format(table, "provider", "url", "credentialType", "credentialArgs"));
+            builder.append(format(table, "provider", "url", "duplicateZones", "credentialType", "credentialArgs"));
             for (Provider provider : listProviders()) {
-                if (provider.getCredentialTypeToParameterNames().isEmpty())
-                    builder.append(format("%-10s %-52s%n", provider.getName(), provider.getUrl()));
-                for (Entry<String, Collection<String>> entry : provider.getCredentialTypeToParameterNames().asMap()
+                if (provider.credentialTypeToParameterNames().isEmpty())
+                    builder.append(format("%-10s %-51s %-14s %n", provider.name(), provider.url(),
+                            provider.supportsDuplicateZoneNames()));
+                for (Entry<String, Collection<String>> entry : provider.credentialTypeToParameterNames().asMap()
                         .entrySet()) {
                     String parameters = Joiner.on(' ').join(entry.getValue());
-                    builder.append(format(table, provider.getName(), provider.getUrl(), entry.getKey(), parameters));
+                    builder.append(format(table, provider.name(), provider.url(),
+                            provider.supportsDuplicateZoneNames(), entry.getKey(), parameters));
                 }
             }
             return builder.toString();
@@ -269,11 +279,30 @@ public class Denominator {
                             .add(new UltraDNSProvider()).build();
     }
 
-    @Command(name = "list", description = "Lists the zone names present in this provider")
+    @Command(name = "list", description = "Lists the zones present in this provider.  If the second column is present, it is the zone id.")
     public static class ZoneList extends DenominatorCommand {
         public Iterator<String> doRun(DNSApiManager mgr) {
-            return mgr.getApi().getZoneApi().list();
+            return Iterators.transform(mgr.api().zones().iterator(), new Function<Zone, String>() {
+
+                @Override
+                public String apply(Zone input) {
+                    if (input.id().isPresent())
+                        return input.name() + " " + input.id().get();
+                    return input.name();
+                }
+
+            });
         }
     }
 
+    static String idOrName(DNSApiManager mgr, String zoneIdOrName) {
+        if (!InternetDomainName.isValid(zoneIdOrName) || !InternetDomainName.from(zoneIdOrName).hasParent()) {
+            return zoneIdOrName;
+        } else if (InternetDomainName.isValid(zoneIdOrName) && mgr.provider().supportsDuplicateZoneNames()) {
+            Optional<Zone> zone = tryFind(mgr.api().zones().iterator(), Zones.nameEqualTo(zoneIdOrName));
+            checkArgument(zone.isPresent(), "zone %s not found", zoneIdOrName);
+            return zone.get().idOrName();
+        }
+        return zoneIdOrName;
+    }
 }

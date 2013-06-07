@@ -53,13 +53,13 @@ Different providers connect to different urls and need different credentials.  F
 
 ```bash
 $ denominator providers
-provider   url                                                  credentialType credentialArgs
-mock       mem:mock
-clouddns   https://identity.api.rackspacecloud.com/v2.0/        apiKey         username apiKey
-dynect     https://api2.dynect.net/REST                         password       customer username password
-route53    https://route53.amazonaws.com                        accessKey      accessKey secretKey
-route53    https://route53.amazonaws.com                        session        accessKey secretKey sessionToken
-ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01  password       username password
+provider   url                                                 duplicateZones credentialType credentialArgs
+mock       mem:mock                                            false
+clouddns   https://identity.api.rackspacecloud.com/v2.0/       true           apiKey         username apiKey
+dynect     https://api2.dynect.net/REST                        false          password       customer username password
+route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey
+route53    https://route53.amazonaws.com                       true           session        accessKey secretKey sessionToken
+ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 false          password       username password
 ```
 
 The first field says the type, if any.  If there's no type listed, it needs no credentials.  If there is a type listed, the following fields are credential args.  Say for example, you were using `ultradns`.  

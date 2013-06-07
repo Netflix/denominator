@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
+import static denominator.cli.Denominator.idOrName;
 import static java.lang.String.format;
 import io.airlift.command.Arguments;
 import io.airlift.command.Command;
@@ -41,8 +42,8 @@ import denominator.model.rdata.TXTData;
 class ResourceRecordSetCommands {
 
     private static abstract class ResourceRecordSetCommand extends DenominatorCommand {
-        @Option(type = OptionType.GROUP, required = true, name = { "-z", "--zone" }, description = "zone name to affect. ex. denominator.io.")
-        public String zoneName;
+        @Option(type = OptionType.GROUP, required = true, name = { "-z", "--zone" }, description = "zone name (or id if ambiguous) to affect. ex. denominator.io. or EXFHEDD")
+        public String zoneIdOrName;
     }
 
     @Command(name = "list", description = "Lists the record record sets present in this zone")
@@ -51,12 +52,12 @@ class ResourceRecordSetCommands {
         public String name;
 
         public Iterator<String> doRun(DNSApiManager mgr) {
-            Iterator<ResourceRecordSet<?>> list;
+            Iterator<ResourceRecordSet<?>> iterator;
             if (name != null)
-                list = mgr.getApi().getResourceRecordSetApiForZone(zoneName).listByName(name);
+                iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).listByName(name);
             else
-                list = mgr.getApi().getResourceRecordSetApiForZone(zoneName).list();
-            return transform(list, ResourceRecordSetToString.INSTANCE);
+                iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterator();
+            return transform(iterator, ResourceRecordSetToString.INSTANCE);
         }
     }
 
@@ -69,7 +70,7 @@ class ResourceRecordSetCommands {
         public String type;
 
         public Iterator<String> doRun(DNSApiManager mgr) {
-            return forArray(mgr.getApi().getResourceRecordSetApiForZone(zoneName).getByNameAndType(name, type)
+            return forArray(mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).getByNameAndType(name, type)
                     .transform(ResourceRecordSetToString.INSTANCE).or(""));
         }
     }
@@ -86,7 +87,7 @@ class ResourceRecordSetCommands {
         public int ttl;
 
         public Iterator<String> doRun(final DNSApiManager mgr) {
-            String cmd = format(";; in zone %s applying ttl %d to rrset %s %s", zoneName, ttl, name, type);
+            String cmd = format(";; in zone %s applying ttl %d to rrset %s %s", zoneIdOrName, ttl, name, type);
             return concat(forArray(cmd), new Iterator<String>() {
                 boolean done = false;
 
@@ -97,7 +98,7 @@ class ResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    mgr.getApi().getResourceRecordSetApiForZone(zoneName)
+                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName))
                             .applyTTLToNameAndType(ttl, name, type);
                     done = true;
                     return ";; ok";
@@ -185,7 +186,7 @@ class ResourceRecordSetCommands {
             if (ttl != -1)
                 builder.ttl(ttl);
             final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
-            String cmd = format(";; in zone %s adding to rrset %s %s values: [%s]", zoneName, name, type, Joiner
+            String cmd = format(";; in zone %s adding to rrset %s %s values: [%s]", zoneIdOrName, name, type, Joiner
                     .on(',').join(toAdd));
             if (ttl != -1)
                 cmd = format("%s applying ttl %d", cmd, ttl);
@@ -199,7 +200,7 @@ class ResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    mgr.getApi().getResourceRecordSetApiForZone(zoneName).add(toAdd);
+                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).add(toAdd);
                     done = true;
                     return ";; ok";
                 }
@@ -222,7 +223,7 @@ class ResourceRecordSetCommands {
             if (ttl != -1)
                 builder.ttl(ttl);
             final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
-            String cmd = format(";; in zone %s replacing rrset %s %s with values: [%s]", zoneName, name, type, Joiner
+            String cmd = format(";; in zone %s replacing rrset %s %s with values: [%s]", zoneIdOrName, name, type, Joiner
                     .on(',').join(toAdd));
             if (ttl != -1)
                 cmd = format("%s and ttl %d", cmd, ttl);
@@ -236,7 +237,7 @@ class ResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    mgr.getApi().getResourceRecordSetApiForZone(zoneName).replace(toAdd);
+                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).replace(toAdd);
                     done = true;
                     return ";; ok";
                 }
@@ -254,7 +255,7 @@ class ResourceRecordSetCommands {
 
         public Iterator<String> doRun(final DNSApiManager mgr) {
             final ResourceRecordSet<Map<String, Object>> toRemove = rrsetBuilder().build();
-            String cmd = format(";; in zone %s removing from rrset %s %s values: [%s]", zoneName, name, type, Joiner
+            String cmd = format(";; in zone %s removing from rrset %s %s values: [%s]", zoneIdOrName, name, type, Joiner
                     .on(',').join(toRemove));
             return concat(forArray(cmd), new Iterator<String>() {
                 boolean done = false;
@@ -266,7 +267,7 @@ class ResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    mgr.getApi().getResourceRecordSetApiForZone(zoneName).remove(toRemove);
+                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).remove(toRemove);
                     done = true;
                     return ";; ok";
                 }
@@ -288,7 +289,7 @@ class ResourceRecordSetCommands {
         public String type;
 
         public Iterator<String> doRun(final DNSApiManager mgr) {
-            String cmd = format(";; in zone %s deleting rrset %s %s", zoneName, name, type);
+            String cmd = format(";; in zone %s deleting rrset %s %s", zoneIdOrName, name, type);
             return concat(forArray(cmd), new Iterator<String>() {
                 boolean done = false;
 
@@ -299,7 +300,7 @@ class ResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    mgr.getApi().getResourceRecordSetApiForZone(zoneName).deleteByNameAndType(name, type);
+                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).deleteByNameAndType(name, type);
                     done = true;
                     return ";; ok";
                 }
