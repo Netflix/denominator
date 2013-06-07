@@ -28,7 +28,7 @@ public class DataFromInstanceMetadataHookTest {
         try {
 
             ResourceRecordSetAdd command = new ResourceRecordSetAdd();
-            command.zoneName = "denominator.io.";
+            command.zoneIdOrName = "denominator.io.";
             command.name = "www1.denominator.io.";
             command.type = "CNAME";
             command.ec2PublicHostname = true;
@@ -51,7 +51,7 @@ public class DataFromInstanceMetadataHookTest {
         try {
 
             ResourceRecordSetAdd command = new ResourceRecordSetAdd();
-            command.zoneName = "denominator.io.";
+            command.zoneIdOrName = "denominator.io.";
             command.name = "www1.denominator.io.";
             command.type = "CNAME";
             command.ec2PublicHostname = true;
@@ -77,7 +77,7 @@ public class DataFromInstanceMetadataHookTest {
         try {
 
             ResourceRecordSetAdd command = new ResourceRecordSetAdd();
-            command.zoneName = "denominator.io.";
+            command.zoneIdOrName = "denominator.io.";
             command.name = "www1.denominator.io.";
             command.type = "A";
             command.ec2PublicIpv4 = true;
@@ -104,7 +104,7 @@ public class DataFromInstanceMetadataHookTest {
         try {
 
             ResourceRecordSetAdd command = new ResourceRecordSetAdd();
-            command.zoneName = "denominator.io.";
+            command.zoneIdOrName = "denominator.io.";
             command.name = "www1.denominator.io.";
             command.type = "A";
             command.ec2PublicIpv4 = true;
@@ -129,7 +129,7 @@ public class DataFromInstanceMetadataHookTest {
         try {
 
             ResourceRecordSetAdd command = new ResourceRecordSetAdd();
-            command.zoneName = "denominator.io.";
+            command.zoneIdOrName = "denominator.io.";
             command.name = "www1.denominator.io.";
             command.type = "CNAME";
             command.ec2LocalHostname = true;
@@ -155,7 +155,7 @@ public class DataFromInstanceMetadataHookTest {
         try {
 
             ResourceRecordSetAdd command = new ResourceRecordSetAdd();
-            command.zoneName = "denominator.io.";
+            command.zoneIdOrName = "denominator.io.";
             command.name = "www1.denominator.io.";
             command.type = "A";
             command.ec2LocalIpv4 = true;
@@ -182,7 +182,7 @@ public class DataFromInstanceMetadataHookTest {
         try {
 
             ResourceRecordSetAdd command = new ResourceRecordSetAdd();
-            command.zoneName = "denominator.io.";
+            command.zoneIdOrName = "denominator.io.";
             command.name = "www1.denominator.io.";
             command.type = "A";
             command.ec2LocalIpv4 = true;
