@@ -25,8 +25,9 @@ public class CloudDNSProviderTest {
 
     @Test
     public void testMockMetadata() {
-        assertEquals(PROVIDER.getName(), "clouddns");
-        assertEquals(PROVIDER.getCredentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
+        assertEquals(PROVIDER.name(), "clouddns");
+        assertEquals(PROVIDER.supportsDuplicateZoneNames(), true);
+        assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
                 .putAll("apiKey", "username", "apiKey").build());
     }
 
@@ -39,18 +40,18 @@ public class CloudDNSProviderTest {
     @Test
     public void testProviderWiresCloudDNSZoneApi() {
         DNSApiManager manager = create(PROVIDER, credentials("username", "apiKey"));
-        assertEquals(manager.getApi().getZoneApi().getClass(), CloudDNSZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), CloudDNSZoneApi.class);
         manager = create("clouddns", credentials("username", "apiKey"));
-        assertEquals(manager.getApi().getZoneApi().getClass(), CloudDNSZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), CloudDNSZoneApi.class);
         manager = create("clouddns", credentials(MapCredentials.from(ImmutableMap.<String, String> builder()
                                                                .put("username", "U")
                                                                .put("apiKey", "K").build())));
-        assertEquals(manager.getApi().getZoneApi().getClass(), CloudDNSZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), CloudDNSZoneApi.class);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. clouddns requires username, apiKey")
     public void testCredentialsRequired() {
-        create(PROVIDER).getApi().getZoneApi().list();
+        create(PROVIDER).api().zones().iterator();
     }
 
     @Test
@@ -58,6 +59,6 @@ public class CloudDNSProviderTest {
         DNSApiManager manager = ObjectGraph
                 .create(provider(new CloudDNSProvider()), new CloudDNSProvider.Module(), credentials("username", "apiKey"))
                 .get(DNSApiManager.class);
-        assertEquals(manager.getApi().getZoneApi().getClass(), CloudDNSZoneApi.class);
+        assertEquals(manager.api().zones().getClass(), CloudDNSZoneApi.class);
     }
 }
