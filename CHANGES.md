@@ -1,3 +1,6 @@
+### Version 1.2.1
+* remove strict zone name checks on deprecated `DNSApi.get..Api` methods as often the backend will accept zone names with or without a trailing dot.
+
 ### Version 1.2.0
 * Added `Zone` type, allowing disambiguation when `Provider.supportsMultipleZoneNames`.
 * Added zone id to commandline `zone list` output when present. 
