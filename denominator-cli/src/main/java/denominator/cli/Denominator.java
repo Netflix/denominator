@@ -1,6 +1,6 @@
 package denominator.cli;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Iterators.tryFind;
+import static com.google.common.collect.Iterables.tryFind;
 import static com.google.common.io.Closeables.closeQuietly;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.provider;
@@ -299,9 +299,10 @@ public class Denominator {
         if (!InternetDomainName.isValid(zoneIdOrName) || !InternetDomainName.from(zoneIdOrName).hasParent()) {
             return zoneIdOrName;
         } else if (InternetDomainName.isValid(zoneIdOrName) && mgr.provider().supportsDuplicateZoneNames()) {
-            Optional<Zone> zone = tryFind(mgr.api().zones().iterator(), Zones.nameEqualTo(zoneIdOrName));
-            checkArgument(zone.isPresent(), "zone %s not found", zoneIdOrName);
-            return zone.get().idOrName();
+            List<Zone> currentZones = ImmutableList.copyOf(mgr.api().zones());
+            Optional<Zone> zone = tryFind(currentZones, Zones.nameEqualTo(zoneIdOrName));
+            checkArgument(zone.isPresent(), "zone %s not found in %s", zoneIdOrName, currentZones);
+            return zone.get().id().get();
         }
         return zoneIdOrName;
     }

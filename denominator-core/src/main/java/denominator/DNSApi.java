@@ -1,12 +1,15 @@
 package denominator;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.collect.Iterables.tryFind;
+
+import java.util.List;
 
 import javax.inject.Inject;
 
 import com.google.common.annotations.Beta;
 import com.google.common.base.Optional;
-import com.google.common.collect.Iterators;
+import com.google.common.collect.ImmutableList;
 
 import denominator.model.Zone;
 import denominator.model.Zones;
@@ -17,14 +20,16 @@ import denominator.profile.GeoResourceRecordSetApi;
  * allows you to manipulate resources such as DNS Zones and Records.
  */
 public class DNSApi {
+    private final Provider provider;
     private final ZoneApi zones;
     private final ResourceRecordSetApi.Factory rrsetApiFactory;
     private final AllProfileResourceRecordSetApi.Factory allRRSetApiFactory;
     private final GeoResourceRecordSetApi.Factory geoApiFactory;
 
     @Inject
-    DNSApi(ZoneApi zones, ResourceRecordSetApi.Factory rrsetApiFactory,
+    DNSApi(Provider provider, ZoneApi zones, ResourceRecordSetApi.Factory rrsetApiFactory,
             AllProfileResourceRecordSetApi.Factory allRRSetApiFactory, GeoResourceRecordSetApi.Factory geoApiFactory) {
+        this.provider = provider;
         this.zones = zones;
         this.rrsetApiFactory = rrsetApiFactory;
         this.allRRSetApiFactory = allRRSetApiFactory;
@@ -169,9 +174,15 @@ public class DNSApi {
         return geoApiFactory.create(idOrName);
     }
 
+    /**
+     * if the provider supports duplicate zone names, we'll choose the first.
+     */
     String idOrName(String zoneName) {
-        Optional<Zone> zone = Iterators.tryFind(zones.iterator(), Zones.nameEqualTo(zoneName));
-        checkArgument(zone.isPresent(), "zone %s not found", zoneName);
-        return zone.get().idOrName();
+        if (!provider.supportsDuplicateZoneNames())
+            return zoneName;
+        List<Zone> currentZones = ImmutableList.copyOf(zones);
+        Optional<Zone> zone = tryFind(currentZones, Zones.nameEqualTo(zoneName));
+        checkArgument(zone.isPresent(), "zone %s not found in %s", zoneName, currentZones);
+        return zone.get().id().get();
     }
 }
