@@ -2,7 +2,7 @@ package denominator.route53;
 
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
-import static denominator.Denominator.listProviders;
+import static denominator.Denominator.providers;
 import static denominator.Denominator.provider;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -34,7 +34,7 @@ public class Route53ProviderTest {
 
     @Test
     public void testRoute53Registered() {
-        Set<Provider> allProviders = ImmutableSet.copyOf(listProviders());
+        Set<Provider> allProviders = ImmutableSet.copyOf(providers());
         assertTrue(allProviders.contains(PROVIDER));
     }
 

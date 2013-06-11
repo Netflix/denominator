@@ -22,8 +22,8 @@ import com.google.common.collect.Multimap;
 public class Geo extends ForwardingMap<String, Object> {
 
     /**
-     * @param group corresponds to {@link #getGroup()}
-     * @param regions corresponds to {@link #getRegions()}
+     * @param group corresponds to {@link #group()}
+     * @param regions corresponds to {@link #regions()}
      */
     public static Geo create(String group, Multimap<String, String> regions) {
         return new Geo(group, regions);
@@ -45,19 +45,41 @@ public class Geo extends ForwardingMap<String, Object> {
     }
 
     /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #group()}
+     */
+    @Deprecated
+    public String getGroup() {
+        return group();
+    }
+
+    /**
      * user-defined name for the group of regions that represent the traffic
      * desired. For example, {@code "US-West"} or {@code "Non-EU"}.
+     * 
+     * @since 1.3
      */
-    public String getGroup() {
+    public String group() {
         return group;
     }
 
     /**
-     * a filtered view of
-     * {@code denominator.profile.GeoResourceRecordSetApi.getSupportedRegions()}, which
-     * describes the traffic desired for this profile.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #regions()}
      */
+    @Deprecated
     public Multimap<String, String> getRegions() {
+        return regions();
+    }
+
+    /**
+     * a filtered view of
+     * {@code denominator.profile.GeoResourceRecordSetApi.supportedRegions()}
+     * , which describes the traffic desired for this profile.
+     * 
+     * @since 1.3
+     */
+    public Multimap<String, String> regions() {
         return regions;
     }
 

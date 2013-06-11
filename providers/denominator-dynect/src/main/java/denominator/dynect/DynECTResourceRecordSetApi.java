@@ -65,7 +65,13 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     }
 
     @Override
-    public Iterator<ResourceRecordSet<?>> listByName(String fqdn) {
+    @Deprecated
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByName(String fqdn) {
         checkNotNull(fqdn, "fqdn was null");
         return groupByRecordNameAndType(FluentIterable.from(roApi.recordsInZoneByName(zoneFQDN, fqdn).values()));
     }
@@ -92,11 +98,11 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     @Override
     public void add(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
+        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
 
-        Optional<Integer> ttlToApply = rrset.getTTL();
+        Optional<Integer> ttlToApply = rrset.ttl();
 
-        List<Record<?>> existingRecords = existing(rrset.getName(), rrset.getType());
+        List<Record<?>> existingRecords = existing(rrset.name(), rrset.type());
 
         List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset);
 
@@ -117,8 +123,8 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
         if (recordsLeftToCreate.size() > 0) {
             CreateRecord.Builder<Map<String, Object>> builder = CreateRecord.builder()
-                                                                            .fqdn(rrset.getName())
-                                                                            .type(rrset.getType())
+                                                                            .fqdn(rrset.name())
+                                                                            .type(rrset.type())
                                                                             .ttl(ttlToApply.or(0));
             for (Map<String, Object> record : recordsLeftToCreate) {
                 api.getRecordApiForZone(zoneFQDN).scheduleCreate(builder.rdata(record).build());
@@ -160,10 +166,10 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     @Override
     public void replace(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
-        int ttlToApply = rrset.getTTL().or(0);
+        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
+        int ttlToApply = rrset.ttl().or(0);
 
-        List<Record<?>> existingRecords = existing(rrset.getName(), rrset.getType());
+        List<Record<?>> existingRecords = existing(rrset.name(), rrset.type());
 
         List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset);
 
@@ -178,8 +184,8 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
         if (recordsLeftToCreate.size() > 0) {
             CreateRecord.Builder<Map<String, Object>> builder = CreateRecord.builder()
-                                                                            .fqdn(rrset.getName())
-                                                                            .type(rrset.getType())
+                                                                            .fqdn(rrset.name())
+                                                                            .type(rrset.type())
                                                                             .ttl(ttlToApply);
             for (Map<String, Object> record : recordsLeftToCreate) {
                 api.getRecordApiForZone(zoneFQDN).scheduleCreate(builder.rdata(record).build());
@@ -191,14 +197,14 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     @Override
     public void remove(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
+        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
 
-        List<Record<?>> existingRecords = existing(rrset.getName(), rrset.getType());
+        List<Record<?>> existingRecords = existing(rrset.name(), rrset.type());
         if (existingRecords.isEmpty())
             return;
         boolean shouldPublish = false;
         for (Record<? extends Map<String, Object>> toEvaluate : existingRecords) {
-            if (toEvaluate != null && rrset.contains(toEvaluate.getRData())) {
+            if (toEvaluate != null && rrset.rdata().contains(toEvaluate.getRData())) {
                 shouldPublish = true;
                 api.getRecordApiForZone(zoneFQDN).scheduleDelete(toEvaluate);
             }

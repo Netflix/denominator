@@ -42,7 +42,7 @@ public class ResourceRecordSetsTest {
                                                      .add(AData.create("192.0.2.1")).build();
 
     public void nameEqualToReturnsFalseOnNull() {
-        assertFalse(ResourceRecordSets.nameEqualTo(aRRS.getName()).apply(null));
+        assertFalse(ResourceRecordSets.nameEqualTo(aRRS.name()).apply(null));
     }
 
     public void nameEqualToReturnsFalseOnDifferentName() {
@@ -50,11 +50,11 @@ public class ResourceRecordSetsTest {
     }
 
     public void nameEqualToReturnsTrueOnSameName() {
-        assertTrue(ResourceRecordSets.nameEqualTo(aRRS.getName()).apply(aRRS));
+        assertTrue(ResourceRecordSets.nameEqualTo(aRRS.name()).apply(aRRS));
     }
 
     public void typeEqualToReturnsFalseOnNull() {
-        assertFalse(ResourceRecordSets.typeEqualTo(aRRS.getType()).apply(null));
+        assertFalse(ResourceRecordSets.typeEqualTo(aRRS.type()).apply(null));
     }
 
     public void typeEqualToReturnsFalseOnDifferentType() {
@@ -62,11 +62,11 @@ public class ResourceRecordSetsTest {
     }
 
     public void typeEqualToReturnsTrueOnSameType() {
-        assertTrue(ResourceRecordSets.typeEqualTo(aRRS.getType()).apply(aRRS));
+        assertTrue(ResourceRecordSets.typeEqualTo(aRRS.type()).apply(aRRS));
     }
 
     public void containsRDataReturnsFalseOnNull() {
-        assertFalse(ResourceRecordSets.containsRData(aRRS.get(0)).apply(null));
+        assertFalse(ResourceRecordSets.containsRData(aRRS.rdata().get(0)).apply(null));
     }
 
     public void containsRDataReturnsFalseWhenRDataDifferent() {
@@ -257,9 +257,9 @@ public class ResourceRecordSetsTest {
     @Test(dataProvider = "a")
     public void shortFormEqualsLongForm(ResourceRecordSet<?> shortForm, ResourceRecordSet<?> longForm) {
         assertEquals(shortForm, longForm);
-        assertEquals(shortForm.getName(), longForm.getName());
-        assertEquals(shortForm.getType(), longForm.getType());
-        assertEquals(shortForm.getTTL(), longForm.getTTL());
+        assertEquals(shortForm.name(), longForm.name());
+        assertEquals(shortForm.type(), longForm.type());
+        assertEquals(shortForm.ttl(), longForm.ttl());
         assertEquals(ImmutableList.copyOf(shortForm), ImmutableList.copyOf(longForm));
     }
 }

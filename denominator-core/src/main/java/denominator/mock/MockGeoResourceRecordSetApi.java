@@ -37,12 +37,24 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
     }
 
     @Override
+    @Deprecated
     public Set<String> getSupportedTypes() {
+        return supportedTypes();
+    }
+
+    @Override
+    public Set<String> supportedTypes() {
         return types;
     }
 
     @Override
+    @Deprecated
     public Multimap<String, String> getSupportedRegions() {
+        return supportedRegions();
+    }
+
+    @Override
+    public Multimap<String, String> supportedRegions() {
         return regions;
     }
 
@@ -63,13 +75,13 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
             return;
         ResourceRecordSet<?> rrset = existing.get();
         Geo geo = toProfile(Geo.class).apply(rrset);
-        if (geo.getRegions().equals(regions))
+        if (geo.regions().equals(regions))
             return;
         ResourceRecordSet<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>> builder()
-                                                                       .name(rrset.getName())
-                                                                       .type(rrset.getType())
-                                                                       .ttl(rrset.getTTL().orNull())
-                                                                       .addProfile(Geo.create(geo.getGroup(), regions))
+                                                                       .name(rrset.name())
+                                                                       .type(rrset.type())
+                                                                       .ttl(rrset.ttl().orNull())
+                                                                       .addProfile(Geo.create(geo.group(), regions))
                                                                        .addAll(rrset).build();
         replace(rrs);
     }
@@ -81,13 +93,13 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         if (!existing.isPresent())
             return;
         ResourceRecordSet<?> rrset = existing.get();
-        if (rrset.getTTL().isPresent() && rrset.getTTL().get().equals(ttl))
+        if (rrset.ttl().isPresent() && rrset.ttl().get().equals(ttl))
             return;
         ResourceRecordSet<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>> builder()
-                                                                       .name(rrset.getName())
-                                                                       .type(rrset.getType())
+                                                                       .name(rrset.name())
+                                                                       .type(rrset.type())
                                                                        .ttl(ttl)
-                                                                       .profile(rrset.getProfiles())
+                                                                       .profile(rrset.profiles())
                                                                        .addAll(rrset).build();
         replace(rrs);
     }
@@ -96,7 +108,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         checkNotNull(rrset, "rrset was null");
         checkArgument(profileContainsType(Geo.class).apply(rrset), "no geo profile found: %s", rrset);
         Geo geo = toProfile(Geo.class).apply(rrset);
-        Optional<ResourceRecordSet<?>> rrsMatch = getByNameTypeAndGroup(rrset.getName(), rrset.getType(), geo.getGroup());
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameTypeAndGroup(rrset.name(), rrset.type(), geo.group());
         if (rrsMatch.isPresent()) {
             records.remove(zone, rrsMatch.get());
         }
@@ -132,5 +144,4 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
                     new MockGeoResourceRecordSetApi(records, regions, types, zone));
         }
     }
-
 }

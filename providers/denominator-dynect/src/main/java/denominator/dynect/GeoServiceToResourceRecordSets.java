@@ -32,7 +32,7 @@ final class GeoServiceToResourceRecordSets implements Function<GeoService, Itera
 
     /**
      * @param countryIndexer
-     *            {@link Geo#getRegions()} is indexed, but
+     *            {@link Geo#regions()} is indexed, but
      *            {@link GeoRegionGroup#getCountries()} is not. This function
      *            will index the countries so that they match the denominator
      *            model.
@@ -106,7 +106,7 @@ final class GeoServiceToResourceRecordSets implements Function<GeoService, Itera
 
     /**
      * the dynect {@code RecordSet} doesn't include
-     * {@link ResourceRecordSet#getName()}. This collects all details except the
+     * {@link ResourceRecordSet#name()}. This collects all details except the
      * name. The result of this function would be applied to all relevant
      * {@link GeoService#getNodes() nodes}.
      * 

@@ -226,7 +226,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void listByNameWhenPresent() throws IOException, InterruptedException {
+    public void iterateByNameWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
@@ -239,7 +239,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
                          
-            Iterator<ResourceRecordSet<?>> iterator = api.listByName("srv.denominator.io.");
+            Iterator<ResourceRecordSet<?>> iterator = api.iterateByName("srv.denominator.io.");
             assertEquals(iterator.next().toString(), europe.toString());
             assertEquals(iterator.next().toString(), everywhereElse.toString());
             assertEquals(iterator.next().toString(), us.toString());
@@ -272,7 +272,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void listByNameAndTypeWhenPresent() throws IOException, InterruptedException {
+    public void iterateByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
@@ -286,7 +286,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
                          
-            Iterator<ResourceRecordSet<?>> iterator = api.listByNameAndType("srv.denominator.io.", "CNAME");
+            Iterator<ResourceRecordSet<?>> iterator = api.iterateByNameAndType("srv.denominator.io.", "CNAME");
             assertEquals(iterator.next().toString(), europe.toString());
             assertEquals(iterator.next().toString(), everywhereElse.toString());
             assertEquals(iterator.next().toString(), us.toString());
@@ -346,7 +346,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
 
-            Multimap<String, String> regions = toProfile(Geo.class).apply(europe).getRegions();
+            Multimap<String, String> regions = toProfile(Geo.class).apply(europe).regions();
             api.applyRegionsToNameTypeAndGroup(regions, "srv.denominator.io.", "CNAME", "Europe");
 
             assertEquals(server.getRequestCount(), 5);

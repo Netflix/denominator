@@ -51,18 +51,28 @@ public class OnlyBasicResourceRecordSets {
         }
 
         @Override
+        @Deprecated
         public Iterator<ResourceRecordSet<?>> listByName(String name) {
-            return api.listByName(name);
+            return iterateByName(name);
         }
 
         @Override
+        public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
+            return api.iterateByName(name);
+        }
+
+        @Override
+        @Deprecated
         public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
+            return iterateByNameAndType(name, type);
+        }
+
+        @Override
+        public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
             Optional<ResourceRecordSet<?>> rrs = api.getByNameAndType(name, type);
             if (rrs.isPresent())
                 return Iterators.<ResourceRecordSet<?>> forArray(rrs.get());
             return Iterators.emptyIterator();
         }
-
-
     }
 }

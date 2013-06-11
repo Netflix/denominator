@@ -36,9 +36,20 @@ public class SPFData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * One or more character-strings.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #txtdata()}
      */
+    @Deprecated
     public String getTxtdata() {
+        return txtdata();
+    }
+
+    /**
+     * One or more character-strings.
+     * 
+     * @since 1.3
+     */
+    public String txtdata() {
         return txtdata;
     }
 

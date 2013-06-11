@@ -41,18 +41,40 @@ public class MXData extends ForwardingMap<String, Object> {
     }
 
     /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #preference()}
+     */
+    @Deprecated
+    public int getPreference() {
+        return preference();
+    }
+
+    /**
      * specifies the preference given to this RR among others at the same owner.
      * Lower values are preferred.
+     * 
+     * @since 1.3
      */
-    public int getPreference() {
+    public int preference() {
         return preference;
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #exchange()}
+     */
+    @Deprecated
+    public String getExchange() {
+        return exchange();
     }
 
     /**
      * domain-name which specifies a host willing to act as a mail exchange for
      * the owner name.
+     * 
+     * @since 1.3
      */
-    public String getExchange() {
+    public String exchange() {
         return exchange;
     }
 

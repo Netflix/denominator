@@ -92,7 +92,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void listByNameWhenPresent() throws IOException, InterruptedException {
+    public void iterateByNameWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
@@ -100,7 +100,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            Iterator<ResourceRecordSet<?>> iterator = api.listByName("srv.denominator.io");
+            Iterator<ResourceRecordSet<?>> iterator = api.iterateByName("srv.denominator.io");
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
             assertEquals(iterator.next(), fallback);
@@ -115,7 +115,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void listByNameWhenAbsent() throws IOException, InterruptedException {
+    public void iterateByNameWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoServices));
@@ -123,7 +123,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertFalse(api.listByName("www.denominator.io").hasNext());
+            assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
@@ -134,7 +134,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void listByNameAndTypeWhenPresent() throws IOException, InterruptedException {
+    public void iterateByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
@@ -142,7 +142,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            Iterator<ResourceRecordSet<?>> iterator = api.listByNameAndType("srv.denominator.io", "CNAME");
+            Iterator<ResourceRecordSet<?>> iterator = api.iterateByNameAndType("srv.denominator.io", "CNAME");
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
             assertEquals(iterator.next(), fallback);
@@ -157,7 +157,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void listByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
+    public void iterateByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoServices));
@@ -165,7 +165,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertFalse(api.listByNameAndType("www.denominator.io", "A").hasNext());
+            assertFalse(api.iterateByNameAndType("www.denominator.io", "A").hasNext());
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");

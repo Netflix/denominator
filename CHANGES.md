@@ -1,3 +1,7 @@
+### Version 1.3.0
+* Deprecated remaining naming conventions that use syntax like `getUrl` or `listByName` to `url` or `iterateByName` to support migration to denominator 2.0.
+* ResourceRecordSet no longer implements `List<D>`.  Please access rdata via the `rdata()` accessor.
+
 ### Version 1.2.1
 * remove strict zone name checks on deprecated `DNSApi.get..Api` methods as often the backend will accept zone names with or without a trailing dot.
 

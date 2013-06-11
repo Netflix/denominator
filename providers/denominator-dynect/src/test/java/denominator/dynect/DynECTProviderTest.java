@@ -2,7 +2,7 @@ package denominator.dynect;
 
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
-import static denominator.Denominator.listProviders;
+import static denominator.Denominator.providers;
 import static denominator.Denominator.provider;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -33,7 +33,7 @@ public class DynECTProviderTest {
 
     @Test
     public void testDynECTRegistered() {
-        Set<Provider> allProviders = ImmutableSet.copyOf(listProviders());
+        Set<Provider> allProviders = ImmutableSet.copyOf(providers());
         assertTrue(allProviders.contains(PROVIDER));
     }
 

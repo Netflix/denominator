@@ -59,7 +59,13 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     }
 
     @Override
+    @Deprecated
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
         checkNotNull(name, "name");
         return from(records.get(zone)).filter(nameEqualTo(name)).iterator();
     }
@@ -71,11 +77,11 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
         if (!existing.isPresent())
             return;
         ResourceRecordSet<?> rrset = existing.get();
-        if (rrset.getTTL().isPresent() && rrset.getTTL().get().equals(ttl))
+        if (rrset.ttl().isPresent() && rrset.ttl().get().equals(ttl))
             return;
         ResourceRecordSet<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>> builder()
-                                                                       .name(rrset.getName())
-                                                                       .type(rrset.getType())
+                                                                       .name(rrset.name())
+                                                                       .type(rrset.type())
                                                                        .ttl(ttl)
                                                                        .addAll(rrset).build();
         replace(rrs);
@@ -84,11 +90,11 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     @Override
     public void add(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.getName(), rrset.getType());
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.name(), rrset.type());
         Builder<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>>builder()
-                                                             .name(rrset.getName())
-                                                             .type(rrset.getType())
-                                                             .ttl(rrset.getTTL().or(3600));
+                                                             .name(rrset.name())
+                                                             .type(rrset.type())
+                                                             .ttl(rrset.ttl().or(3600));
         if (rrsMatch.isPresent()) {
             rrs.addAll(rrsMatch.get());
             rrs.addAll(filter(rrset, not(in(rrsMatch.get()))));
@@ -102,7 +108,7 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     @Override
     public void replace(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.getName(), rrset.getType());
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.name(), rrset.type());
         if (rrsMatch.isPresent()) {
             records.remove(zone, rrsMatch.get());
         }
@@ -112,14 +118,14 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
     @Override
     public void remove(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.getName(), rrset.getType());
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameAndType(rrset.name(), rrset.type());
         if (rrsMatch.isPresent()) {
             records.remove(zone, rrsMatch.get());
-            if (rrsMatch.get().size() > 1) {
+            if (rrsMatch.get().rdata().size() > 1) {
                 records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
-                                                    .name(rrset.getName())
-                                                    .type(rrset.getType())
-                                                    .ttl(rrsMatch.get().getTTL().get())
+                                                    .name(rrset.name())
+                                                    .type(rrset.type())
+                                                    .ttl(rrsMatch.get().ttl().get())
                                                     .addAll(filter(rrsMatch.get(), not(in(rrset))))
                                                     .build());
             }
