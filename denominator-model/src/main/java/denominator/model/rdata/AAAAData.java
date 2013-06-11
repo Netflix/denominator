@@ -47,9 +47,20 @@ public class AAAAData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * a 128 bit IPv6 address
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #address()}
      */
+    @Deprecated
     public String getAddress() {
+        return address();
+    }
+
+    /**
+     * a 128 bit IPv6 address
+     * 
+     * @since 1.3
+     */
+    public String address() {
         return address;
     }
 

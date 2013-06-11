@@ -100,10 +100,10 @@ public abstract class BaseProviderLiveTest {
     protected Zone mutableZone;
 
     protected void checkRRS(ResourceRecordSet<?> rrs) {
-        checkNotNull(rrs.getName(), "Name: ResourceRecordSet %s", rrs);
-        checkNotNull(rrs.getType(), "Type: ResourceRecordSet %s", rrs);
-        checkNotNull(rrs.getTTL(), "TTL: ResourceRecordSet %s", rrs);
-        assertTrue(!rrs.isEmpty(), "Values absent on ResourceRecordSet: " + rrs);
+        checkNotNull(rrs.name(), "Name: ResourceRecordSet %s", rrs);
+        checkNotNull(rrs.type(), "Type: ResourceRecordSet %s", rrs);
+        checkNotNull(rrs.ttl(), "TTL: ResourceRecordSet %s", rrs);
+        assertTrue(!rrs.rdata().isEmpty(), "Values absent on ResourceRecordSet: " + rrs);
     }
 
     protected void skipIfRRSetExists(Zone zone, String name, String type) {

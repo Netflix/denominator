@@ -333,7 +333,7 @@ public class DynECTResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void listByNameWhenPresent() throws IOException, InterruptedException {
+    public void iterateByNameWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(recordsByName));
@@ -341,7 +341,7 @@ public class DynECTResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertEquals(api.listByName("www.denominator.io").next(),
+            assertEquals(api.iterateByName("www.denominator.io").next(),
                     a("www.denominator.io", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
 
             assertEquals(server.getRequestCount(), 2);
@@ -353,7 +353,7 @@ public class DynECTResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void listByNameWhenAbsent() throws IOException, InterruptedException {
+    public void iterateByNameWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
@@ -361,7 +361,7 @@ public class DynECTResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertFalse(api.listByName("www.denominator.io").hasNext());
+            assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");

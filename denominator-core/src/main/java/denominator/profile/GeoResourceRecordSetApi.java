@@ -15,11 +15,27 @@ import denominator.model.profile.Geo;
  */
 @Beta
 public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi {
-    
+
     /**
-     * the set of {@link ResourceRecordSet#getType() record types} that support the geo profile.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #supportedTypes()}
      */
+    @Deprecated
     Set<String> getSupportedTypes();
+
+    /**
+     * the set of {@link ResourceRecordSet#type() record types} that support the geo profile.
+     * 
+     * @since 1.3
+     */
+    Set<String> supportedTypes();
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #supportedRegions()}
+     */
+    @Deprecated
+    Multimap<String, String> getSupportedRegions();
 
     /**
      * retrieve an organized list of regions by region. It is often the case
@@ -42,18 +58,20 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
      * <h4>Note</h4>
      * 
      * The values of this are not guaranteed portable across providers.
+     * 
+     * @since 1.3
      */
-    Multimap<String, String> getSupportedRegions();
+    Multimap<String, String> supportedRegions();
 
     /**
      * retrieve a resource record set by name, type, and geo group
      * 
      * @param name
-     *            {@link ResourceRecordSet#getName() name} of the rrset
+     *            {@link ResourceRecordSet#name() name} of the rrset
      * @param type
-     *            {@link ResourceRecordSet#getType() type} of the rrset
+     *            {@link ResourceRecordSet#type() type} of the rrset
      * @param group
-     *            {@link Geo#getGroup() group} of the rrset
+     *            {@link Geo#group() group} of the rrset
      * 
      * @return present if a resource record exists with the same {@code name},
      *         {@code type}, and {@code group}
@@ -64,39 +82,39 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
 
     /**
      * Ensures the supplied {@code regions} are uniform for all record sets with
-     * the supplied {@link ResourceRecordSet#getName() name},
-     * {@link ResourceRecordSet#getType() type}, and {@link Geo#toName() group}
+     * the supplied {@link ResourceRecordSet#name() name},
+     * {@link ResourceRecordSet#type() type}, and {@link Geo#toName() group}
      * . Returns without error if there are no record sets of the specified
      * name, type, and group.
      * 
      * @param regions
-     *            corresponds to {@link Geo#getRegions() regions} you want this
+     *            corresponds to {@link Geo#regions() regions} you want this
      *            {@code group} to represent. Should be a sub-map of
      *            {@link #getSupportedRegions()}.
      * @param name
-     *            {@link ResourceRecordSet#getName() name} of the rrset
+     *            {@link ResourceRecordSet#name() name} of the rrset
      * @param type
-     *            {@link ResourceRecordSet#getType() type} of the rrset
+     *            {@link ResourceRecordSet#type() type} of the rrset
      * @param group
-     *            {@link Geo#getGroup() group} of the rrset
+     *            {@link Geo#group() group} of the rrset
      */
     void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group);
 
     /**
      * Ensures the supplied {@code ttl} is uniform for all record sets with the
-     * supplied {@link ResourceRecordSet#getName() name},
-     * {@link ResourceRecordSet#getType() type}, and {@link Geo#toName() group}
+     * supplied {@link ResourceRecordSet#name() name},
+     * {@link ResourceRecordSet#type() type}, and {@link Geo#toName() group}
      * . Returns without error if there are no record sets of the specified
      * name, type, and group.
      * 
      * @param ttl
      *            ttl to apply to all records in seconds
      * @param name
-     *            {@link ResourceRecordSet#getName() name} of the rrset
+     *            {@link ResourceRecordSet#name() name} of the rrset
      * @param type
-     *            {@link ResourceRecordSet#getType() type} of the rrset
+     *            {@link ResourceRecordSet#type() type} of the rrset
      * @param group
-     *            {@link Geo#getGroup() group} of the rrset
+     *            {@link Geo#group() group} of the rrset
      */
     void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group);
 

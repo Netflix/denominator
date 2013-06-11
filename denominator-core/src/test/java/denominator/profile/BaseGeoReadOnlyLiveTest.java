@@ -51,15 +51,15 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
                 ResourceRecordSet<?> geoRRS = geoRRSIterator.next();
                 checkGeoRRS(geoRRS);
                 getAnonymousLogger().info(format("%s ::: geoRRS: %s", manager, geoRRS));
-                recordTypeCounts.getUnchecked(geoRRS.getType()).addAndGet(geoRRS.size());
-                geoRecordCounts.getUnchecked(toProfile(Geo.class).apply(geoRRS)).addAndGet(geoRRS.size());
+                recordTypeCounts.getUnchecked(geoRRS.type()).addAndGet(geoRRS.rdata().size());
+                geoRecordCounts.getUnchecked(toProfile(Geo.class).apply(geoRRS)).addAndGet(geoRRS.rdata().size());
                 
-                Iterator<ResourceRecordSet<?>> byNameAndType = geoApi(zone).listByNameAndType(geoRRS.getName(), geoRRS.getType());
+                Iterator<ResourceRecordSet<?>> byNameAndType = geoApi(zone).iterateByNameAndType(geoRRS.name(), geoRRS.type());
                 assertTrue(byNameAndType.hasNext(), "could not list by name and type: " + geoRRS);
-                assertTrue(Iterators.elementsEqual(geoApi(zone).listByNameAndType(geoRRS.getName(), geoRRS.getType()), byNameAndType));
+                assertTrue(Iterators.elementsEqual(geoApi(zone).iterateByNameAndType(geoRRS.name(), geoRRS.type()), byNameAndType));
                 
                 Optional<ResourceRecordSet<?>> byNameTypeAndGroup = geoApi(zone)
-                        .getByNameTypeAndGroup(geoRRS.getName(), geoRRS.getType(), toProfile(Geo.class).apply(geoRRS).getGroup());
+                        .getByNameTypeAndGroup(geoRRS.name(), geoRRS.type(), toProfile(Geo.class).apply(geoRRS).group());
                 assertTrue(byNameTypeAndGroup.isPresent(), "could not lookup by name, type, and group: " + geoRRS);
                 assertEquals(byNameTypeAndGroup.get(), geoRRS);
             }
@@ -68,15 +68,15 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     }
 
     protected void checkGeoRRS(ResourceRecordSet<?> geoRRS) {
-        assertFalse(geoRRS.getProfiles().isEmpty(), "Profile absent: " + geoRRS);
+        assertFalse(geoRRS.profiles().isEmpty(), "Profile absent: " + geoRRS);
         Geo geo = toProfile(Geo.class).apply(geoRRS);
-        checkNotNull(geo.getGroup(), "Group: Geo %s", geoRRS);
-        assertTrue(!geo.getRegions().isEmpty(), "Regions empty on Geo: " + geoRRS);
+        checkNotNull(geo.group(), "Group: Geo %s", geoRRS);
+        assertTrue(!geo.regions().isEmpty(), "Regions empty on Geo: " + geoRRS);
         
-        checkNotNull(geoRRS.getName(), "Name: ResourceRecordSet %s", geoRRS);
-        checkNotNull(geoRRS.getType(), "Type: ResourceRecordSet %s", geoRRS);
-        checkNotNull(geoRRS.getTTL(), "TTL: ResourceRecordSet %s", geoRRS);
-        assertFalse(geoRRS.isEmpty(), "Values absent on ResourceRecordSet: " + geoRRS);
+        checkNotNull(geoRRS.name(), "Name: ResourceRecordSet %s", geoRRS);
+        checkNotNull(geoRRS.type(), "Type: ResourceRecordSet %s", geoRRS);
+        checkNotNull(geoRRS.ttl(), "TTL: ResourceRecordSet %s", geoRRS);
+        assertFalse(geoRRS.rdata().isEmpty(), "Values absent on ResourceRecordSet: " + geoRRS);
     }
 
     @Test
@@ -87,16 +87,16 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
             if (!geoRRSIterator.hasNext())
                 continue;
             ResourceRecordSet<?> geoRRSet = geoRRSIterator.next();
-            String name = geoRRSet.getName();
+            String name = geoRRSet.name();
             List<ResourceRecordSet<?>> withName = Lists.newArrayList();
             withName.add(geoRRSet);
             while (geoRRSIterator.hasNext()) {
                 geoRRSet = geoRRSIterator.next();
-                if (!name.equalsIgnoreCase(geoRRSet.getName()))
+                if (!name.equalsIgnoreCase(geoRRSet.name()))
                         break;
                 withName.add(geoRRSet);
             }
-            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(geoApi(zone).listByName(name));
+            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(geoApi(zone).iterateByName(name));
             assertEquals(usingToString().immutableSortedCopy(fromApi), usingToString().immutableSortedCopy(withName));
             break;
         }
@@ -106,7 +106,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testListByNameWhenNotFound() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertFalse(geoApi(zone).listByName("ARGHH." + zone.name()).hasNext());
+            assertFalse(geoApi(zone).iterateByName("ARGHH." + zone.name()).hasNext());
             break;
         }
     }
@@ -115,7 +115,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testListByNameAndTypeWhenNone() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertFalse(geoApi(zone).listByNameAndType("ARGHH." + zone.name(), "TXT").hasNext());
+            assertFalse(geoApi(zone).iterateByNameAndType("ARGHH." + zone.name(), "TXT").hasNext());
             break;
         }
     }

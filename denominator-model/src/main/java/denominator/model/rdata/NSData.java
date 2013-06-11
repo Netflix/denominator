@@ -35,10 +35,21 @@ public class NSData extends ForwardingMap<String, Object> {
     }
 
     /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #nsdname()}
+     */
+    @Deprecated
+    public String getNsdname() {
+        return nsdname();
+    }
+
+    /**
      * domain-name which specifies a host which should be authoritative for the
      * specified class and domain.
+     * 
+     * @since 1.3
      */
-    public String getNsdname() {
+    public String nsdname() {
         return nsdname;
     }
 

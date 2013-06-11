@@ -48,10 +48,10 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
         /**
          * @param sortedIterator
          *            only contains records with the same
-         *            {@link DirectionalPoolRecordDetail#getName()}, sorted by
-         *            {@link DirectionalRecord#getType()},
+         *            {@link DirectionalPoolRecordDetail#name()}, sorted by
+         *            {@link DirectionalRecord#type()},
          *            {@link DirectionalPoolRecordDetail#getGeolocationGroup()}
-         *            or {@link DirectionalPoolRecordDetail#getGroup()}
+         *            or {@link DirectionalPoolRecordDetail#group()}
          */
         Iterator<ResourceRecordSet<?>> create(Iterator<DirectionalPoolRecordDetail> sortedIterator) {
             LoadingCache<String, Multimap<String, String>> requestScopedGeoCache = 

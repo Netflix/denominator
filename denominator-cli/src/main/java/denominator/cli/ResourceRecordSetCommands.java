@@ -54,7 +54,7 @@ class ResourceRecordSetCommands {
         public Iterator<String> doRun(DNSApiManager mgr) {
             Iterator<ResourceRecordSet<?>> iterator;
             if (name != null)
-                iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).listByName(name);
+                iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByName(name);
             else
                 iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterator();
             return transform(iterator, ResourceRecordSetToString.INSTANCE);
@@ -320,7 +320,7 @@ class ResourceRecordSetCommands {
         public String apply(ResourceRecordSet<?> input) {
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
             for (Map<String, Object> rdata : input) {
-                lines.add(format("%-50s%-7s%-6s%s", input.getName(), input.getType(), input.getTTL().orNull(),
+                lines.add(format("%-50s%-7s%-6s%s", input.name(), input.type(), input.ttl().orNull(),
                         flatten(rdata)));
             }
             return Joiner.on('\n').join(lines.build());

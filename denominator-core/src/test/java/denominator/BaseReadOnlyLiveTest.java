@@ -35,7 +35,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
         for (Zone zone : zones()) {
             for (Iterator<ResourceRecordSet<?>> rrsIterator = roApi(zone).iterator(); rrsIterator.hasNext();) {
                 ResourceRecordSet<?> rrs = rrsIterator.next();
-                recordTypeCounts.getUnchecked(rrs.getType()).addAndGet(rrs.size());
+                recordTypeCounts.getUnchecked(rrs.type()).addAndGet(rrs.rdata().size());
                 checkRRS(rrs);
                 checkListByNameAndTypeConsistent(zone, rrs);
             }
@@ -45,7 +45,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
 
     protected void checkListByNameAndTypeConsistent(Zone zone, ResourceRecordSet<?> rrs) {
         List<ResourceRecordSet<?>> byNameAndType = ImmutableList.copyOf(roApi(zone)
-                .listByNameAndType(rrs.getName(), rrs.getType()));
+                .iterateByNameAndType(rrs.name(), rrs.type()));
         assertFalse(byNameAndType.isEmpty(), "could not lookup by name and type: " + rrs);
         assertTrue(byNameAndType.contains(rrs), rrs + " not found in list by name and type: " + byNameAndType);
     }
@@ -58,16 +58,16 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
             if (!rrsIterator.hasNext())
                 continue;
             ResourceRecordSet<?> rrset = rrsIterator.next();
-            String name = rrset.getName();
+            String name = rrset.name();
             List<ResourceRecordSet<?>> withName = Lists.newArrayList();
             withName.add(rrset);
             while (rrsIterator.hasNext()) {
                 rrset = rrsIterator.next();
-                if (!name.equalsIgnoreCase(rrset.getName()))
+                if (!name.equalsIgnoreCase(rrset.name()))
                         break;
                 withName.add(rrset);
             }
-            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(roApi(zone).listByName(name));
+            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(roApi(zone).iterateByName(name));
             assertEquals(usingToString().immutableSortedCopy(fromApi), usingToString().immutableSortedCopy(withName));
             break;
         }
@@ -77,7 +77,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testListByNameWhenNotFound() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertFalse(roApi(zone).listByName("ARGHH." + zone.name()).hasNext());
+            assertFalse(roApi(zone).iterateByName("ARGHH." + zone.name()).hasNext());
             break;
         }
     }
@@ -86,7 +86,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testListByNameAndTypeWhenEmpty() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertFalse(roApi(zone).listByNameAndType("ARGHH." + zone.name(), "TXT").hasNext());
+            assertFalse(roApi(zone).iterateByNameAndType("ARGHH." + zone.name(), "TXT").hasNext());
             break;
         }
     }

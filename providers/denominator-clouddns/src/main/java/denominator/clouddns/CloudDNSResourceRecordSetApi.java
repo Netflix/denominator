@@ -37,7 +37,13 @@ public final class CloudDNSResourceRecordSetApi implements denominator.ResourceR
     }
 
     @Override
+    @Deprecated
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
         checkNotNull(name, "name was null");
         return Iterators.filter(iterator(), nameEqualTo(name));
     }

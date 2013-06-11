@@ -23,7 +23,7 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     private ImmutableList.Builder<Map<String, Object>> profile = ImmutableList.builder();
 
     /**
-     * @see ResourceRecordSet#getName()
+     * @see ResourceRecordSet#name()
      */
     @SuppressWarnings("unchecked")
     public B name(String name) {
@@ -32,7 +32,7 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     }
 
     /**
-     * @see ResourceRecordSet#getType()
+     * @see ResourceRecordSet#type()
      */
     @SuppressWarnings("unchecked")
     public B type(String type) {
@@ -41,7 +41,7 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     }
 
     /**
-     * @see ResourceRecordSet#getTTL()
+     * @see ResourceRecordSet#ttl()
      */
     @SuppressWarnings("unchecked")
     public B ttl(Integer ttl) {
@@ -81,7 +81,7 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     }
 
     /**
-     * @see ResourceRecordSet#getProfiles()
+     * @see ResourceRecordSet#profiles()
      */
     @SuppressWarnings("unchecked")
     public B profile(Iterable<Map<String, Object>> profile) {

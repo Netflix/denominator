@@ -41,12 +41,24 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     }
 
     @Override
+    @Deprecated
     public Set<String> getSupportedTypes() {
+        return supportedTypes();
+    }
+
+    @Override
+    public Set<String> supportedTypes() {
         return types;
     }
 
     @Override
+    @Deprecated
     public Multimap<String, String> getSupportedRegions() {
+        return supportedRegions();
+    }
+
+    @Override
+    public Multimap<String, String> supportedRegions() {
         return regions;
     }
 
@@ -62,13 +74,25 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     }
 
     @Override
-    public Iterator<ResourceRecordSet<?>> listByName(String fqdn) {
+    @Deprecated
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByName(String fqdn) {
         checkNotNull(fqdn, "fqdn was null");
         return geoServices(withNode(fqdn)).transformAndConcat(geoToRRSets).iterator();
     }
 
     @Override
-    public Iterator<ResourceRecordSet<?>> listByNameAndType(String fqdn, String type) {
+    @Deprecated
+    public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
+        return iterateByNameAndType(name, type);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String fqdn, String type) {
         checkNotNull(fqdn, "fqdn was null");
         checkNotNull(type, "type was null");
         return geoServices(withNode(fqdn)).transformAndConcat(geoToRRSets.type(type)).iterator();
