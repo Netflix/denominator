@@ -37,16 +37,20 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     ResourceRecordSet<CNAMEData> europe = ResourceRecordSet.<CNAMEData> builder()
             .name("srv.denominator.io")
             .type("CNAME")
+            .qualifier("Europe")
             .ttl(300)
             .add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
+            // TODO: remove group arg in 2.0
             .addProfile(Geo.create("Europe", ImmutableMultimap.of("13", "13")))
             .build();
 
     ResourceRecordSet<CNAMEData> everywhereElse = ResourceRecordSet.<CNAMEData> builder()
             .name("srv.denominator.io")
             .type("CNAME")
+            .qualifier("Everywhere Else")
             .ttl(300)
             .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
+            // TODO: remove group arg in 2.0
             .addProfile(Geo.create("Everywhere Else",
                                 ImmutableMultimap.<String, String> builder()
                                                  .put("11", "11")
@@ -60,8 +64,10 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     ResourceRecordSet<CNAMEData> fallback = ResourceRecordSet.<CNAMEData> builder()
             .name("srv.denominator.io")
             .type("CNAME")
+            .qualifier("Fallback")
             .ttl(60)
             .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
+            // TODO: remove group arg in 2.0
             .addProfile(Geo.create("Fallback",
                                 ImmutableMultimap.<String, String> builder()
                                                  .put("@!", "@!")
@@ -176,7 +182,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void getByNameTypeAndGroupWhenPresent() throws IOException, InterruptedException {
+    public void getByNameTypeAndQualifierWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
@@ -184,7 +190,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertEquals(api.getByNameTypeAndGroup("srv.denominator.io", "CNAME", "Fallback").get(), fallback);
+            assertEquals(api.getByNameTypeAndQualifier("srv.denominator.io", "CNAME", "Fallback").get(), fallback);
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
@@ -195,7 +201,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void getByNameTypeAndGroupWhenAbsent() throws IOException, InterruptedException {
+    public void getByNameTypeAndQualifierWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoServices));
@@ -203,7 +209,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertFalse(api.getByNameTypeAndGroup("www.denominator.io", "A", "Fallback").isPresent());
+            assertFalse(api.getByNameTypeAndQualifier("www.denominator.io", "A", "Fallback").isPresent());
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");

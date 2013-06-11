@@ -2,13 +2,9 @@ package denominator.mock;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.compose;
-import static com.google.common.collect.FluentIterable.from;
 import static com.google.common.collect.Multimaps.filterValues;
 import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.model.ResourceRecordSets.toProfile;
-import static denominator.model.profile.Geos.groupEqualTo;
 
 import java.util.Map;
 import java.util.Set;
@@ -16,7 +12,6 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Multimap;
 
 import denominator.model.ResourceRecordSet;
@@ -59,18 +54,21 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
     }
 
     @Override
+    @Deprecated
     public Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type, String group) {
-        checkNotNull(name, "name");
-        checkNotNull(type, "type");
-        checkNotNull(type, "group");
-        return from(records.get(zone))
-                .firstMatch(and(nameAndTypeEqualTo(name, type), geoGroupEqualTo(group)));
+        return getByNameTypeAndQualifier(name, type, group);
     }
 
     @Override
+    @Deprecated
     public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
+        applyRegionsToNameTypeAndQualifier(regions, name, type, group);
+    }
+
+    @Override
+    public void applyRegionsToNameTypeAndQualifier(Multimap<String, String> regions, String name, String type, String qualifier) {
         checkNotNull(regions, "regions");
-        Optional<ResourceRecordSet<?>> existing = getByNameTypeAndGroup(name, type, group);
+        Optional<ResourceRecordSet<?>> existing = getByNameTypeAndQualifier(name, type, qualifier);
         if (!existing.isPresent())
             return;
         ResourceRecordSet<?> rrset = existing.get();
@@ -80,16 +78,24 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         ResourceRecordSet<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>> builder()
                                                                        .name(rrset.name())
                                                                        .type(rrset.type())
+                                                                       .qualifier(qualifier)
                                                                        .ttl(rrset.ttl().orNull())
-                                                                       .addProfile(Geo.create(geo.group(), regions))
+                                                                       // TODO: remove qualifier here in 2.0
+                                                                       .addProfile(Geo.create(qualifier, regions))
                                                                        .addAll(rrset).build();
         replace(rrs);
     }
 
     @Override
+    @Deprecated
     public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
+        applyTTLToNameTypeAndGroup(ttl, name, type, group);
+    }
+
+    @Override
+    public void applyTTLToNameTypeAndQualifier(int ttl, String name, String type, String qualifier) {
         checkNotNull(ttl, "ttl");
-        Optional<ResourceRecordSet<?>> existing = getByNameTypeAndGroup(name, type, group);
+        Optional<ResourceRecordSet<?>> existing = getByNameTypeAndQualifier(name, type, qualifier);
         if (!existing.isPresent())
             return;
         ResourceRecordSet<?> rrset = existing.get();
@@ -98,25 +104,23 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         ResourceRecordSet<Map<String, Object>> rrs  = ResourceRecordSet.<Map<String, Object>> builder()
                                                                        .name(rrset.name())
                                                                        .type(rrset.type())
+                                                                       .qualifier(qualifier)
                                                                        .ttl(ttl)
                                                                        .profile(rrset.profiles())
                                                                        .addAll(rrset).build();
         replace(rrs);
     }
 
-    private void replace(ResourceRecordSet<?> rrset) {
+    protected void replace(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
+        checkArgument(rrset.qualifier().isPresent(), "no qualifier on: %s", rrset);
         checkArgument(profileContainsType(Geo.class).apply(rrset), "no geo profile found: %s", rrset);
-        Geo geo = toProfile(Geo.class).apply(rrset);
-        Optional<ResourceRecordSet<?>> rrsMatch = getByNameTypeAndGroup(rrset.name(), rrset.type(), geo.group());
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameTypeAndQualifier(rrset.name(), rrset.type(), rrset
+                .qualifier().get());
         if (rrsMatch.isPresent()) {
             records.remove(zone, rrsMatch.get());
         }
         records.put(zone, rrset);
-    }
-
-    private static Predicate<ResourceRecordSet<?>> geoGroupEqualTo(String group) {
-        return compose(groupEqualTo(group), toProfile(Geo.class));
     }
 
     public static final class Factory implements GeoResourceRecordSetApi.Factory {

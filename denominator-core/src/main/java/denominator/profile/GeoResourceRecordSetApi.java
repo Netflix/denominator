@@ -24,7 +24,8 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
     Set<String> getSupportedTypes();
 
     /**
-     * the set of {@link ResourceRecordSet#type() record types} that support the geo profile.
+     * the set of {@link ResourceRecordSet#type() record types} that support the
+     * geo profile.
      * 
      * @since 1.3
      */
@@ -64,48 +65,55 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
     Multimap<String, String> supportedRegions();
 
     /**
-     * retrieve a resource record set by name, type, and geo group
      * 
-     * @param name
-     *            {@link ResourceRecordSet#name() name} of the rrset
-     * @param type
-     *            {@link ResourceRecordSet#type() type} of the rrset
-     * @param group
-     *            {@link Geo#group() group} of the rrset
-     * 
-     * @return present if a resource record exists with the same {@code name},
-     *         {@code type}, and {@code group}
-     * @throws IllegalArgumentException
-     *             if the zone {@code idOrName} is not found.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link denominator.ReadOnlyResourceRecordSetApi#getByNameTypeAndQualifier(String, String, String)}
      */
+    @Deprecated
     Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type, String group);
+
+    /**
+     * 
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #applyRegionsToNameTypeAndQualifier(Multimap, String, String, String)}
+     */
+    @Deprecated
+    void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group);
 
     /**
      * Ensures the supplied {@code regions} are uniform for all record sets with
      * the supplied {@link ResourceRecordSet#name() name},
-     * {@link ResourceRecordSet#type() type}, and {@link Geo#toName() group}
-     * . Returns without error if there are no record sets of the specified
-     * name, type, and group.
+     * {@link ResourceRecordSet#type() type}, and
+     * {@link ResourceRecordSet#qualifier() qualifier}. Returns without error if
+     * there are no record sets of the specified name, type, and qualifier.
      * 
      * @param regions
      *            corresponds to {@link Geo#regions() regions} you want this
-     *            {@code group} to represent. Should be a sub-map of
-     *            {@link #getSupportedRegions()}.
+     *            {@code qualifier} to represent. Should be a sub-map of
+     *            {@link #supportedRegions()}.
      * @param name
      *            {@link ResourceRecordSet#name() name} of the rrset
      * @param type
      *            {@link ResourceRecordSet#type() type} of the rrset
-     * @param group
-     *            {@link Geo#group() group} of the rrset
+     * @param qualifier
+     *            {@link ResourceRecordSet#qualifier() qualifier} of the rrset
      */
-    void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group);
+    void applyRegionsToNameTypeAndQualifier(Multimap<String, String> regions, String name, String type, String qualifier);
+
+    /**
+     * 
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #applyTTLToNameTypeAndQualifier}
+     */
+    @Deprecated
+    void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group);
 
     /**
      * Ensures the supplied {@code ttl} is uniform for all record sets with the
      * supplied {@link ResourceRecordSet#name() name},
-     * {@link ResourceRecordSet#type() type}, and {@link Geo#toName() group}
-     * . Returns without error if there are no record sets of the specified
-     * name, type, and group.
+     * {@link ResourceRecordSet#type() type}, and
+     * {@link ResourceRecordSet#qualifier() qualifier} . Returns without error
+     * if there are no record sets of the specified name, type, and qualifier.
      * 
      * @param ttl
      *            ttl to apply to all records in seconds
@@ -113,10 +121,10 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
      *            {@link ResourceRecordSet#name() name} of the rrset
      * @param type
      *            {@link ResourceRecordSet#type() type} of the rrset
-     * @param group
-     *            {@link Geo#group() group} of the rrset
+     * @param qualifier
+     *            {@link ResourceRecordSet#qualifier() qualifier} of the rrset
      */
-    void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group);
+    void applyTTLToNameTypeAndQualifier(int ttl, String name, String type, String qualifier);
 
     static interface Factory {
         Optional<GeoResourceRecordSetApi> create(String idOrName);

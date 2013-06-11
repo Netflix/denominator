@@ -82,5 +82,10 @@ public class ConcatBasicAndGeoResourceRecordSets {
                 return concat(rrs.asSet().iterator(), geoApi.iterateByNameAndType(name, type));
             return geoApi.iterateByNameAndType(name, type);
         }
+
+        @Override
+        public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier) {
+            return geoApi.getByNameTypeAndQualifier(name, type, qualifier);
+        }
     }
 }

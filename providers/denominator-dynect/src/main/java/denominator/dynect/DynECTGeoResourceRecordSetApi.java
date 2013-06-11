@@ -97,13 +97,18 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
         checkNotNull(type, "type was null");
         return geoServices(withNode(fqdn)).transformAndConcat(geoToRRSets.type(type)).iterator();
     }
+    @Override
+    @Deprecated
+    public Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type, String group) {
+        return getByNameTypeAndQualifier(name, type, group);
+    }
 
     @Override
-    public Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String fqdn, String type, String group) {
+    public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String fqdn, String type, String qualifier) {
         checkNotNull(fqdn, "fqdn was null");
         checkNotNull(type, "type was null");
-        checkNotNull(group, "group was null");
-        return geoServices(withNode(fqdn)).transformAndConcat(geoToRRSets.type(type).group(group)).first();
+        checkNotNull(qualifier, "qualifier was null");
+        return geoServices(withNode(fqdn)).transformAndConcat(geoToRRSets.type(type).group(qualifier)).first();
     }
 
     /**
@@ -118,12 +123,24 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     }
 
     @Override
+    @Deprecated
     public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
+        applyRegionsToNameTypeAndQualifier(regions, name, type, group);
+    }
+
+    @Override
+    public void applyRegionsToNameTypeAndQualifier(Multimap<String, String> regions, String name, String type, String qualifier) {
         throw new UnsupportedOperationException();
     }
 
     @Override
+    @Deprecated
     public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
+        applyTTLToNameTypeAndQualifier(ttl, name, type, group);
+    }
+
+    @Override
+    public void applyTTLToNameTypeAndQualifier(int ttl, String name, String type, String qualifier) {
         throw new UnsupportedOperationException();
     }
 

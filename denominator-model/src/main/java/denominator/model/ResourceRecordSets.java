@@ -26,6 +26,39 @@ public class ResourceRecordSets {
 
     /**
      * evaluates to true if the input {@link ResourceRecordSet} exists with
+     * {@link ResourceRecordSet#name() name} corresponding to the {@code name}
+     * parameter.
+     * 
+     * @param name
+     *            the {@link ResourceRecordSet#name() name} of the desired
+     *            record set
+     */
+    public static Predicate<ResourceRecordSet<?>> nameEqualTo(String name) {
+        return new NameEqualToPredicate(name);
+    }
+
+    private static final class NameEqualToPredicate implements Predicate<ResourceRecordSet<?>> {
+        private final String name;
+
+        public NameEqualToPredicate(String name) {
+            this.name = checkNotNull(name, "name");
+        }
+
+        @Override
+        public boolean apply(ResourceRecordSet<?> input) {
+            if (input == null)
+                return false;
+            return name.equals(input.name());
+        }
+
+        @Override
+        public String toString() {
+            return "NameEqualTo(" + name + ")";
+        }
+    }
+
+    /**
+     * evaluates to true if the input {@link ResourceRecordSet} exists with
      * {@link ResourceRecordSet#type() type} corresponding to the
      * {@code type} parameter.
      * 
@@ -58,35 +91,35 @@ public class ResourceRecordSets {
     }
 
     /**
-     * evaluates to true if the input {@link ResourceRecordSet} exists with
-     * {@link ResourceRecordSet#name() name} corresponding to the
-     * {@code name} parameter.
+     * evaluates to true if the input {@link ResourceRecordSet} exists with a
+     * {@link ResourceRecordSet#qualifier() qualifier} present and
+     * corresponding to the {@code qualifier} parameter.
      * 
-     * @param name
-     *            the {@link ResourceRecordSet#name() name} of the desired
-     *            record set
+     * @param qualifier
+     *            the {@link ResourceRecordSet#qualifier() qualifier} of the
+     *            desired record set
      */
-    public static Predicate<ResourceRecordSet<?>> nameEqualTo(String name) {
-        return new NameEqualToPredicate(name);
+    public static Predicate<ResourceRecordSet<?>> qualifierEqualTo(String qualifier) {
+        return new QualifierEqualToPredicate(qualifier);
     }
 
-    private static final class NameEqualToPredicate implements Predicate<ResourceRecordSet<?>> {
-        private final String name;
+    private static final class QualifierEqualToPredicate implements Predicate<ResourceRecordSet<?>> {
+        private final String qualifier;
 
-        public NameEqualToPredicate(String name) {
-            this.name = checkNotNull(name, "name");
+        public QualifierEqualToPredicate(String qualifier) {
+            this.qualifier = checkNotNull(qualifier, "qualifier");
         }
 
         @Override
         public boolean apply(ResourceRecordSet<?> input) {
             if (input == null)
                 return false;
-            return name.equals(input.name());
+            return qualifier.equals(input.qualifier().orNull());
         }
 
         @Override
         public String toString() {
-            return "NameEqualTo(" + name + ")";
+            return "QualifierEqualTo(" + qualifier + ")";
         }
     }
 
