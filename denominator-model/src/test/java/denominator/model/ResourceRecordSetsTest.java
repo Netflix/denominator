@@ -81,14 +81,31 @@ public class ResourceRecordSetsTest {
         assertTrue(ResourceRecordSets.containsRData(ImmutableMap.of("address", "192.0.2.1")).apply(aRRS));
     }
 
-    Geo geo = Geo.create("US-East", ImmutableMultimap.of("US", "US-VA"));
+    Geo geo = Geo.create(ImmutableMultimap.of("US", "US-VA"));
 
     ResourceRecordSet<AData> geoRRS = ResourceRecordSet.<AData> builder()
                                                        .name("www.denominator.io.")
                                                        .type("A")
+                                                       .qualifier("US-East")
                                                        .ttl(3600)
                                                        .add(AData.create("1.1.1.1"))
                                                        .addProfile(geo).build();
+
+    public void qualifierEqualToReturnsFalseOnNull() {
+        assertFalse(ResourceRecordSets.qualifierEqualTo(geoRRS.qualifier().get()).apply(null));
+    }
+
+    public void qualifierEqualToReturnsFalseOnDifferentQualifier() {
+        assertFalse(ResourceRecordSets.qualifierEqualTo("TXT").apply(geoRRS));
+    }
+
+    public void qualifierEqualToReturnsFalseOnAbsentQualifier() {
+        assertFalse(ResourceRecordSets.qualifierEqualTo("TXT").apply(aRRS));
+    }
+
+    public void qualifierEqualToReturnsTrueOnSameQualifier() {
+        assertTrue(ResourceRecordSets.qualifierEqualTo(geoRRS.qualifier().get()).apply(geoRRS));
+    }
 
     public void withoutProfileReturnsFalseOnNull() {
         assertFalse(withoutProfile().apply(null));

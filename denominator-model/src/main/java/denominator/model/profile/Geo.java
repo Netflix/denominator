@@ -10,33 +10,54 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
+import denominator.model.ResourceRecordSet;
+
 /**
  * Record sets with this profile are visible to the regions specified.
  * 
  * <h4>Example</h4>
  * 
  * <pre>
- * Geo profile = Geo.create(&quot;md&quot;, ImmutableMultimap.of(&quot;United States (US)&quot;, &quot;Maryland&quot;));
+ * Geo profile = Geo.create(ImmutableMultimap.of(&quot;United States (US)&quot;, &quot;Maryland&quot;));
  * </pre>
  */
 public class Geo extends ForwardingMap<String, Object> {
 
     /**
-     * @param group corresponds to {@link #group()}
-     * @param regions corresponds to {@link #regions()}
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #create(Multimap)}
      */
+    @Deprecated
     public static Geo create(String group, Multimap<String, String> regions) {
         return new Geo(group, regions);
     }
 
+    /**
+     * @param regions corresponds to {@link #regions()}
+     * 
+     * @since 1.3
+     */
+    public static Geo create(Multimap<String, String> regions) {
+        return new Geo(regions);
+    }
+
     private final String type = "geo";
-    private final String group;
     private final Multimap<String, String> regions;
 
-    @ConstructorProperties({ "group", "regions"})
-    private Geo(String group, Multimap<String, String> regions) {
-        this.group = checkNotNull(group, "group");
+    @ConstructorProperties({ "regions"})
+    private Geo(Multimap<String, String> regions) {
         checkNotNull(regions, "regions");
+        this.regions = ImmutableMultimap.copyOf(regions);
+        this.delegate = ImmutableMap.<String, Object> builder()
+                                    .put("type", type)
+                                    .put("regions", regions).build();
+    }
+
+    @Deprecated
+    @ConstructorProperties({ "group", "regions" })
+    private Geo(String group, Multimap<String, String> regions) {
+        checkNotNull(regions, "regions");
+        checkNotNull(group, "group");
         this.regions = ImmutableMultimap.copyOf(regions);
         this.delegate = ImmutableMap.<String, Object> builder()
                                     .put("type", type)
@@ -46,7 +67,7 @@ public class Geo extends ForwardingMap<String, Object> {
 
     /**
      * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #group()}
+     *             {@link ResourceRecordSet#qualifier() qualifier}
      */
     @Deprecated
     public String getGroup() {
@@ -54,13 +75,12 @@ public class Geo extends ForwardingMap<String, Object> {
     }
 
     /**
-     * user-defined name for the group of regions that represent the traffic
-     * desired. For example, {@code "US-West"} or {@code "Non-EU"}.
-     * 
-     * @since 1.3
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link ResourceRecordSet#qualifier() qualifier}
      */
+    @Deprecated
     public String group() {
-        return group;
+        return (String) delegate.get("group");
     }
 
     /**

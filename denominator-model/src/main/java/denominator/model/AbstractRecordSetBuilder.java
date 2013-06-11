@@ -19,6 +19,7 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
 
     private String name;
     private String type;
+    private Optional<String> qualifier = Optional.absent();
     private Optional<Integer> ttl = Optional.absent();
     private ImmutableList.Builder<Map<String, Object>> profile = ImmutableList.builder();
 
@@ -41,7 +42,20 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     }
 
     /**
+<<<<<<< HEAD
      * @see ResourceRecordSet#ttl()
+=======
+     * @see ResourceRecordSet#qualifier()
+     */
+    @SuppressWarnings("unchecked")
+    public B qualifier(String qualifier) {
+        this.qualifier = Optional.fromNullable(qualifier);
+        return (B) this;
+    }
+
+    /**
+     * @see ResourceRecordSet#getTTL()
+>>>>>>> issue #168: add ResourceRecordSet.qualifier()
      */
     @SuppressWarnings("unchecked")
     public B ttl(Integer ttl) {
@@ -90,7 +104,7 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     }
 
     public ResourceRecordSet<D> build() {
-        return new ResourceRecordSet<D>(name, type, ttl, rdataValues(), profile.build());
+        return new ResourceRecordSet<D>(name, type, qualifier, ttl, rdataValues(), profile.build());
     }
 
     /**

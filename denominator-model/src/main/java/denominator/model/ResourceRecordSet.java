@@ -17,6 +17,8 @@ import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.UnsignedInteger;
 
+import denominator.model.profile.Geo;
+
 /**
  * A grouping of resource records by name and type. In implementation, this is
  * an immutable list of rdata values corresponding to records sharing the same
@@ -32,21 +34,23 @@ public class ResourceRecordSet<D extends Map<String, Object>> implements List<D>
 
     private final String name;
     private final String type;
+    private final Optional<String> qualifier;
     private final Optional<Integer> ttl;
     private final ImmutableList<D> rdata;
     private final ImmutableList<Map<String, Object>> profiles;
 
-    @ConstructorProperties({ "name", "type", "ttl", "rdata", "profiles" })
-    ResourceRecordSet(String name, String type, Optional<Integer> ttl, ImmutableList<D> rdata,
+    @ConstructorProperties({ "name", "type", "qualifier", "ttl", "rdata", "profiles" })
+    ResourceRecordSet(String name, String type, Optional<String> qualifier, Optional<Integer> ttl, ImmutableList<D> rdata,
             ImmutableList<Map<String, Object>> profiles) {
         this.name = checkNotNull(name, "name");
         checkArgument(name.length() <= 255, "Name must be limited to 255 characters"); 
         this.type = checkNotNull(type, "type of %s", name);
-        this.ttl = ttl != null ? ttl : Optional.<Integer> absent(); //temporary until jcloud 1.6.0-rc.2
+        this.qualifier = checkNotNull(qualifier, "qualifier of %s %s", name, type);
+        this.ttl = checkNotNull(ttl, "ttl of %s %s", name, type);
         checkArgument(UnsignedInteger.fromIntBits(this.ttl.or(0)).longValue() <= 0x7FFFFFFFL, // Per RFC 2181 
                 "Invalid ttl value: %s, must be 0-2147483647", this.ttl);
-        this.rdata = checkNotNull(rdata, "rdata of %s", name);
-        this.profiles = checkNotNull(profiles, "profiles of %s", name);
+        this.rdata = checkNotNull(rdata, "rdata  of %s %s", name, type);
+        this.profiles = checkNotNull(profiles, "profiles of %s %s", name, type);
     }
 
     /**
@@ -84,6 +88,18 @@ public class ResourceRecordSet<D extends Map<String, Object>> implements List<D>
      */
     public String type() {
         return type;
+    }
+
+    /**
+     * A user-defined identifier that differentiates among multiple resource
+     * record sets that have the same combination of DNS name and type. Only
+     * present when there's a {@link #profiles() profile} such as {@link Geo
+     * geo}, which is otherwise ambiguous on name, type.
+     * 
+     * @since 1.3
+     */
+    public Optional<String> qualifier() {
+        return qualifier;
     }
 
     /**
@@ -143,7 +159,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> implements List<D>
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(name, type, rdata, profiles);
+        return Objects.hashCode(name, type, qualifier, rdata, profiles);
     }
 
     @Override
@@ -153,8 +169,8 @@ public class ResourceRecordSet<D extends Map<String, Object>> implements List<D>
         if (obj == null || !(obj instanceof ResourceRecordSet))
             return false;
         ResourceRecordSet<?> that = ResourceRecordSet.class.cast(obj);
-        return equal(this.name, that.name) && equal(this.type, that.type) && equal(this.rdata, that.rdata)
-                && equal(this.profiles, that.profiles);
+        return equal(this.name, that.name) && equal(this.type, that.type) && equal(this.qualifier, that.qualifier)
+                && equal(this.rdata, that.rdata) && equal(this.profiles, that.profiles);
     }
 
     @Override
@@ -162,6 +178,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> implements List<D>
         return toStringHelper(this).omitNullValues()
                                    .add("name", name)
                                    .add("type", type)
+                                   .add("qualifier", qualifier.orNull())
                                    .add("ttl", ttl.orNull())
                                    .add("rdata", rdata.isEmpty() ? null : rdata)
                                    .add("profiles", profiles.isEmpty() ? null : profiles).toString();
