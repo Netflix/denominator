@@ -68,6 +68,15 @@ public final class Denominator {
     }
 
     /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #providers}
+     */
+    @Deprecated
+    public static Iterable<Provider> listProviders() {
+        return providers();
+    }
+
+    /**
      * Returns the currently configured {@link Provider providers} from
      * {@link ServiceLoader#load(Class)}.
      * 
@@ -78,7 +87,7 @@ public final class Denominator {
      * jars in your classpath. If you desire speed, it is best to instantiate
      * Providers directly.
      */
-    public static Iterable<Provider> listProviders() {
+    public static Iterable<Provider> providers() {
         return ServiceLoader.load(Provider.class);
     }
 

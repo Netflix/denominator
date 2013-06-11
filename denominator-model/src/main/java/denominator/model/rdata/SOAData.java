@@ -64,55 +64,132 @@ public class SOAData extends ForwardingMap<String, Object> {
     }
 
     /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #mname()}
+     */
+    @Deprecated
+    public String getMname() {
+        return mname();
+    }
+
+    /**
      * domain-name of the name server that was the original or primary source of
      * data for this zone
+     * 
+     * @since 1.3
      */
-    public String getMname() {
+    public String mname() {
         return mname;
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rname()}
+     */
+    @Deprecated
+    public String getRname() {
+        return rname();
     }
 
     /**
      * domain-name which specifies the mailbox of the person responsible for
      * this zone.
+     * 
+     * @since 1.3
      */
-    public String getRname() {
+    public String rname() {
         return rname;
     }
 
     /**
-     * version number of the original copy of the zone.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #serial()}
      */
+    @Deprecated
     public int getSerial() {
+        return serial();
+    }
+
+    /**
+     * version number of the original copy of the zone.
+     * 
+     * @since 1.3
+     */
+    public int serial() {
         return serial;
     }
 
     /**
-     * time interval before the zone should be refreshed
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #refresh()}
      */
+    @Deprecated
     public int getRefresh() {
+        return refresh();
+    }
+
+    /**
+     * time interval before the zone should be refreshed
+     * 
+     * @since 1.3
+     */
+    public int refresh() {
         return refresh;
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #retry()}
+     */
+    @Deprecated
+    public int getRetry() {
+        return retry();
     }
 
     /**
      * time interval that should elapse before a failed refresh should be
      * retried
+     * 
+     * @since 1.3
      */
-    public int getRetry() {
+    public int retry() {
         return retry;
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #expire()}
+     */
+    @Deprecated
+    public int getExpire() {
+        return expire();
     }
 
     /**
      * time value that specifies the upper limit on the time interval that can
      * elapse before the zone is no longer authoritative.
+     * 
+     * @since 1.3
      */
-    public int getExpire() {
+    public int expire() {
         return expire;
     }
 
     /**
-     * minimum TTL field that should be exported with any RR from this zone.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #minimum()}
      */
+    @Deprecated
     public int getMinimum() {
+        return minimum();
+    }
+
+    /**
+     * minimum TTL field that should be exported with any RR from this zone.
+     * 
+     * @since 1.3
+     */
+    public int minimum() {
         return minimum;
     }
 
@@ -130,7 +207,7 @@ public class SOAData extends ForwardingMap<String, Object> {
         private int minimum = -1;
 
         /**
-         * @see SOAData#getMname()
+         * @see SOAData#mname()
          */
         public SOAData.Builder mname(String mname) {
             this.mname = mname;
@@ -138,7 +215,7 @@ public class SOAData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SOAData#getRname()
+         * @see SOAData#rname()
          */
         public SOAData.Builder rname(String rname) {
             this.rname = rname;
@@ -146,7 +223,7 @@ public class SOAData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SOAData#getSerial()
+         * @see SOAData#serial()
          */
         public SOAData.Builder serial(int serial) {
             this.serial = serial;
@@ -154,7 +231,7 @@ public class SOAData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SOAData#getRefresh()
+         * @see SOAData#refresh()
          */
         public SOAData.Builder refresh(int refresh) {
             this.refresh = refresh;
@@ -162,7 +239,7 @@ public class SOAData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SOAData#getRetry()
+         * @see SOAData#retry()
          */
         public SOAData.Builder retry(int retry) {
             this.retry = retry;
@@ -170,7 +247,7 @@ public class SOAData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SOAData#getExpire()
+         * @see SOAData#expire()
          */
         public SOAData.Builder expire(int expire) {
             this.expire = expire;
@@ -178,7 +255,7 @@ public class SOAData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SOAData#getMinimum()
+         * @see SOAData#minimum()
          */
         public SOAData.Builder minimum(int minimum) {
             this.minimum = minimum;
@@ -190,8 +267,8 @@ public class SOAData extends ForwardingMap<String, Object> {
         }
 
         public SOAData.Builder from(SOAData in) {
-            return this.mname(in.getMname()).rname(in.getRname()).serial(in.getSerial()).refresh(in.getRefresh())
-                    .expire(in.getExpire()).minimum(in.getMinimum());
+            return this.mname(in.mname()).rname(in.rname()).serial(in.serial()).refresh(in.refresh())
+                    .expire(in.expire()).minimum(in.minimum());
         }
     }
 

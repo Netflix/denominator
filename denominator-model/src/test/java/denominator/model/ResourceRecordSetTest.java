@@ -17,10 +17,10 @@ public class ResourceRecordSetTest {
                                                            .ttl(3600)
                                                            .add(AData.create("192.0.2.1")).build();
 
-        assertEquals(record.getName(), "www.denominator.io.");
-        assertEquals(record.getType(), "A");
-        assertEquals(record.getTTL().get(), Integer.valueOf(3600));
-        assertEquals(record.get(0), AData.create("192.0.2.1"));
+        assertEquals(record.name(), "www.denominator.io.");
+        assertEquals(record.type(), "A");
+        assertEquals(record.ttl().get(), Integer.valueOf(3600));
+        assertEquals(record.rdata().get(0), AData.create("192.0.2.1"));
     }
 
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "rdata")

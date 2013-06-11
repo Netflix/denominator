@@ -35,10 +35,21 @@ public class CNAMEData extends ForwardingMap<String, Object> {
     }
 
     /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #cname()}
+     */
+    @Deprecated
+    public String getCname() {
+        return cname();
+    }
+
+    /**
      * domain-name which specifies the canonical or primary name for the owner.
      * The owner name is an alias.
+     * 
+     * @since 1.3
      */
-    public String getCname() {
+    public String cname() {
         return cname;
     }
 

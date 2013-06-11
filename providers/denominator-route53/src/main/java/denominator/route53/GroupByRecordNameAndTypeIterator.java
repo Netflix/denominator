@@ -30,12 +30,12 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
     @Override
     public ResourceRecordSet<?> next() {
         ResourceRecordSet<?> rrset = peekingIterator.next();
-        while (hasNext() && and(nameEqualTo(rrset.getName()), typeEqualTo(rrset.getType())).apply(peekingIterator.peek())) {
+        while (hasNext() && and(nameEqualTo(rrset.name()), typeEqualTo(rrset.type())).apply(peekingIterator.peek())) {
             ResourceRecordSet<?> next = peekingIterator.next();
             rrset = ResourceRecordSet.builder()
-                                     .name(rrset.getName())
-                                     .type(rrset.getType())
-                                     .ttl(rrset.getTTL().or(next.getTTL()).orNull())
+                                     .name(rrset.name())
+                                     .type(rrset.type())
+                                     .ttl(rrset.ttl().or(next.ttl()).orNull())
                                      .addAll(rrset)
                                      .addAll(next)
                                      .build();

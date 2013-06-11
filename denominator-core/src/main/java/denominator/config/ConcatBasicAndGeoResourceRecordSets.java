@@ -57,18 +57,30 @@ public class ConcatBasicAndGeoResourceRecordSets {
         }
 
         @Override
+        @Deprecated
         public Iterator<ResourceRecordSet<?>> listByName(String name) {
-            return concat(api.listByName(name), geoApi.listByName(name));
+            return iterateByName(name);
         }
 
         @Override
+        public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
+            return concat(api.iterateByName(name), geoApi.iterateByName(name));
+        }
+
+        @Override
+        @Deprecated
         public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
+            return iterateByNameAndType(name, type);
+        }
+
+        @Override
+        public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
             Optional<ResourceRecordSet<?>> rrs = api.getByNameAndType(name, type);
-            if (!geoApi.getSupportedTypes().contains(type))
+            if (!geoApi.supportedTypes().contains(type))
                 return rrs.asSet().iterator();
             if (rrs.isPresent())
-                return concat(rrs.asSet().iterator(), geoApi.listByNameAndType(name, type));
-            return geoApi.listByNameAndType(name, type);
+                return concat(rrs.asSet().iterator(), geoApi.iterateByNameAndType(name, type));
+            return geoApi.iterateByNameAndType(name, type);
         }
     }
 }

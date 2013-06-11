@@ -58,14 +58,14 @@ public class UltraDNSResourceRecordSetApiMockTest {
             "www.denominator.io.", 0);
 
     @Test
-    public void listByNameWhenNoneMatch() throws IOException, InterruptedException {
+    public void iterateByNameWhenNoneMatch() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
         server.play();
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertFalse(api.listByName("www.denominator.io.").hasNext());
+            assertFalse(api.iterateByName("www.denominator.io.").hasNext());
 
             assertEquals(server.getRequestCount(), 1);
 
@@ -85,14 +85,14 @@ public class UltraDNSResourceRecordSetApiMockTest {
             .append(getResourceRecordsOfZoneResponseFooter).toString();
 
     @Test
-    public void listByNameWhenMatch() throws IOException, InterruptedException {
+    public void iterateByNameWhenMatch() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(records1And2));
         server.play();
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertEquals(api.listByName("www.denominator.io.").next(),
+            assertEquals(api.iterateByName("www.denominator.io.").next(),
                     a("www.denominator.io.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
 
             assertEquals(server.getRequestCount(), 1);

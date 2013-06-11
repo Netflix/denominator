@@ -33,48 +33,48 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         
         Geo existingGeo = toProfile(Geo.class).apply(existing);
         
-        String last = getLast(existingGeo.getRegions().values());
+        String last = getLast(existingGeo.regions().values());
         
-        Multimap<String, String> regions = filterValues(existingGeo.getRegions(), not(equalTo(last)));
+        Multimap<String, String> regions = filterValues(existingGeo.regions(), not(equalTo(last)));
 
-        geoApi().applyRegionsToNameTypeAndGroup(regions, existing.getName(), existing.getType(), mutableGeoRRSet.group);
+        geoApi().applyRegionsToNameTypeAndGroup(regions, existing.name(), existing.type(), mutableGeoRRSet.group);
 
         ResourceRecordSet<?> rrs = 
-                geoApi().getByNameTypeAndGroup(existing.getName(), existing.getType(), mutableGeoRRSet.group).get();
+                geoApi().getByNameTypeAndGroup(existing.name(), existing.type(), mutableGeoRRSet.group).get();
 
         checkRRS(rrs);
-        assertEquals(rrs.getName(), existing.getName());
-        assertEquals(rrs.getType(), existing.getType());
-        assertEquals(rrs.getTTL(), existing.getTTL());
+        assertEquals(rrs.name(), existing.name());
+        assertEquals(rrs.type(), existing.type());
+        assertEquals(rrs.ttl(), existing.ttl());
         assertEquals(ImmutableList.copyOf(rrs), ImmutableList.copyOf(existing));
-        assertEquals(toProfile(Geo.class).apply(rrs).getRegions(), ImmutableMultimap.copyOf(regions));
+        assertEquals(toProfile(Geo.class).apply(rrs).regions(), ImmutableMultimap.copyOf(regions));
 
         // reset back
         geoApi().applyRegionsToNameTypeAndGroup(
-                existingGeo.getRegions(), existing.getName(), existing.getType(), mutableGeoRRSet.group);
+                existingGeo.regions(), existing.name(), existing.type(), mutableGeoRRSet.group);
     }
 
     @Test
     private void applyTTLToNameTypeAndGroup() {
         skipIfNoCredentials();
         ResourceRecordSet<?> existing = skipIfNoMutableRRSet();
-        int ttl = existing.getTTL().or(300) + 300;
+        int ttl = existing.ttl().or(300) + 300;
 
-        geoApi().applyTTLToNameTypeAndGroup(ttl, existing.getName(), existing.getType(), mutableGeoRRSet.group);
+        geoApi().applyTTLToNameTypeAndGroup(ttl, existing.name(), existing.type(), mutableGeoRRSet.group);
 
         ResourceRecordSet<?> rrs = 
-                geoApi().getByNameTypeAndGroup(existing.getName(), existing.getType(), mutableGeoRRSet.group).get();
+                geoApi().getByNameTypeAndGroup(existing.name(), existing.type(), mutableGeoRRSet.group).get();
 
         checkRRS(rrs);
-        assertEquals(rrs.getName(), existing.getName());
-        assertEquals(rrs.getType(), existing.getType());
-        assertEquals(rrs.getTTL().get(), Integer.valueOf(ttl));
+        assertEquals(rrs.name(), existing.name());
+        assertEquals(rrs.type(), existing.type());
+        assertEquals(rrs.ttl().get(), Integer.valueOf(ttl));
         assertEquals(ImmutableList.copyOf(rrs), ImmutableList.copyOf(existing));
-        assertEquals(rrs.getProfiles(), existing.getProfiles());
+        assertEquals(rrs.profiles(), existing.profiles());
         
         // reset back
         geoApi().applyTTLToNameTypeAndGroup(
-                existing.getTTL().or(300), existing.getName(), existing.getType(), mutableGeoRRSet.group);
+                existing.ttl().or(300), existing.name(), existing.type(), mutableGeoRRSet.group);
     }
 
     protected ResourceRecordSet<?> skipIfNoMutableRRSet() {

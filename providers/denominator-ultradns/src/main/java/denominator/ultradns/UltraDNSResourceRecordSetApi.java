@@ -48,7 +48,13 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     }
 
     @Override
+    @Deprecated
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
         checkNotNull(name, "name");
         Iterator<ResourceRecordDetail> orderedRecords = api.listByName(name)
                 .toSortedList(byNameTypeAndCreateDate).iterator();
@@ -78,11 +84,11 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     @Override
     public void add(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
+        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
 
-        Optional<Integer> ttlToApply = rrset.getTTL();
+        Optional<Integer> ttlToApply = rrset.ttl();
 
-        List<ResourceRecordDetail> references = referencesByNameAndType(rrset.getName(), rrset.getType());
+        List<ResourceRecordDetail> references = referencesByNameAndType(rrset.name(), rrset.type());
 
         List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset);
 
@@ -106,7 +112,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
                 api.update(reference.getGuid(), updateTTL);
             }
         }
-        create(rrset.getName(), rrset.getType(), ttlToApply.or(defaultTTL), recordsLeftToCreate);
+        create(rrset.name(), rrset.type(), ttlToApply.or(defaultTTL), recordsLeftToCreate);
     }
 
     @Override
@@ -127,10 +133,10 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     @Override
     public void replace(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
-        int ttlToApply = rrset.getTTL().or(defaultTTL);
+        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
+        int ttlToApply = rrset.ttl().or(defaultTTL);
 
-        List<ResourceRecordDetail> references = referencesByNameAndType(rrset.getName(), rrset.getType());
+        List<ResourceRecordDetail> references = referencesByNameAndType(rrset.name(), rrset.type());
 
         List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset);
 
@@ -146,11 +152,11 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
                 // update ttl of rdata in input
                 api.update(reference.getGuid(), record.toBuilder().ttl(ttlToApply).build());
             } else {
-                remove(rrset.getName(), rrset.getType(), reference.getGuid());
+                remove(rrset.name(), rrset.type(), reference.getGuid());
             }
         }
 
-        create(rrset.getName(), rrset.getType(), ttlToApply, recordsLeftToCreate);
+        create(rrset.name(), rrset.type(), ttlToApply, recordsLeftToCreate);
     }
 
     private void create(String name, String type, int ttl, List<Map<String, Object>> rdatas) {
@@ -175,12 +181,12 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
     @Override
     public void remove(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.isEmpty(), "rrset was empty %s", rrset);
+        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
 
-        for (ResourceRecordDetail reference : referencesByNameAndType(rrset.getName(), rrset.getType())) {
+        for (ResourceRecordDetail reference : referencesByNameAndType(rrset.name(), rrset.type())) {
             ResourceRecord record = reference.getRecord();
-            if (rrset.contains(toRdataMap().apply(record))) {
-                remove(rrset.getName(), rrset.getType(), reference.getGuid());
+            if (rrset.rdata().contains(toRdataMap().apply(record))) {
+                remove(rrset.name(), rrset.type(), reference.getGuid());
             }
         }
     }

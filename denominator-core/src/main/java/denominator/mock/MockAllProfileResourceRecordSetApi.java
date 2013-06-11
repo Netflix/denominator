@@ -44,7 +44,13 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
     }
 
     @Override
+    @Deprecated
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
         checkNotNull(name, "name");
         return from(records.get(zone))
                 .filter(nameEqualTo(name))
@@ -53,7 +59,13 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
     }
 
     @Override
+    @Deprecated
     public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
+        return iterateByNameAndType(name, type);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
         return from(records.get(zone))

@@ -36,15 +36,26 @@ public class TXTData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * One or more character-strings.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #txtdata()}
      */
+    @Deprecated
     public String getTxtdata() {
+        return txtdata();
+    }
+
+    /**
+     * One or more character-strings.
+     * 
+     * @since 1.3
+     */
+    public String txtdata() {
         return txtdata;
     }
 
     // transient to avoid serializing by default, for example in json
     private final transient ImmutableMap<String, Object> delegate;
-    
+
     @Override
     protected Map<String, Object> delegate() {
         return delegate;

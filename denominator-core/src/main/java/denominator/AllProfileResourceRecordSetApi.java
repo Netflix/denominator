@@ -6,7 +6,7 @@ import denominator.model.ResourceRecordSet;
 
 /**
  * list operations that apply to record sets regardless of
- * {@link ResourceRecordSet#getProfiles() profile}.
+ * {@link ResourceRecordSet#profiles() profile}.
  */
 @Beta
 public interface AllProfileResourceRecordSetApi extends ReadOnlyResourceRecordSetApi {

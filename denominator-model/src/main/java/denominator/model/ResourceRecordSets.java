@@ -26,11 +26,11 @@ public class ResourceRecordSets {
 
     /**
      * evaluates to true if the input {@link ResourceRecordSet} exists with
-     * {@link ResourceRecordSet#getType() type} corresponding to the
+     * {@link ResourceRecordSet#type() type} corresponding to the
      * {@code type} parameter.
      * 
      * @param type
-     *            the {@link ResourceRecordSet#getType() type} of the desired
+     *            the {@link ResourceRecordSet#type() type} of the desired
      *            record set
      */
     public static Predicate<ResourceRecordSet<?>> typeEqualTo(String type) {
@@ -48,7 +48,7 @@ public class ResourceRecordSets {
         public boolean apply(ResourceRecordSet<?> input) {
             if (input == null)
                 return false;
-            return type.equals(input.getType());
+            return type.equals(input.type());
         }
 
         @Override
@@ -59,11 +59,11 @@ public class ResourceRecordSets {
 
     /**
      * evaluates to true if the input {@link ResourceRecordSet} exists with
-     * {@link ResourceRecordSet#getName() name} corresponding to the
+     * {@link ResourceRecordSet#name() name} corresponding to the
      * {@code name} parameter.
      * 
      * @param name
-     *            the {@link ResourceRecordSet#getName() name} of the desired
+     *            the {@link ResourceRecordSet#name() name} of the desired
      *            record set
      */
     public static Predicate<ResourceRecordSet<?>> nameEqualTo(String name) {
@@ -81,7 +81,7 @@ public class ResourceRecordSets {
         public boolean apply(ResourceRecordSet<?> input) {
             if (input == null)
                 return false;
-            return name.equals(input.getName());
+            return name.equals(input.name());
         }
 
         @Override
@@ -112,7 +112,7 @@ public class ResourceRecordSets {
         public boolean apply(ResourceRecordSet<?> input) {
             if (input == null)
                 return false;
-            return input.contains(rdata);
+            return input.rdata().contains(rdata);
         }
 
         @Override
@@ -123,7 +123,7 @@ public class ResourceRecordSets {
 
     /**
      * returns true if the input is not null and
-     * {@link ResourceRecordSet#getProfiles() profile} is empty.
+     * {@link ResourceRecordSet#profiles() profile} is empty.
      */
     public static Predicate<ResourceRecordSet<?>> withoutProfile() {
         return WithoutProfile.INSTANCE;
@@ -135,7 +135,7 @@ public class ResourceRecordSets {
 
         @Override
         public boolean apply(ResourceRecordSet<?> input) {
-            return input != null && input.getProfiles().isEmpty();
+            return input != null && input.profiles().isEmpty();
         }
 
         @Override
@@ -145,7 +145,7 @@ public class ResourceRecordSets {
     }
 
     /**
-     * returns true if {@link ResourceRecordSet#getProfiles() profile} contains a
+     * returns true if {@link ResourceRecordSet#profiles() profile} contains a
      * value is assignable from {@code type}.
      * 
      * @param type
@@ -166,9 +166,9 @@ public class ResourceRecordSets {
         public boolean apply(ResourceRecordSet<?> input) {
             if (input == null)
                 return false;
-            if (input.getProfiles().isEmpty())
+            if (input.profiles().isEmpty())
                 return false;
-            for (Map<String, Object> profile : input.getProfiles()) {
+            for (Map<String, Object> profile : input.profiles()) {
                 if (type.isAssignableFrom(profile.getClass()))
                     return true;
             }
@@ -182,7 +182,7 @@ public class ResourceRecordSets {
     }
 
     /**
-     * returns value of {@link ResourceRecordSet#getProfiles() profile},
+     * returns value of {@link ResourceRecordSet#profiles() profile},
      * if matches the input {@code type} and is not null;
      * 
      * @param type
@@ -204,9 +204,9 @@ public class ResourceRecordSets {
         public C apply(ResourceRecordSet<?> input) {
             if (input == null)
                 return null;
-            if (input.getProfiles().isEmpty())
+            if (input.profiles().isEmpty())
                 return null;
-            for (Map<String, Object> profile : input.getProfiles()) {
+            for (Map<String, Object> profile : input.profiles()) {
                 if (type.isAssignableFrom(profile.getClass()))
                     return type.cast(profile);
             }
@@ -239,7 +239,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code www.denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param address
      *            ex. {@code 192.0.2.1}
      */
@@ -267,7 +267,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code www.denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param addresses
      *            address values ex. {@code [192.0.2.1, 192.0.2.2]}
      */
@@ -305,7 +305,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code www.denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param address
      *            ex. {@code 1234:ab00:ff00::6b14:abcd}
      */
@@ -334,7 +334,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code www.denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param addresses
      *            address values ex.
      *            {@code [1234:ab00:ff00::6b14:abcd, 5678:ab00:ff00::6b14:abcd]}
@@ -375,7 +375,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code www.denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param cname
      *            ex. {@code www1.denominator.io.}
      */
@@ -404,7 +404,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code www.denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param cnames
      *            cname values ex.
      *            {@code [www1.denominator.io., www2.denominator.io.]}
@@ -443,7 +443,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param nsdname
      *            ex. {@code ns1.denominator.io.}
      */
@@ -472,7 +472,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param nsdnames
      *            nsdname values ex.
      *            {@code [ns1.denominator.io., ns2.denominator.io.]}
@@ -511,7 +511,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param ptrdname
      *            ex. {@code ptr1.denominator.io.}
      */
@@ -540,7 +540,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param ptrdnames
      *            ptrdname values ex.
      *            {@code [ptr1.denominator.io., ptr2.denominator.io.]}
@@ -579,7 +579,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param spfdata
      *            ex. {@code v=spf1 a mx -all}
      */
@@ -608,7 +608,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param spfdata
      *            spfdata values ex.
      *            {@code [v=spf1 a mx -all, v=spf1 ipv6 -all]}
@@ -647,7 +647,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param txtdata
      *            ex. {@code "made in sweden"}
      */
@@ -676,7 +676,7 @@ public class ResourceRecordSets {
      * @param name
      *            ex. {@code denominator.io.}
      * @param ttl
-     *            see {@link ResourceRecordSet#getTTL()}
+     *            see {@link ResourceRecordSet#ttl()}
      * @param txtdata
      *            txtdata values ex.
      *            {@code ["made in sweden", "made in norway"]}

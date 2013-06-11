@@ -48,36 +48,80 @@ public class SRVData extends ForwardingMap<String, Object> {
     }
 
     /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #priority()}
+     */
+    @Deprecated
+    public int getPriority() {
+        return priority();
+    }
+
+    /**
      * The priority of this target host. A client MUST attempt to contact the
      * target host with the lowest-numbered priority it can reach; target hosts
      * with the same priority SHOULD be tried in an order defined by the weight
      * field.
+     * 
+     * @since 1.3
      */
-    public int getPriority() {
+    public int priority() {
         return priority;
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #weight()}
+     */
+    @Deprecated
+    public int getWeight() {
+        return weight();
     }
 
     /**
      * The weight field specifies a relative weight for entries with the same
      * priority. Larger weights SHOULD be given a proportionately higher
      * probability of being selected.
+     * 
+     * @since 1.3
      */
-    public int getWeight() {
+    public int weight() {
         return weight;
     }
 
     /**
-     * The port on this target host of this service.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #port()}
      */
+    @Deprecated
     public int getPort() {
+        return port();
+    }
+
+    /**
+     * The port on this target host of this service.
+     * 
+     * @since 1.3
+     */
+    public int port() {
         return port;
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #target()}
+     */
+    @Deprecated
+    public String getTarget() {
+        return target();
     }
 
     /**
      * The domain name of the target host. There MUST be one or more address
      * records for this name, the name MUST NOT be an alias.
+     * 
+     * @since 1.3
      */
-    public String getTarget() {
+    public String target() {
         return target;
     }
 
@@ -92,7 +136,7 @@ public class SRVData extends ForwardingMap<String, Object> {
         private String target;
 
         /**
-         * @see SRVData#getPriority()
+         * @see SRVData#priority()
          */
         public SRVData.Builder priority(int priority) {
             this.priority = priority;
@@ -100,7 +144,7 @@ public class SRVData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SRVData#getWeight()
+         * @see SRVData#weight()
          */
         public SRVData.Builder weight(int weight) {
             this.weight = weight;
@@ -108,7 +152,7 @@ public class SRVData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SRVData#getPort()
+         * @see SRVData#port()
          */
         public SRVData.Builder port(int port) {
             this.port = port;
@@ -116,7 +160,7 @@ public class SRVData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SRVData#getTarget()
+         * @see SRVData#target()
          */
         public SRVData.Builder target(String target) {
             this.target = target;
@@ -128,7 +172,7 @@ public class SRVData extends ForwardingMap<String, Object> {
         }
 
         public SRVData.Builder from(SRVData in) {
-            return this.priority(in.getPriority()).weight(in.getWeight()).port(in.getPort()).target(in.getTarget());
+            return this.priority(in.priority()).weight(in.weight()).port(in.port()).target(in.target());
         }
     }
 
