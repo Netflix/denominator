@@ -138,44 +138,56 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
     }
 
     @Override
-    public Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type,
-            String group) {
-        Iterator<DirectionalPoolRecordDetail> records = recordsByNameTypeAndGroupName(name, type, group);
+    @Deprecated
+    public Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type, String group) {
+        return getByNameTypeAndQualifier(name, type, group);
+    }
+
+    @Override
+    public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type,
+            String qualifier) {
+        Iterator<DirectionalPoolRecordDetail> records = recordsByNameTypeAndQualifier(name, type, qualifier);
         Iterator<ResourceRecordSet<?>> iterator = iteratorFactory.create(records);
         if (iterator.hasNext())
             return Optional.<ResourceRecordSet<?>> of(iterator.next());
         return Optional.absent();
     }
 
-    private Iterator<DirectionalPoolRecordDetail> recordsByNameTypeAndGroupName(String name, String type,
-            String group) {
+    private Iterator<DirectionalPoolRecordDetail> recordsByNameTypeAndQualifier(String name, String type,
+            String qualifier) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        checkNotNull(group, "group");
+        checkNotNull(qualifier, "qualifier");
         Iterator<DirectionalPoolRecordDetail> records;
         if ("CNAME".equals(type)) {
             records = filter(
-                        concat(recordsForNameTypeAndGroup(name, "A", group),
-                               recordsForNameTypeAndGroup(name, "AAAA", group)), isCNAME);
+                        concat(recordsForNameTypeAndQualifier(name, "A", qualifier),
+                               recordsForNameTypeAndQualifier(name, "AAAA", qualifier)), isCNAME);
         } else {
-            records = recordsForNameTypeAndGroup(name, type, group);
+            records = recordsForNameTypeAndQualifier(name, type, qualifier);
         }
         return records;
     }
 
-    private Iterator<DirectionalPoolRecordDetail> recordsForNameTypeAndGroup(String name, String type, String group) {
+    private Iterator<DirectionalPoolRecordDetail> recordsForNameTypeAndQualifier(String name, String type, String qualifier) {
         int typeValue = checkNotNull(new ResourceTypeToValue().get(type), "typeValue for %s", type);
         DirectionalGroupCoordinates coord = DirectionalGroupCoordinates.builder()
                                                                        .zoneName(zoneName)
                                                                        .recordName(name)
                                                                        .recordType(typeValue)
-                                                                       .groupName(group).build();
+                                                                       .groupName(qualifier).build();
         return groupApi.listRecordsByGroupCoordinates(coord).iterator();
     }
 
     @Override
+    @Deprecated
     public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
-        Iterator<DirectionalPoolRecordDetail> iterator = recordsByNameTypeAndGroupName(name, type, group);
+        applyRegionsToNameTypeAndQualifier(regions, name, type, group);
+    }
+
+    @Override
+    public void applyRegionsToNameTypeAndQualifier(Multimap<String, String> regions, String name, String type, String qualifier) {
+        Iterator<DirectionalPoolRecordDetail> iterator = recordsByNameTypeAndQualifier(name, type, qualifier);
         Map<DirectionalPoolRecordDetail, DirectionalGroup> updates = groupsToUpdate(iterator, regions);
         if (updates.isEmpty())
             return;
@@ -201,8 +213,14 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
     }
 
     @Override
+    @Deprecated
     public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
-        for (Iterator<DirectionalPoolRecordDetail> i = recordsByNameTypeAndGroupName(name, type, group); i.hasNext();) {
+        applyTTLToNameTypeAndQualifier(ttl, name, type, group);
+    }
+
+    @Override
+    public void applyTTLToNameTypeAndQualifier(int ttl, String name, String type, String qualifier) {
+        for (Iterator<DirectionalPoolRecordDetail> i = recordsByNameTypeAndQualifier(name, type, qualifier); i.hasNext();) {
             DirectionalPoolRecordDetail detail = i.next();
             DirectionalPoolRecord record = detail.getRecord();
             if (record.getTTL() != ttl)
@@ -215,7 +233,7 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
                                              .toSortedList(byTypeAndGeoGroup).iterator());
     }
 
-    static Optional<IdAndName> group(DirectionalPoolRecordDetail in) {
+    static Optional<IdAndName> qualifier(DirectionalPoolRecordDetail in) {
         return in.getGeolocationGroup().or(in.getGroup());
     }
 
@@ -223,11 +241,11 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
 
         @Override
         public int compare(DirectionalPoolRecordDetail left, DirectionalPoolRecordDetail right) {
-            checkState(group(left).isPresent(), "expected record to be in a geolocation group: %s", left);
-            checkState(group(right).isPresent(), "expected record to be in a geolocation group: %s", right);
+            checkState(qualifier(left).isPresent(), "expected record to be in a geolocation qualifier: %s", left);
+            checkState(qualifier(right).isPresent(), "expected record to be in a geolocation qualifier: %s", right);
             return ComparisonChain.start()
                                   .compare(left.getRecord().getType(), right.getRecord().getType())
-                                  .compare(group(left).get().getName(), group(right).get().getName()).result();
+                                  .compare(qualifier(left).get().getName(), qualifier(right).get().getName()).result();
         }
     };
 
