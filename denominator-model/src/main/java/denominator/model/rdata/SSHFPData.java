@@ -59,11 +59,31 @@ public class SSHFPData extends ForwardingMap<String, Object> {
     }
 
     /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #algorithm()}
+     */
+    @Deprecated
+    public int getAlgorithm() {
+        return algorithm();
+    }
+
+    /**
      * This algorithm number octet describes the algorithm of the public key.
      * @return most often {@code 1} for {@code RSA} or {@code 2} for {@code DSA}. 
+     * 
+     * @since 1.3
      */
-    public int getAlgorithm() {
+    public int algorithm() {
         return algorithm;
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #fptype()}
+     */
+    @Deprecated
+    public int getType() {
+        return fptype();
     }
 
     /**
@@ -71,15 +91,28 @@ public class SSHFPData extends ForwardingMap<String, Object> {
      * calculate the fingerprint of the public key.
      * 
      * @return most often {@code 1} for {@code SHA-1}
+     * 
+     * @since 1.3
      */
-    public int getType() {
+    public int fptype() {
         return fptype;
     }
 
     /**
-     * The fingerprint calculated over the public key blob.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #fingerprint()}
      */
+    @Deprecated
     public String getFingerprint() {
+        return fingerprint();
+    }
+
+    /**
+     * The fingerprint calculated over the public key blob.
+     * 
+     * @since 1.3
+     */
+    public String fingerprint() {
         return fingerprint;
     }
 
@@ -89,7 +122,7 @@ public class SSHFPData extends ForwardingMap<String, Object> {
         private String fingerprint;
 
         /**
-         * @see SSHFPData#getAlgorithm()
+         * @see SSHFPData#algorithm()
          */
         public SSHFPData.Builder algorithm(int algorithm) {
             this.algorithm = algorithm;
@@ -97,7 +130,7 @@ public class SSHFPData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SSHFPData#getType()
+         * @see SSHFPData#fptype()
          */
         public SSHFPData.Builder fptype(int fptype) {
             this.fptype = fptype;
@@ -105,7 +138,7 @@ public class SSHFPData extends ForwardingMap<String, Object> {
         }
 
         /**
-         * @see SSHFPData#getFingerprint()
+         * @see SSHFPData#fingerprint()
          */
         public SSHFPData.Builder fingerprint(String fingerprint) {
             this.fingerprint = fingerprint;

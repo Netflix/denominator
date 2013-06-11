@@ -62,12 +62,24 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
     }
 
     @Override
+    @Deprecated
     public Set<String> getSupportedTypes() {
+        return supportedTypes();
+    }
+
+    @Override
+    public Set<String> supportedTypes() {
         return types;
     }
 
     @Override
+    @Deprecated
     public Multimap<String, String> getSupportedRegions() {
+        return supportedRegions();
+    }
+
+    @Override
+    public Multimap<String, String> supportedRegions() {
         return regions;
     }
 
@@ -89,12 +101,24 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
     }
 
     @Override
+    @Deprecated
     public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
         return iteratorForDNameAndDirectionalType(checkNotNull(name, "name"), 0);
     }
 
     @Override
+    @Deprecated
     public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
+        return iterateByNameAndType(name, type);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
         if ("CNAME".equals(type)) {

@@ -41,7 +41,7 @@ class GeoResourceRecordSetCommands {
     public static class GeoTypeList extends GeoResourceRecordSetCommand {
         @Override
         protected Iterator<String> doRun(DNSApiManager mgr) {
-            return mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().getSupportedTypes().iterator();
+            return mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().supportedTypes().iterator();
         }
     }
 
@@ -50,7 +50,7 @@ class GeoResourceRecordSetCommands {
         @Override
         protected Iterator<String> doRun(DNSApiManager mgr) {
             return FluentIterable
-                    .from(mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().getSupportedRegions().asMap()
+                    .from(mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().supportedRegions().asMap()
                             .entrySet()).transform(new Function<Map.Entry<String, Collection<String>>, String>() {
                         @Override
                         public String apply(Entry<String, Collection<String>> input) {
@@ -71,9 +71,9 @@ class GeoResourceRecordSetCommands {
         public Iterator<String> doRun(DNSApiManager mgr) {
             Iterator<ResourceRecordSet<?>> iterator;
             if (name != null && type != null)
-                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().listByNameAndType(name, type);
+                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().iterateByNameAndType(name, type);
             if (name != null)
-                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().listByName(name);
+                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().iterateByName(name);
             else
                 iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().iterator();
             return transform(iterator, GeoResourceRecordSetToString.INSTANCE);
@@ -144,8 +144,8 @@ class GeoResourceRecordSetCommands {
         @Override
         public String apply(ResourceRecordSet<?> geoRRS) {
             Geo geo = toProfile(Geo.class).apply(geoRRS);
-            StringBuilder suffix = new StringBuilder().append(geo.getGroup()).append(' ')
-                    .append(geo.getRegions());
+            StringBuilder suffix = new StringBuilder().append(geo.group()).append(' ')
+                    .append(geo.regions());
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
             for (String line : Splitter.on('\n').split(ResourceRecordSetToString.INSTANCE.apply(geoRRS))) {
                 lines.add(new StringBuilder().append(line).append(' ').append(suffix).toString());

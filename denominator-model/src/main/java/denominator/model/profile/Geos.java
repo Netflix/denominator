@@ -14,7 +14,7 @@ public class Geos {
     }
 
     /**
-     * returns true if {@link Geo#getGroup() group}, if equals the
+     * returns true if {@link Geo#group() group}, if equals the
      * input {@code group};
      * 
      * @param group
@@ -35,7 +35,7 @@ public class Geos {
         public boolean apply(Geo input) {
             if (input == null)
                 return false;
-            return group.equals(input.getGroup());
+            return group.equals(input.group());
         }
 
         @Override

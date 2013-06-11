@@ -399,6 +399,6 @@ public class DenominatorTest {
                 ";; ok"));
         assertEquals(mgr.api().geoRecordSetsInZone(command.zoneIdOrName).get()
                         .getByNameTypeAndGroup(command.name, command.type, command.group).get()
-                        .getTTL().get(), Integer.valueOf(command.ttl));
+                        .ttl().get(), Integer.valueOf(command.ttl));
     }
 }

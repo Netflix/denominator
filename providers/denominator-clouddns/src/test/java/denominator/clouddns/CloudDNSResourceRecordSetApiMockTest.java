@@ -50,8 +50,8 @@ public class CloudDNSResourceRecordSetApiMockTest {
             while (records.hasNext()) {
                 ResourceRecordSet<?> record = records.next();
                 
-                assertEquals(record.getName(), "www.denominator.io");
-                assertEquals(record.getTTL().get().intValue(), 600000);
+                assertEquals(record.name(), "www.denominator.io");
+                assertEquals(record.ttl().get().intValue(), 600000);
             }
 
             assertEquals(server.getRequestCount(), 2);
@@ -107,8 +107,8 @@ public class CloudDNSResourceRecordSetApiMockTest {
             while (records.hasNext()) {
                 ResourceRecordSet<?> record = records.next();
                 
-                assertEquals(record.getName(), "www.denominator.io");
-                assertEquals(record.getTTL().get().intValue(), 600000);
+                assertEquals(record.name(), "www.denominator.io");
+                assertEquals(record.ttl().get().intValue(), 600000);
             }
 
             assertEquals(server.getRequestCount(), 3);
@@ -123,7 +123,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
     String recordsByName = "{\"records\":[{\"name\":\"www.denominator.io\",\"id\":\"A-9872761\",\"type\":\"A\",\"data\":\"1.2.3.4\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"},{\"name\":\"www.denominator.io\",\"id\":\"NS-8703385\",\"type\":\"NS\",\"data\":\"dns1.stabletransit.com\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"},{\"name\":\"www.denominator.io\",\"id\":\"NS-8703386\",\"type\":\"NS\",\"data\":\"dns2.stabletransit.com\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"}],\"totalEntries\":3}";
 
     @Test
-    public void listByNameWhenPresent() throws IOException, InterruptedException {
+    public void iterateByNameWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.play();
 
@@ -135,13 +135,13 @@ public class CloudDNSResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(url);
-            Iterator<ResourceRecordSet<?>> records = api.listByName("www.denominator.io");
+            Iterator<ResourceRecordSet<?>> records = api.iterateByName("www.denominator.io");
             
             while (records.hasNext()) {
             	ResourceRecordSet<?> record = records.next();
             	
-            	assertEquals(record.getName(), "www.denominator.io");
-            	assertEquals(record.getTTL().get().intValue(), 600000);
+            	assertEquals(record.name(), "www.denominator.io");
+            	assertEquals(record.ttl().get().intValue(), 600000);
             }
 
             assertEquals(server.getRequestCount(), 2);
@@ -153,7 +153,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void listByNameWhenAbsent() throws IOException, InterruptedException {
+    public void iterateByNameWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.play();
 
@@ -165,7 +165,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(url);
-            assertFalse(api.listByName("www.denominator.io").hasNext());
+            assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");

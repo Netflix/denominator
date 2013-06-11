@@ -57,7 +57,7 @@ public class UltraDNSGeoSupport {
     @Provides
     @Singleton
     @denominator.config.profile.Geo
-    Multimap<String, String> getRegions(UltraDNSWSApi api) {
+    Multimap<String, String> regions(UltraDNSWSApi api) {
         Builder<String, String> regions = ImmutableMultimap.<String, String> builder();
         for (Entry<IdAndName, Collection<String>> region : api.getRegionsByIdAndName().asMap().entrySet()) {
             regions.putAll(region.getKey().getName(), region.getValue());

@@ -51,12 +51,18 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         return new GroupByRecordNameAndTypeIterator(iterator);
     }
 
+    @Override
+    @Deprecated
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
     /**
      * lists and lazily transforms all record sets for a name which are not
      * aliases into denominator format.
      */
     @Override
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+    public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
         Iterator<ResourceRecordSet<?>> iterator = route53RRsetApi.listAt(NextRecord.name(name))
                                                                  .filter(and(not(isAlias()), nameEqualTo(name)))
                                                                  .transform(ToDenominatorResourceRecordSet.INSTANCE)
@@ -95,12 +101,12 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      */
     @Override
     public void add(ResourceRecordSet<?> rrset) {
-        Optional<Integer> ttlToApply = rrset.getTTL();
+        Optional<Integer> ttlToApply = rrset.ttl();
 
         ChangeBatch.Builder changes = ChangeBatch.builder();
         Builder<String> values = ImmutableList.builder();
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.getName(),
-                rrset.getType()).first();
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.name(),
+                rrset.type()).first();
         if (oldRRS.isPresent()) {
             ttlToApply = ttlToApply.or(oldRRS.get().getTTL());
             changes.delete(oldRRS.get());
@@ -111,8 +117,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         }
         
         changes.create(org.jclouds.route53.domain.ResourceRecordSet.builder()
-                        .name(rrset.getName())
-                        .type(rrset.getType())
+                        .name(rrset.name())
+                        .type(rrset.type())
                         .ttl(ttlToApply.or(300))
                         .addAll(values.build()).build());
 
@@ -141,8 +147,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
 
         org.jclouds.route53.domain.ResourceRecordSet replacement = ToRoute53ResourceRecordSet.INSTANCE.apply(rrset);
 
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.getName(),
-                rrset.getType()).first();
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.name(),
+                rrset.type()).first();
         if (oldRRS.isPresent()) {
             if (oldRRS.get().getTTL().equals(replacement.getTTL())
                     && oldRRS.get().getValues().equals(replacement.getValues()))
@@ -162,8 +168,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      */
     @Override
     public void remove(ResourceRecordSet<?> rrset) {
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.getName(),
-                rrset.getType()).first();
+        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.name(),
+                rrset.type()).first();
         if (!oldRRS.isPresent())
             return;
 
@@ -180,8 +186,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         ChangeBatch.Builder changes = ChangeBatch.builder();
         changes.delete(oldRRS.get());
         changes.create(org.jclouds.route53.domain.ResourceRecordSet.builder()
-                        .name(rrset.getName())
-                        .type(rrset.getType())
+                        .name(rrset.name())
+                        .type(rrset.type())
                         .ttl(oldRRS.get().getTTL().get())
                         .addAll(valuesToRetain)
                         .build());

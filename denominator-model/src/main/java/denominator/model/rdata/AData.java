@@ -47,9 +47,20 @@ public class AData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * a 32-bit internet address
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #address()}
      */
+    @Deprecated
     public String getAddress() {
+        return address();
+    }
+
+    /**
+     * a 32-bit internet address
+     * 
+     * @since 1.3
+     */
+    public String address() {
         return address;
     }
 

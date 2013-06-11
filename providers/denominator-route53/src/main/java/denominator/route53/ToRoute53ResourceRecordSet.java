@@ -18,9 +18,9 @@ enum ToRoute53ResourceRecordSet implements Function<ResourceRecordSet<?>, org.jc
     @Override
     public org.jclouds.route53.domain.ResourceRecordSet apply(ResourceRecordSet<?> rrset) {
         return org.jclouds.route53.domain.ResourceRecordSet.builder()
-                .name(rrset.getName())
-                .type(rrset.getType())
-                .ttl(rrset.getTTL().or(300))
+                .name(rrset.name())
+                .type(rrset.type())
+                .ttl(rrset.ttl().or(300))
                 .addAll(toTextFormat(rrset)).build();
     }
 
@@ -28,7 +28,7 @@ enum ToRoute53ResourceRecordSet implements Function<ResourceRecordSet<?>, org.jc
         Builder<String> values = ImmutableList.builder();
         for (Map<String, Object> rdata : rrset) {
             String textFormat = Joiner.on(' ').join(rdata.values());
-            if (ImmutableSet.of("SPF", "TXT").contains(rrset.getType())) {
+            if (ImmutableSet.of("SPF", "TXT").contains(rrset.type())) {
                 textFormat = format("\"%s\"", textFormat);
             }
             values.add(textFormat);

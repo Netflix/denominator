@@ -34,9 +34,20 @@ public class PTRData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * domain-name which points to some location in the domain name space.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #ptrdname()}
      */
+    @Deprecated
     public String getPtrdname() {
+        return ptrdname();
+    }
+
+    /**
+     * domain-name which points to some location in the domain name space.
+     * 
+     * @since 1.3
+     */
+    public String ptrdname() {
         return ptrdname;
     }
 

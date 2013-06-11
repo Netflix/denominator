@@ -6,18 +6,21 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
-import com.google.common.collect.ForwardingList;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.UnsignedInteger;
 
 /**
  * A grouping of resource records by name and type. In implementation, this is
  * an immutable list of rdata values corresponding to records sharing the same
- * {@link #getName() name} and {@link #getType}.
+ * {@link #name() name} and {@link #type}.
  * 
  * @param <D>
  *            RData type shared across elements. This may be empty in the case
@@ -25,7 +28,7 @@ import com.google.common.primitives.UnsignedInteger;
  * 
  * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class ResourceRecordSet<D extends Map<String, Object>> extends ForwardingList<D> {
+public class ResourceRecordSet<D extends Map<String, Object>> implements List<D> {
 
     private final String name;
     private final String type;
@@ -47,26 +50,68 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
     }
 
     /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #name()}
+     */
+    @Deprecated
+    public String getName() {
+        return name();
+    }
+
+    /**
      * an owner name, i.e., the name of the node to which this resource record
      * pertains.
+     * 
+     * @since 1.3
      */
-    public String getName() {
+    public String name() {
         return name;
     }
 
     /**
-     * The mnemonic type of the record. ex {@code CNAME}
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #type()}
      */
+    @Deprecated
     public String getType() {
+        return type();
+    }
+
+    /**
+     * The mnemonic type of the record. ex {@code CNAME}
+     * 
+     * @since 1.3
+     */
+    public String type() {
         return type;
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #ttl()}
+     */
+    @Deprecated
+    public Optional<Integer> getTTL() {
+        return ttl();
     }
 
     /**
      * the time interval that the resource record may be cached. Zero implies it
      * is not cached. Absent means default for the zone.
+     * 
+     * @since 1.3
      */
-    public Optional<Integer> getTTL() {
+    public Optional<Integer> ttl() {
         return ttl;
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #profiles()}
+     */
+    @Deprecated
+    public ImmutableList<Map<String, Object>> getProfiles() {
+        return profiles();
     }
 
     /**
@@ -77,15 +122,22 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
      * For example, if this record set is intended for resolvers in Utah,
      * profiles will include a Map whose entries include {@code type -> "geo"},
      * and is an instance of {@link denominator.model.profile.Geo}, where
-     * {@link denominator.model.profile.Geo#getRegions()} contains something
+     * {@link denominator.model.profile.Geo#regions()} contains something
      * like `Utah` or `US-UT`.
+     * 
+     * @since 1.3
      */
-    public ImmutableList<Map<String, Object>> getProfiles() {
+    public ImmutableList<Map<String, Object>> profiles() {
         return profiles;
     }
 
-    @Override
-    protected ImmutableList<D> delegate() {
+    /**
+     * RData type shared across elements. This may be empty in the case of
+     * special profile such as `alias`.
+     * 
+     * @since 1.3
+     */
+    public List<D> rdata() {
         return rdata;
     }
 
@@ -179,5 +231,235 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends Forwarding
         protected ImmutableList<D> rdataValues() {
             return rdata.build();
         }
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public boolean add(D e) {
+        return rdata.add(e);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public void add(int index, D element) {
+        rdata.add(index, element);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public boolean addAll(Collection<? extends D> c) {
+        return rdata.addAll(c);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public boolean addAll(int index, Collection<? extends D> c) {
+        return rdata.addAll(index, c);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public void clear() {
+        rdata.clear();
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public boolean contains(Object o) {
+        return rdata.contains(o);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public boolean containsAll(Collection<?> c) {
+        return rdata.containsAll(c);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public D get(int index) {
+        return rdata.get(index);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public int indexOf(Object o) {
+        return rdata.indexOf(o);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public boolean isEmpty() {
+        return rdata.isEmpty();
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public Iterator<D> iterator() {
+        return rdata.iterator();
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public int lastIndexOf(Object o) {
+        return rdata.lastIndexOf(o);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public ListIterator<D> listIterator() {
+        return rdata.listIterator();
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public ListIterator<D> listIterator(int index) {
+        return rdata.listIterator(index);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public boolean remove(Object o) {
+        return rdata.remove(o);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public D remove(int index) {
+        return rdata.remove(index);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public boolean removeAll(Collection<?> c) {
+        return rdata.removeAll(c);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public boolean retainAll(Collection<?> c) {
+        return rdata.retainAll(c);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public D set(int index, D element) {
+        return rdata.set(index, element);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public int size() {
+        return rdata.size();
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public List<D> subList(int fromIndex, int toIndex) {
+        return rdata.subList(fromIndex, toIndex);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public Object[] toArray() {
+        return rdata.toArray();
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #rdata()}
+     */
+    @Deprecated
+    @Override
+    public <T> T[] toArray(T[] a) {
+        return rdata.toArray(a);
     }
 }
