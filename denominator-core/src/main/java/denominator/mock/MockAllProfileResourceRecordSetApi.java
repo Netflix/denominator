@@ -6,12 +6,14 @@ import static com.google.common.base.Predicates.and;
 import static com.google.common.collect.FluentIterable.from;
 import static com.google.common.collect.Ordering.usingToString;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
+import static denominator.model.ResourceRecordSets.qualifierEqualTo;
 import static denominator.model.ResourceRecordSets.typeEqualTo;
 
 import java.util.Iterator;
 
 import javax.inject.Inject;
 
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Multimap;
 
@@ -72,6 +74,15 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
                 .filter(nameAndTypeEqualTo(name, type))
                 .toSortedList(usingToString())
                 .iterator();
+    }
+
+    @Override
+    public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier) {
+        checkNotNull(name, "name");
+        checkNotNull(type, "type");
+        checkNotNull(type, "qualifier");
+        return from(records.get(zone))
+                .firstMatch(and(nameAndTypeEqualTo(name, type), qualifierEqualTo(qualifier)));
     }
 
     static Predicate<ResourceRecordSet<?>> nameAndTypeEqualTo(String name, String type) {

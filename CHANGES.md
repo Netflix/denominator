@@ -1,7 +1,11 @@
 ### Version 1.3.0
 * Deprecated remaining naming conventions that use syntax like `getUrl` or `listByName` to `url` or `iterateByName` to support migration to denominator 2.0.
 * ResourceRecordSet no longer implements `List<D>`.  Please access rdata via the `rdata()` accessor.
+* Added `ResourceRecordSet.getQualifier()`, `ReadOnlyResourceRecordSetApi.getByNameTypeAndQualifier()`
 * Deprecated `Geo.getGroup()` for `ResourceRecordSet.getQualifier()`
+* Deprecated `GeoResourceRecordSetApi.getByNameTypeAndGroup()` for `ReadOnlyResourceRecordSetApi.getByNameTypeAndQualifier()`
+* Deprecated `GeoResourceRecordSetApi.applyRegionsToNameTypeAndGroup()` for `GeoResourceRecordSetApi.applyRegionsToNameTypeAndQualifier()`
+* Deprecated `GeoResourceRecordSetApi.applyTTLToNameTypeAndGroup()` for `GeoResourceRecordSetApi.applyTTLToNameTypeAndQualifier()`
 
 ### Version 1.2.1
 * remove strict zone name checks on deprecated `DNSApi.get..Api` methods as often the backend will accept zone names with or without a trailing dot.
