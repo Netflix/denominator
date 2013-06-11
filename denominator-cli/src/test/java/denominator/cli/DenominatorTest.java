@@ -19,9 +19,6 @@ import denominator.DNSApiManager;
 import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
-import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL;
-import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet;
-import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoTypeList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetApplyTTL;
@@ -176,12 +173,16 @@ public class DenominatorTest {
         ResourceRecordSetList command = new ResourceRecordSetList();
         command.zoneIdOrName = "denominator.io.";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                "denominator.io.                                   NS     86400 ns1.denominator.io.",
-                "denominator.io.                                   SOA    3600  ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 60",
-                "www.denominator.io.                               CNAME  3600  www1.denominator.io.",
-                "www1.denominator.io.                              A      3600  192.0.2.1",
-                "www1.denominator.io.                              A      3600  192.0.2.2",
-                "www2.denominator.io.                              A      3600  198.51.100.1"));
+                "denominator.io.                                   NS                         86400 ns1.denominator.io.",
+                "denominator.io.                                   SOA                        3600  ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 60",
+                "www.denominator.io.                               CNAME                      3600  www1.denominator.io.",
+                "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io.",
+                "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io.",
+                "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io.",
+                "www1.denominator.io.                              A                          3600  192.0.2.1",
+                "www1.denominator.io.                              A                          3600  192.0.2.2",
+                "www2.denominator.io.                              A                          3600  198.51.100.1",
+                "www2.geo.denominator.io.                          A      alazona             300   192.0.2.1"));
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. list -n www1.denominator.io.")
@@ -190,8 +191,8 @@ public class DenominatorTest {
         command.zoneIdOrName = "denominator.io.";
         command.name = "www1.denominator.io.";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                "www1.denominator.io.                              A      3600  192.0.2.1",
-                "www1.denominator.io.                              A      3600  192.0.2.2"));
+                "www1.denominator.io.                              A                          3600  192.0.2.1",
+                "www1.denominator.io.                              A                          3600  192.0.2.2"));
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. get -n www1.denominator.io. -t A ")
@@ -201,8 +202,8 @@ public class DenominatorTest {
         command.name = "www1.denominator.io.";
         command.type = "A";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                "www1.denominator.io.                              A      3600  192.0.2.1",
-                "www1.denominator.io.                              A      3600  192.0.2.2"));
+                "www1.denominator.io.                              A                          3600  192.0.2.1",
+                "www1.denominator.io.                              A                          3600  192.0.2.2"));
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. get -n www3.denominator.io. -t A ")
@@ -214,6 +215,26 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), "");
     }
 
+    @Test(description = "denominator -p mock record -z denominator.io. get -n www.geo.denominator.io. -t CNAME -g alazona")
+    public void testResourceRecordSetGetWhenQualifierPresent() {
+        ResourceRecordSetGet command = new ResourceRecordSetGet();
+        command.zoneIdOrName = "denominator.io.";
+        command.name = "www.geo.denominator.io.";
+        command.type = "CNAME";
+        command.qualifier = "alazona";
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)),
+                "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io.");
+    }
+
+    @Test(description = "denominator -p mock record -z denominator.io. get -n www.geo.denominator.io. -t A -g alazona")
+    public void testResourceRecordSetGetWhenQualifierAbsent() {
+        ResourceRecordSetGet command = new ResourceRecordSetGet();
+        command.zoneIdOrName = "denominator.io.";
+        command.name = "www.geo.denominator.io.";
+        command.type = "A";
+        command.qualifier = "alazona";
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), "");
+    }
     @Test(description = "denominator -p mock record -z denominator.io. applyttl -n www3.denominator.io. -t A 10000")
     public void testResourceRecordSetApplyTTL() {
         ResourceRecordSetApplyTTL command = new ResourceRecordSetApplyTTL();
@@ -332,53 +353,58 @@ public class DenominatorTest {
     }
 
     @Test(description = "denominator -p mock geo -z denominator.io. list")
+    @Deprecated
     public void testGeoResourceRecordSetList() {
-        GeoResourceRecordSetList command = new GeoResourceRecordSetList();
+        denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList command = new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList();
         command.zoneIdOrName = "denominator.io.";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                "www.geo.denominator.io.                           CNAME  0     c.denominator.io. antarctica {Antarctica=[Bouvet Island, French Southern Territories, Antarctica]}",
-                "www.geo.denominator.io.                           CNAME  300   a.denominator.io. alazona {United States (US)=[Alaska, Arizona]}",
-                "www.geo.denominator.io.                           CNAME  86400 b.denominator.io. columbador {South America=[Colombia, Ecuador]}",
-                "www2.geo.denominator.io.                          A      300   192.0.2.1 alazona {United States (US)=[Alaska, Arizona]}"));
+                "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {United States (US)=[Alaska, Arizona]}",
+                "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io. {Antarctica=[Bouvet Island, French Southern Territories, Antarctica]}",
+                "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {South America=[Colombia, Ecuador]}",
+                "www2.geo.denominator.io.                          A      alazona             300   192.0.2.1 {United States (US)=[Alaska, Arizona]}"));
     }
 
     @Test(description = "denominator -p mock geo -z denominator.io. list -n www.geo.denominator.io.")
+    @Deprecated
     public void testGeoResourceRecordSetListByName() {
-        GeoResourceRecordSetList command = new GeoResourceRecordSetList();
+        denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList command = new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList();
         command.zoneIdOrName = "denominator.io.";
         command.name = "www.geo.denominator.io.";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                "www.geo.denominator.io.                           CNAME  0     c.denominator.io. antarctica {Antarctica=[Bouvet Island, French Southern Territories, Antarctica]}",
-                "www.geo.denominator.io.                           CNAME  300   a.denominator.io. alazona {United States (US)=[Alaska, Arizona]}",
-                "www.geo.denominator.io.                           CNAME  86400 b.denominator.io. columbador {South America=[Colombia, Ecuador]}"));
+                "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {United States (US)=[Alaska, Arizona]}",
+                "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io. {Antarctica=[Bouvet Island, French Southern Territories, Antarctica]}",
+                "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {South America=[Colombia, Ecuador]}"));
     }
 
     @Test(description = "denominator -p mock geo -z denominator.io. list -n www.geo.denominator.io. -t CNAME")
+    @Deprecated
     public void testGeoResourceRecordSetListByNameAndType() {
-        GeoResourceRecordSetList command = new GeoResourceRecordSetList();
+        denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList command = new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList();
         command.zoneIdOrName = "denominator.io.";
         command.name = "www.geo.denominator.io.";
         command.type = "CNAME";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                "www.geo.denominator.io.                           CNAME  0     c.denominator.io. antarctica {Antarctica=[Bouvet Island, French Southern Territories, Antarctica]}",
-                "www.geo.denominator.io.                           CNAME  300   a.denominator.io. alazona {United States (US)=[Alaska, Arizona]}",
-                "www.geo.denominator.io.                           CNAME  86400 b.denominator.io. columbador {South America=[Colombia, Ecuador]}"));
+                "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {United States (US)=[Alaska, Arizona]}",
+                "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io. {Antarctica=[Bouvet Island, French Southern Territories, Antarctica]}",
+                "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {South America=[Colombia, Ecuador]}"));
     }
 
     @Test(description = "denominator -p mock geo -z denominator.io. get -n www.geo.denominator.io. -t CNAME -g alazona")
+    @Deprecated
     public void testGeoResourceRecordSetGetWhenPresent() {
-        GeoResourceRecordSetGet command = new GeoResourceRecordSetGet();
+        denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet command = new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet();
         command.zoneIdOrName = "denominator.io.";
         command.name = "www.geo.denominator.io.";
         command.type = "CNAME";
         command.group = "alazona";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)),
-                "www.geo.denominator.io.                           CNAME  300   a.denominator.io. alazona {United States (US)=[Alaska, Arizona]}");
+                "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {United States (US)=[Alaska, Arizona]}");
     }
 
     @Test(description = "denominator -p mock geo -z denominator.io. get -n www.geo.denominator.io. -t A -g alazona")
+    @Deprecated
     public void testGeoResourceRecordSetGetWhenAbsent() {
-        GeoResourceRecordSetGet command = new GeoResourceRecordSetGet();
+        denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet command = new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet();
         command.zoneIdOrName = "denominator.io.";
         command.name = "www.geo.denominator.io.";
         command.type = "A";
@@ -387,8 +413,9 @@ public class DenominatorTest {
     }
 
     @Test(description = "denominator -p mock geo -z denominator.io. applyttl -n www2.geo.denominator.io. -t A -g alazona 300")
+    @Deprecated
     public void testGeoResourceRecordSetApplyTTL() {
-        GeoResourceRecordSetApplyTTL command = new GeoResourceRecordSetApplyTTL();
+        denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL command = new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL();
         command.zoneIdOrName = "denominator.io.";
         command.name = "www2.geo.denominator.io.";
         command.type = "A";
@@ -398,7 +425,7 @@ public class DenominatorTest {
                 ";; in zone denominator.io. applying ttl 300 to rrset www2.geo.denominator.io. A alazona",
                 ";; ok"));
         assertEquals(mgr.api().geoRecordSetsInZone(command.zoneIdOrName).get()
-                        .getByNameTypeAndGroup(command.name, command.type, command.group).get()
+                        .getByNameTypeAndQualifier(command.name, command.type, command.group).get()
                         .ttl().get(), Integer.valueOf(command.ttl));
     }
 }
