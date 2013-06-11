@@ -18,7 +18,7 @@ public class OnlyNormalResourceRecordSets {
 
     @Provides
     @Singleton
-    AllProfileResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(final ResourceRecordSetApi.Factory factory) {
+    AllProfileResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(ResourceRecordSetApi.Factory factory) {
         return new OnlyBasicResourceRecordSets().provideResourceRecordSetApiFactory(factory);
     }
 }

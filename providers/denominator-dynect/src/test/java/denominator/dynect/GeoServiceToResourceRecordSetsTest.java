@@ -68,9 +68,12 @@ public class GeoServiceToResourceRecordSetsTest {
                 ImmutableList.<ResourceRecordSet<CNAMEData>> builder()
                              .add(ResourceRecordSet.<CNAMEData> builder()
                                                    .name("srv.denominator.io")
+                                                   .qualifier("Everywhere Else")
                                                    .type("CNAME")
+                                                   .qualifier("Everywhere Else")
                                                    .ttl(300)
                                                    .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
+                                                   // TODO: remove group arg in 2.0
                                                    .addProfile(Geo.create("Everywhere Else",
                                                                        ImmutableMultimap.<String, String> builder()
                                                                                         .put("11", "11")
@@ -83,15 +86,19 @@ public class GeoServiceToResourceRecordSetsTest {
                              .add(ResourceRecordSet.<CNAMEData> builder()
                                                    .name("srv.denominator.io")
                                                    .type("CNAME")
+                                                   .qualifier("Europe")
                                                    .ttl(300)
                                                    .add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
+                                                   // TODO: remove group arg in 2.0
                                                    .addProfile(Geo.create("Europe", ImmutableMultimap.of("13", "13")))
                                                    .build())
                              .add(ResourceRecordSet.<CNAMEData> builder()
                                                    .name("srv.denominator.io")
                                                    .type("CNAME")
+                                                   .qualifier("Fallback")
                                                    .ttl(60)
                                                    .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
+                                                   // TODO: remove group arg in 2.0
                                                    .addProfile(Geo.create("Fallback",
                                                                        ImmutableMultimap.<String, String> builder()
                                                                                         .put("@!", "@!")
@@ -107,8 +114,10 @@ public class GeoServiceToResourceRecordSetsTest {
                              .add(ResourceRecordSet.<CNAMEData> builder()
                                                    .name("srv.denominator.io")
                                                    .type("CNAME")
+                                                   .qualifier("Everywhere Else")
                                                    .ttl(300)
                                                    .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
+                                                   // TODO: remove group arg in 2.0
                                                    .addProfile(Geo.create("Everywhere Else",
                                                                        ImmutableMultimap.<String, String> builder()
                                                                                         .put("11", "11")
@@ -140,8 +149,10 @@ public class GeoServiceToResourceRecordSetsTest {
     public void testMultipleNodesBecomeDifferentRRSets() {
         Builder<CNAMEData> builder = ResourceRecordSet.<CNAMEData> builder()
                         .type("CNAME")
+                        .qualifier("Default")
                         .ttl(60)
                         .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
+                        // TODO: remove group arg in 2.0
                         .addProfile(Geo.create("Default", ImmutableMultimap.of("@!", "@!", "@@", "@@")));
         
         assertEquals(geoToRRSets.apply(multipleNodes), 
@@ -172,12 +183,14 @@ public class GeoServiceToResourceRecordSetsTest {
 
     @Test
     public void testTypeFilterRetainsExpectedType() {
+        // TODO: remove group arg in 2.0
         Geo geo = Geo.create("Default", ImmutableMultimap.of("@!", "@!", "@@", "@@"));
 
         assertEquals(geoToRRSets.type("A").apply(mixedTypesSameGroup), 
                 ImmutableList.of(ResourceRecordSet.builder()
                                                   .name("srv.denominator.io")
                                                   .type("A")
+                                                  .qualifier("Default")
                                                   .ttl(60)
                                                   .addProfile(geo)
                                                   .add(AData.create("192.0.2.1")).build()));
@@ -185,18 +198,21 @@ public class GeoServiceToResourceRecordSetsTest {
 
     @Test
     public void testMixedTypesInSameGroupBecomeDifferentRRSets() {
+        // TODO: remove group arg in 2.0
         Geo geo = Geo.create("Default", ImmutableMultimap.of("@!", "@!", "@@", "@@"));
 
         assertEquals(geoToRRSets.apply(mixedTypesSameGroup), 
                 ImmutableList.of(ResourceRecordSet.builder()
                                                   .name("srv.denominator.io")
                                                   .type("A")
+                                                  .qualifier("Default")
                                                   .ttl(60)
                                                   .addProfile(geo)
                                                   .add(AData.create("192.0.2.1")).build(),
                                  ResourceRecordSet.builder()
                                                   .name("srv.denominator.io")
                                                   .type("CNAME")
+                                                  .qualifier("Default")
                                                   .ttl(60)
                                                   .addProfile(geo)
                                                   .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))

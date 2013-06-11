@@ -7,7 +7,10 @@ import com.google.common.base.Predicate;
 /**
  * Static utility methods that build {@code Geo} instances.
  * 
+ * @deprecated Will be removed in denominator 2.0. Please use
+ *             {@link denominator.model.ResourceRecordSets}
  */
+@Deprecated
 public class Geos {
 
     private Geos() {
@@ -19,11 +22,16 @@ public class Geos {
      * 
      * @param group
      *            expected name of the group. ex. {@code US-East}
+     * 
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link denominator.model.ResourceRecordSets#qualifierEqualTo(String)}
      */
+    @Deprecated
     public static Predicate<Geo> groupEqualTo(String group) {
         return new GroupEqualToPredicate(group);
     }
 
+    @Deprecated
     private static final class GroupEqualToPredicate implements Predicate<Geo> {
         private final String group;
 

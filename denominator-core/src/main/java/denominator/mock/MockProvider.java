@@ -113,8 +113,10 @@ public class MockProvider extends BasicProvider {
             records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
                     .name("www2.geo.denominator.io.")
                     .type("A")
+                    .qualifier("alazona")
                     .ttl(300)
                     .add(AData.create("192.0.2.1"))
+                    // TODO: remove group arg in 2.0
                     .addProfile(Geo.create("alazona", ImmutableMultimap.<String, String> builder()
                             .putAll("United States (US)", ImmutableList.of("Alaska", "Arizona"))
                             .build()))
@@ -122,8 +124,10 @@ public class MockProvider extends BasicProvider {
             records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
                     .name("www.geo.denominator.io.")
                     .type("CNAME")
+                    .qualifier("alazona")
                     .ttl(300)
                     .add(CNAMEData.create("a.denominator.io."))
+                    // TODO: remove group arg in 2.0
                     .addProfile(Geo.create("alazona", ImmutableMultimap.<String, String> builder()
                             .putAll("United States (US)", ImmutableList.of("Alaska", "Arizona"))
                             .build()))
@@ -131,8 +135,10 @@ public class MockProvider extends BasicProvider {
             records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
                     .name("www.geo.denominator.io.")
                     .type("CNAME")
+                    .qualifier("columbador")
                     .ttl(86400)
                     .add(CNAMEData.create("b.denominator.io."))
+                    // TODO: remove group arg in 2.0
                     .addProfile(Geo.create("columbador", ImmutableMultimap.<String, String> builder()
                             .putAll("South America", ImmutableList.of("Colombia", "Ecuador"))
                             .build()))
@@ -140,8 +146,10 @@ public class MockProvider extends BasicProvider {
             records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
                     .name("www.geo.denominator.io.")
                     .type("CNAME")
+                    .qualifier("antarctica")
                     .ttl(0)
                     .add(CNAMEData.create("c.denominator.io."))
+                    // TODO: remove group arg in 2.0
                     .addProfile(Geo.create("antarctica", ImmutableMultimap.<String, String> builder()
                             .putAll("Antarctica", ImmutableList.<String> builder()
                                                         .add("Bouvet Island")

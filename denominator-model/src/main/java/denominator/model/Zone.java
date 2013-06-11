@@ -62,7 +62,7 @@ public class Zone {
      * system generated. Even if a provider has an id associated with a zone, if
      * it isn't used by their api calls, this method will return absent.
      * 
-     * @see Provider#supportsDuplicateZoneNames()
+     * @see #idOrName()
      */
     public Optional<String> id() {
         return id;
@@ -76,9 +76,11 @@ public class Zone {
      * In implementation, this method is the same as calling:
      * {@code zone.id().or(zone.name())}
      * 
-     * @return {@link #id() id} or {@code #name() if absent}
+     * <p/>
+     * If {@code denominator.Provider#supportsDuplicateZoneNames()} is true,
+     * this will return an id.
      * 
-     * @see Provider#supportsDuplicateZoneNames()
+     * @return {@link #id() id} or {@link #name() name} if absent
      */
     public String idOrName() {
         return id().or(name());

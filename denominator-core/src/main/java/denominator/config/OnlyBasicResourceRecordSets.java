@@ -9,8 +9,8 @@ import com.google.common.collect.Iterators;
 
 import dagger.Module;
 import dagger.Provides;
-import denominator.DNSApiManager;
 import denominator.AllProfileResourceRecordSetApi;
+import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 
@@ -47,7 +47,7 @@ public class OnlyBasicResourceRecordSets {
 
         @Override
         public Iterator<ResourceRecordSet<?>> iterator() {
-           return api.iterator();
+            return api.iterator();
         }
 
         @Override
@@ -73,6 +73,11 @@ public class OnlyBasicResourceRecordSets {
             if (rrs.isPresent())
                 return Iterators.<ResourceRecordSet<?>> forArray(rrs.get());
             return Iterators.emptyIterator();
+        }
+
+        @Override
+        public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier) {
+            return Optional.absent();
         }
     }
 }

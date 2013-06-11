@@ -93,15 +93,17 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
     public ResourceRecordSet<?> next() {
         DirectionalPoolRecordDetail directionalRecord = peekingIterator.next();
         DirectionalPoolRecord record = directionalRecord.getRecord();
+        IdAndName directionalGroup = group(directionalRecord).get();
 
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
                                                                 .name(directionalRecord.getName())
                                                                 .type(record.getType())
+                                                                .qualifier(directionalGroup.getName())
                                                                 .ttl(record.getTTL());
 
         builder.add(forTypeAndRData(record.getType(), record.getRData()));
 
-        IdAndName directionalGroup = group(directionalRecord).get();
+        // TODO: remove group arg in 2.0
         Geo profile =  Geo.create(directionalGroup.getName(), 
                                  getDirectionalGroup.apply(directionalGroup.getId()));
         builder.addProfile(profile);

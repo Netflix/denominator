@@ -47,8 +47,8 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testListRRSs() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            for (Iterator<ResourceRecordSet<?>> geoRRSIterator = geoApi(zone).iterator(); geoRRSIterator.hasNext();) {
-                ResourceRecordSet<?> geoRRS = geoRRSIterator.next();
+            for (ResourceRecordSet<?> geoRRS : geoApi(zone)) {
+                assertTrue(geoRRS.qualifier().isPresent(), "Geo record sets should include a qualifier: " + geoRRS);
                 checkGeoRRS(geoRRS);
                 getAnonymousLogger().info(format("%s ::: geoRRS: %s", manager, geoRRS));
                 recordTypeCounts.getUnchecked(geoRRS.type()).addAndGet(geoRRS.rdata().size());
@@ -58,10 +58,10 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
                 assertTrue(byNameAndType.hasNext(), "could not list by name and type: " + geoRRS);
                 assertTrue(Iterators.elementsEqual(geoApi(zone).iterateByNameAndType(geoRRS.name(), geoRRS.type()), byNameAndType));
                 
-                Optional<ResourceRecordSet<?>> byNameTypeAndGroup = geoApi(zone)
-                        .getByNameTypeAndGroup(geoRRS.name(), geoRRS.type(), toProfile(Geo.class).apply(geoRRS).group());
-                assertTrue(byNameTypeAndGroup.isPresent(), "could not lookup by name, type, and group: " + geoRRS);
-                assertEquals(byNameTypeAndGroup.get(), geoRRS);
+                Optional<ResourceRecordSet<?>> byNameTypeAndQualifier = geoApi(zone)
+                        .getByNameTypeAndQualifier(geoRRS.name(), geoRRS.type(), geoRRS.qualifier().get());
+                assertTrue(byNameTypeAndQualifier.isPresent(), "could not lookup by name, type, and qualifier: " + geoRRS);
+                assertEquals(byNameTypeAndQualifier.get(), geoRRS);
             }
         }
         logRecordSummary();
@@ -69,9 +69,13 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
 
     protected void checkGeoRRS(ResourceRecordSet<?> geoRRS) {
         assertFalse(geoRRS.profiles().isEmpty(), "Profile absent: " + geoRRS);
+        checkNotNull(geoRRS.qualifier().orNull(), "Qualifier: ResourceRecordSet %s", geoRRS);
+
         Geo geo = toProfile(Geo.class).apply(geoRRS);
-        checkNotNull(geo.group(), "Group: Geo %s", geoRRS);
         assertTrue(!geo.regions().isEmpty(), "Regions empty on Geo: " + geoRRS);
+        
+        // TODO: remove in 2.0
+        assertEquals(geoRRS.qualifier().get(), geo.group());
         
         checkNotNull(geoRRS.name(), "Name: ResourceRecordSet %s", geoRRS);
         checkNotNull(geoRRS.type(), "Type: ResourceRecordSet %s", geoRRS);
@@ -121,10 +125,10 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     }
 
     @Test
-    private void testGetByNameTypeAndGroupWhenAbsent() {
+    private void testGetByNameTypeAndQualifierWhenAbsent() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertEquals(geoApi(zone).getByNameTypeAndGroup("ARGHH." + zone.name(), "TXT", "Mars"), Optional.absent());
+            assertEquals(geoApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"), Optional.absent());
             break;
         }
     }

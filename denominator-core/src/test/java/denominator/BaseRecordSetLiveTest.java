@@ -42,9 +42,9 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
     private void testListRRSs() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            for (Iterator<ResourceRecordSet<?>> rrsIterator = rrsApi(zone).iterator(); rrsIterator.hasNext();) {
-                ResourceRecordSet<?> rrs = rrsIterator.next();
+            for (ResourceRecordSet<?> rrs : rrsApi(zone)) {
                 checkRRS(rrs);
+                assertFalse(rrs.qualifier().isPresent(), "Only basic record sets should be returned. found: " + rrs);
                 Optional<ResourceRecordSet<?>> byNameAndType = rrsApi(zone).getByNameAndType(rrs.name(), rrs.type());
                 assertTrue(byNameAndType.isPresent(), "could not lookup by name and type: " + rrs);
                 assertEquals(byNameAndType.get(), rrs);

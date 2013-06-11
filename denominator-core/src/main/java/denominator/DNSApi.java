@@ -11,6 +11,7 @@ import com.google.common.annotations.Beta;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
+import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import denominator.model.Zones;
 import denominator.model.profile.Geo;
@@ -38,7 +39,7 @@ public class DNSApi {
 
     /**
      * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #zones}
+     *             {@link #zones()}
      */
     @Deprecated
     public ZoneApi getZoneApi() {
@@ -57,10 +58,10 @@ public class DNSApi {
      * controls DNS records as a set. Operates against the first zone named
      * zone {@code idOrName}.
      * 
-     * @param idOrName
+     * @param zoneName
      *            name of the zone containing the record sets.
      * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #basicRecordSetsInZone}
+     *             {@link #basicRecordSetsInZone(String)}
      */
     @Deprecated
     public ResourceRecordSetApi getResourceRecordSetApiForZone(String zoneName) {
@@ -70,7 +71,9 @@ public class DNSApi {
     /**
      * Controls basic DNS records as a set. Operates against the zone with id
      * {@code zoneId}. This api will not affect or return advanced records such
-     * as {@link Geo}, and is supported by all {@link Provider providers}.
+     * as {@link Geo}, and it is expected that no record sets returned will
+     * contain a {@link ResourceRecordSet#qualifier()}. This api is supported
+     * by all {@link Provider providers}.
      * 
      * <h4>Usage</h4>
      * 
@@ -100,7 +103,7 @@ public class DNSApi {
      * allows you to list all resource record sets regardless of their profile.
      * 
      * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #recordSetsInZone}
+     *             {@link #recordSetsInZone(String)}
      */
     @Deprecated
     public AllProfileResourceRecordSetApi getAllProfileResourceRecordSetApiForZone(String zoneName) {
@@ -140,7 +143,7 @@ public class DNSApi {
      * caller. These are otherwise known as Directional records.
      * 
      * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #geoRecordSetsInZone}
+     *             {@link #geoRecordSetsInZone(String)}
      */
     @Deprecated
     public Optional<GeoResourceRecordSetApi> getGeoResourceRecordSetApiForZone(String zoneName) {

@@ -61,10 +61,11 @@ final class GeoServiceToResourceRecordSets implements Function<GeoService, Itera
     private Function<GeoRegionGroup, Iterable<Builder<?>>> toRRSetBuildersForEachGroup = new Function<GeoRegionGroup, Iterable<Builder<?>>>() {
         @Override
         public Iterable<Builder<?>> apply(GeoRegionGroup group) {
+            // TODO: remove groupName arg in 2.0
             Geo geo = Geo.create(group.getName(), countryIndexer.apply(group.getCountries()));
             return FluentIterable.from(group.getRecordSets())
                                  .filter(rsetFilter)
-                                 .transform(new ToResourceRecordSetBuilder(geo));
+                                 .transform(new ToResourceRecordSetBuilder(geo, group.getName()));
         }
     };
 
@@ -113,15 +114,18 @@ final class GeoServiceToResourceRecordSets implements Function<GeoService, Itera
      */
     private static class ToResourceRecordSetBuilder implements Function<RecordSet, ResourceRecordSet.Builder<?>> {
         private final Geo geo;
+        private final String qualifier;
 
-        public ToResourceRecordSetBuilder(Geo geo) {
+        public ToResourceRecordSetBuilder(Geo geo, String qualifier) {
             this.geo = geo;
+            this.qualifier = qualifier;
         }
 
         @Override
         public ResourceRecordSet.Builder<?> apply(RecordSet in) {
             ResourceRecordSet.Builder<Map<String, Object>> builder = ResourceRecordSet.builder();
             builder.type(in.getType());
+            builder.qualifier(qualifier);
             builder.ttl(in.getTTL());
             for (Value val : in) {
                 builder.add(val.getRData());
