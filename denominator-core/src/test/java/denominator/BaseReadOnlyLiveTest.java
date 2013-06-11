@@ -15,6 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -33,14 +34,24 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testListRRSs() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            for (Iterator<ResourceRecordSet<?>> rrsIterator = roApi(zone).iterator(); rrsIterator.hasNext();) {
-                ResourceRecordSet<?> rrs = rrsIterator.next();
+            for (ResourceRecordSet<?> rrs : roApi(zone)) {
                 recordTypeCounts.getUnchecked(rrs.type()).addAndGet(rrs.rdata().size());
                 checkRRS(rrs);
                 checkListByNameAndTypeConsistent(zone, rrs);
+                if (rrs.qualifier().isPresent()) {
+                    checkGetByNameTypeAndQualifierConsistent(zone, rrs);
+                }
             }
         }
         logRecordSummary();
+    }
+
+    protected void checkGetByNameTypeAndQualifierConsistent(Zone zone, ResourceRecordSet<?> rrs) {
+        Optional<ResourceRecordSet<?>> byNameTypeAndQualifier = roApi(zone).getByNameTypeAndQualifier(
+                rrs.name(), rrs.type(), rrs.qualifier().get());
+        assertTrue(byNameTypeAndQualifier.isPresent(), "could not lookup by name, type, and qualifier: "
+                + rrs);
+        assertEquals(byNameTypeAndQualifier.get(), rrs);
     }
 
     protected void checkListByNameAndTypeConsistent(Zone zone, ResourceRecordSet<?> rrs) {
@@ -87,6 +98,15 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
             assertFalse(roApi(zone).iterateByNameAndType("ARGHH." + zone.name(), "TXT").hasNext());
+            break;
+        }
+    }
+
+    @Test
+    private void testGetByNameTypeAndGroupWhenAbsent() {
+        skipIfNoCredentials();
+        for (Zone zone : zones()) {
+            assertEquals(roApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"), Optional.absent());
             break;
         }
     }

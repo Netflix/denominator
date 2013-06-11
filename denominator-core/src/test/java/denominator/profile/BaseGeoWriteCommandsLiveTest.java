@@ -27,7 +27,7 @@ import denominator.model.profile.Geo;
 public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest {
 
     @Test
-    private void applyRegionsToNameTypeAndGroup() {
+    private void applyRegionsToNameTypeAndQualifier() {
         skipIfNoCredentials();
         ResourceRecordSet<?> existing = skipIfNoMutableRRSet();
         
@@ -37,10 +37,10 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         
         Multimap<String, String> regions = filterValues(existingGeo.regions(), not(equalTo(last)));
 
-        geoApi().applyRegionsToNameTypeAndGroup(regions, existing.name(), existing.type(), mutableGeoRRSet.group);
+        geoApi().applyRegionsToNameTypeAndQualifier(regions, existing.name(), existing.type(), mutableGeoRRSet.group);
 
         ResourceRecordSet<?> rrs = 
-                geoApi().getByNameTypeAndGroup(existing.name(), existing.type(), mutableGeoRRSet.group).get();
+                geoApi().getByNameTypeAndQualifier(existing.name(), existing.type(), mutableGeoRRSet.group).get();
 
         checkRRS(rrs);
         assertEquals(rrs.name(), existing.name());
@@ -50,20 +50,20 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         assertEquals(toProfile(Geo.class).apply(rrs).regions(), ImmutableMultimap.copyOf(regions));
 
         // reset back
-        geoApi().applyRegionsToNameTypeAndGroup(
+        geoApi().applyRegionsToNameTypeAndQualifier(
                 existingGeo.regions(), existing.name(), existing.type(), mutableGeoRRSet.group);
     }
 
     @Test
-    private void applyTTLToNameTypeAndGroup() {
+    private void applyTTLToNameTypeAndQualifier() {
         skipIfNoCredentials();
         ResourceRecordSet<?> existing = skipIfNoMutableRRSet();
         int ttl = existing.ttl().or(300) + 300;
 
-        geoApi().applyTTLToNameTypeAndGroup(ttl, existing.name(), existing.type(), mutableGeoRRSet.group);
+        geoApi().applyTTLToNameTypeAndQualifier(ttl, existing.name(), existing.type(), mutableGeoRRSet.group);
 
         ResourceRecordSet<?> rrs = 
-                geoApi().getByNameTypeAndGroup(existing.name(), existing.type(), mutableGeoRRSet.group).get();
+                geoApi().getByNameTypeAndQualifier(existing.name(), existing.type(), mutableGeoRRSet.group).get();
 
         checkRRS(rrs);
         assertEquals(rrs.name(), existing.name());
@@ -73,7 +73,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         assertEquals(rrs.profiles(), existing.profiles());
         
         // reset back
-        geoApi().applyTTLToNameTypeAndGroup(
+        geoApi().applyTTLToNameTypeAndQualifier(
                 existing.ttl().or(300), existing.name(), existing.type(), mutableGeoRRSet.group);
     }
 
@@ -85,7 +85,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         if (!option.isPresent())
             throw new SkipException("geo not supported or not supported on zone " + mutableGeoRRSet.zone);
         Optional<ResourceRecordSet<?>> rrset = 
-                geoApi().getByNameTypeAndGroup(mutableGeoRRSet.name, mutableGeoRRSet.type, mutableGeoRRSet.group);
+                geoApi().getByNameTypeAndQualifier(mutableGeoRRSet.name, mutableGeoRRSet.type, mutableGeoRRSet.group);
         if (!rrset.isPresent())
             throw new SkipException("rrset not found " + mutableGeoRRSet);
         if (!profileContainsType(Geo.class).apply(rrset.get()))
