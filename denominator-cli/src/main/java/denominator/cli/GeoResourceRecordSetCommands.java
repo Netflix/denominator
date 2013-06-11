@@ -93,7 +93,7 @@ class GeoResourceRecordSetCommands {
 
         public Iterator<String> doRun(DNSApiManager mgr) {
             GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get();
-            Optional<ResourceRecordSet<?>> result = api.getByNameTypeAndGroup(name, type, group);
+            Optional<ResourceRecordSet<?>> result = api.getByNameTypeAndQualifier(name, type, group);
             return forArray(result.transform(GeoResourceRecordSetToString.INSTANCE).or(""));
         }
     }
@@ -125,7 +125,7 @@ class GeoResourceRecordSetCommands {
                 @Override
                 public String next() {
                     GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get();
-                    api.applyTTLToNameTypeAndGroup(ttl, name, type, group);
+                    api.applyTTLToNameTypeAndQualifier(ttl, name, type, group);
                     done = true;
                     return ";; ok";
                 }
@@ -144,14 +144,11 @@ class GeoResourceRecordSetCommands {
         @Override
         public String apply(ResourceRecordSet<?> geoRRS) {
             Geo geo = toProfile(Geo.class).apply(geoRRS);
-            StringBuilder suffix = new StringBuilder().append(geo.group()).append(' ')
-                    .append(geo.regions());
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
             for (String line : Splitter.on('\n').split(ResourceRecordSetToString.INSTANCE.apply(geoRRS))) {
-                lines.add(new StringBuilder().append(line).append(' ').append(suffix).toString());
+                lines.add(new StringBuilder().append(line).append(' ').append(geo.regions()).toString());
             }
             return Joiner.on('\n').join(lines.build());
         }
     }
-
 }

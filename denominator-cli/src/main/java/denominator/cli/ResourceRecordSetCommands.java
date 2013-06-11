@@ -51,17 +51,22 @@ class ResourceRecordSetCommands {
         @Option(type = OptionType.COMMAND, name = { "-n", "--name" }, description = "name of the record sets. ex. www.denominator.io.")
         public String name;
 
+        @Option(type = OptionType.COMMAND, name = { "-t", "--type" }, description = "type of the record set. ex. CNAME")
+        public String type;
+
         public Iterator<String> doRun(DNSApiManager mgr) {
             Iterator<ResourceRecordSet<?>> iterator;
+            if (name != null && type != null)
+                iterator = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByNameAndType(name, type);
             if (name != null)
                 iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByName(name);
             else
-                iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterator();
+                iterator = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName)).iterator();
             return transform(iterator, ResourceRecordSetToString.INSTANCE);
         }
     }
 
-    @Command(name = "get", description = "gets a record record set by name and type, if present in this zone")
+    @Command(name = "get", description = "gets a record record set by name and type (optionally by qualifier), if present in this zone")
     public static class ResourceRecordSetGet extends ResourceRecordSetCommand {
         @Option(type = OptionType.COMMAND, required = true, name = { "-n", "--name" }, description = "name of the record set. ex. www.denominator.io.")
         public String name;
@@ -69,9 +74,18 @@ class ResourceRecordSetCommands {
         @Option(type = OptionType.COMMAND, required = true, name = { "-t", "--type" }, description = "type of the record set. ex. CNAME")
         public String type;
 
+        @Option(type = OptionType.COMMAND, name = { "-q", "--qualifier" }, description = "qualifier of the record set (if applicable). ex. US")
+        public String qualifier;
+
         public Iterator<String> doRun(DNSApiManager mgr) {
-            return forArray(mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).getByNameAndType(name, type)
-                    .transform(ResourceRecordSetToString.INSTANCE).or(""));
+            Optional<ResourceRecordSet<?>> result;
+            if (qualifier != null) {
+                result = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName))
+                        .getByNameTypeAndQualifier(name, type, qualifier);
+            } else {
+                result = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).getByNameAndType(name, type);
+            }
+            return forArray(result.transform(ResourceRecordSetToString.INSTANCE).or(""));
         }
     }
 
@@ -98,8 +112,7 @@ class ResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName))
-                            .applyTTLToNameAndType(ttl, name, type);
+                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).applyTTLToNameAndType(ttl, name, type);
                     done = true;
                     return ";; ok";
                 }
@@ -320,8 +333,8 @@ class ResourceRecordSetCommands {
         public String apply(ResourceRecordSet<?> input) {
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
             for (Map<String, Object> rdata : input) {
-                lines.add(format("%-50s%-7s%-6s%s", input.name(), input.type(), input.ttl().orNull(),
-                        flatten(rdata)));
+                lines.add(format("%-50s%-7s%-20s%-6s%s", input.name(), input.type(), input.qualifier().or(""),
+                        input.ttl().orNull(), flatten(rdata)));
             }
             return Joiner.on('\n').join(lines.build());
         }

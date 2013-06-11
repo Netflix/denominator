@@ -6,6 +6,7 @@
 * Deprecated `GeoResourceRecordSetApi.getByNameTypeAndGroup()` for `ReadOnlyResourceRecordSetApi.getByNameTypeAndQualifier()`
 * Deprecated `GeoResourceRecordSetApi.applyRegionsToNameTypeAndGroup()` for `GeoResourceRecordSetApi.applyRegionsToNameTypeAndQualifier()`
 * Deprecated `GeoResourceRecordSetApi.applyTTLToNameTypeAndGroup()` for `GeoResourceRecordSetApi.applyTTLToNameTypeAndQualifier()`
+* Add `-t/--type` to list, and `-q/--qualifier` to get record cli commands.
 
 ### Version 1.2.1
 * remove strict zone name checks on deprecated `DNSApi.get..Api` methods as often the backend will accept zone names with or without a trailing dot.
