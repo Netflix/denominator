@@ -9,6 +9,7 @@ import org.testng.annotations.Test;
 import com.google.common.collect.ImmutableMultimap;
 
 @Test
+@Deprecated
 public class GeosTest {
 
     Geo geo = Geo.create("US-East", ImmutableMultimap.of("US", "US-VA"));
