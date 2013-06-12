@@ -1,17 +1,18 @@
 package denominator;
 
-import com.google.common.annotations.Beta;
-
-import denominator.model.ResourceRecordSet;
 
 /**
- * list operations that apply to record sets regardless of
- * {@link ResourceRecordSet#profiles() profile}.
+ * @deprecated Will be removed in denominator 2.0. Please use
+ *             {@link ReadOnlyResourceRecordSetApi}
  */
-@Beta
+@Deprecated
 public interface AllProfileResourceRecordSetApi extends ReadOnlyResourceRecordSetApi {
-
-    static interface Factory {
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link ReadOnlyResourceRecordSetApi}
+     */
+    @Deprecated
+    static interface Factory extends ReadOnlyResourceRecordSetApi.Factory {
         AllProfileResourceRecordSetApi create(String idOrName);
     }
 }

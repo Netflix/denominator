@@ -11,6 +11,7 @@ import dagger.Module;
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.DNSApiManager;
+import denominator.ReadOnlyResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 
@@ -22,7 +23,15 @@ public class OnlyBasicResourceRecordSets {
 
     @Provides
     @Singleton
-    AllProfileResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(final ResourceRecordSetApi.Factory factory) {
+    ReadOnlyResourceRecordSetApi.Factory provideReadOnlyResourceRecordSetApiFactory(
+            AllProfileResourceRecordSetApi.Factory factory) {
+        return factory;
+    }
+
+    @Provides
+    @Singleton
+    AllProfileResourceRecordSetApi.Factory provideAllProfileResourceRecordSetApi(
+            final ResourceRecordSetApi.Factory factory) {
         return new AllProfileResourceRecordSetApi.Factory() {
 
             @Override

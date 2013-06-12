@@ -97,7 +97,7 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
      * value at index 1 in the rrs is used for testing replace
      */
     @DataProvider(name = "simpleRecords")
-    public Object[][] roundRobinRecords() {
+    public Object[][] simpleRecords() {
         ImmutableList<ResourceRecordSet<?>> rrsets = ImmutableList.copyOf(stockRRSets().values());
         Object[][] data = new Object[rrsets.size()][1];
         for (int i = 0; i < rrsets.size(); i++)

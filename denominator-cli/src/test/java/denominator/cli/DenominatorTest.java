@@ -179,10 +179,14 @@ public class DenominatorTest {
                 "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io.",
                 "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io.",
                 "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io.",
+                "www.weighted.denominator.io.                      CNAME  EU-West             0     c.denominator.io.",
+                "www.weighted.denominator.io.                      CNAME  US-East             0     b.denominator.io.",
+                "www.weighted.denominator.io.                      CNAME  US-West             0     a.denominator.io.",
                 "www1.denominator.io.                              A                          3600  192.0.2.1",
                 "www1.denominator.io.                              A                          3600  192.0.2.2",
                 "www2.denominator.io.                              A                          3600  198.51.100.1",
-                "www2.geo.denominator.io.                          A      alazona             300   192.0.2.1"));
+                "www2.geo.denominator.io.                          A      alazona             300   192.0.2.1",
+                "www2.weighted.denominator.io.                     A      US-West             0     192.0.2.1"));
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. list -n www1.denominator.io.")

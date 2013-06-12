@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -155,12 +154,4 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
                     return new AtomicLong();
                 }
             });
-
-    protected GeoResourceRecordSetApi geoApi(Zone zone) {
-        Optional<GeoResourceRecordSetApi> geoOption = manager.api().geoRecordSetsInZone(zone.idOrName());
-        if (!geoOption.isPresent())
-            throw new SkipException("geo not available or not available in zone " + zone);
-        return geoOption.get();
-    }
-
 }

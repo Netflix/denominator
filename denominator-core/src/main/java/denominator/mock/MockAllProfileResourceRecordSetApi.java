@@ -60,6 +60,18 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
                 .iterator();
     }
 
+    protected void put(Predicate<ResourceRecordSet<?>> valid, ResourceRecordSet<?> rrset) {
+        checkNotNull(rrset, "rrset was null");
+        checkArgument(rrset.qualifier().isPresent(), "no qualifier on: %s", rrset);
+        checkArgument(valid.apply(rrset), "%s failed on: %s", valid, rrset);
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameTypeAndQualifier(rrset.name(), rrset.type(), rrset
+                .qualifier().get());
+        if (rrsMatch.isPresent()) {
+            records.remove(zone, rrsMatch.get());
+        }
+        records.put(zone, rrset);
+    }
+
     @Override
     @Deprecated
     public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {

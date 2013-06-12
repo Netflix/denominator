@@ -30,6 +30,7 @@ import denominator.Credentials.ListCredentials;
 import denominator.config.GeoUnsupported;
 import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
+import denominator.config.WeightedUnsupported;
 import denominator.mock.MockResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
@@ -108,6 +109,7 @@ public class DynamicCredentialsProviderExampleTest {
                        complete = false, // denominator.Provider is externally provided
                        includes = { NothingToClose.class,
                                     GeoUnsupported.class,
+                                    WeightedUnsupported.class,
                                     OnlyBasicResourceRecordSets.class } )
         static class Module {
 
