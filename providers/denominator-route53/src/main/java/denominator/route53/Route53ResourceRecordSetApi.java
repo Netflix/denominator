@@ -3,8 +3,10 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
+import static com.google.common.base.Predicates.or;
 import static com.google.common.collect.Iterables.filter;
 import static denominator.route53.ToDenominatorResourceRecordSet.isAlias;
+import static denominator.route53.ToDenominatorResourceRecordSet.isSubset;
 import static denominator.route53.ToRoute53ResourceRecordSet.toTextFormat;
 
 import java.util.Iterator;
@@ -44,11 +46,10 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      */
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
-        Iterator<ResourceRecordSet<?>> iterator = route53RRsetApi.list().concat()
-                .filter(not(isAlias()))
-                .transform(ToDenominatorResourceRecordSet.INSTANCE)
-                .iterator();
-        return new GroupByRecordNameAndTypeIterator(iterator);
+        return route53RRsetApi.list().concat()
+                              .filter(not(or(isAlias(), isSubset())))
+                              .transform(ToDenominatorResourceRecordSet.INSTANCE)
+                              .iterator();
     }
 
     @Override
@@ -63,24 +64,16 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      */
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
-        Iterator<ResourceRecordSet<?>> iterator = route53RRsetApi.listAt(NextRecord.name(name))
-                                                                 .filter(and(not(isAlias()), nameEqualTo(name)))
-                                                                 .transform(ToDenominatorResourceRecordSet.INSTANCE)
-                                                                 .iterator();
-        return new GroupByRecordNameAndTypeIterator(iterator);
+        return route53RRsetApi.listAt(NextRecord.name(name))
+                              .filter(and(not(or(isAlias(), isSubset())), nameEqualTo(name)))
+                              .transform(ToDenominatorResourceRecordSet.INSTANCE)
+                              .iterator();
     }
 
     @Override
     public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
-        List<ResourceRecordSet<?>> matches = filterRoute53RRSByNameAndType(name, type).transform(
-                ToDenominatorResourceRecordSet.INSTANCE).toList();
-        switch (matches.size()) {
-        case 0:
-            return Optional.absent();
-        case 1:
-            return Optional.<ResourceRecordSet<?>> of(matches.get(0));
-        }
-        return Optional.<ResourceRecordSet<?>> of(new GroupByRecordNameAndTypeIterator(matches.iterator()).next());
+        return filterRoute53RRSByNameAndType(name, type)
+                .transform(ToDenominatorResourceRecordSet.INSTANCE).first();
     }
 
     /**
@@ -89,8 +82,8 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
      */
     @SuppressWarnings("unchecked")
     FluentIterable<org.jclouds.route53.domain.ResourceRecordSet> filterRoute53RRSByNameAndType(String name, String type) {
-        return route53RRsetApi.listAt(NextRecord.nameAndType(name, type)).filter(
-                and(not(isAlias()), nameEqualTo(name), typeEqualTo(type)));
+        return route53RRsetApi.listAt(NextRecord.nameAndType(name, type))
+                              .filter(and(not(or(isAlias(), isSubset())), nameEqualTo(name), typeEqualTo(type)));
     }
 
     /**
@@ -218,7 +211,7 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         }
     }
 
-    public static Predicate<org.jclouds.route53.domain.ResourceRecordSet> nameEqualTo(String name) {
+    static Predicate<org.jclouds.route53.domain.ResourceRecordSet> nameEqualTo(String name) {
         return new Route53NameEqualToPredicate(name);
     }
 
@@ -240,7 +233,7 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         }
     }
 
-    public static Predicate<org.jclouds.route53.domain.ResourceRecordSet> typeEqualTo(String type) {
+    static Predicate<org.jclouds.route53.domain.ResourceRecordSet> typeEqualTo(String type) {
         return new Route53TypeEqualToPredicate(type);
     }
 
