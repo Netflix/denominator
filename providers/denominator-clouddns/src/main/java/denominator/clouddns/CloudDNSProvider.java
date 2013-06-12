@@ -36,6 +36,7 @@ import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.GeoUnsupported;
 import denominator.config.OnlyBasicResourceRecordSets;
+import denominator.config.WeightedUnsupported;
 
 public class CloudDNSProvider extends BasicProvider {
     private final String url;
@@ -71,6 +72,7 @@ public class CloudDNSProvider extends BasicProvider {
     @dagger.Module(injects = DNSApiManager.class,
                    complete = false, // denominator.Provider and denominator.Credentials
                    includes = { GeoUnsupported.class, 
+                                WeightedUnsupported.class,
                                 OnlyBasicResourceRecordSets.class } )
     public static final class Module {
 

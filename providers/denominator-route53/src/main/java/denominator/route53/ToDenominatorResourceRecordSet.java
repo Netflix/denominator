@@ -2,6 +2,8 @@ package denominator.route53;
 
 import java.util.Map;
 
+import org.jclouds.route53.domain.ResourceRecordSet.RecordSubset;
+
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.base.Splitter;
@@ -10,6 +12,7 @@ import com.google.common.collect.ImmutableMap;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
+import denominator.model.profile.Weighted;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
@@ -35,6 +38,14 @@ enum ToDenominatorResourceRecordSet implements
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
                                                                 .name(input.getName())
                                                                 .type(input.getType());
+        if (input instanceof RecordSubset) {
+            builder.qualifier(RecordSubset.class.cast(input).getId());
+        }
+
+        if (input instanceof RecordSubset.Weighted) {
+            builder.addProfile(Weighted.create(RecordSubset.Weighted.class.cast(input).getWeight()));
+        }
+
         if (input.getTTL().isPresent())
             builder.ttl(input.getTTL().get().intValue());
         for (String rdata : input.getValues()) {
@@ -61,6 +72,39 @@ enum ToDenominatorResourceRecordSet implements
             @Override
             public String toString() {
                 return "IsAlias()";
+            }
+        };
+    }
+
+    static final Predicate<org.jclouds.route53.domain.ResourceRecordSet> isSubset() {
+        return new Predicate<org.jclouds.route53.domain.ResourceRecordSet>() {
+            @Override
+            public boolean apply(org.jclouds.route53.domain.ResourceRecordSet input) {
+                return input instanceof RecordSubset;
+            }
+
+            @Override
+            public String toString() {
+                return "isSubset()";
+            }
+        };
+    }
+
+    /**
+     * @see <a
+     *      href="http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/WeightedResourceRecordSets.html">weighted
+     *      RRSet</a>
+     */
+    static final Predicate<org.jclouds.route53.domain.ResourceRecordSet> isWeighted() {
+        return new Predicate<org.jclouds.route53.domain.ResourceRecordSet>() {
+            @Override
+            public boolean apply(org.jclouds.route53.domain.ResourceRecordSet input) {
+                return input instanceof RecordSubset.Weighted;
+            }
+
+            @Override
+            public String toString() {
+                return "isWeighted()";
             }
         };
     }

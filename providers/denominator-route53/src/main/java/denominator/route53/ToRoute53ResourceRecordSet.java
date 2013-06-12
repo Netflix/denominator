@@ -1,4 +1,5 @@
 package denominator.route53;
+import static denominator.model.ResourceRecordSets.toProfile;
 import static java.lang.String.format;
 
 import java.util.List;
@@ -11,17 +12,25 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableSet;
 
 import denominator.model.ResourceRecordSet;
+import denominator.model.profile.Weighted;
 
 enum ToRoute53ResourceRecordSet implements Function<ResourceRecordSet<?>, org.jclouds.route53.domain.ResourceRecordSet> {
     INSTANCE;
 
     @Override
     public org.jclouds.route53.domain.ResourceRecordSet apply(ResourceRecordSet<?> rrset) {
-        return org.jclouds.route53.domain.ResourceRecordSet.builder()
-                .name(rrset.name())
-                .type(rrset.type())
-                .ttl(rrset.ttl().or(300))
-                .addAll(toTextFormat(rrset)).build();
+        org.jclouds.route53.domain.ResourceRecordSet.Builder builder = 
+                org.jclouds.route53.domain.ResourceRecordSet.builder()
+                                                            .name(rrset.name())
+                                                            .type(rrset.type())
+                                                            .id(rrset.qualifier().orNull())
+                                                            .ttl(rrset.ttl().or(300))
+                                                            .addAll(toTextFormat(rrset));
+        Weighted weighted = toProfile(Weighted.class).apply(rrset);
+        if (weighted != null) {
+            builder.weight(weighted.weight());
+        }
+        return builder.build();
     }
 
     static List<String> toTextFormat(ResourceRecordSet<?> rrset) {
