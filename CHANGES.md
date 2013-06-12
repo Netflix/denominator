@@ -3,14 +3,15 @@
 * Changed `Route53` to no longer return weighted record sets inside basic record set results.
 * Added `ResourceRecordSet.getQualifier()`, `ReadOnlyResourceRecordSetApi.getByNameTypeAndQualifier()`
 * Added `QualifiedResourceRecordSetApi` with `supportedTypes()`, `put()`, and `deleteByNameTypeAndQualifier()`
+* Updated `GeoResourceRecordSetApi` to implement write support via `QualifiedResourceRecordSetApi`
 * Added `-t/--type` to list, and `-q/--qualifier` to get record cli commands.
 * Deprecation in preparation of Denominator 2.0
   * Conventions like `getUrl` or `listByName` for `url` or `iterateByName`
   * `ResourceRecordSet` implementing `List<D>` for `rdata()` accessor.
   * `Geo.getGroup()` for `ResourceRecordSet.getQualifier()`
   * `GeoResourceRecordSetApi.getByNameTypeAndGroup()` for `ReadOnlyResourceRecordSetApi.getByNameTypeAndQualifier()`
-  * `GeoResourceRecordSetApi.applyRegionsToNameTypeAndGroup()` for `GeoResourceRecordSetApi.applyRegionsToNameTypeAndQualifier()`
-  * `GeoResourceRecordSetApi.applyTTLToNameTypeAndGroup()` for `GeoResourceRecordSetApi.applyTTLToNameTypeAndQualifier()`
+  * `GeoResourceRecordSetApi.applyRegionsToNameTypeAndGroup()` for `GeoResourceRecordSetApi.put()`
+  * `GeoResourceRecordSetApi.applyTTLToNameTypeAndGroup()` for `GeoResourceRecordSetApi.put()`
 
 ### Version 1.2.1
 * remove strict zone name checks on deprecated `DNSApi.get..Api` methods as often the backend will accept zone names with or without a trailing dot.
