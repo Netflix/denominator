@@ -12,6 +12,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Multimap;
 
 import denominator.model.ResourceRecordSet;
@@ -20,16 +21,18 @@ import denominator.model.profile.Geo;
 import denominator.profile.GeoResourceRecordSetApi;
 
 public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRecordSetApi implements GeoResourceRecordSetApi {
+    private static final Predicate<ResourceRecordSet<?>> IS_GEO = profileContainsType(Geo.class);
 
-    private final Multimap<String, String> regions;
-    private final Set<String> types;
+    private final Set<String> supportedTypes;
+    private final Multimap<String, String> supportedRegions;
 
-    MockGeoResourceRecordSetApi(Multimap<Zone, ResourceRecordSet<?>> records, Multimap<String, String> regions,
-            Set<String> types, Zone zone) {
+    MockGeoResourceRecordSetApi(Multimap<Zone, ResourceRecordSet<?>> records, Zone zone,
+            Set<String> supportedTypes, Multimap<String, String> supportedRegions) {
         super(records, zone);
-        this.regions = regions;
-        this.types = types;
+        this.supportedTypes = supportedTypes;
+        this.supportedRegions = supportedRegions;
     }
+
 
     @Override
     @Deprecated
@@ -39,7 +42,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
 
     @Override
     public Set<String> supportedTypes() {
-        return types;
+        return supportedTypes;
     }
 
     @Override
@@ -50,7 +53,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
 
     @Override
     public Multimap<String, String> supportedRegions() {
-        return regions;
+        return supportedRegions;
     }
 
     @Override
@@ -83,7 +86,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
                                                                        // TODO: remove qualifier here in 2.0
                                                                        .addProfile(Geo.create(qualifier, regions))
                                                                        .addAll(rrset).build();
-        replace(rrs);
+        put(IS_GEO, rrs);
     }
 
     @Override
@@ -108,36 +111,24 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
                                                                        .ttl(ttl)
                                                                        .profile(rrset.profiles())
                                                                        .addAll(rrset).build();
-        replace(rrs);
-    }
-
-    protected void replace(ResourceRecordSet<?> rrset) {
-        checkNotNull(rrset, "rrset was null");
-        checkArgument(rrset.qualifier().isPresent(), "no qualifier on: %s", rrset);
-        checkArgument(profileContainsType(Geo.class).apply(rrset), "no geo profile found: %s", rrset);
-        Optional<ResourceRecordSet<?>> rrsMatch = getByNameTypeAndQualifier(rrset.name(), rrset.type(), rrset
-                .qualifier().get());
-        if (rrsMatch.isPresent()) {
-            records.remove(zone, rrsMatch.get());
-        }
-        records.put(zone, rrset);
+        put(IS_GEO, rrs);
     }
 
     public static final class Factory implements GeoResourceRecordSetApi.Factory {
 
         private final Multimap<Zone, ResourceRecordSet<?>> records;
-        private final Multimap<String, String> regions;
-        private final Set<String> types;
+        private final Set<String> supportedTypes;
+        private final Multimap<String, String> supportedRegions;
 
         // wildcard types are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
         Factory(Multimap<Zone, ResourceRecordSet> records,
-                @denominator.config.profile.Geo Multimap<String, String> regions,
-                @denominator.config.profile.Geo Set<String> types) {
-            this.records = Multimap.class.cast(filterValues(Multimap.class.cast(records), profileContainsType(Geo.class)));
-            this.regions = regions;
-            this.types = types;
+                @denominator.config.profile.Geo Set<String> supportedTypes,
+                @denominator.config.profile.Geo Multimap<String, String> supportedRegions) {
+            this.records = Multimap.class.cast(filterValues(Multimap.class.cast(records), IS_GEO));
+            this.supportedTypes = supportedTypes;
+            this.supportedRegions = supportedRegions;
         }
 
         @Override
@@ -145,7 +136,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
             Zone zone = Zone.create(idOrName);
             checkArgument(records.keySet().contains(zone), "zone %s not found", idOrName);
             return Optional.<GeoResourceRecordSetApi> of(
-                    new MockGeoResourceRecordSetApi(records, regions, types, zone));
+                    new MockGeoResourceRecordSetApi(records, zone, supportedTypes, supportedRegions));
         }
     }
 }

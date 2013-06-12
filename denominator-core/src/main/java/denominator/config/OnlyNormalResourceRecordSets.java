@@ -6,6 +6,7 @@ import dagger.Module;
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.DNSApiManager;
+import denominator.ReadOnlyResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 
 /**
@@ -18,7 +19,14 @@ public class OnlyNormalResourceRecordSets {
 
     @Provides
     @Singleton
+    ReadOnlyResourceRecordSetApi.Factory provideReadOnlyResourceRecordSetApiFactory(
+            AllProfileResourceRecordSetApi.Factory factory) {
+        return factory;
+    }
+
+    @Provides
+    @Singleton
     AllProfileResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(ResourceRecordSetApi.Factory factory) {
-        return new OnlyBasicResourceRecordSets().provideResourceRecordSetApiFactory(factory);
+        return new OnlyBasicResourceRecordSets().provideAllProfileResourceRecordSetApi(factory);
     }
 }

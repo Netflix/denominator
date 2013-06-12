@@ -8,30 +8,37 @@ import static denominator.model.ResourceRecordSets.ns;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 import javax.inject.Singleton;
 
+import com.google.common.collect.ContiguousSet;
+import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Range;
 
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.BasicProvider;
 import denominator.DNSApiManager;
+import denominator.ReadOnlyResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.NothingToClose;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import denominator.model.profile.Geo;
+import denominator.model.profile.Weighted;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import denominator.model.rdata.SOAData;
 import denominator.profile.GeoResourceRecordSetApi;
+import denominator.profile.WeightedResourceRecordSetApi;
 
 /**
  * in-memory {@code Provider}, used for testing.
@@ -75,6 +82,12 @@ public class MockProvider extends BasicProvider {
         }
     
         @Provides
+        ReadOnlyResourceRecordSetApi.Factory provideReadOnlyResourceRecordSetApi(
+                AllProfileResourceRecordSetApi.Factory in) {
+            return in;
+        }
+        
+        @Provides
         AllProfileResourceRecordSetApi.Factory provideAllProfileResourceRecordSetApiFactory(
                 MockAllProfileResourceRecordSetApi.Factory in) {
             return in;
@@ -84,7 +97,7 @@ public class MockProvider extends BasicProvider {
         GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(MockGeoResourceRecordSetApi.Factory in) {
             return in;
         }
-    
+
         // wildcard types are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Provides
@@ -156,6 +169,38 @@ public class MockProvider extends BasicProvider {
                                                         .add("French Southern Territories")
                                                         .add("Antarctica").build()).build()))
                     .build());
+            records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
+                    .name("www2.weighted.denominator.io.")
+                    .type("A")
+                    .qualifier("US-West")
+                    .ttl(0)
+                    .add(AData.create("192.0.2.1"))
+                    .addProfile(Weighted.create(0))
+                    .build());
+            records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
+                    .name("www.weighted.denominator.io.")
+                    .type("CNAME")
+                    .qualifier("US-West")
+                    .ttl(0)
+                    .add(CNAMEData.create("a.denominator.io."))
+                    .addProfile(Weighted.create(1))
+                    .build());
+            records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
+                    .name("www.weighted.denominator.io.")
+                    .type("CNAME")
+                    .qualifier("US-East")
+                    .ttl(0)
+                    .add(CNAMEData.create("b.denominator.io."))
+                    .addProfile(Weighted.create(1))
+                    .build());
+            records.put(zone, ResourceRecordSet.<Map<String, Object>> builder()
+                    .name("www.weighted.denominator.io.")
+                    .type("CNAME")
+                    .qualifier("EU-West")
+                    .ttl(0)
+                    .add(CNAMEData.create("c.denominator.io."))
+                    .addProfile(Weighted.create(1))
+                    .build());            
             return Multimap.class.cast(records);
         }
     
@@ -253,6 +298,26 @@ public class MockProvider extends BasicProvider {
                                 "Tuvalu", "Undefined Australia / Oceania", "Vanuatu", "Wallis and Futuna"))
                 .putAll("Antarctica", ImmutableList.of("Antarctica", "Bouvet Island", "French Southern Territories"))
                 .build();
+        }
+
+        @Provides
+        WeightedResourceRecordSetApi.Factory provideWeightedResourceRecordSetApiFactory(
+                MockWeightedResourceRecordSetApi.Factory in) {
+            return in;
+        }
+
+        @Provides
+        @Singleton
+        @denominator.config.profile.Weighted
+        Set<String> provideSupportedWeightedRecordTypes() {
+            return ImmutableSet.of("A", "CNAME");
+        }
+
+        @Provides
+        @Singleton
+        @denominator.config.profile.Weighted
+        SortedSet<Integer> provideSupportedWeights() {
+            return ContiguousSet.create(Range.closed(0, 100), DiscreteDomain.integers());
         }
     }
 }

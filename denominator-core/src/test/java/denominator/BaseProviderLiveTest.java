@@ -8,8 +8,10 @@ import static com.google.common.io.Closeables.close;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.aaaa;
 import static denominator.model.ResourceRecordSets.cname;
+import static denominator.model.ResourceRecordSets.nameEqualTo;
 import static denominator.model.ResourceRecordSets.ns;
 import static denominator.model.ResourceRecordSets.ptr;
+import static denominator.model.ResourceRecordSets.qualifierEqualTo;
 import static denominator.model.ResourceRecordSets.spf;
 import static denominator.model.ResourceRecordSets.txt;
 import static denominator.model.ResourceRecordSets.typeEqualTo;
@@ -31,12 +33,13 @@ import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.Iterators;
 
 import denominator.model.ResourceRecordSet;
-import denominator.model.ResourceRecordSets;
 import denominator.model.Zone;
 import denominator.model.Zones;
 import denominator.model.rdata.MXData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.SSHFPData;
+import denominator.profile.GeoResourceRecordSetApi;
+import denominator.profile.WeightedResourceRecordSetApi;
 
 /**
  * extend this and initialize manager {@link BeforeClass}
@@ -107,16 +110,26 @@ public abstract class BaseProviderLiveTest {
     }
 
     protected void skipIfRRSetExists(Zone zone, String name, String type) {
-        if (any(rrsApi(zone).iterator(), and(ResourceRecordSets.nameEqualTo(name), typeEqualTo(type))))
+        if (any(rrsApi(zone).iterator(), and(nameEqualTo(name), typeEqualTo(type))))
             throw new SkipException(format("recordset(%s, %s) already exists in %s", name, type, zone));
     }
 
-    protected void assertPresent(Optional<ResourceRecordSet<?>> rrs, Zone zone, String recordName,
-            String recordType) {
+    @SuppressWarnings("unchecked")
+    protected void skipIfRRSetExists(Zone zone, String name, String type, String qualifier) {
+        if (any(rrsApi(zone).iterator(), and(nameEqualTo(name), typeEqualTo(type), qualifierEqualTo(qualifier))))
+            throw new SkipException(format("recordset(%s, %s, %s) already exists in %s", name, type, qualifier, zone));
+    }
+
+    protected void assertPresent(Optional<ResourceRecordSet<?>> rrs, Zone zone, String name, String type,
+            String qualifier) {
         if (!rrs.isPresent()) {
-            throw new AssertionError(format("recordset(%s, %s) not present in %s; rrsets: %s", recordName,
-                    recordType, zone, Iterators.toString(rrsApi(zone).iterator())));
+            throw new AssertionError(format("recordset(%s, %s%s) not present in %s; rrsets: %s", name, type,
+                    qualifier != null ? ", " + qualifier : "", zone, Iterators.toString(rrsApi(zone).iterator())));
         }
+    }
+
+    protected void assertPresent(Optional<ResourceRecordSet<?>> rrs, Zone zone, String name, String type) {
+        assertPresent(rrs, zone, name, type, null);
     }
 
     @AfterClass
@@ -151,5 +164,19 @@ public abstract class BaseProviderLiveTest {
 
     protected ResourceRecordSetApi rrsApi(Zone zone) {
         return manager.api().basicRecordSetsInZone(zone.idOrName());
+    }
+
+    protected GeoResourceRecordSetApi geoApi(Zone zone) {
+        Optional<GeoResourceRecordSetApi> geoOption = manager.api().geoRecordSetsInZone(zone.idOrName());
+        if (!geoOption.isPresent())
+            throw new SkipException("geo not available or not available in zone " + zone);
+        return geoOption.get();
+    }
+
+    protected WeightedResourceRecordSetApi weightedApi(Zone zone) {
+        Optional<WeightedResourceRecordSetApi> weightedOption = manager.api().weightedRecordSetsInZone(zone.idOrName());
+        if (!weightedOption.isPresent())
+            throw new SkipException("weighted not available or not available in zone " + zone);
+        return weightedOption.get();
     }
 }

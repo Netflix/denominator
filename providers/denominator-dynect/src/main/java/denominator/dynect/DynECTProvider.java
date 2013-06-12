@@ -52,6 +52,7 @@ import denominator.Provider;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndGeoResourceRecordSets;
+import denominator.config.WeightedUnsupported;
 
 public class DynECTProvider extends BasicProvider {
     private final String url;
@@ -82,7 +83,8 @@ public class DynECTProvider extends BasicProvider {
 
     @dagger.Module(injects = DNSApiManager.class, 
                    complete = false, // denominator.Provider and denominator.Credentials
-                   includes = { DynECTGeoSupport.class, 
+                   includes = { DynECTGeoSupport.class,
+                                WeightedUnsupported.class,
                                 ConcatBasicAndGeoResourceRecordSets.class })
     public static final class Module {
 
