@@ -8,7 +8,7 @@ import com.google.common.base.Optional;
 import denominator.model.ResourceRecordSet;
 
 @Beta
-interface ReadOnlyResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
+public interface ReadOnlyResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
 
     /**
      * a listing of all resource record sets inside the zone.
@@ -93,4 +93,8 @@ interface ReadOnlyResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
      *             if the zone {@code idOrName} is not found.
      */
     Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier);
+
+    static interface Factory {
+        ReadOnlyResourceRecordSetApi create(String idOrName);
+    }
 }

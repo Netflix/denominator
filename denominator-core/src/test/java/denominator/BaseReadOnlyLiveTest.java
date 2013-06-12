@@ -124,7 +124,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
                 }
             });
 
-    private AllProfileResourceRecordSetApi roApi(Zone zone) {
+    private ReadOnlyResourceRecordSetApi roApi(Zone zone) {
         return manager.api().recordSetsInZone(zone.idOrName());
     }
 }

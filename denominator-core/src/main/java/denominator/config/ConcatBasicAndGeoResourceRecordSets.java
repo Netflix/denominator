@@ -12,6 +12,7 @@ import dagger.Module;
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.DNSApiManager;
+import denominator.ReadOnlyResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 import denominator.profile.GeoResourceRecordSetApi;
@@ -21,6 +22,13 @@ import denominator.profile.GeoResourceRecordSetApi;
  */
 @Module(injects = DNSApiManager.class, complete = false)
 public class ConcatBasicAndGeoResourceRecordSets {
+
+    @Provides
+    @Singleton
+    ReadOnlyResourceRecordSetApi.Factory provideReadOnlyResourceRecordSetApiFactory(
+            AllProfileResourceRecordSetApi.Factory factory) {
+        return factory;
+    }
 
     @Provides
     @Singleton

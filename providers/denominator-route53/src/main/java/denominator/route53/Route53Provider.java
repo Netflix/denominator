@@ -35,6 +35,7 @@ import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.GeoUnsupported;
 import denominator.config.OnlyBasicResourceRecordSets;
+import denominator.config.WeightedUnsupported;
 
 public class Route53Provider extends BasicProvider {
     private final String url;
@@ -71,7 +72,8 @@ public class Route53Provider extends BasicProvider {
 
     @dagger.Module(injects = DNSApiManager.class,
                    complete = false, // denominator.Provider
-                   includes = { GeoUnsupported.class, 
+                   includes = { GeoUnsupported.class,
+                                WeightedUnsupported.class,
                                 OnlyBasicResourceRecordSets.class,
                                 InstanceProfileCredentialsProvider.class })
     public static final class Module {

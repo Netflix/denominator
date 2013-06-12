@@ -16,6 +16,7 @@ import denominator.model.Zone;
 import denominator.model.Zones;
 import denominator.model.profile.Geo;
 import denominator.profile.GeoResourceRecordSetApi;
+import denominator.profile.WeightedResourceRecordSetApi;
 
 /**
  * allows you to manipulate resources such as DNS Zones and Records.
@@ -24,17 +25,23 @@ public class DNSApi {
     private final Provider provider;
     private final ZoneApi zones;
     private final ResourceRecordSetApi.Factory rrsetApiFactory;
+    private final ReadOnlyResourceRecordSetApi.Factory roApiFactory;
     private final AllProfileResourceRecordSetApi.Factory allRRSetApiFactory;
     private final GeoResourceRecordSetApi.Factory geoApiFactory;
+    private final WeightedResourceRecordSetApi.Factory weightedApiFactory;
 
     @Inject
     DNSApi(Provider provider, ZoneApi zones, ResourceRecordSetApi.Factory rrsetApiFactory,
-            AllProfileResourceRecordSetApi.Factory allRRSetApiFactory, GeoResourceRecordSetApi.Factory geoApiFactory) {
+            ReadOnlyResourceRecordSetApi.Factory roApiFactory,
+            AllProfileResourceRecordSetApi.Factory allRRSetApiFactory, GeoResourceRecordSetApi.Factory geoApiFactory,
+            WeightedResourceRecordSetApi.Factory weightedApiFactory) {
         this.provider = provider;
         this.zones = zones;
         this.rrsetApiFactory = rrsetApiFactory;
+        this.roApiFactory = roApiFactory;
         this.allRRSetApiFactory = allRRSetApiFactory;
         this.geoApiFactory = geoApiFactory;
+        this.weightedApiFactory = weightedApiFactory;
     }
 
     /**
@@ -107,7 +114,7 @@ public class DNSApi {
      */
     @Deprecated
     public AllProfileResourceRecordSetApi getAllProfileResourceRecordSetApiForZone(String zoneName) {
-        return recordSetsInZone(idOrName(zoneName));
+        return allRRSetApiFactory.create(idOrName(zoneName));
     }
 
     /**
@@ -134,8 +141,8 @@ public class DNSApi {
      *            id of the zone, or its name if absent.
      * @see Zone#idOrName
      */
-    public AllProfileResourceRecordSetApi recordSetsInZone(String idOrName) {
-        return allRRSetApiFactory.create(idOrName);
+    public ReadOnlyResourceRecordSetApi recordSetsInZone(String idOrName) {
+        return roApiFactory.create(idOrName);
     }
 
     /**
@@ -175,6 +182,33 @@ public class DNSApi {
      */
     public Optional<GeoResourceRecordSetApi> geoRecordSetsInZone(String idOrName) {
         return geoApiFactory.create(idOrName);
+    }
+
+    /**
+     * Controls DNS records which take into consideration the load of traffic
+     * from the caller. These are otherwise known as weighted records.
+     * 
+     * <h4>Usage</h4>
+     * 
+     * The argument to this is {@code zoneId}. It is possible that some zones do
+     * not have an id, and in this case the name is used. The following form
+     * will ensure you get a reference regardless.
+     * 
+     * <pre>
+     * api.weightedRecordSetsInZone(zone.idOrName());
+     * </pre>
+     * 
+     * <h4>Beta</h4>
+     * 
+     * This is marked beta until the denominator 2.0 model is finalized. If this
+     * interface is unaffected following that, we'll remove the Beta status.
+     * 
+     * @param idOrName
+     *            id of the zone, or its name if absent.
+     * @see Zone#idOrName
+     */
+    public Optional<WeightedResourceRecordSetApi> weightedRecordSetsInZone(String idOrName) {
+        return weightedApiFactory.create(idOrName);
     }
 
     /**
