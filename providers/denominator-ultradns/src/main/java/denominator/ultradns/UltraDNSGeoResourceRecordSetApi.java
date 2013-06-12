@@ -180,14 +180,19 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
     }
 
     @Override
-    @Deprecated
-    public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
-        applyRegionsToNameTypeAndQualifier(regions, name, type, group);
+    public void put(ResourceRecordSet<?> rrset) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public void applyRegionsToNameTypeAndQualifier(Multimap<String, String> regions, String name, String type, String qualifier) {
-        Iterator<DirectionalPoolRecordDetail> iterator = recordsByNameTypeAndQualifier(name, type, qualifier);
+    public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    @Deprecated
+    public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
+        Iterator<DirectionalPoolRecordDetail> iterator = recordsByNameTypeAndQualifier(name, type, group);
         Map<DirectionalPoolRecordDetail, DirectionalGroup> updates = groupsToUpdate(iterator, regions);
         if (updates.isEmpty())
             return;
@@ -215,12 +220,7 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
     @Override
     @Deprecated
     public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
-        applyTTLToNameTypeAndQualifier(ttl, name, type, group);
-    }
-
-    @Override
-    public void applyTTLToNameTypeAndQualifier(int ttl, String name, String type, String qualifier) {
-        for (Iterator<DirectionalPoolRecordDetail> i = recordsByNameTypeAndQualifier(name, type, qualifier); i.hasNext();) {
+        for (Iterator<DirectionalPoolRecordDetail> i = recordsByNameTypeAndQualifier(name, type, group); i.hasNext();) {
             DirectionalPoolRecordDetail detail = i.next();
             DirectionalPoolRecord record = detail.getRecord();
             if (record.getTTL() != ttl)

@@ -66,7 +66,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
         logRecordSummary();
     }
 
-    protected void checkGeoRRS(ResourceRecordSet<?> geoRRS) {
+    static void checkGeoRRS(ResourceRecordSet<?> geoRRS) {
         assertFalse(geoRRS.profiles().isEmpty(), "Profile absent: " + geoRRS);
         checkNotNull(geoRRS.qualifier().orNull(), "Qualifier: ResourceRecordSet %s", geoRRS);
 

@@ -6,7 +6,7 @@ import com.google.common.annotations.Beta;
 import com.google.common.base.Optional;
 import com.google.common.collect.Multimap;
 
-import denominator.AllProfileResourceRecordSetApi;
+import denominator.QualifiedResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 import denominator.model.profile.Geo;
 
@@ -14,7 +14,7 @@ import denominator.model.profile.Geo;
  * list operations are filtered to only include those which are geo record sets.
  */
 @Beta
-public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi {
+public interface GeoResourceRecordSetApi extends QualifiedResourceRecordSetApi {
 
     /**
      * @deprecated Will be removed in denominator 2.0. Please use
@@ -73,14 +73,6 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
     Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type, String group);
 
     /**
-     * 
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #applyRegionsToNameTypeAndQualifier(Multimap, String, String, String)}
-     */
-    @Deprecated
-    void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group);
-
-    /**
      * Ensures the supplied {@code regions} are uniform for all record sets with
      * the supplied {@link ResourceRecordSet#name() name},
      * {@link ResourceRecordSet#type() type}, and
@@ -97,16 +89,12 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
      *            {@link ResourceRecordSet#type() type} of the rrset
      * @param qualifier
      *            {@link ResourceRecordSet#qualifier() qualifier} of the rrset
-     */
-    void applyRegionsToNameTypeAndQualifier(Multimap<String, String> regions, String name, String type, String qualifier);
-
-    /**
      * 
      * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #applyTTLToNameTypeAndQualifier}
+     *             {@link #put(ResourceRecordSet)}
      */
     @Deprecated
-    void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group);
+    void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group);
 
     /**
      * Ensures the supplied {@code ttl} is uniform for all record sets with the
@@ -123,10 +111,14 @@ public interface GeoResourceRecordSetApi extends AllProfileResourceRecordSetApi 
      *            {@link ResourceRecordSet#type() type} of the rrset
      * @param qualifier
      *            {@link ResourceRecordSet#qualifier() qualifier} of the rrset
+     * 
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #put(ResourceRecordSet)}
      */
-    void applyTTLToNameTypeAndQualifier(int ttl, String name, String type, String qualifier);
+    @Deprecated
+    void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group);
 
-    static interface Factory {
+    static interface Factory extends QualifiedResourceRecordSetApi.Factory {
         Optional<GeoResourceRecordSetApi> create(String idOrName);
     }
 }
