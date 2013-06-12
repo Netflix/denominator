@@ -2,7 +2,6 @@ package denominator.route53;
 
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.model.ResourceRecordSets.a;
-import static denominator.model.ResourceRecordSets.cname;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
@@ -27,55 +26,14 @@ public class Route53ResourceRecordSetApiMockTest {
     String weightedRecords = "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>Route53Service:us-east-1:PLATFORMSERVICE:i-7f0aec0d:20130313205017</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www1.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>Route53Service:us-east-1:PLATFORMSERVICE:i-fbe41089:20130312203418</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www2.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
 
     @Test
-    public void listWeightedRecordSubsetsAggregateOnNameAndType() throws IOException, InterruptedException {
+    public void weighedRecordSetsAreFilteredOut() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(weightedRecords));
         server.play();
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertEquals(api.iterator().next(),
-                    cname("www.denominator.io.", 0, ImmutableList.of("www1.denominator.io.", "www2.denominator.io.")));
-
-            assertEquals(server.getRequestCount(), 1);
-
-            assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    @Test
-    public void iterateByNameWeightedRecordSubsetsAggregateOnNameAndType() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(weightedRecords));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertEquals(api.iterateByName("www.denominator.io.").next(),
-                    cname("www.denominator.io.", 0, ImmutableList.of("www1.denominator.io.", "www2.denominator.io.")));
-
-            assertEquals(server.getRequestCount(), 1);
-
-            assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io. HTTP/1.1");
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    @Test
-    public void getByNameAndTypeWeightedRecordSubsetsAggregateOnNameAndType() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(weightedRecords));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertEquals(api.getByNameAndType("www.denominator.io.", "CNAME").get(),
-                    cname("www.denominator.io.", 0, ImmutableList.of("www1.denominator.io.", "www2.denominator.io.")));
+            assertFalse(api.getByNameAndType("www.denominator.io.", "CNAME").isPresent());
 
             assertEquals(server.getRequestCount(), 1);
 

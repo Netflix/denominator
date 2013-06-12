@@ -8,6 +8,8 @@ import java.io.Closeable;
 import java.net.URI;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
+import java.util.SortedSet;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -21,9 +23,12 @@ import org.jclouds.route53.Route53Api;
 import org.jclouds.route53.Route53ApiMetadata;
 
 import com.google.common.base.Supplier;
+import com.google.common.collect.ContiguousSet;
+import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.Range;
 
 import dagger.Provides;
 import denominator.BasicProvider;
@@ -31,11 +36,12 @@ import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.QualifiedResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
+import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
 import denominator.config.GeoUnsupported;
-import denominator.config.OnlyBasicResourceRecordSets;
-import denominator.config.WeightedUnsupported;
+import denominator.profile.WeightedResourceRecordSetApi;
 
 public class Route53Provider extends BasicProvider {
     private final String url;
@@ -73,8 +79,7 @@ public class Route53Provider extends BasicProvider {
     @dagger.Module(injects = DNSApiManager.class,
                    complete = false, // denominator.Provider
                    includes = { GeoUnsupported.class,
-                                WeightedUnsupported.class,
-                                OnlyBasicResourceRecordSets.class,
+                                ConcatBasicAndQualifiedResourceRecordSets.class,
                                 InstanceProfileCredentialsProvider.class })
     public static final class Module {
 
@@ -131,6 +136,42 @@ public class Route53Provider extends BasicProvider {
         @Singleton
         Closeable provideCloser(Route53Api api) {
             return api;
+        }
+
+        @Provides
+        WeightedResourceRecordSetApi.Factory provideWeightedResourceRecordSetApiFactory(
+                Route53WeightedResourceRecordSetApi.Factory in) {
+            return in;
+        }
+
+        @Provides(type = Provides.Type.SET)
+        QualifiedResourceRecordSetApi.Factory provideWeightedResourceRecordSetApiFactory(
+                WeightedResourceRecordSetApi.Factory in) {
+            return in;
+        }
+
+        /**
+         * @see <a
+         *      href="http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html">valid
+         *      types</a>
+         */
+        @Provides
+        @Singleton
+        @denominator.config.profile.Weighted
+        Set<String> provideSupportedWeightedRecordTypes() {
+            return ImmutableSet.of("A", "AAAA", "CNAME", "MX", "PTR", "SPF", "SRV", "TXT");
+        }
+
+        /**
+         * @see <a
+         *      href="http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html">valid
+         *      weights</a>
+         */
+        @Provides
+        @Singleton
+        @denominator.config.profile.Weighted
+        SortedSet<Integer> provideSupportedWeights() {
+            return ContiguousSet.create(Range.closed(0, 255), DiscreteDomain.integers());
         }
     }
 

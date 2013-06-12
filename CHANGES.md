@@ -1,5 +1,6 @@
 ### Version 1.3.0
 * Added `WeightedResourceRecordSetApi` to support reading and writing new `Weighted` (load balanced rrset) profile.
+* Changed `Route53` to no longer return weighted record sets inside basic record set results.
 * Added `ResourceRecordSet.getQualifier()`, `ReadOnlyResourceRecordSetApi.getByNameTypeAndQualifier()`
 * Added `QualifiedResourceRecordSetApi` with `supportedTypes()`, `put()`, and `deleteByNameTypeAndQualifier()`
 * Added `-t/--type` to list, and `-q/--qualifier` to get record cli commands.
