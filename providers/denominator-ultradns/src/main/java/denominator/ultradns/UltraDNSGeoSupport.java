@@ -1,25 +1,16 @@
 package denominator.ultradns;
 
-import static com.google.common.base.Functions.toStringFunction;
-import static com.google.common.base.Predicates.in;
-import static com.google.common.base.Predicates.not;
-import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType.IPV4;
-import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType.IPV6;
-
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.inject.Singleton;
 
 import org.jclouds.ultradns.ws.UltraDNSWSApi;
-import org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType;
 import org.jclouds.ultradns.ws.domain.IdAndName;
 
 import com.google.common.base.Supplier;
 import com.google.common.cache.CacheLoader;
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableMultimap.Builder;
 import com.google.common.collect.ImmutableSet;
@@ -47,11 +38,7 @@ public class UltraDNSGeoSupport {
     @Singleton
     @denominator.config.profile.Geo
     Set<String> provideSupportedGeoRecordTypes() {
-        return ImmutableSet.<String> builder()
-                .add("A", "AAAAA", "CNAME")
-                .addAll(FluentIterable.from(EnumSet.allOf(RecordType.class))
-                        .filter(not(in((ImmutableSet.of(IPV4, IPV6)))))
-                        .transform(toStringFunction())).build();
+        return ImmutableSet.of("A", "AAAA", "CNAME", "HINFO", "MX", "PTR", "RP", "SRV", "TXT", "NAPTR");
     }
 
     @Provides
