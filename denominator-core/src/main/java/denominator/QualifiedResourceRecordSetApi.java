@@ -1,7 +1,5 @@
 package denominator;
 
-import java.util.Set;
-
 import com.google.common.annotations.Beta;
 import com.google.common.base.Optional;
 
@@ -15,12 +13,6 @@ import denominator.model.ResourceRecordSet;
  */
 @Beta
 public interface QualifiedResourceRecordSetApi extends ReadOnlyResourceRecordSetApi {
-
-    /**
-     * the set of {@link ResourceRecordSet#getType() record types} that are
-     * supported in this api.
-     */
-    Set<String> supportedTypes();
 
     /**
      * Idempotently replaces any existing records with

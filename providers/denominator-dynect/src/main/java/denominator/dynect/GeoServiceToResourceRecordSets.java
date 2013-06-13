@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.jclouds.dynect.v3.domain.GeoRegionGroup;
 import org.jclouds.dynect.v3.domain.GeoService;
@@ -38,8 +39,7 @@ final class GeoServiceToResourceRecordSets implements Function<GeoService, Itera
      *            model.
      */
     @Inject
-    GeoServiceToResourceRecordSets(
-            @denominator.config.profile.Geo Function<List<String>, Multimap<String, String>> countryIndexer) {
+    GeoServiceToResourceRecordSets(@Named("geo") Function<List<String>, Multimap<String, String>> countryIndexer) {
         this(countryIndexer, Predicates.<GeoRegionGroup> alwaysTrue(), Predicates.<RecordSet> alwaysTrue());
     }
 

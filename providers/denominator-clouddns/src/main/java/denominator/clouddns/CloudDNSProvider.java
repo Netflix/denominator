@@ -8,6 +8,7 @@ import java.io.Closeable;
 import java.net.URI;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -24,7 +25,9 @@ import org.jclouds.rest.internal.GeneratedHttpRequest;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.SetMultimap;
 
 import dagger.Provides;
 import denominator.BasicProvider;
@@ -57,6 +60,19 @@ public class CloudDNSProvider extends BasicProvider {
     @Override
     public String url() {
         return url;
+    }
+
+    // TODO: verify when write support is added
+    // http://docs.rackspace.com/cdns/api/v1.0/cdns-devguide/content/supported_record_types.htm
+    @Override
+    public Set<String> basicRecordTypes() {
+        return ImmutableSet.of("A", "AAAA", "CNAME", "MX", "NS", "PTR", "SRV", "TXT");
+    }
+
+    // TODO: verify when write support is added
+    @Override
+    public SetMultimap<String, String> profileToRecordTypes() {
+        return ImmutableSetMultimap.<String, String> builder().putAll("roundRobin", basicRecordTypes()).build();
     }
 
     @Override

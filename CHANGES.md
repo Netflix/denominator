@@ -1,4 +1,5 @@
 ### Version 1.3.0
+* Added `Provider.basicRecordTypes()` and `Provider.profileToRecordTypes()` advertizing what record types are supported.
 * Added `WeightedResourceRecordSetApi` to support reading and writing new `Weighted` (load balanced rrset) profile.
 * Changed `Route53` to no longer return weighted record sets inside basic record set results.
 * Added `ResourceRecordSet.getQualifier()`, `ReadOnlyResourceRecordSetApi.getByNameTypeAndQualifier()`

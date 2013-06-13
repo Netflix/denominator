@@ -27,11 +27,8 @@ import denominator.model.Zone;
  */
 public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
 
-    protected ImmutableList<String> supportedRecordTypes = ImmutableList.of("AAAA", "A", "MX", "NS", "PTR", "SPF",
-            "SRV", "SSHFP", "TXT");
-
     protected Map<String, ResourceRecordSet<?>> stockRRSets() {
-        return filterKeys(super.stockRRSets(), in(supportedRecordTypes));
+        return filterKeys(super.stockRRSets(), in(manager.provider().profileToRecordTypes().get("roundRobin")));
     }
 
     @DataProvider(name = "roundRobinRecords")
@@ -178,7 +175,7 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
                 format("recordset(%s, %s) still present in %s", recordSet.name(), recordSet.type(), zone));
     }
 
-    @Test(dataProvider = "roundRobinRecords")
+    @Test(dependsOnMethods = "removeRecordFromExistingRRS", dataProvider = "roundRobinRecords")
     private void deleteRRS(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         Zone zone = skipIfNoMutableZone();

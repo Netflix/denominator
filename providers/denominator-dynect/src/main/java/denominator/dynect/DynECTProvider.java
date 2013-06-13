@@ -1,7 +1,11 @@
 package denominator.dynect;
 
+import static com.google.common.base.Predicates.in;
+import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Strings.emptyToNull;
+import static com.google.common.collect.Iterables.filter;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
+import static dagger.Provides.Type.SET;
 import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
 import static org.jclouds.rest.config.BinderUtils.bindHttpApi;
 
@@ -10,6 +14,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -40,7 +45,9 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.SetMultimap;
 import com.google.inject.Injector;
 
 import dagger.Provides;
@@ -49,10 +56,12 @@ import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.QualifiedResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
-import denominator.config.ConcatBasicAndGeoResourceRecordSets;
+import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
 import denominator.config.WeightedUnsupported;
+import denominator.profile.GeoResourceRecordSetApi;
 
 public class DynECTProvider extends BasicProvider {
     private final String url;
@@ -75,6 +84,22 @@ public class DynECTProvider extends BasicProvider {
         return url;
     }
 
+    // https://manage.dynect.net/help/docs/api2/rest/resources/index.html
+    @Override
+    public Set<String> basicRecordTypes() {
+        return ImmutableSet.of("A", "AAAA", "CERT", "CNAME", "DHCID", "DNAME", "DNSKEY", "DS", "IPSECKEY", "KEY", "KX",
+                "LOC", "MX", "NAPTR", "NS", "NSAP", "PTR", "PX", "RP", "SOA", "SPF", "SRV", "SSHFP", "TXT");
+    }
+
+    @Override
+    public SetMultimap<String, String> profileToRecordTypes() {
+        return ImmutableSetMultimap.<String, String> builder()
+                // https://manage.dynect.net/help/docs/api2/rest/resources/Geo.html
+                .putAll("geo", "A", "AAAAA", "CNAME", "CERT", "MX", "TXT", "SPF", "PTR", "LOC", "SRV", "RP", "KEY",
+                        "DNSKEY", "SSHFP", "DHCID", "NSAP", "PX")
+                .putAll("roundRobin", filter(basicRecordTypes(), not(in(ImmutableSet.of("SOA", "CNAME"))))).build();
+    }
+
     @Override
     public Multimap<String, String> credentialTypeToParameterNames() {
         return ImmutableMultimap.<String, String> builder()
@@ -85,7 +110,7 @@ public class DynECTProvider extends BasicProvider {
                    complete = false, // denominator.Provider and denominator.Credentials
                    includes = { DynECTGeoSupport.class,
                                 WeightedUnsupported.class,
-                                ConcatBasicAndGeoResourceRecordSets.class })
+                                ConcatBasicAndQualifiedResourceRecordSets.class })
     public static final class Module {
 
         @Provides
@@ -148,6 +173,12 @@ public class DynECTProvider extends BasicProvider {
         @Singleton
         ReadOnlyApi provideReadOnlyApi(Injector injector) {
            return injector.getInstance(ReadOnlyApi.class);
+        }
+
+        @Provides(type = SET)
+        @Singleton
+        QualifiedResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(GeoResourceRecordSetApi.Factory in) {
+            return in;
         }
 
         @Provides

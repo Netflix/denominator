@@ -1,6 +1,9 @@
 package denominator.route53;
 
+import static com.google.common.base.Predicates.in;
+import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Strings.emptyToNull;
+import static com.google.common.collect.Iterables.filter;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
 import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
 
@@ -12,6 +15,7 @@ import java.util.Set;
 import java.util.SortedSet;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import org.jclouds.ContextBuilder;
@@ -27,8 +31,10 @@ import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Range;
+import com.google.common.collect.SetMultimap;
 
 import dagger.Provides;
 import denominator.BasicProvider;
@@ -62,6 +68,20 @@ public class Route53Provider extends BasicProvider {
     @Override
     public String url() {
         return url;
+    }
+
+    // http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
+    @Override
+    public Set<String> basicRecordTypes() {
+        return ImmutableSet.of("A", "AAAA", "CNAME", "MX", "NS", "PTR", "SOA", "SPF", "SRV", "TXT");
+    }
+
+    // http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
+    @Override
+    public SetMultimap<String, String> profileToRecordTypes() {
+        return ImmutableSetMultimap.<String, String> builder()
+                .putAll("weighted", "A", "AAAA", "CNAME", "MX", "PTR", "SPF", "SRV", "TXT")//
+                .putAll("roundRobin", filter(basicRecordTypes(), not(in(ImmutableSet.of("SOA", "CNAME"))))).build();
     }
 
     @Override
@@ -153,23 +173,11 @@ public class Route53Provider extends BasicProvider {
         /**
          * @see <a
          *      href="http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html">valid
-         *      types</a>
-         */
-        @Provides
-        @Singleton
-        @denominator.config.profile.Weighted
-        Set<String> provideSupportedWeightedRecordTypes() {
-            return ImmutableSet.of("A", "AAAA", "CNAME", "MX", "PTR", "SPF", "SRV", "TXT");
-        }
-
-        /**
-         * @see <a
-         *      href="http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html">valid
          *      weights</a>
          */
         @Provides
         @Singleton
-        @denominator.config.profile.Weighted
+        @Named("weighted")
         SortedSet<Integer> provideSupportedWeights() {
             return ContiguousSet.create(Range.closed(0, 255), DiscreteDomain.integers());
         }

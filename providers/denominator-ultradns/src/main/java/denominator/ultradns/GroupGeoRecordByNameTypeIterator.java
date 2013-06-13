@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.jclouds.ultradns.ws.domain.DirectionalPool;
 import org.jclouds.ultradns.ws.domain.DirectionalPoolRecord;
@@ -41,7 +42,7 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
         private final CacheLoader<String, Multimap<String, String>> getDirectionalGroup;
 
         @Inject
-        Factory(@denominator.config.profile.Geo CacheLoader<String, Multimap<String, String>> getDirectionalGroup) {
+        Factory(@Named("geo") CacheLoader<String, Multimap<String, String>> getDirectionalGroup) {
             this.getDirectionalGroup = getDirectionalGroup;
         }
 
