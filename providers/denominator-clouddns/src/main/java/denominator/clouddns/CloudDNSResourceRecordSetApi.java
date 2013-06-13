@@ -24,22 +24,10 @@ public final class CloudDNSResourceRecordSetApi implements denominator.ResourceR
         this.api = recordApi;
     }
 
-    @Deprecated
-    @Override
-    public Iterator<ResourceRecordSet<?>> list() {
-        return iterator();
-    }
-
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
         // assumes these are sorted, which might be bad
         return new GroupByRecordNameAndTypeIterator(api.list().concat().iterator());
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        return iterateByName(name);
     }
 
     @Override
@@ -57,6 +45,16 @@ public final class CloudDNSResourceRecordSetApi implements denominator.ResourceR
         return it.hasNext() ? Optional.<ResourceRecordSet<?>> of(it.next()) : Optional.<ResourceRecordSet<?>> absent();
     }
 
+    @Override
+    public void put(ResourceRecordSet<?> rrset) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteByNameAndType(String name, String type) {
+        throw new UnsupportedOperationException();
+    }
+
     static final class Factory implements denominator.ResourceRecordSetApi.Factory {
 
         private final CloudDNSApi api;
@@ -72,28 +70,39 @@ public final class CloudDNSResourceRecordSetApi implements denominator.ResourceR
         }
     }
 
+    @Deprecated
     @Override
+    public Iterator<ResourceRecordSet<?>> list() {
+        return iterator();
+    }
+
+    @Override
+    @Deprecated
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
+    @Override
+    @Deprecated
     public void add(ResourceRecordSet<?> rrset) {
         throw new UnsupportedOperationException();
     }
 
     @Override
+    @Deprecated
     public void applyTTLToNameAndType(int ttl, String name, String type) {
         throw new UnsupportedOperationException();
     }
 
     @Override
+    @Deprecated
     public void replace(ResourceRecordSet<?> rrset) {
         throw new UnsupportedOperationException();
     }
 
     @Override
+    @Deprecated
     public void remove(ResourceRecordSet<?> rrset) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void deleteByNameAndType(String name, String type) {
         throw new UnsupportedOperationException();
     }
 }

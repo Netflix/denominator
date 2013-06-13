@@ -33,10 +33,10 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
     private final Set<String> supportedTypes;
     private final Multimap<String, String> supportedRegions;
 
-    MockGeoResourceRecordSetApi(Multimap<Zone, ResourceRecordSet<?>> records, Zone zone, Set<String> supportedTypes,
+    MockGeoResourceRecordSetApi(Provider provider, Multimap<Zone, ResourceRecordSet<?>> records, Zone zone,
             Multimap<String, String> supportedRegions) {
-        super(records, zone);
-        this.supportedTypes = supportedTypes;
+        super(provider, records, zone);
+        this.supportedTypes = provider.profileToRecordTypes().get("geo");
         this.supportedRegions = supportedRegions;
     }
 
@@ -75,21 +75,13 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
                 currentGeo = Geo.create(currentGeo.group(), ImmutableMultimap.copyOf(without));
                 records.remove(zone, toTest);
                 records.put(zone, ResourceRecordSet.<Map<String, Object>> builder() //
-                                                   .name(toTest.name())//
-                                                   .type(toTest.type())//
-                                                   .qualifier(toTest.qualifier().get())//
-                                                   .ttl(toTest.ttl().orNull())//
-                                                   .addProfile(currentGeo)//
-                                                   .addAll(toTest.rdata()).build());
+                        .name(toTest.name())//
+                        .type(toTest.type())//
+                        .qualifier(toTest.qualifier().get())//
+                        .ttl(toTest.ttl().orNull())//
+                        .addProfile(currentGeo)//
+                        .addAll(toTest.rdata()).build());
             }
-        }
-    }
-
-    @Override
-    public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
-        Optional<ResourceRecordSet<?>> rrsMatch = getByNameTypeAndQualifier(name, type, qualifier);
-        if (rrsMatch.isPresent()) {
-            records.remove(zone, rrsMatch.get());
         }
     }
 
@@ -136,7 +128,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
     public static final class Factory implements GeoResourceRecordSetApi.Factory {
 
         private final Multimap<Zone, ResourceRecordSet<?>> records;
-        private final Set<String> supportedTypes;
+        private Provider provider;
         private final Multimap<String, String> supportedRegions;
 
         // wildcard types are not currently injectable in dagger
@@ -145,7 +137,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         Factory(Multimap<Zone, ResourceRecordSet> records, Provider provider,
                 @Named("geo") Multimap<String, String> supportedRegions) {
             this.records = Multimap.class.cast(filterValues(Multimap.class.cast(records), IS_GEO));
-            this.supportedTypes = provider.profileToRecordTypes().get("geo");
+            this.provider = provider;
             this.supportedRegions = supportedRegions;
         }
 
@@ -153,7 +145,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         public Optional<GeoResourceRecordSetApi> create(String idOrName) {
             Zone zone = Zone.create(idOrName);
             checkArgument(records.keySet().contains(zone), "zone %s not found", idOrName);
-            return Optional.<GeoResourceRecordSetApi> of(new MockGeoResourceRecordSetApi(records, zone, supportedTypes,
+            return Optional.<GeoResourceRecordSetApi> of(new MockGeoResourceRecordSetApi(provider, records, zone,
                     supportedRegions));
         }
     }

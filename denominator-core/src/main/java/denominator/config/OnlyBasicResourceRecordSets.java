@@ -11,7 +11,6 @@ import dagger.Module;
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.DNSApiManager;
-import denominator.ReadOnlyResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 
@@ -20,13 +19,6 @@ import denominator.model.ResourceRecordSet;
  */
 @Module(injects = DNSApiManager.class, complete = false)
 public class OnlyBasicResourceRecordSets {
-
-    @Provides
-    @Singleton
-    ReadOnlyResourceRecordSetApi.Factory provideReadOnlyResourceRecordSetApiFactory(
-            AllProfileResourceRecordSetApi.Factory factory) {
-        return factory;
-    }
 
     @Provides
     @Singleton
@@ -87,6 +79,21 @@ public class OnlyBasicResourceRecordSets {
         @Override
         public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier) {
             return Optional.absent();
+        }
+
+        @Override
+        public void put(ResourceRecordSet<?> rrset) {
+            api.put(rrset);
+        }
+
+        @Override
+        public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
+            api.deleteByNameAndType(name, type);
+        }
+
+        @Override
+        public void deleteByNameAndType(String name, String type) {
+            api.deleteByNameAndType(name, type);
         }
     }
 }

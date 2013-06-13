@@ -5,7 +5,6 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
-import static dagger.Provides.Type.SET;
 import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
 import static org.jclouds.rest.config.BinderUtils.bindHttpApi;
 
@@ -56,7 +55,7 @@ import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
-import denominator.QualifiedResourceRecordSetApi;
+import denominator.QualifiedResourceRecordSetApi.Factory;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
@@ -121,8 +120,8 @@ public class DynECTProvider extends BasicProvider {
 
         @Provides
         @Singleton
-        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(DynECTApi api, ReadOnlyApi roApi) {
-            return new DynECTResourceRecordSetApi.Factory(api, roApi);
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(DynECTApi api, ReadOnlyApi allApi) {
+            return new DynECTResourceRecordSetApi.Factory(api, allApi);
         }
 
         @Provides
@@ -175,10 +174,10 @@ public class DynECTProvider extends BasicProvider {
            return injector.getInstance(ReadOnlyApi.class);
         }
 
-        @Provides(type = SET)
+        @Provides
         @Singleton
-        QualifiedResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(GeoResourceRecordSetApi.Factory in) {
-            return in;
+        SetMultimap<Factory, String> factoryToProfiles(GeoResourceRecordSetApi.Factory in) {
+            return ImmutableSetMultimap.<Factory, String> of(in, "geo");
         }
 
         @Provides

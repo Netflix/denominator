@@ -9,19 +9,6 @@ import denominator.model.ResourceRecordSet;
 public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
 
     /**
-     * a listing of all basic resource record sets inside the zone.
-     * 
-     * @return iterator which is lazy where possible
-     * @throws IllegalArgumentException
-     *             if the zone {@code idOrName} is not found.
-     * 
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #iterator}
-     */
-    @Deprecated
-    Iterator<ResourceRecordSet<?>> list();
-
-    /**
      * Iterates across all basic record sets in the zone (those with no
      * {@link ResourceRecordSet#profiles() profile}). Implementations are
      * lazy when possible.
@@ -32,13 +19,6 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
      */
     @Override
     Iterator<ResourceRecordSet<?>> iterator();
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #iterateByName(String)}
-     */
-    @Deprecated
-    Iterator<ResourceRecordSet<?>> listByName(String name);
 
     /**
      * a listing of all resource record sets which have the specified name.
@@ -67,6 +47,69 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
     Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type);
 
     /**
+     * Idempotently replaces any existing records with
+     * {@link ResourceRecordSet#name() name} and
+     * {@link ResourceRecordSet#type()} corresponding to {@code rrset}. If no
+     * records exists, they will be added.
+     * 
+     * <p/>
+     * Example of replacing the {@code A} record set for
+     * {@code www.denominator.io.}:
+     * 
+     * <pre>
+     * rrsApi.put(a(&quot;www.denominator.io.&quot;, &quot;192.0.2.1&quot;));
+     * </pre>
+     * 
+     * @param rrset
+     *            contains the {@code rdata} elements ensure exist. If
+     *            {@link ResourceRecordSet#ttl() ttl} is not present, zone
+     *            default is used.
+     * 
+     * @throws IllegalArgumentException
+     *             if the zone {@code idOrName} is not found
+     * @since 1.3
+     */
+    void put(ResourceRecordSet<?> rrset);
+
+    /**
+     * deletes a resource record set by name and type idempotently. This does
+     * not error if the record set doesn't exist.
+     * 
+     * @param name
+     *            {@link ResourceRecordSet#name() name} of the rrset
+     * @param type
+     *            {@link ResourceRecordSet#type() type} of the rrset
+     * 
+     * @throws IllegalArgumentException
+     *             if the zone {@code idOrName} is not found.
+     */
+    void deleteByNameAndType(String name, String type);
+
+    static interface Factory {
+        ResourceRecordSetApi create(String idOrName);
+    }
+
+    /**
+     * a listing of all basic resource record sets inside the zone.
+     * 
+     * @return iterator which is lazy where possible
+     * @throws IllegalArgumentException
+     *             if the zone {@code idOrName} is not found.
+     * 
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #iterator}
+     */
+    @Deprecated
+    Iterator<ResourceRecordSet<?>> list();
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #iterateByName(String)}
+     */
+    @Deprecated
+    Iterator<ResourceRecordSet<?>> listByName(String name);
+
+    /**
      * If a {@link ResourceRecordSet} exists with
      * {@link ResourceRecordSet#name() name} and
      * {@link ResourceRecordSet#type() type} corresponding to {@code rrset},
@@ -87,7 +130,10 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
      *            contains the {@code rdata} elements to be added. If
      *            {@link ResourceRecordSet#ttl() ttl} is present, it will
      *            replace the TTL on all records.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #put(ResourceRecordSet)}
      */
+    @Deprecated
     void add(ResourceRecordSet<?> rrset);
 
     /**
@@ -102,7 +148,10 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
      *            {@link ResourceRecordSet#name() name} of the rrset
      * @param type
      *            {@link ResourceRecordSet#type() type} of the rrset
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #put(ResourceRecordSet)}
      */
+    @Deprecated
     void applyTTLToNameAndType(int ttl, String name, String type);
 
     /**
@@ -123,7 +172,10 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
      *            contains the {@code rdata} elements ensure exist. If
      *            {@link ResourceRecordSet#ttl() ttl} is not present, zone
      *            default is used.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #put(ResourceRecordSet)}
      */
+    @Deprecated
     void replace(ResourceRecordSet<?> rrset);
 
     /**
@@ -145,24 +197,9 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
      * @param rrset
      *            contains the {@code rdata} elements to be removed. The
      *            {@link ResourceRecordSet#ttl() ttl} is ignored.
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #put(ResourceRecordSet)}
      */
+    @Deprecated
     void remove(ResourceRecordSet<?> rrset);
-
-    /**
-     * deletes a resource record set by name and type idempotently. This does
-     * not error if the record set doesn't exist.
-     * 
-     * @param name
-     *            {@link ResourceRecordSet#name() name} of the rrset
-     * @param type
-     *            {@link ResourceRecordSet#type() type} of the rrset
-     * 
-     * @throws IllegalArgumentException
-     *             if the zone {@code idOrName} is not found.
-     */
-    void deleteByNameAndType(String name, String type);
-
-    static interface Factory {
-        ResourceRecordSetApi create(String idOrName);
-    }
 }
