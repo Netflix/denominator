@@ -125,7 +125,16 @@ class GeoResourceRecordSetCommands {
                 @Override
                 public String next() {
                     GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get();
-                    api.applyTTLToNameTypeAndQualifier(ttl, name, type, group);
+                    Optional<ResourceRecordSet<?>> rrs = api.getByNameTypeAndQualifier(name, type, group);
+                    if (rrs.isPresent()) {
+                        api.put(ResourceRecordSet.<Map<String, Object>> builder()
+                                                 .name(name)
+                                                 .type(type)
+                                                 .qualifier(group)
+                                                 .ttl(ttl)
+                                                 .addAllProfile(rrs.get().profiles())
+                                                 .addAll(rrs.get().rdata()).build());
+                    }
                     done = true;
                     return ";; ok";
                 }

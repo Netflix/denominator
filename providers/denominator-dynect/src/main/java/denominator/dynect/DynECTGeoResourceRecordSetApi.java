@@ -123,24 +123,24 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     }
 
     @Override
-    @Deprecated
-    public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
-        applyRegionsToNameTypeAndQualifier(regions, name, type, group);
+    public void put(ResourceRecordSet<?> rrset) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public void applyRegionsToNameTypeAndQualifier(Multimap<String, String> regions, String name, String type, String qualifier) {
+    public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    @Deprecated
+    public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     @Deprecated
     public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
-        applyTTLToNameTypeAndQualifier(ttl, name, type, group);
-    }
-
-    @Override
-    public void applyTTLToNameTypeAndQualifier(int ttl, String name, String type, String qualifier) {
         throw new UnsupportedOperationException();
     }
 

@@ -11,6 +11,6 @@ public class UltraDNSGeoWriteCommandsLiveTest extends BaseGeoWriteCommandsLiveTe
     private void setUp() {
         UltraDNSConnection connection = new UltraDNSConnection();
         manager = connection.manager;
-        mutableGeoRRSet = connection.mutableGeoRRSet;
+        setMutableZoneIfPresent(connection.mutableZone);
     }
 }
