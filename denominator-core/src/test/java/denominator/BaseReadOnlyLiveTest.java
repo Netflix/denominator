@@ -34,7 +34,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testListRRSs() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            for (ResourceRecordSet<?> rrs : roApi(zone)) {
+            for (ResourceRecordSet<?> rrs : allApi(zone)) {
                 recordTypeCounts.getUnchecked(rrs.type()).addAndGet(rrs.rdata().size());
                 checkRRS(rrs);
                 checkListByNameAndTypeConsistent(zone, rrs);
@@ -47,7 +47,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     }
 
     protected void checkGetByNameTypeAndQualifierConsistent(Zone zone, ResourceRecordSet<?> rrs) {
-        Optional<ResourceRecordSet<?>> byNameTypeAndQualifier = roApi(zone).getByNameTypeAndQualifier(
+        Optional<ResourceRecordSet<?>> byNameTypeAndQualifier = allApi(zone).getByNameTypeAndQualifier(
                 rrs.name(), rrs.type(), rrs.qualifier().get());
         assertTrue(byNameTypeAndQualifier.isPresent(), "could not lookup by name, type, and qualifier: "
                 + rrs);
@@ -55,7 +55,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     }
 
     protected void checkListByNameAndTypeConsistent(Zone zone, ResourceRecordSet<?> rrs) {
-        List<ResourceRecordSet<?>> byNameAndType = ImmutableList.copyOf(roApi(zone)
+        List<ResourceRecordSet<?>> byNameAndType = ImmutableList.copyOf(allApi(zone)
                 .iterateByNameAndType(rrs.name(), rrs.type()));
         assertFalse(byNameAndType.isEmpty(), "could not lookup by name and type: " + rrs);
         assertTrue(byNameAndType.contains(rrs), rrs + " not found in list by name and type: " + byNameAndType);
@@ -65,7 +65,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testListByName() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            Iterator<ResourceRecordSet<?>> rrsIterator = roApi(zone).iterator();
+            Iterator<ResourceRecordSet<?>> rrsIterator = allApi(zone).iterator();
             if (!rrsIterator.hasNext())
                 continue;
             ResourceRecordSet<?> rrset = rrsIterator.next();
@@ -78,7 +78,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
                         break;
                 withName.add(rrset);
             }
-            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(roApi(zone).iterateByName(name));
+            List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(allApi(zone).iterateByName(name));
             assertEquals(usingToString().immutableSortedCopy(fromApi), usingToString().immutableSortedCopy(withName));
             break;
         }
@@ -88,7 +88,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testListByNameWhenNotFound() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertFalse(roApi(zone).iterateByName("ARGHH." + zone.name()).hasNext());
+            assertFalse(allApi(zone).iterateByName("ARGHH." + zone.name()).hasNext());
             break;
         }
     }
@@ -97,7 +97,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testListByNameAndTypeWhenEmpty() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertFalse(roApi(zone).iterateByNameAndType("ARGHH." + zone.name(), "TXT").hasNext());
+            assertFalse(allApi(zone).iterateByNameAndType("ARGHH." + zone.name(), "TXT").hasNext());
             break;
         }
     }
@@ -106,7 +106,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testGetByNameTypeAndGroupWhenAbsent() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertEquals(roApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"), Optional.absent());
+            assertEquals(allApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"), Optional.absent());
             break;
         }
     }
@@ -123,8 +123,4 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
                     return new AtomicLong();
                 }
             });
-
-    private ReadOnlyResourceRecordSetApi roApi(Zone zone) {
-        return manager.api().recordSetsInZone(zone.idOrName());
-    }
 }

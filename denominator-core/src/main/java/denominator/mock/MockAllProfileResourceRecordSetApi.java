@@ -7,26 +7,32 @@ import static com.google.common.collect.FluentIterable.from;
 import static com.google.common.collect.Ordering.usingToString;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
 import static denominator.model.ResourceRecordSets.qualifierEqualTo;
+import static denominator.model.ResourceRecordSets.toProfileTypes;
 import static denominator.model.ResourceRecordSets.typeEqualTo;
 
 import java.util.Iterator;
+import java.util.Set;
 
 import javax.inject.Inject;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import com.google.common.collect.Multimap;
 
 import denominator.AllProfileResourceRecordSetApi;
+import denominator.Provider;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 
 public class MockAllProfileResourceRecordSetApi implements denominator.AllProfileResourceRecordSetApi {
 
+    protected final Provider provider;
     protected final Multimap<Zone, ResourceRecordSet<?>> records;
     protected final Zone zone;
 
-    MockAllProfileResourceRecordSetApi(Multimap<Zone, ResourceRecordSet<?>> records, Zone zone) {
+    MockAllProfileResourceRecordSetApi(Provider provider, Multimap<Zone, ResourceRecordSet<?>> records, Zone zone) {
+        this.provider = provider;
         this.records = records;
         this.zone = zone;
     }
@@ -73,6 +79,16 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
     }
 
     @Override
+    public void put(ResourceRecordSet<?> rrset) {
+        Set<String> profiles = toProfileTypes(rrset);
+        checkArgument(provider.profileToRecordTypes().keySet().containsAll(profiles),
+                "cannot put rrset %s:%s%s as it contains profiles %s which aren't supported %s", rrset.name(),
+                rrset.type(), rrset.qualifier().isPresent() ? ":" + rrset.qualifier().get() : "", profiles,
+                provider.profileToRecordTypes());
+        put(Predicates.<ResourceRecordSet<?>> alwaysTrue(), rrset);
+    }
+
+    @Override
     @Deprecated
     public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
         return iterateByNameAndType(name, type);
@@ -97,18 +113,35 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
                 .firstMatch(and(nameAndTypeEqualTo(name, type), qualifierEqualTo(qualifier)));
     }
 
+    @Override
+    public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
+        Optional<ResourceRecordSet<?>> rrsMatch = getByNameTypeAndQualifier(name, type, qualifier);
+        if (rrsMatch.isPresent()) {
+            records.remove(zone, rrsMatch.get());
+        }
+    }
+
+    @Override
+    public void deleteByNameAndType(String name, String type) {
+        for (Iterator<ResourceRecordSet<?>> it = iterateByNameAndType(name, type); it.hasNext();) {
+            records.remove(zone, it.next());
+        }
+    }
+
     static Predicate<ResourceRecordSet<?>> nameAndTypeEqualTo(String name, String type) {
         return and(nameEqualTo(name), typeEqualTo(type));
     }
 
     static class Factory implements denominator.AllProfileResourceRecordSetApi.Factory {
 
+        private final Provider provider;
         private final Multimap<Zone, ResourceRecordSet<?>> records;
 
         // wildcard types are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
-        Factory(Multimap<Zone, ResourceRecordSet> records) {
+        Factory(Provider provider, Multimap<Zone, ResourceRecordSet> records) {
+            this.provider = provider;
             this.records = Multimap.class.cast(records);
         }
 
@@ -116,7 +149,7 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
         public AllProfileResourceRecordSetApi create(String idOrName) {
             Zone zone = Zone.create(idOrName);
             checkArgument(records.keySet().contains(zone), "zone %s not found", idOrName);
-            return new MockAllProfileResourceRecordSetApi(records, zone);
+            return new MockAllProfileResourceRecordSetApi(provider, records, zone);
         }
     }
 }

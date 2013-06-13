@@ -49,7 +49,7 @@ public class Route53ResourceRecordSetApiMockTest {
     String changeSynced = "<GetChangeResponse><ChangeInfo><Id>/change/C2682N5HXP0BZ4</Id><Status>INSYNC</Status><SubmittedAt>2011-09-10T01:36:41.958Z</SubmittedAt></ChangeInfo></GetChangeResponse>";
 
     @Test
-    public void addFirstRecordCreatesNewRRSet() throws IOException, InterruptedException {
+    public void putFirstRecordCreatesNewRRSet() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(changeSynced));
@@ -57,7 +57,7 @@ public class Route53ResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.add(a("www.denominator.io.", 3600, "192.0.2.1"));
+            api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 2);
 
@@ -73,10 +73,30 @@ public class Route53ResourceRecordSetApiMockTest {
     }
 
     String oneRecord = "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
-    String replaceWith2ElementRecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
 
     @Test
-    public void addSecondRecordRecreatesRRSetAndRetainsTTL() throws IOException, InterruptedException {
+    public void putSameRecordNoOp() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
+        server.play();
+
+        try {
+            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
+
+            assertEquals(server.getRequestCount(), 1);
+
+            assertEquals(server.takeRequest().getRequestLine(),
+                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=A HTTP/1.1");
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    String replaceWith2ElementRecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>10000000</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+
+    @Test
+    public void putRecreatesWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(changeSynced));
@@ -84,7 +104,7 @@ public class Route53ResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.add(a("www.denominator.io.", "198.51.100.1"));
+            api.put(a("www.denominator.io.", 10000000, ImmutableSet.of("192.0.2.1", "198.51.100.1")));
 
             assertEquals(server.getRequestCount(), 2);
 
@@ -99,63 +119,11 @@ public class Route53ResourceRecordSetApiMockTest {
         }
     }
 
-    String replaceWith2ElementRecordSetOverridingTTL = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>10000000</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
-
-    @Test
-    public void addSecondRecordRecreatesRRSetAndOverridesTTLWhenPresent() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(changeSynced));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.add(a("www.denominator.io.", 10000000, "198.51.100.1"));
-
-            assertEquals(server.getRequestCount(), 2);
-
-            assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=A HTTP/1.1");
-
-            RecordedRequest createRRSet = server.takeRequest();
-            assertEquals(createRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
-            assertEquals(new String(createRRSet.getBody()), replaceWith2ElementRecordSetOverridingTTL);
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    String deleteARecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
-
-    @Test
-    public void removeOnlyRecordDoesntAdd() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(changeSynced));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.remove(a("www.denominator.io.", "192.0.2.1"));
-
-            assertEquals(server.getRequestCount(), 2);
-
-            assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=A HTTP/1.1");
-
-            RecordedRequest deleteRRSet = server.takeRequest();
-            assertEquals(deleteRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
-            assertEquals(new String(deleteRRSet.getBody()), deleteARecordSet);
-        } finally {
-            server.shutdown();
-        }
-    }
-
     String twoRecords = "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
     String replaceWith1ElementRecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
 
     @Test
-    public void removeOneRecordReplacesRRSet() throws IOException, InterruptedException {
+    public void putOneRecordReplacesRRSet() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(twoRecords));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(changeSynced));
@@ -163,7 +131,7 @@ public class Route53ResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.remove(a("www.denominator.io.", "198.51.100.1"));
+            api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 2);
 
@@ -173,70 +141,6 @@ public class Route53ResourceRecordSetApiMockTest {
             RecordedRequest createRRSet = server.takeRequest();
             assertEquals(createRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
             assertEquals(new String(createRRSet.getBody()), replaceWith1ElementRecordSet);
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    @Test
-    public void applyTTLDoesNothingWhenTTLIsExpected() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(twoRecords));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.applyTTLToNameAndType(3600, "www.denominator.io.", "A");
-
-            assertEquals(server.getRequestCount(), 1);
-
-            assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=A HTTP/1.1");
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    @Test
-    public void applyTTLDoesNothingWhenRecordsArentFound() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.applyTTLToNameAndType(3600, "www.boo.com.", "A");
-
-            assertEquals(server.getRequestCount(), 1);
-
-            assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.boo.com.&type=A HTTP/1.1");
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    String recreate2ElementRecordSetWithTTL = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>10000000</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
-
-    @Test
-    public void applyTTLRecreatesRecordsWithSameRDataWhenDifferent() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(twoRecords));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(changeSynced));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.applyTTLToNameAndType(10000000, "www.denominator.io.", "A");
-
-            assertEquals(server.getRequestCount(), 2);
-
-            assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=A HTTP/1.1");
-
-            RecordedRequest createRRSet = server.takeRequest();
-            assertEquals(createRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
-            assertEquals(new String(createRRSet.getBody()), recreate2ElementRecordSetWithTTL);
         } finally {
             server.shutdown();
         }
@@ -310,68 +214,6 @@ public class Route53ResourceRecordSetApiMockTest {
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
             assertEquals(api.getByNameAndType("www.denominator.io.", "A"), Optional.absent());
-
-            assertEquals(server.getRequestCount(), 1);
-
-            assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=A HTTP/1.1");
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    @Test
-    public void replaceRecordSet() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(changeSynced));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.replace(a("www.denominator.io.", 10000000, ImmutableSet.of("192.0.2.1", "198.51.100.1")));
-
-            assertEquals(server.getRequestCount(), 2);
-
-            assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=A HTTP/1.1");
-
-            RecordedRequest createRRSet = server.takeRequest();
-            assertEquals(createRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
-            assertEquals(new String(createRRSet.getBody()), replaceWith2ElementRecordSetOverridingTTL);
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    @Test
-    public void replaceRecordSetSkipsWhenEqual() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.replace(a("www.denominator.io.", 3600, "192.0.2.1"));
-
-            assertEquals(server.getRequestCount(), 1);
-
-            assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=A HTTP/1.1");
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    @Test
-    public void removeAbsentRecordDoesNothing() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(oneRecord));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.remove(a("www.denominator.io.", "198.51.100.1"));
 
             assertEquals(server.getRequestCount(), 1);
 

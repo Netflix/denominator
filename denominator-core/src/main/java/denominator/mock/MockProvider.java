@@ -89,13 +89,7 @@ public class MockProvider extends BasicProvider {
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(MockResourceRecordSetApi.Factory in) {
             return in;
         }
-    
-        @Provides
-        ReadOnlyResourceRecordSetApi.Factory provideReadOnlyResourceRecordSetApi(
-                AllProfileResourceRecordSetApi.Factory in) {
-            return in;
-        }
-        
+
         @Provides
         AllProfileResourceRecordSetApi.Factory provideAllProfileResourceRecordSetApiFactory(
                 MockAllProfileResourceRecordSetApi.Factory in) {

@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
@@ -158,7 +159,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
     private String addRecordToRRPoolResponseTemplate = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:addRecordToRRPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><guid xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">%s</guid></ns1:addRecordToRRPoolResponse></soap:Body></soap:Envelope>";
 
     @Test
-    public void addFirstACreatesRoundRobinPoolThenAddsRecordToIt() throws IOException, InterruptedException {
+    public void putFirstACreatesRoundRobinPoolThenAddsRecordToIt() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noPools));
@@ -169,7 +170,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.add(a("www.denominator.io.", 3600, "192.0.2.1"));
+            api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 4);
 
@@ -204,7 +205,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
             .append(getLoadBalancingPoolsByZoneResponseFooter).toString();
 
     @Test
-    public void addFirstAReusesExistingEmptyRoundRobinPool() throws IOException, InterruptedException {
+    public void putFirstAReusesExistingEmptyRoundRobinPool() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(poolsForAandAAAA));
@@ -214,7 +215,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.add(a("www.denominator.io.", 3600, "192.0.2.1"));
+            api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 3);
 
@@ -254,7 +255,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
     private String deleteLBPoolResponse = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:deleteLBPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result></ns1:deleteLBPoolResponse></soap:Body></soap:Envelope>";
 
     @Test
-    public void removeOnlyRecordAlsoRemovesPool() throws IOException, InterruptedException {
+    public void deleteAlsoRemovesPool() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(record1));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(poolsForAandAAAA));
@@ -266,7 +267,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.remove(a("www.denominator.io.", "192.0.2.1"));
+            api.deleteByNameAndType("www.denominator.io.", "A");
 
             assertEquals(server.getRequestCount(), 6);
 
@@ -299,7 +300,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void addSecondAAddsRecordToExistingPool() throws IOException, InterruptedException {
+    public void putSecondAAddsRecordToExistingPool() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(record1));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(poolsForAandAAAA));
@@ -309,7 +310,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.add(a("www.denominator.io.", "198.51.100.1"));
+            api.put(a("www.denominator.io.", 3600, ImmutableSet.of("192.0.2.1", "198.51.100.1")));
 
             assertEquals(server.getRequestCount(), 3);
 
@@ -334,7 +335,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
             "www.denominator.io.", 28);
 
     @Test
-    public void addFirstAAAACreatesRoundRobinPoolThenAddsRecordToIt() throws IOException, InterruptedException {
+    public void putFirstAAAACreatesRoundRobinPoolThenAddsRecordToIt() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noPools));
@@ -346,7 +347,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.add(aaaa("www.denominator.io.", 3600, "2001:0DB8:85A3:0000:0000:8A2E:0370:7334"));
+            api.put(aaaa("www.denominator.io.", 3600, "2001:0DB8:85A3:0000:0000:8A2E:0370:7334"));
 
             assertEquals(server.getRequestCount(), 4);
 
@@ -373,7 +374,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void addFirstAAAAReusesExistingEmptyRoundRobinPool() throws IOException, InterruptedException {
+    public void putFirstAAAAReusesExistingEmptyRoundRobinPool() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(poolsForAandAAAA));
@@ -383,7 +384,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            api.add(aaaa("www.denominator.io.", 3600, "2001:0DB8:85A3:0000:0000:8A2E:0370:7334"));
+            api.put(aaaa("www.denominator.io.", 3600, "2001:0DB8:85A3:0000:0000:8A2E:0370:7334"));
 
             assertEquals(server.getRequestCount(), 3);
 

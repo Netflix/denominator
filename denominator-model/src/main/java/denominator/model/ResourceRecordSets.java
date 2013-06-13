@@ -3,9 +3,11 @@ package denominator.model;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.FluentIterable;
 
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
@@ -252,6 +254,21 @@ public class ResourceRecordSets {
         }
     }
 
+    /**
+     * Returns the set of profile types, if present, in the {@code rrset}.
+     */
+    public static Set<String> toProfileTypes(ResourceRecordSet<?> rrset) {
+        return FluentIterable.from(rrset.profiles()).transform(ToTypeValue.INSTANCE).toSet();
+    }
+
+    private static enum ToTypeValue implements Function<Map<String, Object>, String> {
+        INSTANCE;
+        @Override
+        public String apply(Map<String, Object> input) {
+            return input.get("type").toString();
+        }
+    }
+    
     /**
      * creates a set of a single {@link denominator.model.rdata.AData A} record
      * for the specified name.
