@@ -49,6 +49,8 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
             for (ResourceRecordSet<?> geoRRS : geoApi(zone)) {
                 assertTrue(geoRRS.qualifier().isPresent(), "Geo record sets should include a qualifier: " + geoRRS);
                 checkGeoRRS(geoRRS);
+                assertTrue(manager.provider().profileToRecordTypes().get("geo").contains(geoRRS.type()));
+
                 getAnonymousLogger().info(format("%s ::: geoRRS: %s", manager, geoRRS));
                 recordTypeCounts.getUnchecked(geoRRS.type()).addAndGet(geoRRS.rdata().size());
                 geoRecordCounts.getUnchecked(toProfile(Geo.class).apply(geoRRS)).addAndGet(geoRRS.rdata().size());

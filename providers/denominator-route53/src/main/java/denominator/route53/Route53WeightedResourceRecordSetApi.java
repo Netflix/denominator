@@ -3,6 +3,7 @@ package denominator.route53;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
+import static com.google.common.collect.Iterators.emptyIterator;
 import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.route53.Route53ResourceRecordSetApi.nameEqualTo;
 import static denominator.route53.Route53ResourceRecordSetApi.typeEqualTo;
@@ -13,6 +14,7 @@ import java.util.Set;
 import java.util.SortedSet;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.jclouds.route53.Route53Api;
 import org.jclouds.route53.domain.ChangeBatch;
@@ -26,6 +28,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 
+import denominator.Provider;
 import denominator.model.ResourceRecordSet;
 import denominator.profile.WeightedResourceRecordSetApi;
 
@@ -37,16 +40,10 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
     private final Set<String> supportedTypes;
     private final SortedSet<Integer> supportedWeights;
 
-    Route53WeightedResourceRecordSetApi(ResourceRecordSetApi route53RRsetApi, Set<String> supportedTypes,
-            SortedSet<Integer> supportedWeights) {
+    Route53WeightedResourceRecordSetApi(ResourceRecordSetApi route53RRsetApi, Set<String> supportedTypes, SortedSet<Integer> supportedWeights) {
         this.route53RRsetApi = route53RRsetApi;
         this.supportedTypes = supportedTypes;
         this.supportedWeights = supportedWeights;
-    }
-
-    @Override
-    public Set<String> supportedTypes() {
-        return supportedTypes;
     }
 
     @Override
@@ -87,6 +84,11 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
     @SuppressWarnings("unchecked")
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
+        checkNotNull(name, "name");
+        checkNotNull(type, "type");
+        if (!supportedTypes.contains(type)){
+            return emptyIterator();
+        }
         return route53RRsetApi.listAt(NextRecord.nameAndType(name, type))
                 .filter(and(isWeighted(), nameEqualTo(name), typeEqualTo(type)))
                 .transform(ToDenominatorResourceRecordSet.INSTANCE).iterator();
@@ -94,6 +96,12 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
 
     @Override
     public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier) {
+        checkNotNull(name, "name");
+        checkNotNull(type, "type");
+        checkNotNull(qualifier, "qualifier");
+        if (!supportedTypes.contains(type)){
+            return Optional.absent();
+        }
         return filterRoute53RRSByNameTypeAndId(name, type, qualifier)
                 .transform(ToDenominatorResourceRecordSet.INSTANCE).first();
     }
@@ -117,6 +125,7 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
         checkNotNull(rrset, "rrset was null");
         checkArgument(rrset.qualifier().isPresent(), "no qualifier on: %s", rrset);
         checkArgument(IS_WEIGHTED.apply(rrset), "%s failed on: %s", IS_WEIGHTED, rrset);
+        checkArgument(supportedTypes.contains(rrset.type()), "%s not a supported type for geo: %s", rrset.type(), supportedTypes);
 
         ChangeBatch.Builder changes = ChangeBatch.builder();
 
@@ -151,10 +160,9 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
         private final SortedSet<Integer> supportedWeights;
 
         @Inject
-        Factory(Route53Api api, @denominator.config.profile.Weighted Set<String> supportedTypes,
-                @denominator.config.profile.Weighted SortedSet<Integer> supportedWeights) {
+        Factory(Route53Api api, Provider provider, @Named("weighted") SortedSet<Integer> supportedWeights) {
             this.api = api;
-            this.supportedTypes = supportedTypes;
+            this.supportedTypes = provider.profileToRecordTypes().get("weighted");
             this.supportedWeights = supportedWeights;
         }
 

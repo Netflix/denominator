@@ -34,7 +34,7 @@ import denominator.model.profile.Geo;
 public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest {
 
     protected Map<String, ResourceRecordSet<?>> stockRRSets() {
-        return filterKeys(super.stockRRSets(), in(geoApi(skipIfNoMutableZone()).supportedTypes()));
+        return filterKeys(super.stockRRSets(), in(manager.provider().profileToRecordTypes().get("geo")));
     }
 
     String qualifier1 = "US-East";

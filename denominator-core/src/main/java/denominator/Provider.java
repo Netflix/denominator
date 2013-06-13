@@ -1,10 +1,14 @@
 package denominator;
 
+import java.util.Set;
+
 import javax.inject.Singleton;
 
 import com.google.common.annotations.Beta;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.SetMultimap;
 
+import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 
 /**
@@ -65,15 +69,41 @@ public interface Provider {
     String url();
 
     /**
-     * Certain providers support multiple zones with the same
-     * {@link Zone#name name}. These are served by different name servers and
-     * used to provide different internal vs external views, environment testing
-     * or smoother zone transfers for the same name.
+     * The set of basic {@link ResourceRecordSet#getType() record types} that
+     * are supported by {@link ResourceRecordSetApi} commands.
+     * <p/>
+     * For example:
+     * 
+     * <pre>
+     * ["A", "AAAA", "CNAME", "HINFO", "MX", "PTR", "RP", "SRV", "TXT", "NAPTR"]
+     * </pre>
+     */
+    Set<String> basicRecordTypes();
+
+    /**
+     * Maps a {@link ResourceRecordSet#profiles() profile} {@code type} value to
+     * a collection of supported record types. If empty, the provider does not
+     * support advanced records.
+     * <p/>
+     * For example:
+     * 
+     * <pre>
+     * { "geo" : ["A", "AAAA", "CNAME", "HINFO", "MX", "PTR", "RP", "SRV", "TXT", "NAPTR"],
+     *   "weighted" : ["A", "AAAA", "CNAME"] }
+     * </pre>
+     */
+    SetMultimap<String, String> profileToRecordTypes();
+
+    /**
+     * Certain providers support multiple zones with the same {@link Zone#name
+     * name}. These are served by different name servers and used to provide
+     * different internal vs external views, environment testing or smoother
+     * zone transfers for the same name.
      * 
      * @return true when {@link Zone#id() zone id} is present and
-     *         {@link Zone#idOrName()} returns the {@link Zone#id() zone id}.
-     *         If false, {@link Zone#idOrName()} will returns
-     *         {@link Zone#name zone name}.
+     *         {@link Zone#idOrName()} returns the {@link Zone#id() zone id}. If
+     *         false, {@link Zone#idOrName()} will returns {@link Zone#name zone
+     *         name}.
      */
     boolean supportsDuplicateZoneNames();
 

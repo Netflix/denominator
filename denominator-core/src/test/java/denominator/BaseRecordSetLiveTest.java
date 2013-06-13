@@ -31,11 +31,9 @@ import denominator.model.Zone;
  * extend this and initialize manager {@link BeforeClass}
  */
 public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
-    protected ImmutableList<String> supportedRecordTypes = ImmutableList.of("AAAA", "A", "CNAME", "MX", "NS", "PTR",
-            "SPF", "SRV", "SSHFP", "TXT");
 
     protected Map<String, ResourceRecordSet<?>> stockRRSets() {
-        return filterKeys(super.stockRRSets(), in(supportedRecordTypes));
+        return filterKeys(super.stockRRSets(), in(manager.provider().basicRecordTypes()));
     }
 
     @Test
