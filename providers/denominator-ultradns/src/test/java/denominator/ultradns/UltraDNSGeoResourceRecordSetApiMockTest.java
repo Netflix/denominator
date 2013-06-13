@@ -340,7 +340,8 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     private String noDirectionalDNSRecordsForGroupResponse = "<soap:Envelope><soap:Body><ns1:getDirectionalDNSRecordsForGroupResponse /></soap:Body></soap:Envelope>";
 
     @Test
-    public void applyRegionsToNameTypeAndQualifierWhenTTLMatches() throws IOException, InterruptedException {
+    @Deprecated
+    public void applyRegionsToNameTypeAndGroupWhenTTLMatches() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
@@ -353,7 +354,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
 
             Multimap<String, String> regions = toProfile(Geo.class).apply(europe).regions();
-            api.applyRegionsToNameTypeAndQualifier(regions, "srv.denominator.io.", "CNAME", "Europe");
+            api.applyRegionsToNameTypeAndGroup(regions, "srv.denominator.io.", "CNAME", "Europe");
 
             assertEquals(server.getRequestCount(), 5);
 
@@ -394,7 +395,8 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             "<GeolocationGroupDetails groupName=\"Europe\" ><GeolocationGroupDefinitionData regionName=\"Europe\" territoryNames=\"Aland Islands\" /></GeolocationGroupDetails><forceOverlapTransfer>true</forceOverlapTransfer>");
 
     @Test
-    public void applyRegionsToNameTypeAndQualifierWhenRegionsDiffer() throws IOException, InterruptedException {
+    @Deprecated
+    public void applyRegionsToNameTypeAndGroupWhenRegionsDiffer() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
@@ -408,7 +410,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
 
             Multimap<String, String> regions = ImmutableMultimap.of("Europe", "Aland Islands");
-            api.applyRegionsToNameTypeAndQualifier(regions, "srv.denominator.io.", "CNAME", "Europe");
+            api.applyRegionsToNameTypeAndGroup(regions, "srv.denominator.io.", "CNAME", "Europe");
 
             assertEquals(server.getRequestCount(), 6);
 
@@ -443,7 +445,8 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     }
 
     @Test
-    public void applyTTLToNameTypeAndQualifierWhenTTLMatches() throws IOException, InterruptedException {
+    @Deprecated
+    public void applyTTLToNameTypeAndGroupWhenTTLMatches() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
@@ -454,7 +457,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
 
-            api.applyTTLToNameTypeAndQualifier(300, "srv.denominator.io.", "CNAME", "Europe");
+            api.applyTTLToNameTypeAndGroup(300, "srv.denominator.io.", "CNAME", "Europe");
 
             assertEquals(server.getRequestCount(), 4);
 
@@ -484,7 +487,8 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     private String updateDirectionalPoolRecordResponse = "<soap:Envelope><soap:Body><ns1:updateDirectionalPoolRecordResponse></ns1:updateDirectionalPoolRecordResponse></soap:Body></soap:Envelope>";
 
     @Test
-    public void applyTTLToNameTypeAndQualifierWhenTTLDiffers() throws IOException, InterruptedException {
+    @Deprecated
+    public void applyTTLToNameTypeAndGroupWhenTTLDiffers() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
@@ -496,7 +500,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
 
-            api.applyTTLToNameTypeAndQualifier(600, "srv.denominator.io.", "CNAME", "Europe");
+            api.applyTTLToNameTypeAndGroup(600, "srv.denominator.io.", "CNAME", "Europe");
 
             assertEquals(server.getRequestCount(), 5);
 

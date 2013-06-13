@@ -11,6 +11,6 @@ public class MockGeoWriteCommandsLiveTest extends BaseGeoWriteCommandsLiveTest {
     private void setUp() {
         MockConnection connection = new MockConnection();
         manager = connection.manager;
-        mutableGeoRRSet = connection.mutableGeoRRSet;
+        mutableZone = manager.api().zones().iterator().next();
     }
 }
