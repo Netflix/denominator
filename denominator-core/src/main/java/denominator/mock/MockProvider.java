@@ -7,9 +7,9 @@ import static denominator.model.ResourceRecordSets.cname;
 import static denominator.model.ResourceRecordSets.ns;
 
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import com.google.common.collect.ContiguousSet;
@@ -17,10 +17,12 @@ import com.google.common.collect.DiscreteDomain;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Range;
+import com.google.common.collect.SetMultimap;
 
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
@@ -62,6 +64,13 @@ public class MockProvider extends BasicProvider {
     @Override
     public String url() {
         return url;
+    }
+
+    @Override
+    public SetMultimap<String, String> profileToRecordTypes() {
+        return ImmutableSetMultimap.<String, String> builder()//
+                .putAll("geo", "A", "AAAA", "CNAME")//
+                .putAll("weighted", "A", "AAAA", "CNAME").build();
     }
 
     // normally, we'd set package private visibility, but this module is helpful
@@ -206,14 +215,7 @@ public class MockProvider extends BasicProvider {
     
         @Provides
         @Singleton
-        @denominator.config.profile.Geo
-        Set<String> provideSupportedGeoRecordTypes() {
-            return ImmutableSet.of("A", "CNAME");
-        }
-    
-        @Provides
-        @Singleton
-        @denominator.config.profile.Geo
+        @Named("geo")
         Multimap<String, String> provideRegions() {
             return ImmutableMultimap.<String, String> builder()
                 .put("Anonymous Proxy (A1)", "Anonymous Proxy")
@@ -308,14 +310,7 @@ public class MockProvider extends BasicProvider {
 
         @Provides
         @Singleton
-        @denominator.config.profile.Weighted
-        Set<String> provideSupportedWeightedRecordTypes() {
-            return ImmutableSet.of("A", "CNAME");
-        }
-
-        @Provides
-        @Singleton
-        @denominator.config.profile.Weighted
+        @Named("weighted")
         SortedSet<Integer> provideSupportedWeights() {
             return ContiguousSet.create(Range.closed(0, 100), DiscreteDomain.integers());
         }

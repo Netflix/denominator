@@ -8,11 +8,13 @@ import java.util.Set;
 import java.util.SortedSet;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Multimap;
 
+import denominator.Provider;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import denominator.model.profile.Weighted;
@@ -33,17 +35,14 @@ public final class MockWeightedResourceRecordSetApi extends MockAllProfileResour
     }
 
     @Override
-    public Set<String> supportedTypes() {
-        return supportedTypes;
-    }
-
-    @Override
     public SortedSet<Integer> supportedWeights() {
         return supportedWeights;
     }
 
     @Override
     public void put(ResourceRecordSet<?> rrset) {
+        checkArgument(supportedTypes.contains(rrset.type()), "%s not a supported type for weighted: %s", rrset.type(),
+                supportedTypes);
         put(IS_WEIGHTED, rrset);
     }
 
@@ -64,11 +63,10 @@ public final class MockWeightedResourceRecordSetApi extends MockAllProfileResour
         // wildcard types are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
-        Factory(Multimap<Zone, ResourceRecordSet> records,
-                @denominator.config.profile.Weighted Set<String> supportedTypes,
-                @denominator.config.profile.Weighted SortedSet<Integer> supportedWeights) {
+        Factory(Multimap<Zone, ResourceRecordSet> records, Provider provider,
+                @Named("weighted") SortedSet<Integer> supportedWeights) {
             this.records = Multimap.class.cast(filterValues(Multimap.class.cast(records), IS_WEIGHTED));
-            this.supportedTypes = supportedTypes;
+            this.supportedTypes = provider.profileToRecordTypes().get("weighted");
             this.supportedWeights = supportedWeights;
         }
 
@@ -76,8 +74,8 @@ public final class MockWeightedResourceRecordSetApi extends MockAllProfileResour
         public Optional<WeightedResourceRecordSetApi> create(String idOrName) {
             Zone zone = Zone.create(idOrName);
             checkArgument(records.keySet().contains(zone), "zone %s not found", idOrName);
-            return Optional.<WeightedResourceRecordSetApi> of(new MockWeightedResourceRecordSetApi(records,
-                    zone, supportedTypes, supportedWeights));
+            return Optional.<WeightedResourceRecordSetApi> of(new MockWeightedResourceRecordSetApi(records, zone,
+                    supportedTypes, supportedWeights));
         }
     }
 }

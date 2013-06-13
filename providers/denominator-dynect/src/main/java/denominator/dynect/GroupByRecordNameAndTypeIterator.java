@@ -1,6 +1,6 @@
 package denominator.dynect;
-
 import static com.google.common.collect.Iterators.peekingIterator;
+import static denominator.dynect.DynECTResourceRecordSetApi.numbersToInts;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -33,7 +33,7 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
                                                                 .name(record.getFQDN())
                                                                 .type(record.getType())
                                                                 .ttl(record.getTTL())
-                                                                .add(record.getRData());
+                                                                .add(numbersToInts(record));
         while (hasNext()) {
             Record<?> next = peekingIterator.peek();
             if (next == null)

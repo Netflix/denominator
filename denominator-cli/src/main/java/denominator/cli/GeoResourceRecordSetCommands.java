@@ -41,7 +41,7 @@ class GeoResourceRecordSetCommands {
     public static class GeoTypeList extends GeoResourceRecordSetCommand {
         @Override
         protected Iterator<String> doRun(DNSApiManager mgr) {
-            return mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().supportedTypes().iterator();
+            return mgr.provider().profileToRecordTypes().get("geo").iterator();
         }
     }
 

@@ -1,7 +1,11 @@
 package denominator.ultradns;
 
+import static com.google.common.base.Predicates.in;
+import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Strings.emptyToNull;
+import static com.google.common.collect.Iterables.filter;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
+import static dagger.Provides.Type.SET;
 import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
 
 import java.io.Closeable;
@@ -9,6 +13,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -27,7 +32,9 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.SetMultimap;
 
 import dagger.Provides;
 import denominator.BasicProvider;
@@ -35,10 +42,12 @@ import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.QualifiedResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
-import denominator.config.ConcatBasicAndGeoResourceRecordSets;
+import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
 import denominator.config.WeightedUnsupported;
+import denominator.profile.GeoResourceRecordSetApi;
 
 public class UltraDNSProvider extends BasicProvider {
     private final String url;
@@ -61,6 +70,27 @@ public class UltraDNSProvider extends BasicProvider {
         return url;
     }
 
+    /**
+     * harvested from the {@code RESOURCE RECORD TYPE CODES} section of the SOAP
+     * user guide, dated 2012-11-04.
+     */
+    @Override
+    public Set<String> basicRecordTypes() {
+        return ImmutableSet.of("A", "AAAA", "CNAME", "HINFO", "MX", "NAPTR", "NS", "PTR", "RP", "SOA", "SPF", "SRV",
+                "TXT");
+    }
+
+    /**
+     * directional pools in ultra have types {@code IPV4} and {@code IPV6} which
+     * accept both CNAME and address types.
+     */
+    @Override
+    public SetMultimap<String, String> profileToRecordTypes() {
+        return ImmutableSetMultimap.<String, String> builder()
+                .putAll("geo", "A", "AAAA", "CNAME", "HINFO", "MX", "NAPTR", "PTR", "RP", "SRV", "TXT")
+                .putAll("roundRobin", filter(basicRecordTypes(), not(in(ImmutableSet.of("SOA", "CNAME"))))).build();
+    }
+
     @Override
     public Multimap<String, String> credentialTypeToParameterNames() {
         return ImmutableMultimap.<String, String> builder().putAll("password", "username", "password").build();
@@ -70,7 +100,7 @@ public class UltraDNSProvider extends BasicProvider {
                    complete = false, // denominator.Provider and denominator.Credentials
                    includes = { UltraDNSGeoSupport.class,
                                 WeightedUnsupported.class,
-                                ConcatBasicAndGeoResourceRecordSets.class })
+                                ConcatBasicAndQualifiedResourceRecordSets.class })
     public static final class Module {
 
         @Provides
@@ -154,6 +184,12 @@ public class UltraDNSProvider extends BasicProvider {
         @Singleton
         ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(UltraDNSWSApi api) {
             return new UltraDNSResourceRecordSetApi.Factory(api);
+        }
+
+        @Provides(type = SET)
+        @Singleton
+        QualifiedResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(GeoResourceRecordSetApi.Factory in) {
+            return in;
         }
 
         @Provides

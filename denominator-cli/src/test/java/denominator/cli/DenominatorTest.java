@@ -330,6 +330,7 @@ public class DenominatorTest {
         command.zoneIdOrName = "denominator.io.";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 "A",
+                "AAAA",
                 "CNAME"));
     }
 

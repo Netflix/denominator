@@ -2,6 +2,7 @@ package denominator.dynect;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.collect.Maps.transformValues;
 import static com.google.common.collect.Ordering.usingToString;
 
 import java.util.Iterator;
@@ -15,6 +16,7 @@ import org.jclouds.dynect.v3.domain.CreateRecord;
 import org.jclouds.dynect.v3.domain.Record;
 import org.jclouds.dynect.v3.domain.RecordId;
 
+import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -90,7 +92,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         for (Record<?> existingRecord : existingRecords) {
             if (!ttl.isPresent())
                 ttl = Optional.of(existingRecord.getTTL());
-            builder.add(existingRecord.getRData());
+            builder.add(numbersToInts(existingRecord));
         }
         return Optional.<ResourceRecordSet<?>> of(builder.ttl(ttl.get()).build());
     }
@@ -204,7 +206,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
             return;
         boolean shouldPublish = false;
         for (Record<? extends Map<String, Object>> toEvaluate : existingRecords) {
-            if (toEvaluate != null && rrset.rdata().contains(toEvaluate.getRData())) {
+            if (toEvaluate != null && rrset.rdata().contains(numbersToInts(toEvaluate))) {
                 shouldPublish = true;
                 api.getRecordApiForZone(zoneFQDN).scheduleDelete(toEvaluate);
             }
@@ -234,5 +236,18 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     private Iterator<ResourceRecordSet<?>> groupByRecordNameAndType(FluentIterable<Record<?>> records) {
         Iterator<Record<?>> ordered = records.toSortedList(usingToString()).iterator();
         return new GroupByRecordNameAndTypeIterator(ordered);
+    }
+
+    static Map<String, Object> numbersToInts(Record<?> record) {
+        return transformValues(record.getRData(), new Function<Object, Object>() {
+
+            @Override
+            public Object apply(Object input) {
+                // gson makes everything floats, which conflicts with data format for typical types
+                // such as MX priority
+                return input instanceof Number ? Number.class.cast(input).intValue() : input;
+            }
+
+        });
     }
 }

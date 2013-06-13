@@ -13,12 +13,14 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
+import denominator.Provider;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import denominator.model.profile.Geo;
@@ -41,11 +43,6 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
     @Override
     @Deprecated
     public Set<String> getSupportedTypes() {
-        return supportedTypes();
-    }
-
-    @Override
-    public Set<String> supportedTypes() {
         return supportedTypes;
     }
 
@@ -62,6 +59,8 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
 
     @Override
     public void put(ResourceRecordSet<?> rrset) {
+        checkArgument(supportedTypes.contains(rrset.type()), "%s not a supported type for geo: %s", rrset.type(),
+                supportedTypes);
         synchronized (records) {
             Geo newGeo = toProfile(Geo.class).apply(rrset);
             put(IS_GEO, rrset);
@@ -143,10 +142,10 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         // wildcard types are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
-        Factory(Multimap<Zone, ResourceRecordSet> records, @denominator.config.profile.Geo Set<String> supportedTypes,
-                @denominator.config.profile.Geo Multimap<String, String> supportedRegions) {
+        Factory(Multimap<Zone, ResourceRecordSet> records, Provider provider,
+                @Named("geo") Multimap<String, String> supportedRegions) {
             this.records = Multimap.class.cast(filterValues(Multimap.class.cast(records), IS_GEO));
-            this.supportedTypes = supportedTypes;
+            this.supportedTypes = provider.profileToRecordTypes().get("geo");
             this.supportedRegions = supportedRegions;
         }
 
