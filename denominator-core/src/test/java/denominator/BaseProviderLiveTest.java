@@ -49,6 +49,8 @@ public abstract class BaseProviderLiveTest {
     protected Map<String, ResourceRecordSet<?>> stockRRSets() {
         Zone zone = skipIfNoMutableZone();
         String recordSuffix =  recordPrefix + "." + zone.name();
+        // TODO: metadata about whether zone names have trailing dots or not.
+        recordSuffix = recordSuffix.endsWith(".") ? recordSuffix : recordSuffix + ".";
         Builder<String, ResourceRecordSet<?>> builder = ImmutableMap.<String, ResourceRecordSet<?>> builder();
         builder.put("AAAA", aaaa("ipv6-" + recordSuffix, ImmutableList.of("2001:0DB8:85A3:0000:0000:8A2E:0370:7334",
                 "2001:0DB8:85A3:0000:0000:8A2E:0370:7335", "2001:0DB8:85A3:0000:0000:8A2E:0370:7336")));

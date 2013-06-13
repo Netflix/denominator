@@ -4,8 +4,8 @@ import static com.google.common.collect.Multimaps.index;
 
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import com.google.common.base.Function;
@@ -37,7 +37,7 @@ public class DynECTGeoSupport {
      */
     @Provides
     @Singleton
-    @denominator.config.profile.Geo
+    @Named("geo")
     Multimap<String, String> provideCountriesByRegion() {
         return ImmutableMultimap.<String, String> builder()
                 // Continental North America
@@ -90,27 +90,14 @@ public class DynECTGeoSupport {
     }
 
     /**
-     * harvested from <a
-     * href="https://manage.dynect.net/help/docs/api2/rest/resources/Geo.html"
-     * >docs</a> on 2013-04-23.
-     */
-    @Provides
-    @Singleton
-    @denominator.config.profile.Geo
-    Set<String> provideSupportedGeoRecordTypes() {
-        return ImmutableSet.of("A", "AAAAA", "CNAME", "CERT", "MX", "TXT", "SPF", "PTR", "LOC", "SRV", "RP", "KEY",
-                "DNSKEY", "SSHFP", "DHCID", "NSAP", "PX");
-    }
-
-    /**
      * {@link org.jclouds.dynect.v3.domain.GeoRegionGroup#getCountries()} isn't
      * organized, so we need a lookup table.
      */
     @Provides
     @Singleton
-    @denominator.config.profile.Geo
+    @Named("geo")
     Function<List<String>, Multimap<String, String>> provideCountryToRegionIndexer(
-            @denominator.config.profile.Geo final Multimap<String, String> regions) {
+            @Named("geo") final Multimap<String, String> regions) {
         Builder<String, String> builder = ImmutableMap.<String, String> builder();
         for (Entry<String, String> region : regions.entries()) {
             builder.put(region.getValue(), region.getKey());

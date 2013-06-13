@@ -6,6 +6,7 @@ import com.google.common.annotations.Beta;
 import com.google.common.base.Optional;
 import com.google.common.collect.Multimap;
 
+import denominator.Provider;
 import denominator.QualifiedResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 import denominator.model.profile.Geo;
@@ -18,18 +19,10 @@ public interface GeoResourceRecordSetApi extends QualifiedResourceRecordSetApi {
 
     /**
      * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #supportedTypes()}
+     *             {@link Provider#profileToRecordTypes()} with the {@code geo} key.
      */
     @Deprecated
     Set<String> getSupportedTypes();
-
-    /**
-     * the set of {@link ResourceRecordSet#type() record types} that support the
-     * geo profile.
-     * 
-     * @since 1.3
-     */
-    Set<String> supportedTypes();
 
     /**
      * @deprecated Will be removed in denominator 2.0. Please use

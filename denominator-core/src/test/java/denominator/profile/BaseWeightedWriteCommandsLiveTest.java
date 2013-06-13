@@ -28,7 +28,7 @@ import denominator.model.profile.Weighted;
 public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLiveTest {
 
     protected Map<String, ResourceRecordSet<?>> stockRRSets() {
-        return filterKeys(super.stockRRSets(), in(weightedApi(skipIfNoMutableZone()).supportedTypes()));
+        return filterKeys(super.stockRRSets(), in(manager.provider().profileToRecordTypes().get("weighted")));
     }
 
     String qualifier1 = "US-East";

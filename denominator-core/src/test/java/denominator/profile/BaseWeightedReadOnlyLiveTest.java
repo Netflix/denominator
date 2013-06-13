@@ -44,7 +44,7 @@ public abstract class BaseWeightedReadOnlyLiveTest extends BaseProviderLiveTest 
 
                 Weighted weighted = toProfile(Weighted.class).apply(weightedRRS);
                 assertTrue(weightedApi(zone).supportedWeights().contains(weighted.weight()));
-                assertTrue(weightedApi(zone).supportedTypes().contains(weightedRRS.type()));
+                assertTrue(manager.provider().profileToRecordTypes().get("weighted").contains(weightedRRS.type()));
 
                 getAnonymousLogger().info(format("%s ::: weightedRRS: %s", manager, weightedRRS));
                 recordTypeCounts.getUnchecked(weightedRRS.type()).addAndGet(weightedRRS.rdata().size());

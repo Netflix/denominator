@@ -3,14 +3,21 @@ package denominator;
 import static com.google.common.base.Objects.equal;
 import static com.google.common.base.Objects.toStringHelper;
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Predicates.in;
+import static com.google.common.base.Predicates.not;
+import static com.google.common.collect.Iterables.filter;
 
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import com.google.common.annotations.Beta;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
+import com.google.common.collect.SetMultimap;
 
 /**
  * base implementation of {@link Provider}, which sets defaults and properly
@@ -58,6 +65,17 @@ public abstract class BasicProvider implements Provider {
     @Override
     public String url() {
         return "mem:" + name();
+    }
+
+    @Override
+    public Set<String> basicRecordTypes() {
+        return ImmutableSet.of("A", "AAAA", "CNAME", "MX", "NS", "PTR", "SOA", "SPF", "SRV", "SSHFP", "TXT");
+    }
+
+    @Override
+    public SetMultimap<String, String> profileToRecordTypes() {
+        return ImmutableSetMultimap.<String, String> builder()
+                .putAll("roundRobin", filter(basicRecordTypes(), not(in(ImmutableSet.of("SOA", "CNAME"))))).build();
     }
 
     @Override

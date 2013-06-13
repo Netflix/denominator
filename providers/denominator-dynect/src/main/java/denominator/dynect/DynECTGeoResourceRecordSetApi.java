@@ -4,11 +4,13 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.equalTo;
 import static com.google.common.collect.Iterables.any;
 import static com.google.common.collect.Iterables.filter;
+import static com.google.common.collect.Iterators.emptyIterator;
 
 import java.util.Iterator;
 import java.util.Set;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import org.jclouds.dynect.v3.domain.GeoService;
 import org.jclouds.dynect.v3.domain.Node;
@@ -19,21 +21,22 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Multimap;
 
+import denominator.Provider;
 import denominator.dynect.DynECTProvider.ReadOnlyApi;
 import denominator.model.ResourceRecordSet;
 import denominator.profile.GeoResourceRecordSetApi;
 
 public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
-    private final Set<String> types;
+    private final Set<String> supportedTypes;
     private final Multimap<String, String> regions;
     private final ReadOnlyApi api;
     private final GeoServiceToResourceRecordSets geoToRRSets;
     private final String zoneFQDN;
 
-    DynECTGeoResourceRecordSetApi(Set<String> types, Multimap<String, String> regions, ReadOnlyApi api,
+    DynECTGeoResourceRecordSetApi(Set<String> supportedTypes, Multimap<String, String> regions, ReadOnlyApi api,
             GeoServiceToResourceRecordSets geoToRRSets, String zoneFQDN) {
-        this.types = types;
+        this.supportedTypes = supportedTypes;
         this.regions = regions;
         this.api = api;
         this.geoToRRSets = geoToRRSets;
@@ -43,12 +46,7 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     @Override
     @Deprecated
     public Set<String> getSupportedTypes() {
-        return supportedTypes();
-    }
-
-    @Override
-    public Set<String> supportedTypes() {
-        return types;
+        return supportedTypes;
     }
 
     @Override
@@ -95,6 +93,9 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String fqdn, String type) {
         checkNotNull(fqdn, "fqdn was null");
         checkNotNull(type, "type was null");
+        if (!supportedTypes.contains(type)){
+            return emptyIterator();
+        }
         return geoServices(withNode(fqdn)).transformAndConcat(geoToRRSets.type(type)).iterator();
     }
     @Override
@@ -108,6 +109,9 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
         checkNotNull(fqdn, "fqdn was null");
         checkNotNull(type, "type was null");
         checkNotNull(qualifier, "qualifier was null");
+        if (!supportedTypes.contains(type)){
+            return Optional.absent();
+        }
         return geoServices(withNode(fqdn)).transformAndConcat(geoToRRSets.type(type).group(qualifier)).first();
     }
 
@@ -174,16 +178,15 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     }
 
     static final class Factory implements GeoResourceRecordSetApi.Factory {
-        private final Set<String> types;
+        private final Set<String> supportedTypes;
         private final Multimap<String, String> regions;
         private final ReadOnlyApi api;
         private final GeoServiceToResourceRecordSets geoToRRSets;
 
         @Inject
-        Factory(@denominator.config.profile.Geo Set<String> types,
-                @denominator.config.profile.Geo Multimap<String, String> regions, ReadOnlyApi api,
+        Factory(Provider provider, @Named("geo") Multimap<String, String> regions, ReadOnlyApi api,
                 GeoServiceToResourceRecordSets geoToRRSets) {
-            this.types = types;
+            this.supportedTypes = provider.profileToRecordTypes().get("geo");
             this.regions = regions;
             this.api = api;
             this.geoToRRSets = geoToRRSets;
@@ -193,7 +196,7 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
         public Optional<GeoResourceRecordSetApi> create(String idOrName) {
             checkNotNull(idOrName, "idOrName was null");
             return Optional.<GeoResourceRecordSetApi> of(
-                    new DynECTGeoResourceRecordSetApi(types, regions, api, geoToRRSets, idOrName));
+                    new DynECTGeoResourceRecordSetApi(supportedTypes, regions, api, geoToRRSets, idOrName));
         }
     }
 }
