@@ -2,16 +2,12 @@ package denominator.route53;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.and;
-import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Predicates.or;
-import static com.google.common.collect.Iterables.filter;
 import static denominator.route53.ToDenominatorResourceRecordSet.isAlias;
 import static denominator.route53.ToDenominatorResourceRecordSet.isSubset;
-import static denominator.route53.ToRoute53ResourceRecordSet.toTextFormat;
 
 import java.util.Iterator;
-import java.util.List;
 
 import javax.inject.Inject;
 
@@ -22,8 +18,6 @@ import org.jclouds.route53.domain.ResourceRecordSetIterable.NextRecord;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -158,100 +152,5 @@ final class Route53ResourceRecordSetApi implements denominator.ResourceRecordSet
         public String toString() {
             return "TypeEqualTo(" + type + ")";
         }
-    }
-
-    @Deprecated
-    @Override
-    public Iterator<ResourceRecordSet<?>> list() {
-        return iterator();
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        return iterateByName(name);
-    }
-
-    @Override
-    @Deprecated
-    public void applyTTLToNameAndType(int ttl, String name, String type) {
-        checkNotNull(ttl, "ttl");
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> existing = filterRoute53RRSByNameAndType(name, type)
-                .first();
-        if (!existing.isPresent())
-            return;
-        org.jclouds.route53.domain.ResourceRecordSet rrset = existing.get();
-        if (rrset.getTTL().isPresent() && rrset.getTTL().get().intValue() == ttl)
-            return;
-        ChangeBatch.Builder changes = ChangeBatch.builder();
-        changes.delete(rrset);
-        changes.create(rrset.toBuilder().ttl(ttl).build());
-        route53RRsetApi.apply(changes.build());
-    }
-
-    /**
-     * if the {@code rdata} is present in an existing RRSet, that RRSet is
-     * either deleted, or replaced, depending on whether the parameter is the
-     * only value or not.
-     */
-    @Override
-    @Deprecated
-    public void remove(ResourceRecordSet<?> rrset) {
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.name(),
-                rrset.type()).first();
-        if (!oldRRS.isPresent())
-            return;
-
-        List<String> valuesToRemove = ImmutableList.copyOf(filter(oldRRS.get().getValues(), in(toTextFormat(rrset))));
-        if (valuesToRemove.size() == 0)
-            return;
-
-        List<String> valuesToRetain = ImmutableList.copyOf(filter(oldRRS.get().getValues(), not(in(valuesToRemove))));
-        if (valuesToRetain.size() == 0) {
-            route53RRsetApi.delete(oldRRS.get());
-            return;
-        }
-
-        ChangeBatch.Builder changes = ChangeBatch.builder();
-        changes.delete(oldRRS.get());
-        changes.create(org.jclouds.route53.domain.ResourceRecordSet.builder().name(rrset.name()).type(rrset.type())
-                .ttl(oldRRS.get().getTTL().get()).addAll(valuesToRetain).build());
-        route53RRsetApi.apply(changes.build());
-    }
-
-    /**
-     * creates a record set, adding the {@code rdata} values in the
-     * {@code rrset}. If the record set already exists, the old copy is deleted
-     * first. If the {@code ttl} is not present on a new {@code rrset}, we use
-     * default ttl from the amazon console ({@code 300 seconds}).
-     */
-    @Override
-    @Deprecated
-    public void add(ResourceRecordSet<?> rrset) {
-        Optional<Integer> ttlToApply = rrset.ttl();
-
-        ChangeBatch.Builder changes = ChangeBatch.builder();
-        Builder<String> values = ImmutableList.builder();
-        Optional<org.jclouds.route53.domain.ResourceRecordSet> oldRRS = filterRoute53RRSByNameAndType(rrset.name(),
-                rrset.type()).first();
-        if (oldRRS.isPresent()) {
-            ttlToApply = ttlToApply.or(oldRRS.get().getTTL());
-            changes.delete(oldRRS.get());
-            values.addAll(oldRRS.get().getValues());
-            values.addAll(filter(toTextFormat(rrset), not(in(oldRRS.get().getValues()))));
-        } else {
-            values.addAll(toTextFormat(rrset));
-        }
-
-        changes.create(org.jclouds.route53.domain.ResourceRecordSet.builder().name(rrset.name()).type(rrset.type())
-                .ttl(ttlToApply.or(300)).addAll(values.build()).build());
-
-        route53RRsetApi.apply(changes.build());
-    }
-
-    @Override
-    @Deprecated
-    public void replace(ResourceRecordSet<?> rrset) {
-        put(rrset);
     }
 }

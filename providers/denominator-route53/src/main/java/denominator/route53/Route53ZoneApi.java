@@ -1,8 +1,5 @@
 package denominator.route53;
 
-import static com.google.common.collect.Iterators.transform;
-import static denominator.model.Zones.toName;
-
 import java.util.Iterator;
 
 import javax.inject.Inject;
@@ -20,11 +17,6 @@ public final class Route53ZoneApi implements denominator.ZoneApi {
     @Inject
     Route53ZoneApi(Route53Api api) {
         this.api = api;
-    }
-
-    @Override
-    public Iterator<String> list() {
-        return transform(iterator(), toName());
     }
 
     @Override

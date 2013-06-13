@@ -74,10 +74,6 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
 
         Geo geo = toProfile(Geo.class).apply(geoRRS);
         assertTrue(!geo.regions().isEmpty(), "Regions empty on Geo: " + geoRRS);
-        
-        // TODO: remove in 2.0
-        assertEquals(geoRRS.qualifier().get(), geo.group());
-        
         checkNotNull(geoRRS.name(), "Name: ResourceRecordSet %s", geoRRS);
         checkNotNull(geoRRS.type(), "Type: ResourceRecordSet %s", geoRRS);
         checkNotNull(geoRRS.ttl(), "TTL: ResourceRecordSet %s", geoRRS);

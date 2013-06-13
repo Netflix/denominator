@@ -42,34 +42,11 @@ public class DNSApi {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #zones()}
-     */
-    @Deprecated
-    public ZoneApi getZoneApi() {
-        return zones();
-    }
-
-    /**
      * controls DNS zones, such as {@code netflix.com.}, availing information
      * about name servers.
      */
     public ZoneApi zones() {
         return zones;
-    }
-
-    /**
-     * controls DNS records as a set. Operates against the first zone named
-     * zone {@code idOrName}.
-     * 
-     * @param zoneName
-     *            name of the zone containing the record sets.
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #basicRecordSetsInZone(String)}
-     */
-    @Deprecated
-    public ResourceRecordSetApi getResourceRecordSetApiForZone(String zoneName) {
-        return basicRecordSetsInZone(idOrName(zoneName));
     }
 
     /**
@@ -104,17 +81,6 @@ public class DNSApi {
     }
 
     /**
-     * allows you to list all resource record sets regardless of their profile.
-     * 
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #recordSetsInZone(String)}
-     */
-    @Deprecated
-    public AllProfileResourceRecordSetApi getAllProfileResourceRecordSetApiForZone(String zoneName) {
-        return recordSetsInZone(idOrName(zoneName));
-    }
-
-    /**
      * Controls all DNS records as a set. Operates against the zone with id
      * {@code zoneId}. This is supported by all {@link Provider providers}, but
      * may only return basic records, if that's all that is supported.
@@ -140,18 +106,6 @@ public class DNSApi {
      */
     public AllProfileResourceRecordSetApi recordSetsInZone(String idOrName) {
         return allRRSetApiFactory.create(idOrName);
-    }
-
-    /**
-     * controls DNS records which take into consideration the territory of the
-     * caller. These are otherwise known as Directional records.
-     * 
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #geoRecordSetsInZone(String)}
-     */
-    @Deprecated
-    public Optional<GeoResourceRecordSetApi> getGeoResourceRecordSetApiForZone(String zoneName) {
-        return geoRecordSetsInZone(idOrName(zoneName));
     }
 
     /**

@@ -212,7 +212,7 @@ class ResourceRecordSetCommands {
                 builder.ttl(ttl);
             final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
             String cmd = format(";; in zone %s adding to rrset %s %s values: [%s]", zoneIdOrName, name, type, Joiner
-                    .on(',').join(toAdd));
+                    .on(',').join(toAdd.rdata()));
             if (ttl != -1)
                 cmd = format("%s applying ttl %d", cmd, ttl);
             return concat(forArray(cmd), new Iterator<String>() {
@@ -266,7 +266,7 @@ class ResourceRecordSetCommands {
                 builder.ttl(ttl);
             final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
             String cmd = format(";; in zone %s replacing rrset %s %s with values: [%s]", zoneIdOrName, name, type, Joiner
-                    .on(',').join(toAdd));
+                    .on(',').join(toAdd.rdata()));
             if (ttl != -1)
                 cmd = format("%s and ttl %d", cmd, ttl);
             return concat(forArray(cmd), new Iterator<String>() {
@@ -298,7 +298,7 @@ class ResourceRecordSetCommands {
         public Iterator<String> doRun(final DNSApiManager mgr) {
             final ResourceRecordSet<Map<String, Object>> toRemove = rrsetBuilder().build();
             String cmd = format(";; in zone %s removing from rrset %s %s values: [%s]", zoneIdOrName, name, type, Joiner
-                    .on(',').join(toRemove));
+                    .on(',').join(toRemove.rdata()));
             return concat(forArray(cmd), new Iterator<String>() {
                 boolean done = false;
 
@@ -377,7 +377,7 @@ class ResourceRecordSetCommands {
         @Override
         public String apply(ResourceRecordSet<?> input) {
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
-            for (Map<String, Object> rdata : input) {
+            for (Map<String, Object> rdata : input.rdata()) {
                 lines.add(format("%-50s%-7s%-20s%-6s%s", input.name(), input.type(), input.qualifier().or(""),
                         input.ttl().orNull(), flatten(rdata)));
             }

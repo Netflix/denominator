@@ -67,11 +67,6 @@ public class DynamicCredentialsProviderExampleTest {
             this.creds = creds;
         }
 
-        @Override
-        public Iterator<String> list() {
-            throw new UnsupportedOperationException();
-        }
-
         /**
          * make sure you note in your javadoc that IllegalArgumentException can
          * arise when the user supplies the incorrect form of credentials.

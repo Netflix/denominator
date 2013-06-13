@@ -299,6 +299,6 @@ public class ResourceRecordSetsTest {
         assertEquals(shortForm.name(), longForm.name());
         assertEquals(shortForm.type(), longForm.type());
         assertEquals(shortForm.ttl(), longForm.ttl());
-        assertEquals(ImmutableList.copyOf(shortForm), ImmutableList.copyOf(longForm));
+        assertEquals(ImmutableList.copyOf(shortForm.rdata()), ImmutableList.copyOf(longForm.rdata()));
     }
 }
