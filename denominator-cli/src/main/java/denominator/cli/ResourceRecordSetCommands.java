@@ -1,6 +1,9 @@
 package denominator.cli;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Predicates.in;
+import static com.google.common.base.Predicates.not;
+import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
@@ -24,6 +27,7 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
 import denominator.DNSApiManager;
+import denominator.ResourceRecordSetApi;
 import denominator.cli.Denominator.DenominatorCommand;
 import denominator.hook.InstanceMetadataHook;
 import denominator.model.ResourceRecordSet;
@@ -112,7 +116,15 @@ class ResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).applyTTLToNameAndType(ttl, name, type);
+                    ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
+                    Optional<ResourceRecordSet<?>> rrset = api.getByNameAndType(name, type);
+                    if (rrset.isPresent() && rrset.get().ttl().or(Integer.MAX_VALUE).intValue() != ttl) {
+                        api.put(ResourceRecordSet.builder()
+                                                 .name(rrset.get().name())
+                                                 .type(rrset.get().type())
+                                                 .ttl(ttl)
+                                                 .addAll(rrset.get().rdata()).build());
+                    }
                     done = true;
                     return ";; ok";
                 }
@@ -213,7 +225,24 @@ class ResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).add(toAdd);
+                    ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
+                    Optional<ResourceRecordSet<?>> rrset = api.getByNameAndType(name, type);
+                    if (rrset.isPresent()) {
+                        ImmutableList<Map<String, Object>> oldRDataAsList =
+                                ImmutableList.copyOf(rrset.get().rdata());
+                        ImmutableList<Map<String, Object>> newRData =
+                                ImmutableList.copyOf(filter(rrset.get().rdata(), not(in(toAdd.rdata()))));
+                        if (!newRData.isEmpty()) {
+                            api.put(ResourceRecordSet.builder()
+                                                     .name(rrset.get().name())
+                                                     .type(rrset.get().type())
+                                                     .ttl(rrset.get().ttl().orNull())
+                                                     .addAll(oldRDataAsList)
+                                                     .addAll(newRData).build());
+                        }
+                    } else {
+                        api.put(toAdd);
+                    }
                     done = true;
                     return ";; ok";
                 }
@@ -250,7 +279,7 @@ class ResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).replace(toAdd);
+                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).put(toAdd);
                     done = true;
                     return ";; ok";
                 }
@@ -280,7 +309,23 @@ class ResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).remove(toRemove);
+                    ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
+                    Optional<ResourceRecordSet<?>> rrset = api.getByNameAndType(name, type);
+                    if (rrset.isPresent()) {
+                        ImmutableList<Map<String, Object>> oldRDataAsList =
+                                ImmutableList.copyOf(rrset.get().rdata());
+                        ImmutableList<Map<String, Object>> retainedRData =
+                                ImmutableList.copyOf(filter(rrset.get().rdata(), not(in(toRemove.rdata()))));
+                        if (retainedRData.isEmpty()) {
+                            api.deleteByNameAndType(name, type);
+                        } else if (!oldRDataAsList.equals(retainedRData)) {
+                            api.put(ResourceRecordSet.builder()
+                                                     .name(rrset.get().name())
+                                                     .type(rrset.get().type())
+                                                     .ttl(rrset.get().ttl().orNull())
+                                                     .addAll(retainedRData).build());
+                        }
+                    }
                     done = true;
                     return ";; ok";
                 }

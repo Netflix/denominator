@@ -5,7 +5,6 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
-import static dagger.Provides.Type.SET;
 import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
 
 import java.io.Closeable;
@@ -42,7 +41,7 @@ import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
-import denominator.QualifiedResourceRecordSetApi;
+import denominator.QualifiedResourceRecordSetApi.Factory;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
@@ -186,10 +185,10 @@ public class UltraDNSProvider extends BasicProvider {
             return new UltraDNSResourceRecordSetApi.Factory(api);
         }
 
-        @Provides(type = SET)
+        @Provides
         @Singleton
-        QualifiedResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(GeoResourceRecordSetApi.Factory in) {
-            return in;
+        SetMultimap<Factory, String> factoryToProfiles(GeoResourceRecordSetApi.Factory in) {
+            return ImmutableSetMultimap.<Factory, String> of(in, "geo");
         }
 
         @Provides

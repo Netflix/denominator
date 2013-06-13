@@ -168,6 +168,10 @@ public abstract class BaseProviderLiveTest {
         return manager.api().basicRecordSetsInZone(zone.idOrName());
     }
 
+    protected AllProfileResourceRecordSetApi allApi(Zone zone) {
+        return manager.api().recordSetsInZone(zone.idOrName());
+    }
+
     protected GeoResourceRecordSetApi geoApi(Zone zone) {
         Optional<GeoResourceRecordSetApi> geoOption = manager.api().geoRecordSetsInZone(zone.idOrName());
         if (!geoOption.isPresent())

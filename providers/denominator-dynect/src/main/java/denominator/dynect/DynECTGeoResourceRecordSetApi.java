@@ -44,49 +44,8 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     }
 
     @Override
-    @Deprecated
-    public Set<String> getSupportedTypes() {
-        return supportedTypes;
-    }
-
-    @Override
-    @Deprecated
-    public Multimap<String, String> getSupportedRegions() {
-        return supportedRegions();
-    }
-
-    @Override
-    public Multimap<String, String> supportedRegions() {
-        return regions;
-    }
-
-    @Deprecated
-    @Override
-    public Iterator<ResourceRecordSet<?>> list() {
-        return iterator();
-    }
-
-    @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
         return geoServices(inZone).transformAndConcat(geoToRRSets).iterator();
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        return iterateByName(name);
-    }
-
-    @Override
-    public Iterator<ResourceRecordSet<?>> iterateByName(String fqdn) {
-        checkNotNull(fqdn, "fqdn was null");
-        return geoServices(withNode(fqdn)).transformAndConcat(geoToRRSets).iterator();
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
-        return iterateByNameAndType(name, type);
     }
 
     @Override
@@ -98,10 +57,16 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
         }
         return geoServices(withNode(fqdn)).transformAndConcat(geoToRRSets.type(type)).iterator();
     }
+
     @Override
-    @Deprecated
-    public Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type, String group) {
-        return getByNameTypeAndQualifier(name, type, group);
+    public Iterator<ResourceRecordSet<?>> iterateByName(String fqdn) {
+        checkNotNull(fqdn, "fqdn was null");
+        return geoServices(withNode(fqdn)).transformAndConcat(geoToRRSets).iterator();
+    }
+
+    @Override
+    public Multimap<String, String> supportedRegions() {
+        return regions;
     }
 
     @Override
@@ -133,18 +98,6 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
 
     @Override
     public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    @Deprecated
-    public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    @Deprecated
-    public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
         throw new UnsupportedOperationException();
     }
 
@@ -198,5 +151,53 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
             return Optional.<GeoResourceRecordSetApi> of(
                     new DynECTGeoResourceRecordSetApi(supportedTypes, regions, api, geoToRRSets, idOrName));
         }
+    }
+
+    @Override
+    @Deprecated
+    public Set<String> getSupportedTypes() {
+        return supportedTypes;
+    }
+
+    @Override
+    @Deprecated
+    public Multimap<String, String> getSupportedRegions() {
+        return supportedRegions();
+    }
+
+    @Deprecated
+    @Override
+    public Iterator<ResourceRecordSet<?>> list() {
+        return iterator();
+    }
+
+    @Override
+    @Deprecated
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
+    @Override
+    @Deprecated
+    public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
+        return iterateByNameAndType(name, type);
+    }
+
+    @Override
+    @Deprecated
+    public Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type, String group) {
+        return getByNameTypeAndQualifier(name, type, group);
+    }
+
+    @Override
+    @Deprecated
+    public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    @Deprecated
+    public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
+        throw new UnsupportedOperationException();
     }
 }

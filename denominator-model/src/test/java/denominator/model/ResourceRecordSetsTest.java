@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
 import denominator.model.profile.Geo;
+import denominator.model.profile.Weighted;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import denominator.model.rdata.NSData;
@@ -158,6 +159,27 @@ public class ResourceRecordSetsTest {
 
     public void toProfileReturnsProfileOnSameType() {
         assertEquals(toProfile(Geo.class).apply(geoRRS), geo);
+    }
+
+    public void toProfileTypesEmptyOnBasicRRSet() {
+        assertEquals(ResourceRecordSets.toProfileTypes(aRRS), ImmutableSet.of());
+    }
+
+    public void toProfileTypesWithSingleProfile() {
+        assertEquals(ResourceRecordSets.toProfileTypes(geoRRS), ImmutableSet.of("geo"));
+    }
+
+    public void toProfileTypesWithMultipleProfile() {
+        ResourceRecordSet<AData> geoWeightedRRS = ResourceRecordSet.<AData> builder()
+                .name("www.denominator.io.")
+                .type("A")
+                .qualifier("US-East")
+                .ttl(3600)
+                .add(AData.create("1.1.1.1"))
+                .addProfile(geo)
+                .addProfile(Weighted.create(2))
+                .build();
+        assertEquals(ResourceRecordSets.toProfileTypes(geoWeightedRRS), ImmutableSet.of("geo", "weighted"));
     }
 
     @DataProvider(name = "a")

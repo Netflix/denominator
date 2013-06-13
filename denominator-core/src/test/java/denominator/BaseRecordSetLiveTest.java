@@ -104,17 +104,17 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
     }
 
     @Test(dataProvider = "simpleRecords")
-    private void createNewRRS(ResourceRecordSet<?> recordSet) {
+    private void putNewRRS(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         Zone zone = skipIfNoMutableZone();
 
         skipIfRRSetExists(zone, recordSet.name(), recordSet.type());
 
-        rrsApi(zone).add(ResourceRecordSet.<Map<String, Object>> builder()
-                                              .name(recordSet.name())
-                                              .type(recordSet.type())
-                                              .ttl(1800)
-                                              .add(recordSet.rdata().get(0)).build());
+        rrsApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
+                                          .name(recordSet.name())
+                                          .type(recordSet.type())
+                                          .ttl(1800)
+                                          .add(recordSet.rdata().get(0)).build());
 
         Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
                 .getByNameAndType(recordSet.name(), recordSet.type());
@@ -129,12 +129,16 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
         assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(0));
     }
 
-    @Test(dependsOnMethods = "createNewRRS", dataProvider = "simpleRecords")
-    private void applyTTL(ResourceRecordSet<?> recordSet) {
+    @Test(dependsOnMethods = "putNewRRS", dataProvider = "simpleRecords")
+    private void putChangingTTL(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         Zone zone = skipIfNoMutableZone();
 
-        rrsApi(zone).applyTTLToNameAndType(200000, recordSet.name(), recordSet.type());
+        rrsApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
+                    .name(recordSet.name())
+                    .type(recordSet.type())
+                    .ttl(200000)
+                    .add(recordSet.rdata().get(0)).build());;
 
         Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
                 .getByNameAndType(recordSet.name(), recordSet.type());
@@ -149,72 +153,19 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
         assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(0));
     }
 
-    @Test(dependsOnMethods = "applyTTL", dataProvider = "simpleRecords")
-    private void replaceExistingRRSUpdatingTTL(ResourceRecordSet<?> recordSet) {
-        skipIfNoCredentials();
-        Zone zone = skipIfNoMutableZone();
-
-        rrsApi(zone).replace(ResourceRecordSet.<Map<String, Object>> builder()
-                                                  .name(recordSet.name())
-                                                  .type(recordSet.type())
-                                                  .ttl(10000)
-                                                  .add(recordSet.rdata().get(1)).build());
-
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
-                .getByNameAndType(recordSet.name(), recordSet.type());
-
-        assertPresent(rrs, zone, recordSet.name(), recordSet.type());
-
-        checkRRS(rrs.get());
-        assertEquals(rrs.get().name(), recordSet.name());
-        assertEquals(rrs.get().type(), recordSet.type());
-        assertEquals(rrs.get().ttl().get(), Integer.valueOf(10000));
-        assertEquals(rrs.get().rdata().size(), 1);
-        assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(1));
-    }
-
-    @Test(dependsOnMethods = "replaceExistingRRSUpdatingTTL", dataProvider = "simpleRecords")
-    private void removeLastRecordFromExistingRRSRemovesRRS(ResourceRecordSet<?> recordSet) {
-        skipIfNoCredentials();
-        Zone zone = skipIfNoMutableZone();
-
-        rrsApi(zone).remove(ResourceRecordSet.<Map<String, Object>> builder()
-                                                 .name(recordSet.name())
-                                                 .type(recordSet.type())
-                                                 .add(recordSet.rdata().get(1)).build());
-
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
-                .getByNameAndType(recordSet.name(), recordSet.type());
-
-        assertFalse(rrs.isPresent(),
-                format("recordset(%s, %s) still present in %s", recordSet.name(), recordSet.type(), zone));
-    }
-
-    @Test(dataProvider = "simpleRecords")
+    @Test(dependsOnMethods = "putChangingTTL", dataProvider = "simpleRecords")
     private void deleteRRS(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         Zone zone = skipIfNoMutableZone();
-        String recordName = recordSet.name().replace("." + zone.name(), "-delete." + zone.name());
 
-        skipIfRRSetExists(zone, recordName, recordSet.type());
+        rrsApi(zone).deleteByNameAndType(recordSet.name(), recordSet.type());
 
-        rrsApi(zone).add(ResourceRecordSet.<Map<String, Object>> builder()
-                                              .name(recordName)
-                                              .type(recordSet.type())
-                                              .add(recordSet.rdata().get(0)).build());
-
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone).getByNameAndType(recordName, recordSet.type());
-
-        assertPresent(rrs, zone, recordName, recordSet.type());
-
-        rrsApi(zone).deleteByNameAndType(recordName, recordSet.type());
-
-        String failureMessage = format("recordset(%s, %s) still exists in %s", recordName, recordSet.type(), zone);
-        assertFalse(rrsApi(zone).getByNameAndType(recordName, recordSet.type()).isPresent(), failureMessage);
-        assertFalse(any(rrsApi(zone).iterator(), and(nameEqualTo(recordName), typeEqualTo(recordSet.type()))),
+        String failureMessage = format("recordset(%s, %s) still exists in %s", recordSet.name(), recordSet.type(), zone);
+        assertFalse(rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type()).isPresent(), failureMessage);
+        assertFalse(any(rrsApi(zone).iterator(), and(nameEqualTo(recordSet.name()), typeEqualTo(recordSet.type()))),
                 failureMessage);
 
         // test no exception if re-applied
-        rrsApi(zone).deleteByNameAndType(recordName, recordSet.type());
+        rrsApi(zone).deleteByNameAndType(recordSet.name(), recordSet.type());
     }
 }

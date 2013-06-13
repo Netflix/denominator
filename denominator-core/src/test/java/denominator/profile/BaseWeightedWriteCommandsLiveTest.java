@@ -47,7 +47,7 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
     }
     
     @Test(dataProvider = "weightedRecords")
-    private void createNewRRS(ResourceRecordSet<?> recordSet) {
+    private void createNewRRSWithAllProfileApi(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         Zone zone = skipIfNoMutableZone();
 
@@ -55,13 +55,13 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
         for (String qualifier : new String[] { qualifier1, qualifier2 }) {
             skipIfRRSetExists(zone, recordSet.name(), recordSet.type(), qualifier);
     
-            weightedApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
-                                                   .name(recordSet.name())
-                                                   .type(recordSet.type())
-                                                   .ttl(1800)
-                                                   .qualifier(qualifier)
-                                                   .addProfile(Weighted.create(0))
-                                                   .add(recordSet.rdata().get(i)).build());
+            allApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
+                                              .name(recordSet.name())
+                                              .type(recordSet.type())
+                                              .ttl(1800)
+                                              .qualifier(qualifier)
+                                              .addProfile(Weighted.create(0))
+                                              .add(recordSet.rdata().get(i)).build());
     
             Optional<ResourceRecordSet<?>> rrs = weightedApi(zone)
                     .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier);
@@ -79,7 +79,7 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
         }
     }
 
-    @Test(dependsOnMethods = "createNewRRS", dataProvider = "weightedRecords")
+    @Test(dependsOnMethods = "createNewRRSWithAllProfileApi", dataProvider = "weightedRecords")
     private void replaceWeight(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         Zone zone = skipIfNoMutableZone();
@@ -127,9 +127,9 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
         weightedApi(zone).deleteByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier1);
 
         // clean up the other one
-        weightedApi(zone).deleteByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier2);
+        allApi(zone).deleteByNameAndType(recordSet.name(), recordSet.type());
 
-        rrs = weightedApi(zone)
+        rrs = allApi(zone)
                 .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier2);
 
         assertFalse(rrs.isPresent(), format("recordset(%s, %s, %s) still present in %s",
