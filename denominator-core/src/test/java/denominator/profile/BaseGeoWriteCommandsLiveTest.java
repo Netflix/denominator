@@ -54,7 +54,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
     
     @SuppressWarnings("deprecation")
     @Test(dataProvider = "geoRecords")
-    private void createNewRRS(ResourceRecordSet<?> recordSet) {
+    private void createNewRRSWithAllProfileApi(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         Zone zone = skipIfNoMutableZone();
         
@@ -70,7 +70,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
             // TODO: remove qualifier from geo in 2.0
             Geo territories = Geo.create(qualifier, i == 0 ? allButOne : onlyOne);
 
-            geoApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
+            allApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
                                               .name(recordSet.name())
                                               .type(recordSet.type())
                                               .ttl(1800)
@@ -94,7 +94,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         }
     }
 
-    @Test(dependsOnMethods = "createNewRRS", dataProvider = "geoRecords")
+    @Test(dependsOnMethods = "createNewRRSWithAllProfileApi", dataProvider = "geoRecords")
     private void yankTerritoryIntoAnotherRRSet(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         Zone zone = skipIfNoMutableZone();
@@ -135,7 +135,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
     }
 
     @Test(dependsOnMethods = "yankTerritoryIntoAnotherRRSet", dataProvider = "geoRecords")
-    private void changeTTLIndependently(ResourceRecordSet<?> recordSet) {
+    private void changeTTLWithAllProfileApi(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         Zone zone = skipIfNoMutableZone();
 
@@ -147,13 +147,13 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
             int ttl = rrs.ttl().or(60000) + 60000;
             Geo oldGeo = toProfile(Geo.class).apply(rrs);
 
-            geoApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
-                    .name(recordSet.name())
-                    .type(recordSet.type())
-                    .ttl(ttl)
-                    .qualifier(qualifier)
-                    .addProfile(oldGeo)
-                    .add(recordSet.rdata().get(i)).build());
+            allApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
+                                              .name(recordSet.name())
+                                              .type(recordSet.type())
+                                              .ttl(ttl)
+                                              .qualifier(qualifier)
+                                              .addProfile(oldGeo)
+                                              .add(recordSet.rdata().get(i)).build());
 
             rrs = geoApi(zone).getByNameTypeAndQualifier(recordSet.name(), recordSet.type(),
                     qualifier).get();
@@ -169,60 +169,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         }
     }
 
-    @Test(dependsOnMethods = "changeTTLIndependently", dataProvider = "geoRecords")
-    @Deprecated
-    private void applyRegionsToNameTypeAndGroup(ResourceRecordSet<?> recordSet) {
-        skipIfNoCredentials();
-        Zone zone = skipIfNoMutableZone();
-
-        ResourceRecordSet<?> rrs2 = geoApi(zone)
-                .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier2).get();
-
-        Geo rrs2Geo = toProfile(Geo.class).apply(rrs2);
-        
-        String last = getLast(rrs2Geo.regions().values());
-        
-        Multimap<String, String> regions = filterValues(rrs2Geo.regions(), not(equalTo(last)));
-
-        geoApi(zone).applyRegionsToNameTypeAndGroup(regions, rrs2.name(), rrs2.type(), qualifier2);
-
-        ResourceRecordSet<?> rrs = 
-                geoApi(zone).getByNameTypeAndQualifier(rrs2.name(), rrs2.type(), qualifier2).get();
-
-        checkRRS(rrs);
-        assertEquals(rrs.name(), rrs2.name());
-        assertEquals(rrs.type(), rrs2.type());
-        assertEquals(rrs.ttl(), rrs2.ttl());
-        assertEquals(ImmutableList.copyOf(rrs), ImmutableList.copyOf(rrs2));
-        assertEquals(toProfile(Geo.class).apply(rrs).regions(), ImmutableMultimap.copyOf(regions));
-    }
-
-    @Test(dependsOnMethods = "applyRegionsToNameTypeAndGroup", dataProvider = "geoRecords")
-    @Deprecated
-    private void applyTTLToNameTypeAndGroup(ResourceRecordSet<?> recordSet) {
-        skipIfNoCredentials();
-        Zone zone = skipIfNoMutableZone();
-
-        int i = 0;
-        for (String qualifier : new String[] { qualifier1, qualifier2 }) {
-            int ttl = 60000;
-
-            geoApi(zone).applyTTLToNameTypeAndGroup(ttl, recordSet.name(), recordSet.type(), qualifier);
-
-            ResourceRecordSet<?> rrs = geoApi(zone).getByNameTypeAndQualifier(recordSet.name(), recordSet.type(),
-                    qualifier).get();
-
-            checkGeoRRS(rrs);
-            assertEquals(rrs.name(), recordSet.name());
-            assertEquals(rrs.ttl().get(), Integer.valueOf(ttl));
-            assertEquals(rrs.type(), recordSet.type());
-            assertEquals(rrs.qualifier().get(), qualifier);
-            assertEquals(rrs.rdata().size(), 1);
-            assertEquals(rrs.rdata().get(0), recordSet.rdata().get(i++));
-        }
-    }
-
-    @Test(dependsOnMethods = "applyTTLToNameTypeAndGroup", dataProvider = "geoRecords")
+    @Test(dependsOnMethods = "changeTTLWithAllProfileApi", dataProvider = "geoRecords")
     private void deleteOneQualifierDoesntAffectOther(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
         Zone zone = skipIfNoMutableZone();
@@ -244,9 +191,9 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         geoApi(zone).deleteByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier1);
 
         // clean up the other one
-        geoApi(zone).deleteByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier2);
+        allApi(zone).deleteByNameAndType(recordSet.name(), recordSet.type());
 
-        rrs = geoApi(zone)
+        rrs = allApi(zone)
                 .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier2);
 
         assertFalse(rrs.isPresent(), format("recordset(%s, %s, %s) still present in %s",

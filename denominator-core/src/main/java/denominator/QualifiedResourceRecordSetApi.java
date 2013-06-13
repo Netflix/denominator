@@ -18,7 +18,7 @@ public interface QualifiedResourceRecordSetApi extends ReadOnlyResourceRecordSet
      * Idempotently replaces any existing records with
      * {@link ResourceRecordSet#name() name}, {@link ResourceRecordSet#type()
      * type}, and {@link ResourceRecordSet#qualifier() qualifier} corresponding
-     * to {@code rrset}.
+     * to {@code rrset}.  If no records exist, they will be added.
      * 
      * <p/>
      * Example of replacing the {@code A} record set for

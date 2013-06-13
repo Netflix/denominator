@@ -1,4 +1,5 @@
 ### Version 1.3.0
+* Added full write support to `AllProfileResourceRecordSetApi`.
 * Added `Provider.basicRecordTypes()` and `Provider.profileToRecordTypes()` advertizing what record types are supported.
 * Added `WeightedResourceRecordSetApi` to support reading and writing new `Weighted` (load balanced rrset) profile.
 * Changed `Route53` to no longer return weighted record sets inside basic record set results.
@@ -10,9 +11,9 @@
   * Conventions like `getUrl` or `listByName` for `url` or `iterateByName`
   * `ResourceRecordSet` implementing `List<D>` for `rdata()` accessor.
   * `Geo.getGroup()` for `ResourceRecordSet.getQualifier()`
-  * `GeoResourceRecordSetApi.getByNameTypeAndGroup()` for `ReadOnlyResourceRecordSetApi.getByNameTypeAndQualifier()`
-  * `GeoResourceRecordSetApi.applyRegionsToNameTypeAndGroup()` for `GeoResourceRecordSetApi.put()`
-  * `GeoResourceRecordSetApi.applyTTLToNameTypeAndGroup()` for `GeoResourceRecordSetApi.put()`
+  * `GeoResourceRecordSetApi.getByNameTypeAndGroup()` for `getByNameTypeAndQualifier()`
+  * `GeoResourceRecordSetApi`: `applyRegionsToNameTypeAndGroup()`, `applyTTLToNameTypeAndGroup()` for `put()`
+  * `ResourceRecordSetApi`: `add()`, `applyTTLToNameAndType()`, `replace()`, `remove()` for `.put()`
 
 ### Version 1.2.1
 * remove strict zone name checks on deprecated `DNSApi.get..Api` methods as often the backend will accept zone names with or without a trailing dot.

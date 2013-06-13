@@ -25,20 +25,17 @@ public class DNSApi {
     private final Provider provider;
     private final ZoneApi zones;
     private final ResourceRecordSetApi.Factory rrsetApiFactory;
-    private final ReadOnlyResourceRecordSetApi.Factory roApiFactory;
     private final AllProfileResourceRecordSetApi.Factory allRRSetApiFactory;
     private final GeoResourceRecordSetApi.Factory geoApiFactory;
     private final WeightedResourceRecordSetApi.Factory weightedApiFactory;
 
     @Inject
     DNSApi(Provider provider, ZoneApi zones, ResourceRecordSetApi.Factory rrsetApiFactory,
-            ReadOnlyResourceRecordSetApi.Factory roApiFactory,
             AllProfileResourceRecordSetApi.Factory allRRSetApiFactory, GeoResourceRecordSetApi.Factory geoApiFactory,
             WeightedResourceRecordSetApi.Factory weightedApiFactory) {
         this.provider = provider;
         this.zones = zones;
         this.rrsetApiFactory = rrsetApiFactory;
-        this.roApiFactory = roApiFactory;
         this.allRRSetApiFactory = allRRSetApiFactory;
         this.geoApiFactory = geoApiFactory;
         this.weightedApiFactory = weightedApiFactory;
@@ -114,7 +111,7 @@ public class DNSApi {
      */
     @Deprecated
     public AllProfileResourceRecordSetApi getAllProfileResourceRecordSetApiForZone(String zoneName) {
-        return allRRSetApiFactory.create(idOrName(zoneName));
+        return recordSetsInZone(idOrName(zoneName));
     }
 
     /**
@@ -141,8 +138,8 @@ public class DNSApi {
      *            id of the zone, or its name if absent.
      * @see Zone#idOrName
      */
-    public ReadOnlyResourceRecordSetApi recordSetsInZone(String idOrName) {
-        return roApiFactory.create(idOrName);
+    public AllProfileResourceRecordSetApi recordSetsInZone(String idOrName) {
+        return allRRSetApiFactory.create(idOrName);
     }
 
     /**

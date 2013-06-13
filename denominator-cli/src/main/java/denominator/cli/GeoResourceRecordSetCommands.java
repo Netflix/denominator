@@ -126,7 +126,7 @@ class GeoResourceRecordSetCommands {
                 public String next() {
                     GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get();
                     Optional<ResourceRecordSet<?>> rrs = api.getByNameTypeAndQualifier(name, type, group);
-                    if (rrs.isPresent()) {
+                    if (rrs.isPresent() && rrs.get().ttl().or(Integer.MAX_VALUE).intValue() != ttl) {
                         api.put(ResourceRecordSet.<Map<String, Object>> builder()
                                                  .name(name)
                                                  .type(type)

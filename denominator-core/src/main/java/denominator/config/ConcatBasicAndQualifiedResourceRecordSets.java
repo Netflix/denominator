@@ -1,8 +1,12 @@
 package denominator.config;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterators.concat;
+import static denominator.model.ResourceRecordSets.toProfileTypes;
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.inject.Singleton;
@@ -10,16 +14,16 @@ import javax.inject.Singleton;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSet.Builder;
+import com.google.common.collect.ImmutableSetMultimap;
+import com.google.common.collect.ImmutableSetMultimap.Builder;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.SetMultimap;
 
 import dagger.Module;
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.DNSApiManager;
 import denominator.QualifiedResourceRecordSetApi;
-import denominator.ReadOnlyResourceRecordSetApi;
 import denominator.QualifiedResourceRecordSetApi.Factory;
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -33,37 +37,31 @@ public class ConcatBasicAndQualifiedResourceRecordSets {
 
     @Provides
     @Singleton
-    ReadOnlyResourceRecordSetApi.Factory provideReadOnlyResourceRecordSetApiFactory(
-            AllProfileResourceRecordSetApi.Factory factory) {
-        return factory;
-    }
-
-    @Provides
-    @Singleton
     AllProfileResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(
-            final ResourceRecordSetApi.Factory factory,
-            final Set<QualifiedResourceRecordSetApi.Factory> qualifiedFactories) {
+            final ResourceRecordSetApi.Factory factory, final SetMultimap<Factory, String> factoryToProfiles) {
         return new AllProfileResourceRecordSetApi.Factory() {
 
             @Override
             public AllProfileResourceRecordSetApi create(String idOrName) {
-                Builder<QualifiedResourceRecordSetApi> qualifiedApis = ImmutableSet.builder();
-                for (Factory factory : qualifiedFactories) {
-                    qualifiedApis.add(factory.create(idOrName).get());
+                Builder<QualifiedResourceRecordSetApi, String> apiToProfiles = ImmutableSetMultimap.builder();
+                for (Entry<Factory, Collection<String>> entry : factoryToProfiles.asMap().entrySet()) {
+                    Optional<? extends QualifiedResourceRecordSetApi> api = entry.getKey().create(idOrName);
+                    if (api.isPresent())
+                        apiToProfiles.putAll(api.get(), entry.getValue());
                 }
-                return new ConcatBasicAndGeoResourceRecordSetApi(factory.create(idOrName), qualifiedApis.build());
+                return new ConcatBasicAndGeoResourceRecordSetApi(factory.create(idOrName), apiToProfiles.build());
             }
         };
     }
 
     private static class ConcatBasicAndGeoResourceRecordSetApi implements AllProfileResourceRecordSetApi {
         private final ResourceRecordSetApi api;
-        private final Set<QualifiedResourceRecordSetApi> qualifiedApis;
+        private final SetMultimap<QualifiedResourceRecordSetApi, String> apiToProfiles;
 
         private ConcatBasicAndGeoResourceRecordSetApi(ResourceRecordSetApi api,
-                Set<QualifiedResourceRecordSetApi> qualifiedApis) {
+                ImmutableSetMultimap<QualifiedResourceRecordSetApi, String> apiToProfiles) {
             this.api = api;
-            this.qualifiedApis = qualifiedApis;
+            this.apiToProfiles = apiToProfiles;
         }
 
         @Override
@@ -73,7 +71,7 @@ public class ConcatBasicAndQualifiedResourceRecordSets {
 
         @Override
         public Iterator<ResourceRecordSet<?>> iterator() {
-            Iterator<ResourceRecordSet<?>> iterators = Iterables.concat(qualifiedApis).iterator();
+            Iterator<ResourceRecordSet<?>> iterators = Iterables.concat(apiToProfiles.keySet()).iterator();
             if (!iterators.hasNext())
                 return api.iterator();
             return concat(api.iterator(), iterators);
@@ -87,7 +85,7 @@ public class ConcatBasicAndQualifiedResourceRecordSets {
 
         @Override
         public Iterator<ResourceRecordSet<?>> iterateByName(final String name) {
-            Iterator<ResourceRecordSet<?>> iterators = concat(FluentIterable.from(qualifiedApis)
+            Iterator<ResourceRecordSet<?>> iterators = concat(FluentIterable.from(apiToProfiles.keySet())
                     .transform(new Function<QualifiedResourceRecordSetApi, Iterator<ResourceRecordSet<?>>>() {
 
                         @Override
@@ -109,7 +107,7 @@ public class ConcatBasicAndQualifiedResourceRecordSets {
 
         @Override
         public Iterator<ResourceRecordSet<?>> iterateByNameAndType(final String name, final String type) {
-            Iterator<ResourceRecordSet<?>> iterators = concat(FluentIterable.from(qualifiedApis)
+            Iterator<ResourceRecordSet<?>> iterators = concat(FluentIterable.from(apiToProfiles.keySet())
                     .transform(new Function<QualifiedResourceRecordSetApi, Iterator<ResourceRecordSet<?>>>() {
 
                         @Override
@@ -129,7 +127,7 @@ public class ConcatBasicAndQualifiedResourceRecordSets {
         @Override
         public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(final String name, final String type,
                 final String qualifier) {
-            return FluentIterable.from(qualifiedApis)
+            return FluentIterable.from(apiToProfiles.keySet())
                     .transformAndConcat(new Function<QualifiedResourceRecordSetApi, Set<ResourceRecordSet<?>>>() {
 
                         @Override
@@ -138,6 +136,48 @@ public class ConcatBasicAndQualifiedResourceRecordSets {
                         }
 
                     }).first();
+        }
+
+        @Override
+        public void put(ResourceRecordSet<?> rrset) {
+            if (rrset.profiles().isEmpty()) {
+                api.put(rrset);
+            } else {
+                Set<String> profiles = toProfileTypes(rrset);
+                Optional<QualifiedResourceRecordSetApi> qualifiedApi = tryFindQualifiedApiForProfiles(profiles);
+                checkArgument(qualifiedApi.isPresent(),
+                        "cannot put rrset %s:%s%s as it contains profiles %s which aren't supported %s",
+                        rrset.name(), rrset.type(), rrset.qualifier().isPresent() ? ":" + rrset.qualifier().get() : "",
+                        profiles, apiToProfiles);
+                qualifiedApi.get().put(rrset);
+            }
+        }
+
+        @Override
+        public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
+            for (QualifiedResourceRecordSetApi qualifiedApi : apiToProfiles.keySet()) {
+                qualifiedApi.deleteByNameTypeAndQualifier(name, type, qualifier);
+            }
+        }
+
+        @Override
+        public void deleteByNameAndType(String name, String type) {
+            api.deleteByNameAndType(name, type);
+            for (QualifiedResourceRecordSetApi qualifiedApi : apiToProfiles.keySet()) {
+                for (Iterator<ResourceRecordSet<?>> it = qualifiedApi.iterateByNameAndType(name, type); it.hasNext();) {
+                    ResourceRecordSet<?> next = it.next();
+                    qualifiedApi.deleteByNameTypeAndQualifier(next.name(), next.type(), next.qualifier().get());
+                }
+            }
+        }
+
+        private Optional<QualifiedResourceRecordSetApi> tryFindQualifiedApiForProfiles(Set<String> profiles) {
+            for (Entry<QualifiedResourceRecordSetApi, Collection<String>> entry : apiToProfiles.asMap().entrySet()) {
+                if (entry.getValue().containsAll(profiles)) {
+                    return Optional.of(entry.getKey());
+                }
+            }
+            return Optional.absent();
         }
     }
 }

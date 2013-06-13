@@ -42,7 +42,7 @@ import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
-import denominator.QualifiedResourceRecordSetApi;
+import denominator.QualifiedResourceRecordSetApi.Factory;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
@@ -164,10 +164,10 @@ public class Route53Provider extends BasicProvider {
             return in;
         }
 
-        @Provides(type = Provides.Type.SET)
-        QualifiedResourceRecordSetApi.Factory provideWeightedResourceRecordSetApiFactory(
-                WeightedResourceRecordSetApi.Factory in) {
-            return in;
+        @Provides
+        @Singleton
+        SetMultimap<Factory, String> factoryToProfiles(WeightedResourceRecordSetApi.Factory in) {
+            return ImmutableSetMultimap.<Factory, String> of(in, "weighted");
         }
 
         /**

@@ -1,6 +1,7 @@
 package denominator.cli;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
@@ -28,6 +29,9 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.mock.MockProvider;
+import denominator.model.ResourceRecordSet;
+import denominator.model.rdata.AData;
+import denominator.model.rdata.CNAMEData;
 
 @Test
 public class DenominatorTest {
@@ -182,8 +186,8 @@ public class DenominatorTest {
                 "www.weighted.denominator.io.                      CNAME  EU-West             0     c.denominator.io.",
                 "www.weighted.denominator.io.                      CNAME  US-East             0     b.denominator.io.",
                 "www.weighted.denominator.io.                      CNAME  US-West             0     a.denominator.io.",
-                "www1.denominator.io.                              A                          3600  192.0.2.1",
-                "www1.denominator.io.                              A                          3600  192.0.2.2",
+                "www1.denominator.io.                              A                          10000 192.0.2.1",
+                "www1.denominator.io.                              A                          10000 192.0.2.2",
                 "www2.denominator.io.                              A                          3600  198.51.100.1",
                 "www2.geo.denominator.io.                          A      alazona             300   192.0.2.1",
                 "www2.weighted.denominator.io.                     A      US-West             0     192.0.2.1"));
@@ -195,8 +199,8 @@ public class DenominatorTest {
         command.zoneIdOrName = "denominator.io.";
         command.name = "www1.denominator.io.";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                "www1.denominator.io.                              A                          3600  192.0.2.1",
-                "www1.denominator.io.                              A                          3600  192.0.2.2"));
+                "www1.denominator.io.                              A                          10000 192.0.2.1",
+                "www1.denominator.io.                              A                          10000 192.0.2.2"));
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. get -n www1.denominator.io. -t A ")
@@ -206,8 +210,8 @@ public class DenominatorTest {
         command.name = "www1.denominator.io.";
         command.type = "A";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                "www1.denominator.io.                              A                          3600  192.0.2.1",
-                "www1.denominator.io.                              A                          3600  192.0.2.2"));
+                "www1.denominator.io.                              A                          10000 192.0.2.1",
+                "www1.denominator.io.                              A                          10000 192.0.2.2"));
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. get -n www3.denominator.io. -t A ")
@@ -239,16 +243,25 @@ public class DenominatorTest {
         command.qualifier = "alazona";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), "");
     }
+
     @Test(description = "denominator -p mock record -z denominator.io. applyttl -n www3.denominator.io. -t A 10000")
     public void testResourceRecordSetApplyTTL() {
         ResourceRecordSetApplyTTL command = new ResourceRecordSetApplyTTL();
         command.zoneIdOrName = "denominator.io.";
-        command.name = "www3.denominator.io.";
+        command.name = "www1.denominator.io.";
         command.type = "A";
         command.ttl = 10000;
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                ";; in zone denominator.io. applying ttl 10000 to rrset www3.denominator.io. A",
+                ";; in zone denominator.io. applying ttl 10000 to rrset www1.denominator.io. A",
                 ";; ok"));
+        assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                ResourceRecordSet.<AData> builder()
+                                 .name(command.name)
+                                 .type(command.type)
+                                 .ttl(command.ttl)
+                                 .add(AData.create("192.0.2.1"))
+                                 .add(AData.create("192.0.2.2")).build().toString());
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2")
@@ -261,6 +274,14 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}]",
                 ";; ok"));
+        assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                ResourceRecordSet.<AData> builder()
+                                 .name(command.name)
+                                 .type(command.type)
+                                 .ttl(3600)
+                                 .add(AData.create("192.0.2.1"))
+                                 .add(AData.create("192.0.2.2")).build().toString());
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A --ttl 3600 -d 192.0.2.1 -d 192.0.2.2")
@@ -274,18 +295,33 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}] applying ttl 3600",
                 ";; ok"));
+        assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                ResourceRecordSet.<AData> builder()
+                                 .name(command.name)
+                                 .type(command.type)
+                                 .ttl(command.ttl)
+                                 .add(AData.create("192.0.2.1"))
+                                 .add(AData.create("192.0.2.2")).build().toString());
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. replace -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2")
     public void testResourceRecordSetReplace() {
         ResourceRecordSetReplace command = new ResourceRecordSetReplace();
         command.zoneIdOrName = "denominator.io.";
-        command.name = "www1.denominator.io.";
-        command.type = "A";
-        command.values = ImmutableList.of("192.0.2.1", "192.0.2.2");
+        command.name = "www.denominator.io.";
+        command.type = "CNAME";
+        command.values = ImmutableList.of("www1.denominator.io.", "www2.denominator.io.");
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                ";; in zone denominator.io. replacing rrset www1.denominator.io. A with values: [{address=192.0.2.1},{address=192.0.2.2}]",
+                ";; in zone denominator.io. replacing rrset www.denominator.io. CNAME with values: [{cname=www1.denominator.io.},{cname=www2.denominator.io.}]",
                 ";; ok"));
+        assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                ResourceRecordSet.<CNAMEData> builder()
+                                 .name(command.name)
+                                 .type(command.type)
+                                 .add(CNAMEData.create("www1.denominator.io."))
+                                 .add(CNAMEData.create("www2.denominator.io.")).build().toString());
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. replace -n www1.denominator.io. -t A --ttl 3600 -d 192.0.2.1 -d 192.0.2.2")
@@ -299,6 +335,14 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. replacing rrset www1.denominator.io. A with values: [{address=192.0.2.1},{address=192.0.2.2}] and ttl 3600",
                 ";; ok"));
+        assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                ResourceRecordSet.<AData> builder()
+                                 .name(command.name)
+                                 .type(command.type)
+                                 .ttl(command.ttl)
+                                 .add(AData.create("192.0.2.1"))
+                                 .add(AData.create("192.0.2.2")).build().toString());
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. remove -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2")
@@ -311,6 +355,8 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. removing from rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}]",
                 ";; ok"));
+        assertFalse(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                .iterateByNameAndType(command.name, command.type).hasNext());
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. delete -n www3.denominator.io. -t A ")
@@ -322,6 +368,8 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. deleting rrset www3.denominator.io. A",
                 ";; ok"));
+        assertFalse(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                       .iterateByNameAndType(command.name, command.type).hasNext());
     }
 
     @Test(description = "denominator -p mock geo -z denominator.io. types")
@@ -429,7 +477,7 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. applying ttl 300 to rrset www2.geo.denominator.io. A alazona",
                 ";; ok"));
-        assertEquals(mgr.api().geoRecordSetsInZone(command.zoneIdOrName).get()
+        assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
                         .getByNameTypeAndQualifier(command.name, command.type, command.group).get()
                         .ttl().get(), Integer.valueOf(command.ttl));
     }

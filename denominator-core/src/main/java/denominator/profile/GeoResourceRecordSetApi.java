@@ -18,20 +18,6 @@ import denominator.model.profile.Geo;
 public interface GeoResourceRecordSetApi extends QualifiedResourceRecordSetApi {
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link Provider#profileToRecordTypes()} with the {@code geo} key.
-     */
-    @Deprecated
-    Set<String> getSupportedTypes();
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #supportedRegions()}
-     */
-    @Deprecated
-    Multimap<String, String> getSupportedRegions();
-
-    /**
      * retrieve an organized list of regions by region. It is often the case
      * that the keys correlate to UN or otherwise defined regions such as
      * {@code North America}. However, this can also include special case keys,
@@ -57,6 +43,24 @@ public interface GeoResourceRecordSetApi extends QualifiedResourceRecordSetApi {
      */
     Multimap<String, String> supportedRegions();
 
+    static interface Factory extends QualifiedResourceRecordSetApi.Factory {
+        Optional<GeoResourceRecordSetApi> create(String idOrName);
+    }
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link Provider#profileToRecordTypes()} with the {@code geo} key.
+     */
+    @Deprecated
+    Set<String> getSupportedTypes();
+
+    /**
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #supportedRegions()}
+     */
+    @Deprecated
+    Multimap<String, String> getSupportedRegions();
+
     /**
      * 
      * @deprecated Will be removed in denominator 2.0. Please use
@@ -80,8 +84,8 @@ public interface GeoResourceRecordSetApi extends QualifiedResourceRecordSetApi {
      *            {@link ResourceRecordSet#name() name} of the rrset
      * @param type
      *            {@link ResourceRecordSet#type() type} of the rrset
-     * @param qualifier
-     *            {@link ResourceRecordSet#qualifier() qualifier} of the rrset
+     * @param group
+     *            {@link ResourceRecordSet#qualifier() group} of the rrset
      * 
      * @deprecated Will be removed in denominator 2.0. Please use
      *             {@link #put(ResourceRecordSet)}
@@ -110,8 +114,4 @@ public interface GeoResourceRecordSetApi extends QualifiedResourceRecordSetApi {
      */
     @Deprecated
     void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group);
-
-    static interface Factory extends QualifiedResourceRecordSetApi.Factory {
-        Optional<GeoResourceRecordSetApi> create(String idOrName);
-    }
 }

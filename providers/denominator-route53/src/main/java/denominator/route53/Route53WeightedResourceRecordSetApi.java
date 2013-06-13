@@ -51,12 +51,6 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
         return supportedWeights;
     }
 
-    @Deprecated
-    @Override
-    public Iterator<ResourceRecordSet<?>> list() {
-        return iterator();
-    }
-
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
         return route53RRsetApi.list().concat().filter(isWeighted()).transform(ToDenominatorResourceRecordSet.INSTANCE)
@@ -64,21 +58,9 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
     }
 
     @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        return iterateByName(name);
-    }
-
-    @Override
     public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
         return route53RRsetApi.listAt(NextRecord.name(name)).filter(and(isWeighted(), nameEqualTo(name)))
                 .transform(ToDenominatorResourceRecordSet.INSTANCE).iterator();
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
-        return iterateByNameAndType(name, type);
     }
 
     @SuppressWarnings("unchecked")
@@ -195,5 +177,23 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
         public String toString() {
             return "IdEqualTo(" + id + ")";
         }
+    }
+
+    @Deprecated
+    @Override
+    public Iterator<ResourceRecordSet<?>> list() {
+        return iterator();
+    }
+
+    @Override
+    @Deprecated
+    public Iterator<ResourceRecordSet<?>> listByName(String name) {
+        return iterateByName(name);
+    }
+
+    @Override
+    @Deprecated
+    public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
+        return iterateByNameAndType(name, type);
     }
 }
