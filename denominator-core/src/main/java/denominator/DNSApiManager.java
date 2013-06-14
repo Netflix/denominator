@@ -24,28 +24,10 @@ public class DNSApiManager implements Closeable {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #api}
-     */
-    @Deprecated
-    public DNSApi getApi() {
-        return api;
-    }
-
-    /**
      * the currently configured {@link DNSApi}
      */
     public DNSApi api() {
         return api;
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #provider}
-     */
-    @Deprecated
-    public Provider getProvider() {
-        return provider;
     }
 
     /**

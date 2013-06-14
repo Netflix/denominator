@@ -36,29 +36,18 @@ import denominator.model.Zone;
  * <h3>Expected Use</h3>
  * Provider instances are bound in {@link javax.inject.Singleton} scope.
  * However, results of all methods are permitted to change at runtime. For
- * example, a change to the value returned by {@link #getUrl()} should affect
+ * example, a change to the value returned by {@link #url()} should affect
  * the remote connection to the DNS provider.
  */
 @Beta
 @Singleton
 public interface Provider {
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use {@link #name}
-     */
-    @Deprecated
-    String getName();
 
     /**
      * configuration key associated with this {@link DNSApi}. For example,
      * {@code hopper}.
      */
     String name();
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use {@link #url}
-     */
-    @Deprecated
-    String getUrl();
 
     /**
      * The base API URL of the DNS Provider. Typically, a http url, such as
@@ -69,7 +58,7 @@ public interface Provider {
     String url();
 
     /**
-     * The set of basic {@link ResourceRecordSet#getType() record types} that
+     * The set of basic {@link ResourceRecordSet#type() record types} that
      * are supported by {@link ResourceRecordSetApi} commands.
      * <p/>
      * For example:
@@ -106,13 +95,6 @@ public interface Provider {
      *         name}.
      */
     boolean supportsDuplicateZoneNames();
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #credentialTypeToParameterNames}
-     */
-    @Deprecated
-    Multimap<String, String> getCredentialTypeToParameterNames();
 
     /**
      * Description of the credential parameters needed for this provider by

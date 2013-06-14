@@ -65,22 +65,11 @@ public class ConcatBasicAndQualifiedResourceRecordSets {
         }
 
         @Override
-        public Iterator<ResourceRecordSet<?>> list() {
-            return iterator();
-        }
-
-        @Override
         public Iterator<ResourceRecordSet<?>> iterator() {
             Iterator<ResourceRecordSet<?>> iterators = Iterables.concat(apiToProfiles.keySet()).iterator();
             if (!iterators.hasNext())
                 return api.iterator();
             return concat(api.iterator(), iterators);
-        }
-
-        @Override
-        @Deprecated
-        public Iterator<ResourceRecordSet<?>> listByName(String name) {
-            return iterateByName(name);
         }
 
         @Override
@@ -97,12 +86,6 @@ public class ConcatBasicAndQualifiedResourceRecordSets {
             if (!iterators.hasNext())
                 return api.iterateByName(name);
             return concat(api.iterateByName(name), iterators);
-        }
-
-        @Override
-        @Deprecated
-        public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
-            return iterateByNameAndType(name, type);
         }
 
         @Override

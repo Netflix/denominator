@@ -104,9 +104,7 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
 
         builder.add(forTypeAndRData(record.getType(), record.getRData()));
 
-        // TODO: remove group arg in 2.0
-        Geo profile =  Geo.create(directionalGroup.getName(), 
-                                 getDirectionalGroup.apply(directionalGroup.getId()));
+        Geo profile =  Geo.create(getDirectionalGroup.apply(directionalGroup.getId()));
         builder.addProfile(profile);
         while (hasNext()) {
             DirectionalPoolRecordDetail next = peekingIterator.peek();

@@ -10,8 +10,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
-import denominator.model.ResourceRecordSet;
-
 /**
  * Record sets with this profile are visible to the regions specified.
  * 
@@ -22,15 +20,6 @@ import denominator.model.ResourceRecordSet;
  * </pre>
  */
 public class Geo extends ForwardingMap<String, Object> {
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #create(Multimap)}
-     */
-    @Deprecated
-    public static Geo create(String group, Multimap<String, String> regions) {
-        return new Geo(group, regions);
-    }
 
     /**
      * @param regions corresponds to {@link #regions()}
@@ -51,45 +40,6 @@ public class Geo extends ForwardingMap<String, Object> {
         this.delegate = ImmutableMap.<String, Object> builder()
                                     .put("type", type)
                                     .put("regions", regions).build();
-    }
-
-    @Deprecated
-    @ConstructorProperties({ "group", "regions" })
-    private Geo(String group, Multimap<String, String> regions) {
-        checkNotNull(regions, "regions");
-        checkNotNull(group, "group");
-        this.regions = ImmutableMultimap.copyOf(regions);
-        this.delegate = ImmutableMap.<String, Object> builder()
-                                    .put("type", type)
-                                    .put("group", group)
-                                    .put("regions", regions).build();
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link ResourceRecordSet#qualifier() qualifier}
-     */
-    @Deprecated
-    public String getGroup() {
-        return group();
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link ResourceRecordSet#qualifier() qualifier}
-     */
-    @Deprecated
-    public String group() {
-        return (String) delegate.get("group");
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #regions()}
-     */
-    @Deprecated
-    public Multimap<String, String> getRegions() {
-        return regions();
     }
 
     /**

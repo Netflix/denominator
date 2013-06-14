@@ -42,30 +42,13 @@ public class OnlyBasicResourceRecordSets {
         }
 
         @Override
-        public Iterator<ResourceRecordSet<?>> list() {
-            return iterator();
-        }
-
-        @Override
         public Iterator<ResourceRecordSet<?>> iterator() {
             return api.iterator();
         }
 
         @Override
-        @Deprecated
-        public Iterator<ResourceRecordSet<?>> listByName(String name) {
-            return iterateByName(name);
-        }
-
-        @Override
         public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
             return api.iterateByName(name);
-        }
-
-        @Override
-        @Deprecated
-        public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
-            return iterateByNameAndType(name, type);
         }
 
         @Override

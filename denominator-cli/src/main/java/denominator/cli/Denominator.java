@@ -1,7 +1,6 @@
 package denominator.cli;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterables.tryFind;
-import static com.google.common.io.Closeables.closeQuietly;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.provider;
 import static java.lang.String.format;
@@ -177,7 +176,13 @@ public class Denominator {
                 for (Iterator<String> i = doRun(mgr); i.hasNext();)
                     System.out.println(i.next());
             } finally {
-                closeQuietly(mgr);
+                if (mgr != null) {
+                    try {
+                        mgr.close();
+                    } catch (IOException ignored) {
+
+                    }
+                }
             }
         }
 

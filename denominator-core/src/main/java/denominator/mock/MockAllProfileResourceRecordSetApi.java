@@ -37,24 +37,12 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
         this.zone = zone;
     }
 
-    @Deprecated
-    @Override
-    public Iterator<ResourceRecordSet<?>> list() {
-        return iterator();
-    }
-
     /**
      * sorted to help tests from breaking
      */
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
         return usingToString().immutableSortedCopy(records.get(zone)).iterator();
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        return iterateByName(name);
     }
 
     @Override
@@ -86,12 +74,6 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
                 rrset.type(), rrset.qualifier().isPresent() ? ":" + rrset.qualifier().get() : "", profiles,
                 provider.profileToRecordTypes());
         put(Predicates.<ResourceRecordSet<?>> alwaysTrue(), rrset);
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
-        return iterateByNameAndType(name, type);
     }
 
     @Override

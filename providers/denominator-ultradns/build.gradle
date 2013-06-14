@@ -16,8 +16,6 @@ test {
   systemProperty 'ultradns.username', System.getProperty('ultradns.username', '')
   systemProperty 'ultradns.password', System.getProperty('ultradns.password', '')
   systemProperty 'ultradns.zone', System.getProperty('ultradns.zone', '')
-  // example value zone=geo.denominator.io.,name=allen.geo.denominator.io.,type=CNAME,group=europe
-  systemProperty 'ultradns.rrset-geo', System.getProperty('ultradns.rrset-geo', '')
 }
 
 dependencies {

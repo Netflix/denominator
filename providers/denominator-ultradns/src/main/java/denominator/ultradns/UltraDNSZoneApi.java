@@ -1,6 +1,5 @@
 package denominator.ultradns;
 
-import static com.google.common.collect.Iterators.transform;
 import static denominator.model.Zones.toZone;
 
 import java.util.Iterator;
@@ -24,23 +23,18 @@ public final class UltraDNSZoneApi implements denominator.ZoneApi {
         this.account = account;
     }
 
+    /**
+     * in UltraDNS, zones are scoped to an account.
+     */
+    @Override
+    public Iterator<denominator.model.Zone> iterator() {
+        return api.getZoneApi().listByAccount(account.get().getId()).transform(ZoneName.INSTANCE).transform(toZone()).iterator();
+    }
+
     private static enum ZoneName implements Function<Zone, String> {
         INSTANCE;
         public String apply(Zone input) {
             return input.getName();
         }
-    }
-
-    /**
-     * in UltraDNS, zones are scoped to an account.
-     */
-    @Override
-    public Iterator<String> list() {
-        return api.getZoneApi().listByAccount(account.get().getId()).transform(ZoneName.INSTANCE).iterator();
-    }
-
-    @Override
-    public Iterator<denominator.model.Zone> iterator() {
-        return transform(list(), toZone());
     }
 }

@@ -1,7 +1,6 @@
 package denominator.mock;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Multimaps.filterValues;
@@ -17,7 +16,6 @@ import javax.inject.Named;
 
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
 import denominator.Provider;
@@ -41,18 +39,6 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
     }
 
     @Override
-    @Deprecated
-    public Set<String> getSupportedTypes() {
-        return supportedTypes;
-    }
-
-    @Override
-    @Deprecated
-    public Multimap<String, String> getSupportedRegions() {
-        return supportedRegions();
-    }
-
-    @Override
     public Multimap<String, String> supportedRegions() {
         return supportedRegions;
     }
@@ -72,57 +58,16 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
                 Geo currentGeo = toProfile(Geo.class).apply(toTest);
                 Multimap<String, String> without = filterValues(currentGeo.regions(),
                         not(in(newGeo.regions().values())));
-                currentGeo = Geo.create(currentGeo.group(), ImmutableMultimap.copyOf(without));
                 records.remove(zone, toTest);
                 records.put(zone, ResourceRecordSet.<Map<String, Object>> builder() //
                         .name(toTest.name())//
                         .type(toTest.type())//
                         .qualifier(toTest.qualifier().get())//
                         .ttl(toTest.ttl().orNull())//
-                        .addProfile(currentGeo)//
+                        .addProfile(Geo.create(without))//
                         .addAll(toTest.rdata()).build());
             }
         }
-    }
-
-    @Override
-    @Deprecated
-    public Optional<ResourceRecordSet<?>> getByNameTypeAndGroup(String name, String type, String group) {
-        return getByNameTypeAndQualifier(name, type, group);
-    }
-
-    @Override
-    @Deprecated
-    public void applyRegionsToNameTypeAndGroup(Multimap<String, String> regions, String name, String type, String group) {
-        checkNotNull(regions, "regions");
-        Optional<ResourceRecordSet<?>> existing = getByNameTypeAndQualifier(name, type, group);
-        if (!existing.isPresent())
-            return;
-        ResourceRecordSet<?> rrset = existing.get();
-        Geo geo = toProfile(Geo.class).apply(rrset);
-        if (geo.regions().equals(regions))
-            return;
-        ResourceRecordSet<Map<String, Object>> rrs = ResourceRecordSet.<Map<String, Object>> builder()
-                .name(rrset.name()).type(rrset.type()).qualifier(group).ttl(rrset.ttl().orNull())
-                // TODO: remove qualifier here in 2.0
-                .addProfile(Geo.create(group, regions)).addAll(rrset).build();
-        put(IS_GEO, rrs);
-    }
-
-    @Override
-    @Deprecated
-    public void applyTTLToNameTypeAndGroup(int ttl, String name, String type, String group) {
-        checkNotNull(ttl, "ttl");
-        Optional<ResourceRecordSet<?>> existing = getByNameTypeAndQualifier(name, type, group);
-        if (!existing.isPresent())
-            return;
-        ResourceRecordSet<?> rrset = existing.get();
-        if (rrset.ttl().isPresent() && rrset.ttl().get().equals(ttl))
-            return;
-        ResourceRecordSet<Map<String, Object>> rrs = ResourceRecordSet.<Map<String, Object>> builder()
-                .name(rrset.name()).type(rrset.type()).qualifier(group).ttl(ttl).profile(rrset.profiles())
-                .addAll(rrset).build();
-        put(IS_GEO, rrs);
     }
 
     public static final class Factory implements GeoResourceRecordSetApi.Factory {
