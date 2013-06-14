@@ -19,13 +19,12 @@ import dagger.Provides;
 import denominator.Credentials;
 import denominator.Credentials.MapCredentials;
 import denominator.hook.InstanceMetadataHook;
-import denominator.route53.Route53Provider.ConvertToJcloudsCredentials;
 
 /**
  * Credentials supplier implementation that loads credentials from the Amazon
  * EC2 Instance Metadata Service.
  */
-@Module(injects = ConvertToJcloudsCredentials.class, complete = false)
+@Module(injects = InvalidatableAuthenticationHeadersSupplier.class, complete = false)
 public class InstanceProfileCredentialsProvider {
     private final Provider<String> iipJsonProvider;
 

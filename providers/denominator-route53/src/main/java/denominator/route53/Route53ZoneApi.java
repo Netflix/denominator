@@ -4,30 +4,45 @@ import java.util.Iterator;
 
 import javax.inject.Inject;
 
-import org.jclouds.route53.Route53Api;
-import org.jclouds.route53.domain.HostedZone;
-
-import com.google.common.base.Function;
-
 import denominator.model.Zone;
+import denominator.route53.Route53.ZoneList;
 
 public final class Route53ZoneApi implements denominator.ZoneApi {
-    private final Route53Api api;
+    private final Route53 api;
 
     @Inject
-    Route53ZoneApi(Route53Api api) {
+    Route53ZoneApi(Route53 api) {
         this.api = api;
     }
 
     @Override
     public Iterator<Zone> iterator() {
-        return api.getHostedZoneApi().list().concat().transform(ToZone.INSTANCE).iterator();
-    }
+        final ZoneList first = api.zones();
+        if (first.next == null)
+            return first.iterator();
+        return new Iterator<Zone>() {
+            Iterator<Zone> current = first.iterator();
+            String next = first.next;
 
-    private static enum ToZone implements Function<HostedZone, Zone> {
-        INSTANCE;
-        public Zone apply(HostedZone input) {
-            return Zone.create(input.getName(), input.getId());
-        }
+            @Override
+            public boolean hasNext() {
+                while (!current.hasNext() && next != null) {
+                    ZoneList nextPage = api.zones(next);
+                    current = nextPage.iterator();
+                    next = nextPage.next;
+                }
+                return current.hasNext();
+            }
+
+            @Override
+            public Zone next() {
+                return current.next();
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 }

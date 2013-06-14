@@ -31,8 +31,8 @@ public class Route53ProviderDynamicUpdateMockTest {
         server.enqueue(new MockResponse().setBody(hostedZones));
         server.play();
 
-        String initialPath = "/";
-        String updatedPath = "/alt/";
+        String initialPath = "";
+        String updatedPath = "/alt";
         URL mockUrl = server.getUrl(initialPath);
         final AtomicReference<URL> dynamicUrl = new AtomicReference<URL>(mockUrl);
 
@@ -49,8 +49,8 @@ public class Route53ProviderDynamicUpdateMockTest {
             assertFalse(api.zones().iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 2);
-            assertEquals(server.takeRequest().getRequestLine(), "GET /2012-02-29/hostedzone HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /alt/2012-02-29/hostedzone HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /2012-12-12/hostedzone HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /alt/2012-12-12/hostedzone HTTP/1.1");
         } finally {
             server.shutdown();
         }
