@@ -69,40 +69,4 @@ public final class CloudDNSResourceRecordSetApi implements denominator.ResourceR
             return new CloudDNSResourceRecordSetApi(api.getRecordApiForDomain(Integer.parseInt(id)));
         }
     }
-
-    @Deprecated
-    @Override
-    public Iterator<ResourceRecordSet<?>> list() {
-        return iterator();
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        return iterateByName(name);
-    }
-
-    @Override
-    @Deprecated
-    public void add(ResourceRecordSet<?> rrset) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    @Deprecated
-    public void applyTTLToNameAndType(int ttl, String name, String type) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    @Deprecated
-    public void replace(ResourceRecordSet<?> rrset) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    @Deprecated
-    public void remove(ResourceRecordSet<?> rrset) {
-        throw new UnsupportedOperationException();
-    }
 }

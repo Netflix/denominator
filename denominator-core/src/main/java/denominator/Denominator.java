@@ -68,15 +68,6 @@ public final class Denominator {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #providers}
-     */
-    @Deprecated
-    public static Iterable<Provider> listProviders() {
-        return providers();
-    }
-
-    /**
      * Returns the currently configured {@link Provider providers} from
      * {@link ServiceLoader#load(Class)}.
      * 
@@ -102,7 +93,7 @@ public final class Denominator {
      * </pre>
      * 
      * @see CredentialsConfiguration
-     * @see #listProviders
+     * @see #providers
      * @throws IllegalArgumentException
      *             if the input provider is misconfigured or expects
      *             credentials.
@@ -158,7 +149,7 @@ public final class Denominator {
 
     /**
      * Creates a new manager for a provider, based on key look up from
-     * {@link #listProviders()}.
+     * {@link #providers()}.
      * 
      * Ex. {@code mock}
      * 
@@ -174,7 +165,7 @@ public final class Denominator {
      */
     public static DNSApiManager create(String providerName, Object... modules) throws IllegalArgumentException {
         checkNotNull(providerName, "providerName");
-        Map<String, Provider> allProvidersByName = uniqueIndex(listProviders(), new Function<Provider, String>() {
+        Map<String, Provider> allProvidersByName = uniqueIndex(providers(), new Function<Provider, String>() {
             public String apply(Provider input) {
                 return input.name();
             }

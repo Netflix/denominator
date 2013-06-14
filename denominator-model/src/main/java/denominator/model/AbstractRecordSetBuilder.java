@@ -42,9 +42,6 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     }
 
     /**
-<<<<<<< HEAD
-     * @see ResourceRecordSet#ttl()
-=======
      * @see ResourceRecordSet#qualifier()
      */
     @SuppressWarnings("unchecked")
@@ -54,8 +51,7 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     }
 
     /**
-     * @see ResourceRecordSet#getTTL()
->>>>>>> issue #168: add ResourceRecordSet.qualifier()
+     * @see ResourceRecordSet#ttl()
      */
     @SuppressWarnings("unchecked")
     public B ttl(Integer ttl) {

@@ -1,6 +1,5 @@
 package denominator.dynect;
 
-import static com.google.common.collect.Iterators.transform;
 import static denominator.model.Zones.toZone;
 
 import java.util.Iterator;
@@ -20,12 +19,7 @@ public final class DynECTZoneApi implements denominator.ZoneApi {
     }
 
     @Override
-    public Iterator<String> list() {
-        return api.getZoneApi().list().iterator();
-    }
-
-    @Override
     public Iterator<Zone> iterator() {
-        return transform(list(), toZone());
+        return api.getZoneApi().list().transform(toZone()).iterator();
     }
 }

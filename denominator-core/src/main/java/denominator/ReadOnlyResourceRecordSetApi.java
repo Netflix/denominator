@@ -66,31 +66,4 @@ public interface ReadOnlyResourceRecordSetApi extends Iterable<ResourceRecordSet
      *             if the zone {@code idOrName} is not found.
      */
     Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier);
-
-    /**
-     * a listing of all resource record sets inside the zone.
-     * 
-     * @return iterator which is lazy where possible
-     * @throws IllegalArgumentException
-     *             if the zone {@code idOrName} is not found.
-     * 
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #iterator}
-     */
-    @Deprecated
-    Iterator<ResourceRecordSet<?>> list();
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #iterateByName(String)}
-     */
-    @Deprecated
-    Iterator<ResourceRecordSet<?>> listByName(String name);
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #iterateByName(String)}
-     */
-    @Deprecated
-    Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type);
 }

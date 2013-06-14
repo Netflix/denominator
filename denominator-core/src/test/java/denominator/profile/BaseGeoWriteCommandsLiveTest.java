@@ -52,7 +52,6 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         return data;
     }
     
-    @SuppressWarnings("deprecation")
     @Test(dataProvider = "geoRecords")
     private void createNewRRSWithAllProfileApi(ResourceRecordSet<?> recordSet) {
         skipIfNoCredentials();
@@ -67,8 +66,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         for (String qualifier : new String[] { qualifier1, qualifier2 }) {
             skipIfRRSetExists(zone, recordSet.name(), recordSet.type(), qualifier);
 
-            // TODO: remove qualifier from geo in 2.0
-            Geo territories = Geo.create(qualifier, i == 0 ? allButOne : onlyOne);
+            Geo territories = Geo.create(i == 0 ? allButOne : onlyOne);
 
             allApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
                                               .name(recordSet.name())
@@ -117,7 +115,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
                                           .type(recordSet.type())
                                           .qualifier(qualifier2)
                                           .ttl(rrs2.ttl().orNull())
-                                          .addProfile(Geo.create(qualifier2, plus1))
+                                          .addProfile(Geo.create(plus1))
                                           .addAll(rrs2.rdata()).build());
 
         rrs1 = geoApi(zone).getByNameTypeAndQualifier(

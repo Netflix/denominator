@@ -45,21 +45,9 @@ public abstract class BasicProvider implements Provider {
         }
     }
 
-    @Deprecated
-    @Override
-    public String getName() {
-        return name();
-    }
-
     @Override
     public String name() {
         return getClass().getSimpleName().toLowerCase().replace("provider", "");
-    }
-
-    @Deprecated
-    @Override
-    public String getUrl() {
-        return url();
     }
 
     @Override
@@ -81,12 +69,6 @@ public abstract class BasicProvider implements Provider {
     @Override
     public boolean supportsDuplicateZoneNames() {
         return false;
-    }
-
-    @Deprecated
-    @Override
-    public Multimap<String, String> getCredentialTypeToParameterNames() {
-        return credentialTypeToParameterNames();
     }
 
     @Override

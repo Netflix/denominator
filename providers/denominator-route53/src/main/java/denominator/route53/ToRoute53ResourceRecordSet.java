@@ -35,7 +35,7 @@ enum ToRoute53ResourceRecordSet implements Function<ResourceRecordSet<?>, org.jc
 
     static List<String> toTextFormat(ResourceRecordSet<?> rrset) {
         Builder<String> values = ImmutableList.builder();
-        for (Map<String, Object> rdata : rrset) {
+        for (Map<String, Object> rdata : rrset.rdata()) {
             String textFormat = Joiner.on(' ').join(rdata.values());
             if (ImmutableSet.of("SPF", "TXT").contains(rrset.type())) {
                 textFormat = format("\"%s\"", textFormat);

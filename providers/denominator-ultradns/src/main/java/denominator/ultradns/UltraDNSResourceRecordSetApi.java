@@ -77,7 +77,7 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
 
         List<ResourceRecordDetail> references = referencesByNameAndType(rrset.name(), rrset.type());
 
-        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset);
+        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset.rdata());
 
         for (ResourceRecordDetail reference : references) {
             ResourceRecord record = reference.getRecord();
@@ -165,88 +165,5 @@ public final class UltraDNSResourceRecordSetApi implements denominator.ResourceR
             return new UltraDNSResourceRecordSetApi(api.getResourceRecordApiForZone(idOrName),
                     new UltraDNSRoundRobinPoolApi(api.getRoundRobinPoolApiForZone(idOrName)));
         }
-    }
-
-    @Deprecated
-    @Override
-    public Iterator<ResourceRecordSet<?>> list() {
-        return iterator();
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        return iterateByName(name);
-    }
-
-    @Override
-    @Deprecated
-    public void add(ResourceRecordSet<?> rrset) {
-        checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
-
-        Optional<Integer> ttlToApply = rrset.ttl();
-
-        List<ResourceRecordDetail> references = referencesByNameAndType(rrset.name(), rrset.type());
-
-        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset);
-
-        for (ResourceRecordDetail reference : references) {
-            ResourceRecord record = reference.getRecord();
-            if (!ttlToApply.isPresent())
-                ttlToApply = Optional.of(record.getTTL());
-            ResourceRecord updateTTL = record.toBuilder().ttl(ttlToApply.or(defaultTTL)).build();
-
-            Map<String, Object> rdata = toRdataMap().apply(record);
-            if (recordsLeftToCreate.contains(rdata)) {
-                recordsLeftToCreate.remove(rdata);
-                // all ok.
-                if (ttlToApply.get().intValue() == record.getTTL()) {
-                    continue;
-                }
-                // update ttl of rdata in input
-                api.update(reference.getGuid(), updateTTL);
-            } else if (ttlToApply.get().intValue() != record.getTTL()) {
-                // update ttl of other record
-                api.update(reference.getGuid(), updateTTL);
-            }
-        }
-        create(rrset.name(), rrset.type(), ttlToApply.or(defaultTTL), recordsLeftToCreate);
-    }
-
-    @Override
-    @Deprecated
-    public void applyTTLToNameAndType(int ttl, String name, String type) {
-        checkNotNull(ttl, "ttl");
-
-        List<ResourceRecordDetail> references = referencesByNameAndType(name, type);
-        if (references.isEmpty())
-            return;
-
-        for (ResourceRecordDetail reference : references) {
-            ResourceRecord updateTTL = reference.getRecord().toBuilder().ttl(ttl).build();
-            // this will update basic or RR pool records.
-            api.update(reference.getGuid(), updateTTL);
-        }
-    }
-
-    @Override
-    @Deprecated
-    public void remove(ResourceRecordSet<?> rrset) {
-        checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
-
-        for (ResourceRecordDetail reference : referencesByNameAndType(rrset.name(), rrset.type())) {
-            ResourceRecord record = reference.getRecord();
-            if (rrset.rdata().contains(toRdataMap().apply(record))) {
-                remove(rrset.name(), rrset.type(), reference.getGuid());
-            }
-        }
-    }
-
-    @Override
-    @Deprecated
-    public void replace(ResourceRecordSet<?> rrset) {
-        put(rrset);
     }
 }

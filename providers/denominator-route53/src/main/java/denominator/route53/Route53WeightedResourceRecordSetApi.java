@@ -178,22 +178,4 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
             return "IdEqualTo(" + id + ")";
         }
     }
-
-    @Deprecated
-    @Override
-    public Iterator<ResourceRecordSet<?>> list() {
-        return iterator();
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByName(String name) {
-        return iterateByName(name);
-    }
-
-    @Override
-    @Deprecated
-    public Iterator<ResourceRecordSet<?>> listByNameAndType(String name, String type) {
-        return iterateByNameAndType(name, type);
-    }
 }
