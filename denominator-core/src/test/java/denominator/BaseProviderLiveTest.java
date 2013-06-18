@@ -50,7 +50,7 @@ public abstract class BaseProviderLiveTest {
         Zone zone = skipIfNoMutableZone();
         String recordSuffix =  recordPrefix + "." + zone.name();
         // TODO: metadata about whether zone names have trailing dots or not.
-        recordSuffix = recordSuffix.endsWith(".") ? recordSuffix : recordSuffix + ".";
+        String rdataSuffix = recordSuffix.endsWith(".") ? recordSuffix : recordSuffix + ".";
         Builder<String, ResourceRecordSet<?>> builder = ImmutableMap.<String, ResourceRecordSet<?>> builder();
         builder.put("AAAA", aaaa("ipv6-" + recordSuffix, ImmutableList.of("2001:0DB8:85A3:0000:0000:8A2E:0370:7334",
                 "2001:0DB8:85A3:0000:0000:8A2E:0370:7335", "2001:0DB8:85A3:0000:0000:8A2E:0370:7336")));
@@ -58,18 +58,18 @@ public abstract class BaseProviderLiveTest {
         builder.put(
                 "CNAME",
                 cname("www-" + recordSuffix,
-                        ImmutableList.of("www-north-" + recordSuffix, "www-east-" + recordSuffix, "www-west-"
-                                + recordSuffix)));
+                        ImmutableList.of("www-north-" + rdataSuffix, "www-east-" + rdataSuffix, "www-west-"
+                                + rdataSuffix)));
         builder.put("MX", ResourceRecordSet.<MXData> builder()
                                            .name("mail-" + recordSuffix)
                                            .type("MX")
-                                           .add(MXData.create(10, "mail1-" + recordSuffix))
-                                           .add(MXData.create(10, "mail2-" + recordSuffix))
-                                           .add(MXData.create(10, "mail3-" + recordSuffix)).build());
+                                           .add(MXData.create(10, "mail1-" + rdataSuffix))
+                                           .add(MXData.create(10, "mail2-" + rdataSuffix))
+                                           .add(MXData.create(10, "mail3-" + rdataSuffix)).build());
         builder.put("NS", ns("ns-" + recordSuffix,
-                ImmutableList.of("ns1-" + recordSuffix, "ns2-" + recordSuffix, "ns3-" + recordSuffix)));
+                ImmutableList.of("ns1-" + rdataSuffix, "ns2-" + rdataSuffix, "ns3-" + rdataSuffix)));
         builder.put("PTR", ptr("ptr-" + recordSuffix,
-                ImmutableList.of("ptr1-" + recordSuffix, "ptr2-" + recordSuffix, "ptr3-" + recordSuffix)));
+                ImmutableList.of("ptr1-" + rdataSuffix, "ptr2-" + rdataSuffix, "ptr3-" + rdataSuffix)));
         builder.put("SPF", spf("spf-" + recordSuffix,
                 ImmutableList.of("v=spf1 a -all", "v=spf1 mx -all", "v=spf1 ipv6 -all")));
         builder.put("SRV", ResourceRecordSet.<SRVData> builder()
@@ -78,15 +78,15 @@ public abstract class BaseProviderLiveTest {
                                             .add(SRVData.builder()
                                                         .priority(0)
                                                         .weight(1)
-                                                        .port(80).target("ipv4-" + recordSuffix).build())
+                                                        .port(80).target("ipv4-" + rdataSuffix).build())
                                             .add(SRVData.builder()
                                                         .priority(0)
                                                         .weight(1)
-                                                        .port(8080).target("ipv4-" + recordSuffix).build())
+                                                        .port(8080).target("ipv4-" + rdataSuffix).build())
                                             .add(SRVData.builder()
                                                         .priority(0)
                                                         .weight(1)
-                                                        .port(443).target("ipv4-" + recordSuffix).build()).build());
+                                                        .port(443).target("ipv4-" + rdataSuffix).build()).build());
         builder.put("SSHFP", ResourceRecordSet.<SSHFPData> builder()
                                               .name("ipv4-" + recordSuffix)
                                               .type("SSHFP")
