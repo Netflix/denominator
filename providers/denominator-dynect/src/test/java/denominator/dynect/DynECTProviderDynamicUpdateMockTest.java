@@ -22,19 +22,20 @@ import denominator.Denominator;
 @Test(singleThreaded = true)
 public class DynECTProviderDynamicUpdateMockTest {
 
-    String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.3.8\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+    String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.5.0\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
     @Test
     public void dynamicEndpointUpdates() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
         server.play();
 
         try {
-            String initialPath = "/";
-            String updatedPath = "/alt/";
+            String initialPath = "";
+            String updatedPath = "/alt";
             URL mockUrl = server.getUrl(initialPath);
             final AtomicReference<URL> dynamicUrl = new AtomicReference<URL>(mockUrl);
 
@@ -49,9 +50,10 @@ public class DynECTProviderDynamicUpdateMockTest {
             dynamicUrl.set(new URL(mockUrl, updatedPath));
             assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
 
-            assertEquals(server.getRequestCount(), 3);
+            assertEquals(server.getRequestCount(), 4);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /alt/Session HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /alt/ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
@@ -73,7 +75,7 @@ public class DynECTProviderDynamicUpdateMockTest {
             DNSApi api = Denominator.create(new DynECTProvider() {
                 @Override
                 public String url() {
-                    return server.getUrl("/").toString();
+                    return server.getUrl("").toString();
                 }
             }, credentials(new Supplier<Credentials>(){
                 @Override

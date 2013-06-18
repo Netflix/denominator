@@ -8,9 +8,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
 
-import org.jclouds.util.Strings2;
 import org.testng.annotations.Test;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Resources;
 import com.google.mockwebserver.MockResponse;
@@ -25,13 +25,13 @@ import denominator.profile.GeoResourceRecordSetApi;
 @Test(singleThreaded = true)
 public class DynECTGeoResourceRecordSetApiMockTest {
 
-    String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.3.8\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+    String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.5.0\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
     String noGeoServices = "{\"status\": \"success\", \"data\": [] }";
     String geoService;
 
     DynECTGeoResourceRecordSetApiMockTest() throws IOException{
-        geoService = Strings2.toStringAndClose(Resources.getResource("geoservice.json").openStream());
+        geoService = Resources.toString(Resources.getResource("geoservice.json"), Charsets.UTF_8);
     }
 
     ResourceRecordSet<CNAMEData> europe = ResourceRecordSet.<CNAMEData> builder()
@@ -77,7 +77,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             Iterator<ResourceRecordSet<?>> iterator = api.iterator();
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
@@ -100,7 +100,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             Iterator<ResourceRecordSet<?>> iterator = api.iterateByName("srv.denominator.io");
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
@@ -123,7 +123,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
             assertEquals(server.getRequestCount(), 2);
@@ -142,7 +142,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             Iterator<ResourceRecordSet<?>> iterator = api.iterateByNameAndType("srv.denominator.io", "CNAME");
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
@@ -165,7 +165,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertFalse(api.iterateByNameAndType("www.denominator.io", "A").hasNext());
 
             assertEquals(server.getRequestCount(), 2);
@@ -184,7 +184,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertEquals(api.getByNameTypeAndQualifier("srv.denominator.io", "CNAME", "Fallback").get(), fallback);
 
             assertEquals(server.getRequestCount(), 2);
@@ -203,7 +203,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertFalse(api.getByNameTypeAndQualifier("www.denominator.io", "A", "Fallback").isPresent());
 
             assertEquals(server.getRequestCount(), 2);

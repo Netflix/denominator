@@ -21,9 +21,9 @@ test {
 
 dependencies {
   compile      project(':denominator-core')
-  provided    'com.squareup.dagger:dagger-compiler:1.0.0'
+  provided    'com.squareup.dagger:dagger-compiler:1.0.1'
+  compile     'com.google.code.gson:gson:2.2.4'
   testCompile  project(':denominator-core').sourceSets.test.output
-  compile     'org.jclouds.provider:dynect:1.6.0'
-  compile     'org.jclouds.driver:jclouds-slf4j:1.6.0'
+  compile      project(':feign')
 }
 

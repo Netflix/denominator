@@ -18,17 +18,9 @@ import com.google.common.collect.Multimap;
 
 import dagger.Module;
 import dagger.Provides;
-import denominator.DNSApiManager;
-import denominator.profile.GeoResourceRecordSetApi;
 
-@Module(injects = DNSApiManager.class, complete = false)
-public class DynECTGeoSupport {
-
-    @Provides
-    @Singleton
-    GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(DynECTGeoResourceRecordSetApi.Factory in) {
-        return in;
-    }
+@Module(injects = GeoResourceRecordSetsDecoder.class)
+public class CountryToRegions {
 
     /**
      * taken from <a
@@ -39,7 +31,8 @@ public class DynECTGeoSupport {
     @Singleton
     @Named("geo")
     Multimap<String, String> provideCountriesByRegion() {
-        return ImmutableMultimap.<String, String> builder()
+        return ImmutableMultimap
+                .<String, String> builder()
                 // Continental North America
                 .putAll("11",
                         ImmutableSet.of("AG", "AI", "AN", "AW", "BB", "BL", "BM", "BS", "BZ", "CA", "CR", "CU", "DM",
@@ -80,12 +73,9 @@ public class DynECTGeoSupport {
                 .putAll("16",
                         ImmutableSet.of("AS", "AU", "CK", "FJ", "FM", "GU", "KI", "MH", "MP", "NC", "NF", "NR", "NU",
                                 "NZ", "PF", "PG", "PN", "PW", "SB", "TK", "TO", "TV", "UM", "VU", "WF", "WS"))
-                 // Continental Antarctica
-                .putAll("17", ImmutableSet.of("AQ", "BV", "GS", "HM", "TF"))
-                .put("Fallback", "@@")
-                .put("Unknown IP", "@!")
-                .put("Anonymous Proxy", "A1")
-                .put("Other Country", "O1")
+                // Continental Antarctica
+                .putAll("17", ImmutableSet.of("AQ", "BV", "GS", "HM", "TF")).put("Fallback", "@@")
+                .put("Unknown IP", "@!").put("Anonymous Proxy", "A1").put("Other Country", "O1")
                 .put("Satellite Provider", "A2").build();
     }
 
@@ -103,7 +93,7 @@ public class DynECTGeoSupport {
             builder.put(region.getValue(), region.getKey());
         }
         // special case the "all countries" condition
-        for (String key : regions.keySet()){
+        for (String key : regions.keySet()) {
             builder.put(key, key);
         }
         final Function<String, String> countryToRegion = Functions.forMap(builder.build());
