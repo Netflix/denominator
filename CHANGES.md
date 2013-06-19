@@ -1,3 +1,6 @@
+### Version 1.4.0
+* Remove deprecated `Geo.group()` for `ResourceRecordSet.qualifier()`
+
 ### Version 1.3.1
 * Profiles like Geo can be specified as maps and serialize naturally as json.
 

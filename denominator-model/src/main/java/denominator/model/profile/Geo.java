@@ -48,9 +48,6 @@ public class Geo extends ForwardingMap<String, Object> {
                         entry.getValue().getClass().getSimpleName());
                 builder.putAll(entry.getKey().toString(), Iterable.class.cast(entry.getValue()));
             }
-            // TODO: remove group from geo in 2.0
-            if (profile.containsKey("group"))
-                return new Geo(profile.get("group").toString(), builder.build());
             return new Geo(builder.build());
         } else {
             throw new IllegalArgumentException(
@@ -66,15 +63,6 @@ public class Geo extends ForwardingMap<String, Object> {
      */
     public static Geo asGeo(ResourceRecordSet<?> rrset) {
         return asGeo(tryFindProfile(rrset, "geo").orNull());
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #create(Multimap)}
-     */
-    @Deprecated
-    public static Geo create(String group, Multimap<String, String> regions) {
-        return new Geo(group, regions);
     }
 
     /**
@@ -96,35 +84,6 @@ public class Geo extends ForwardingMap<String, Object> {
         this.regionsAsMultimap = ImmutableMultimap.copyOf(regionsAsMultimap);
         this.regions = regionsAsMultimap.asMap();
         this.delegate = ImmutableMap.<String, Object> builder().put("type", type).put("regions", regions).build();
-    }
-
-    @Deprecated
-    @ConstructorProperties({ "group", "regions" })
-    private Geo(String group, Multimap<String, String> regionsAsMultimap) {
-        checkNotNull(regionsAsMultimap, "regions");
-        checkNotNull(group, "group");
-        this.regionsAsMultimap = ImmutableMultimap.copyOf(regionsAsMultimap);
-        this.regions = regionsAsMultimap.asMap();
-        this.delegate = ImmutableMap.<String, Object> builder().put("type", type).put("group", group)
-                .put("regions", regions).build();
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link ResourceRecordSet#qualifier() qualifier}
-     */
-    @Deprecated
-    public String getGroup() {
-        return group();
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link ResourceRecordSet#qualifier() qualifier}
-     */
-    @Deprecated
-    public String group() {
-        return (String) delegate.get("group");
     }
 
     /**

@@ -71,7 +71,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
                 Geo currentGeo = asGeo(toTest);
                 Multimap<String, String> without = filterValues(currentGeo.regions(),
                         not(in(newGeo.regions().values())));
-                currentGeo = Geo.create(currentGeo.group(), ImmutableMultimap.copyOf(without));
+                currentGeo = Geo.create(ImmutableMultimap.copyOf(without));
                 records.remove(zone, toTest);
                 records.put(zone, ResourceRecordSet.<Map<String, Object>> builder() //
                         .name(toTest.name())//
@@ -103,8 +103,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
             return;
         ResourceRecordSet<Map<String, Object>> rrs = ResourceRecordSet.<Map<String, Object>> builder()
                 .name(rrset.name()).type(rrset.type()).qualifier(group).ttl(rrset.ttl().orNull())
-                // TODO: remove qualifier here in 2.0
-                .addProfile(Geo.create(group, regions)).addAll(rrset).build();
+                .addProfile(Geo.create(regions)).addAll(rrset).build();
         put(IS_GEO, rrs);
     }
 
