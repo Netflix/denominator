@@ -36,8 +36,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             .qualifier("Europe")
             .ttl(300)
             .add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
-            // TODO: remove group arg in 2.0
-            .addProfile(Geo.create("Europe", ImmutableMultimap.<String, String> builder()
+            .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
                                 .putAll("Europe", "Aland Islands", "Albania", "Andorra", "Armenia", "Austria",
                                         "Azerbaijan", "Belarus", "Belgium", "Bosnia-Herzegovina", "Bulgaria",
                                         "Croatia", "Czech Republic", "Denmark", "Estonia", "Faroe Islands",
@@ -59,8 +58,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             .qualifier("US")
             .ttl(300)
             .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
-            // TODO: remove group arg in 2.0
-            .addProfile(Geo.create("US", ImmutableMultimap.<String, String> builder()
+            .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
                                 .putAll("United States (US)", "Alabama", "Alaska", "Arizona", "Arkansas",
                                         "Armed Forces Americas", "Armed Forces Europe, Middle East, and Canada",
                                         "Armed Forces Pacific", "California", "Colorado", "Connecticut",
@@ -81,8 +79,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             .qualifier("Everywhere Else")
             .ttl(60)
             .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
-            // TODO: remove group arg in 2.0
-            .addProfile(Geo.create("Everywhere Else", ImmutableMultimap.<String, String> builder()
+            .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
                                 .put("Anonymous Proxy (A1)", "Anonymous Proxy")
                                 .put("Mexico", "Mexico")
                                 .put("Satellite Provider (A2)", "Satellite Provider")

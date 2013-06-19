@@ -40,8 +40,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             .qualifier("Europe")
             .ttl(300)
             .add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
-            // TODO: remove group arg in 2.0
-            .addProfile(Geo.create("Europe", ImmutableMultimap.of("13", "13")))
+            .addProfile(Geo.create(ImmutableMultimap.of("13", "13")))
             .build();
 
     ResourceRecordSet<CNAMEData> everywhereElse = ResourceRecordSet.<CNAMEData> builder()
@@ -50,15 +49,13 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             .qualifier("Everywhere Else")
             .ttl(300)
             .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
-            // TODO: remove group arg in 2.0
-            .addProfile(Geo.create("Everywhere Else",
-                                ImmutableMultimap.<String, String> builder()
-                                                 .put("11", "11")
-                                                 .put("16", "16")
-                                                 .put("12", "12")
-                                                 .put("17", "17")
-                                                 .put("15", "15")
-                                                 .put("14", "14").build()))                                                   
+            .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
+                                                    .put("11", "11")
+                                                    .put("16", "16")
+                                                    .put("12", "12")
+                                                    .put("17", "17")
+                                                    .put("15", "15")
+                                                    .put("14", "14").build()))                                                   
             .build();
     
     ResourceRecordSet<CNAMEData> fallback = ResourceRecordSet.<CNAMEData> builder()
@@ -67,11 +64,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             .qualifier("Fallback")
             .ttl(60)
             .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
-            // TODO: remove group arg in 2.0
-            .addProfile(Geo.create("Fallback",
-                                ImmutableMultimap.<String, String> builder()
-                                                 .put("@!", "@!")
-                                                 .put("@@", "@@").build()))
+            .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
+                                                    .put("@!", "@!")
+                                                    .put("@@", "@@").build()))
             .build();
 
     @Test
