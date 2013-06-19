@@ -234,7 +234,7 @@ public class ResourceRecordSets {
      * 
      * @param type
      *            expected type of the profile
-     * @since 1.4.0
+     * @since 1.3.1
      */
     public static Predicate<ResourceRecordSet<?>> profileContainsType(String type) {
         return new ProfileContainsTypeToPredicate(type);
@@ -313,7 +313,7 @@ public class ResourceRecordSets {
      * a profile exists. If no such profile is found, an empty {@link Optional}
      * will be returned.
      * 
-     * @since 1.4.0
+     * @since 1.3.1
      */
     public static Optional<Map<String, Object>> tryFindProfile(ResourceRecordSet<?> rrset, String profileType) {
         checkNotNull(rrset, "rrset");
