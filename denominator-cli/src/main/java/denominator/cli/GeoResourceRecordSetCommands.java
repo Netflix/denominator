@@ -4,7 +4,7 @@ import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.transform;
 import static denominator.cli.Denominator.idOrName;
-import static denominator.model.ResourceRecordSets.toProfile;
+import static denominator.model.profile.Geo.asGeo;
 import static java.lang.String.format;
 import io.airlift.command.Arguments;
 import io.airlift.command.Command;
@@ -27,7 +27,6 @@ import denominator.DNSApiManager;
 import denominator.cli.Denominator.DenominatorCommand;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetToString;
 import denominator.model.ResourceRecordSet;
-import denominator.model.profile.Geo;
 import denominator.profile.GeoResourceRecordSetApi;
 
 class GeoResourceRecordSetCommands {
@@ -152,10 +151,9 @@ class GeoResourceRecordSetCommands {
 
         @Override
         public String apply(ResourceRecordSet<?> geoRRS) {
-            Geo geo = toProfile(Geo.class).apply(geoRRS);
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
             for (String line : Splitter.on('\n').split(ResourceRecordSetToString.INSTANCE.apply(geoRRS))) {
-                lines.add(new StringBuilder().append(line).append(' ').append(geo.regions()).toString());
+                lines.add(new StringBuilder().append(line).append(' ').append(asGeo(geoRRS).regions()).toString());
             }
             return Joiner.on('\n').join(lines.build());
         }

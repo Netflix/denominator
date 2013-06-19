@@ -1,5 +1,5 @@
 package denominator.route53;
-import static denominator.model.ResourceRecordSets.toProfile;
+import static denominator.model.profile.Weighted.asWeighted;
 import static java.lang.String.format;
 
 import java.util.List;
@@ -26,7 +26,7 @@ enum ToRoute53ResourceRecordSet implements Function<ResourceRecordSet<?>, org.jc
                                                             .id(rrset.qualifier().orNull())
                                                             .ttl(rrset.ttl().or(300))
                                                             .addAll(toTextFormat(rrset));
-        Weighted weighted = toProfile(Weighted.class).apply(rrset);
+        Weighted weighted = asWeighted(rrset);
         if (weighted != null) {
             builder.weight(weighted.weight());
         }
