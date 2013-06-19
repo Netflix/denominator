@@ -73,15 +73,13 @@ public class GeoServiceToResourceRecordSetsTest {
                                                    .qualifier("Everywhere Else")
                                                    .ttl(300)
                                                    .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
-                                                   // TODO: remove group arg in 2.0
-                                                   .addProfile(Geo.create("Everywhere Else",
-                                                                       ImmutableMultimap.<String, String> builder()
-                                                                                        .put("11", "11")
-                                                                                        .put("16", "16")
-                                                                                        .put("12", "12")
-                                                                                        .put("17", "17")
-                                                                                        .put("15", "15")
-                                                                                        .put("14", "14").build()))                                                   
+                                                   .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
+                                                                                           .put("11", "11")
+                                                                                           .put("16", "16")
+                                                                                           .put("12", "12")
+                                                                                           .put("17", "17")
+                                                                                           .put("15", "15")
+                                                                                           .put("14", "14").build()))                                                   
                                                    .build())
                              .add(ResourceRecordSet.<CNAMEData> builder()
                                                    .name("srv.denominator.io")
@@ -89,8 +87,7 @@ public class GeoServiceToResourceRecordSetsTest {
                                                    .qualifier("Europe")
                                                    .ttl(300)
                                                    .add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
-                                                   // TODO: remove group arg in 2.0
-                                                   .addProfile(Geo.create("Europe", ImmutableMultimap.of("13", "13")))
+                                                   .addProfile(Geo.create(ImmutableMultimap.of("13", "13")))
                                                    .build())
                              .add(ResourceRecordSet.<CNAMEData> builder()
                                                    .name("srv.denominator.io")
@@ -98,11 +95,9 @@ public class GeoServiceToResourceRecordSetsTest {
                                                    .qualifier("Fallback")
                                                    .ttl(60)
                                                    .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
-                                                   // TODO: remove group arg in 2.0
-                                                   .addProfile(Geo.create("Fallback",
-                                                                       ImmutableMultimap.<String, String> builder()
-                                                                                        .put("@!", "@!")
-                                                                                        .put("@@", "@@").build()))
+                                                   .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
+                                                                                           .put("@!", "@!")
+                                                                                           .put("@@", "@@").build()))
                                                    .build()).build());
     }
 
@@ -117,15 +112,13 @@ public class GeoServiceToResourceRecordSetsTest {
                                                    .qualifier("Everywhere Else")
                                                    .ttl(300)
                                                    .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
-                                                   // TODO: remove group arg in 2.0
-                                                   .addProfile(Geo.create("Everywhere Else",
-                                                                       ImmutableMultimap.<String, String> builder()
-                                                                                        .put("11", "11")
-                                                                                        .put("16", "16")
-                                                                                        .put("12", "12")
-                                                                                        .put("17", "17")
-                                                                                        .put("15", "15")
-                                                                                        .put("14", "14").build()))                                                   
+                                                   .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
+                                                                                           .put("11", "11")
+                                                                                           .put("16", "16")
+                                                                                           .put("12", "12")
+                                                                                           .put("17", "17")
+                                                                                           .put("15", "15")
+                                                                                           .put("14", "14").build()))                                                   
                                                    .build()).build());
     }
 
@@ -152,8 +145,7 @@ public class GeoServiceToResourceRecordSetsTest {
                         .qualifier("Default")
                         .ttl(60)
                         .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
-                        // TODO: remove group arg in 2.0
-                        .addProfile(Geo.create("Default", ImmutableMultimap.of("@!", "@!", "@@", "@@")));
+                        .addProfile(Geo.create(ImmutableMultimap.of("@!", "@!", "@@", "@@")));
         
         assertEquals(geoToRRSets.apply(multipleNodes), 
                 ImmutableList.of(builder.name("srv1.denominator.io").build(),
@@ -183,8 +175,7 @@ public class GeoServiceToResourceRecordSetsTest {
 
     @Test
     public void testTypeFilterRetainsExpectedType() {
-        // TODO: remove group arg in 2.0
-        Geo geo = Geo.create("Default", ImmutableMultimap.of("@!", "@!", "@@", "@@"));
+        Geo geo = Geo.create(ImmutableMultimap.of("@!", "@!", "@@", "@@"));
 
         assertEquals(geoToRRSets.type("A").apply(mixedTypesSameGroup), 
                 ImmutableList.of(ResourceRecordSet.builder()
@@ -198,8 +189,7 @@ public class GeoServiceToResourceRecordSetsTest {
 
     @Test
     public void testMixedTypesInSameGroupBecomeDifferentRRSets() {
-        // TODO: remove group arg in 2.0
-        Geo geo = Geo.create("Default", ImmutableMultimap.of("@!", "@!", "@@", "@@"));
+        Geo geo = Geo.create(ImmutableMultimap.of("@!", "@!", "@@", "@@"));
 
         assertEquals(geoToRRSets.apply(mixedTypesSameGroup), 
                 ImmutableList.of(ResourceRecordSet.builder()

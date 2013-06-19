@@ -28,7 +28,6 @@ import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.BasicProvider;
 import denominator.DNSApiManager;
-import denominator.ReadOnlyResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.NothingToClose;
@@ -132,8 +131,7 @@ public class MockProvider extends BasicProvider {
                     .qualifier("alazona")
                     .ttl(300)
                     .add(AData.create("192.0.2.1"))
-                    // TODO: remove group arg in 2.0
-                    .addProfile(Geo.create("alazona", ImmutableMultimap.<String, String> builder()
+                    .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
                             .putAll("United States (US)", ImmutableList.of("Alaska", "Arizona"))
                             .build()))
                     .build());
@@ -143,8 +141,7 @@ public class MockProvider extends BasicProvider {
                     .qualifier("alazona")
                     .ttl(300)
                     .add(CNAMEData.create("a.denominator.io."))
-                    // TODO: remove group arg in 2.0
-                    .addProfile(Geo.create("alazona", ImmutableMultimap.<String, String> builder()
+                    .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
                             .putAll("United States (US)", ImmutableList.of("Alaska", "Arizona"))
                             .build()))
                     .build());
@@ -154,8 +151,7 @@ public class MockProvider extends BasicProvider {
                     .qualifier("columbador")
                     .ttl(86400)
                     .add(CNAMEData.create("b.denominator.io."))
-                    // TODO: remove group arg in 2.0
-                    .addProfile(Geo.create("columbador", ImmutableMultimap.<String, String> builder()
+                    .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
                             .putAll("South America", ImmutableList.of("Colombia", "Ecuador"))
                             .build()))
                     .build());
@@ -165,8 +161,7 @@ public class MockProvider extends BasicProvider {
                     .qualifier("antarctica")
                     .ttl(0)
                     .add(CNAMEData.create("c.denominator.io."))
-                    // TODO: remove group arg in 2.0
-                    .addProfile(Geo.create("antarctica", ImmutableMultimap.<String, String> builder()
+                    .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
                             .putAll("Antarctica", ImmutableList.<String> builder()
                                                         .add("Bouvet Island")
                                                         .add("French Southern Territories")

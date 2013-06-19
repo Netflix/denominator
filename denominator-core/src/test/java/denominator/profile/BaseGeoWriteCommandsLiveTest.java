@@ -122,8 +122,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
                                           .type(recordSet.type())
                                           .qualifier(qualifier2)
                                           .ttl(rrs2.ttl().orNull())
-                                          // TODO: remove qualifier from geo in 2.0
-                                          .addProfile(Geo.create(qualifier2, plus1))
+                                          .addProfile(Geo.create(plus1))
                                           .addAll(rrs2.rdata()).build());
 
         rrs1 = geoApi(zone).getByNameTypeAndQualifier(
