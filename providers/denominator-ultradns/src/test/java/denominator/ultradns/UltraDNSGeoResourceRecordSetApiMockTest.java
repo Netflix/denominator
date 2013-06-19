@@ -2,7 +2,7 @@ package denominator.ultradns;
 
 import static com.google.common.io.Resources.getResource;
 import static denominator.CredentialsConfiguration.credentials;
-import static denominator.model.ResourceRecordSets.toProfile;
+import static denominator.model.profile.Geo.asGeo;
 import static java.lang.String.format;
 import static org.jclouds.util.Strings2.toStringAndClose;
 import static org.testng.Assert.assertEquals;
@@ -353,7 +353,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl("/"));
 
-            Multimap<String, String> regions = toProfile(Geo.class).apply(europe).regions();
+            Multimap<String, String> regions = asGeo(europe).regions();
             api.applyRegionsToNameTypeAndGroup(regions, "srv.denominator.io.", "CNAME", "Europe");
 
             assertEquals(server.getRequestCount(), 5);

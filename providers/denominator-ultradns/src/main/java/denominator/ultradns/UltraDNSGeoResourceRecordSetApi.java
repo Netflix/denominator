@@ -8,8 +8,8 @@ import static com.google.common.collect.Iterators.emptyIterator;
 import static com.google.common.collect.Iterators.filter;
 import static com.google.common.collect.Lists.newArrayList;
 import static denominator.model.ResourceRecordSets.profileContainsType;
-import static denominator.model.ResourceRecordSets.toProfile;
 import static denominator.model.ResourceRecordSets.typeEqualTo;
+import static denominator.model.profile.Geo.asGeo;
 import static denominator.ultradns.UltraDNSFunctions.forTypeAndRData;
 import static denominator.ultradns.UltraDNSPredicates.isGeolocationPool;
 import static org.jclouds.ultradns.ws.domain.DirectionalPool.RecordType.IPV4;
@@ -50,11 +50,10 @@ import dagger.Lazy;
 import denominator.Provider;
 import denominator.ResourceTypeToValue;
 import denominator.model.ResourceRecordSet;
-import denominator.model.profile.Geo;
 import denominator.profile.GeoResourceRecordSetApi;
 
 public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
-    private static final Predicate<ResourceRecordSet<?>> IS_GEO = profileContainsType(Geo.class);
+    private static final Predicate<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
     private static final int DEFAULT_TTL = 300;
 
     private final Set<String> supportedTypes;
@@ -162,7 +161,7 @@ public final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordS
         int ttlToApply = rrset.ttl().or(DEFAULT_TTL);
         String group = rrset.qualifier().get();
 
-        Multimap<String, String> regions = toProfile(Geo.class).apply(rrset).regions();
+        Multimap<String, String> regions = asGeo(rrset).regions();
 
         List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset);
         for (Iterator<DirectionalPoolRecordDetail> references = recordsByNameTypeAndQualifier(rrset.name(),

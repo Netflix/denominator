@@ -17,12 +17,11 @@ import com.google.common.collect.Multimap;
 import denominator.Provider;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
-import denominator.model.profile.Weighted;
 import denominator.profile.WeightedResourceRecordSetApi;
 
 public final class MockWeightedResourceRecordSetApi extends MockAllProfileResourceRecordSetApi implements
         WeightedResourceRecordSetApi {
-    private static final Predicate<ResourceRecordSet<?>> IS_WEIGHTED = profileContainsType(Weighted.class);
+    private static final Predicate<ResourceRecordSet<?>> IS_WEIGHTED = profileContainsType("weighted");
 
     private final Set<String> supportedTypes;
     private final SortedSet<Integer> supportedWeights;

@@ -1,12 +1,11 @@
 package denominator.mock;
-
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Multimaps.filterValues;
 import static denominator.model.ResourceRecordSets.profileContainsType;
-import static denominator.model.ResourceRecordSets.toProfile;
+import static denominator.model.profile.Geo.asGeo;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -28,7 +27,7 @@ import denominator.profile.GeoResourceRecordSetApi;
 
 public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRecordSetApi implements
         GeoResourceRecordSetApi {
-    private static final Predicate<ResourceRecordSet<?>> IS_GEO = profileContainsType(Geo.class);
+    private static final Predicate<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
 
     private final Set<String> supportedTypes;
     private final Multimap<String, String> supportedRegions;
@@ -62,14 +61,14 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         checkArgument(supportedTypes.contains(rrset.type()), "%s not a supported type for geo: %s", rrset.type(),
                 supportedTypes);
         synchronized (records) {
-            Geo newGeo = toProfile(Geo.class).apply(rrset);
             put(IS_GEO, rrset);
+            Geo newGeo = asGeo(rrset);
             Iterator<ResourceRecordSet<?>> iterateByNameAndType = iterateByNameAndType(rrset.name(), rrset.type());
             while (iterateByNameAndType.hasNext()) {
                 ResourceRecordSet<?> toTest = iterateByNameAndType.next();
                 if (toTest.qualifier().equals(rrset.qualifier()))
                     continue;
-                Geo currentGeo = toProfile(Geo.class).apply(toTest);
+                Geo currentGeo = asGeo(toTest);
                 Multimap<String, String> without = filterValues(currentGeo.regions(),
                         not(in(newGeo.regions().values())));
                 currentGeo = Geo.create(currentGeo.group(), ImmutableMultimap.copyOf(without));
@@ -99,7 +98,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         if (!existing.isPresent())
             return;
         ResourceRecordSet<?> rrset = existing.get();
-        Geo geo = toProfile(Geo.class).apply(rrset);
+        Geo geo = asGeo(rrset);
         if (geo.regions().equals(regions))
             return;
         ResourceRecordSet<Map<String, Object>> rrs = ResourceRecordSet.<Map<String, Object>> builder()
