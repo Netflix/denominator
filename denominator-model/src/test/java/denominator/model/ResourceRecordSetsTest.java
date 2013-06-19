@@ -2,11 +2,12 @@ package denominator.model;
 
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.cname;
-import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.model.ResourceRecordSets.ns;
+import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.model.ResourceRecordSets.ptr;
 import static denominator.model.ResourceRecordSets.spf;
 import static denominator.model.ResourceRecordSets.toProfile;
+import static denominator.model.ResourceRecordSets.tryFindProfile;
 import static denominator.model.ResourceRecordSets.txt;
 import static denominator.model.ResourceRecordSets.withoutProfile;
 import static org.testng.Assert.assertEquals;
@@ -18,6 +19,7 @@ import java.util.Map;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import com.google.common.base.Optional;
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -120,22 +122,43 @@ public class ResourceRecordSetsTest {
         assertTrue(withoutProfile().apply(aRRS));
     }
 
-    public void profileContainsTypeReturnsFalseOnNull() {
+    @Deprecated
+    public void deprecatedProfileContainsTypeReturnsFalseOnNull() {
         assertFalse(profileContainsType(Geo.class).apply(null));
     }
 
-    public void profileContainsTypeReturnsFalseOnDifferentType() {
+    @Deprecated
+    public void deprecatedProfileContainsTypeReturnsFalseOnDifferentType() {
         assertFalse(profileContainsType(String.class).apply(geoRRS));
     }
 
-    public void profileContainsTypeReturnsFalseOnAbsent() {
+    @Deprecated
+    public void deprecatedProfileContainsTypeReturnsFalseOnAbsent() {
         assertFalse(profileContainsType(Geo.class).apply(aRRS));
     }
 
-    public void profileContainsTypeReturnsTrueOnSameType() {
+    @Deprecated
+    public void deprecatedProfileContainsTypeReturnsTrueOnSameType() {
         assertTrue(profileContainsType(Geo.class).apply(geoRRS));
     }
 
+    public void profileContainsTypeReturnsFalseOnNull() {
+        assertFalse(profileContainsType("geo").apply(null));
+    }
+
+    public void profileContainsTypeReturnsFalseOnDifferentType() {
+        assertFalse(profileContainsType("weighted").apply(geoRRS));
+    }
+
+    public void profileContainsTypeReturnsFalseOnAbsent() {
+        assertFalse(profileContainsType("geo").apply(aRRS));
+    }
+
+    public void profileContainsTypeReturnsTrueOnSameType() {
+        assertTrue(profileContainsType("geo").apply(geoRRS));
+    }
+
+    @Deprecated
     public void toProfileReturnsNullOnNull() {
         assertEquals(toProfile(Geo.class).apply(null), null);
     }
@@ -149,16 +172,27 @@ public class ResourceRecordSetsTest {
 
     }
 
+    @Deprecated
     public void toProfileReturnsNullOnDifferentType() {
         assertEquals(toProfile(Foo.class).apply(geoRRS), null);
     }
 
+    @Deprecated
     public void toProfileReturnsNullOnAbsent() {
         assertEquals(toProfile(Geo.class).apply(aRRS), null);
     }
 
+    @Deprecated
     public void toProfileReturnsProfileOnSameType() {
         assertEquals(toProfile(Geo.class).apply(geoRRS), geo);
+    }
+
+    public void tryFindProfileReturnsAbsentOnDifferentType() {
+        assertEquals(tryFindProfile(aRRS, "geo"), Optional.absent());
+    }
+
+    public void tryFindProfileReturnsProfileOnSameType() {
+        assertEquals(tryFindProfile(geoRRS, "geo").get(), geo);
     }
 
     public void toProfileTypesEmptyOnBasicRRSet() {

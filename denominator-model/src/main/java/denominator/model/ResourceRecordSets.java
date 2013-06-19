@@ -6,9 +6,12 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Function;
+import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 
+import denominator.model.profile.Geo;
+import denominator.model.profile.Weighted;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
@@ -185,15 +188,62 @@ public class ResourceRecordSets {
      * 
      * @param type
      *            expected type of the profile
+     * 
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link #profileContainsType(String)}
      */
-    public static Predicate<ResourceRecordSet<?>> profileContainsType(Class<?> type) {
+    @Deprecated
+    public static Predicate<ResourceRecordSet<?>> profileContainsType(final Class<?> type) {
+        checkNotNull(type, "type");
+        return new Predicate<ResourceRecordSet<?>>() {
+
+            @Override
+            public boolean apply(ResourceRecordSet<?> input) {
+                if (input == null)
+                    return false;
+                if (input.profiles().isEmpty())
+                    return false;
+                for (Map<String, Object> profile : input.profiles()) {
+                    if (type.isAssignableFrom(profile.getClass()))
+                        return true;
+                }
+                return false;
+            }
+
+            @Override
+            public String toString() {
+                return "ProfileContainsTypeTo(" + type + ")";
+            }
+        };
+
+    }
+
+    /**
+     * returns true if {@link ResourceRecordSet#profiles() profile} contains a
+     * value is where the value of key {@code type} corresponds to the parameter
+     * {@code type}.
+     * 
+     * <p/>
+     * Ex.
+     * 
+     * <pre>
+     * if (profileContainsType(&quot;weighted&quot;).apply(rrs)) {
+     *     // delegate accordingly
+     * }
+     * </pre>
+     * 
+     * @param type
+     *            expected type of the profile
+     * @since 1.4.0
+     */
+    public static Predicate<ResourceRecordSet<?>> profileContainsType(String type) {
         return new ProfileContainsTypeToPredicate(type);
     }
 
     private static final class ProfileContainsTypeToPredicate implements Predicate<ResourceRecordSet<?>> {
-        private final Class<?> type;
+        private final String type;
 
-        private ProfileContainsTypeToPredicate(Class<?> type) {
+        private ProfileContainsTypeToPredicate(String type) {
             this.type = checkNotNull(type, "type");
         }
 
@@ -204,7 +254,7 @@ public class ResourceRecordSets {
             if (input.profiles().isEmpty())
                 return false;
             for (Map<String, Object> profile : input.profiles()) {
-                if (type.isAssignableFrom(profile.getClass()))
+                if (type.equals(profile.get("type")))
                     return true;
             }
             return false;
@@ -217,14 +267,17 @@ public class ResourceRecordSets {
     }
 
     /**
-     * returns value of {@link ResourceRecordSet#profiles() profile},
-     * if matches the input {@code type} and is not null;
+     * returns value of {@link ResourceRecordSet#profiles() profile}, if matches
+     * the input {@code type} and is not null;
      * 
      * @param type
      *            expected type of profile
+     * @deprecated Will be removed in denominator 2.0. Please use
+     *             {@link Geo#asGeo(ResourceRecordSet)} or
+     *             {@link Weighted#asWeighted(ResourceRecordSet)}
      */
-    public static <C extends Map<String, Object>> Function<ResourceRecordSet<?>, C> toProfile(
-            Class<C> type) {
+    @Deprecated
+    public static <C extends Map<String, Object>> Function<ResourceRecordSet<?>, C> toProfile(Class<C> type) {
         return new ToProfileFunction<C>(type);
     }
 
@@ -252,6 +305,24 @@ public class ResourceRecordSets {
         public String toString() {
             return "ToProfile(" + type + ")";
         }
+    }
+
+    /**
+     * Returns an {@link Optional} containing the first profile in {@code rrset}
+     * that has an entry whose type corresponds to {@code profileType}, if such
+     * a profile exists. If no such profile is found, an empty {@link Optional}
+     * will be returned.
+     * 
+     * @since 1.4.0
+     */
+    public static Optional<Map<String, Object>> tryFindProfile(ResourceRecordSet<?> rrset, String profileType) {
+        checkNotNull(rrset, "rrset");
+        checkNotNull(profileType, "profileType");
+        for (Map<String, Object> profile : rrset.profiles()) {
+            if (profileType.equals(profile.get("type")))
+                return Optional.of(profile);
+        }
+        return Optional.absent();
     }
 
     /**

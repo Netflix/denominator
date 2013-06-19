@@ -1,3 +1,6 @@
+### Version 1.4.0
+* Profiles like Geo can be specified as maps and serialize naturally as json.
+
 ### Version 1.3.0
 * Added full write support to `AllProfileResourceRecordSetApi`.
 * Added `Provider.basicRecordTypes()` and `Provider.profileToRecordTypes()` advertizing what record types are supported.

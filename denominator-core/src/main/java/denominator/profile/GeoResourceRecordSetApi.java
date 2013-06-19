@@ -106,7 +106,7 @@ public interface GeoResourceRecordSetApi extends QualifiedResourceRecordSetApi {
      *            {@link ResourceRecordSet#name() name} of the rrset
      * @param type
      *            {@link ResourceRecordSet#type() type} of the rrset
-     * @param qualifier
+     * @param group
      *            {@link ResourceRecordSet#qualifier() qualifier} of the rrset
      * 
      * @deprecated Will be removed in denominator 2.0. Please use
