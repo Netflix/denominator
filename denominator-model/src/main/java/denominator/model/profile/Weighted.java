@@ -29,7 +29,7 @@ public class Weighted extends ForwardingMap<String, Object> {
      * returns a Weighted view of the {@code profile} or null if no weighted
      * profile found.
      * 
-     * @since 1.4.0
+     * @since 1.3.1
      */
     public static Weighted asWeighted(Map<String, Object> profile) {
         if (profile == null)
@@ -43,7 +43,7 @@ public class Weighted extends ForwardingMap<String, Object> {
      * returns a Weighted view of the {@code rrset} or null if no weighted
      * profile found.
      * 
-     * @since 1.4.0
+     * @since 1.3.1
      */
     public static Weighted asWeighted(ResourceRecordSet<?> rrset) {
         return asWeighted(tryFindProfile(rrset, "weighted").orNull());

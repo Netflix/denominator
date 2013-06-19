@@ -1,6 +1,7 @@
 package denominator.model.profile;
 
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static denominator.model.ResourceRecordSets.tryFindProfile;
 
 import java.beans.ConstructorProperties;
@@ -30,7 +31,7 @@ public class Geo extends ForwardingMap<String, Object> {
      * returns a Geo view of the {@code profile} or null if no geo profile
      * found.
      * 
-     * @since 1.4.0
+     * @since 1.3.1
      */
     @SuppressWarnings("unchecked")
     public static Geo asGeo(Map<String, Object> profile) {
@@ -61,7 +62,7 @@ public class Geo extends ForwardingMap<String, Object> {
     /**
      * returns a Geo view of the {@code rrset} or null if no geo profile found.
      * 
-     * @since 1.4.0
+     * @since 1.3.1
      */
     public static Geo asGeo(ResourceRecordSet<?> rrset) {
         return asGeo(tryFindProfile(rrset, "geo").orNull());
