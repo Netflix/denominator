@@ -33,8 +33,7 @@ import denominator.model.ResourceRecordSet;
 import denominator.profile.WeightedResourceRecordSetApi;
 
 final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecordSetApi {
-    private static final Predicate<ResourceRecordSet<?>> IS_WEIGHTED =
-            profileContainsType(denominator.model.profile.Weighted.class);
+    private static final Predicate<ResourceRecordSet<?>> IS_WEIGHTED = profileContainsType("weighted");
 
     private final ResourceRecordSetApi route53RRsetApi;
     private final Set<String> supportedTypes;

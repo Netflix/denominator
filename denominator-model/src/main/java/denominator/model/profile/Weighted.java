@@ -1,12 +1,15 @@
 package denominator.model.profile;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static denominator.model.ResourceRecordSets.tryFindProfile;
 
 import java.beans.ConstructorProperties;
 import java.util.Map;
 
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableMap;
+
+import denominator.model.ResourceRecordSet;
 
 /**
  * Record sets with this profile are load balanced, differentiated by an integer
@@ -21,6 +24,30 @@ import com.google.common.collect.ImmutableMap;
  * @since 1.3
  */
 public class Weighted extends ForwardingMap<String, Object> {
+
+    /**
+     * returns a Weighted view of the {@code profile} or null if no weighted
+     * profile found.
+     * 
+     * @since 1.4.0
+     */
+    public static Weighted asWeighted(Map<String, Object> profile) {
+        if (profile == null)
+            return null;
+        if (profile instanceof Weighted)
+            return Weighted.class.cast(profile);
+        return new Weighted(Integer.class.cast(profile.get("weight")));
+    }
+
+    /**
+     * returns a Weighted view of the {@code rrset} or null if no weighted
+     * profile found.
+     * 
+     * @since 1.4.0
+     */
+    public static Weighted asWeighted(ResourceRecordSet<?> rrset) {
+        return asWeighted(tryFindProfile(rrset, "weighted").orNull());
+    }
 
     /**
      * @param weight
