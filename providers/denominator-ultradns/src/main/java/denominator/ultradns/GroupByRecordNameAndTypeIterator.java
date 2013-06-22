@@ -6,19 +6,19 @@ import static denominator.ultradns.UltraDNSFunctions.toRdataMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.jclouds.ultradns.ws.domain.ResourceRecord;
-import org.jclouds.ultradns.ws.domain.ResourceRecordDetail;
 
+import com.google.common.collect.BiMap;
 import com.google.common.collect.PeekingIterator;
 
 import denominator.ResourceTypeToValue;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
+import denominator.ultradns.UltraDNS.Record;
 
 class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>> {
-    private final PeekingIterator<ResourceRecordDetail> peekingIterator;
+    private final PeekingIterator<Record> peekingIterator;
 
-    public GroupByRecordNameAndTypeIterator(Iterator<ResourceRecordDetail> sortedIterator) {
+    public GroupByRecordNameAndTypeIterator(Iterator<Record> sortedIterator) {
         this.peekingIterator = peekingIterator(sortedIterator);
     }
 
@@ -27,19 +27,21 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
         return peekingIterator.hasNext();
     }
 
+    private static final BiMap<Integer, String> reverseLookup = new ResourceTypeToValue().inverse();
+
     @Override
     public ResourceRecordSet<?> next() {
-        ResourceRecord record = peekingIterator.next().getRecord();
-        String type = new ResourceTypeToValue().inverse().get(record.getType());
+        Record record = peekingIterator.next();
+        String type = reverseLookup.get(record.typeCode);
         Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
-                                                                .name(record.getName())
+                                                                .name(record.name)
                                                                 .type(type)
-                                                                .ttl(record.getTTL());
+                                                                .ttl(record.ttl);
 
         builder.add(toRdataMap().apply(record));
 
         while (hasNext()) {
-            ResourceRecord next = peekingIterator.peek().getRecord();
+            Record next = peekingIterator.peek();
             if (fqdnAndTypeEquals(next, record)) {
                 peekingIterator.next();
                 builder.add(toRdataMap().apply(next));
@@ -55,7 +57,7 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
         throw new UnsupportedOperationException();
     }
 
-    static boolean fqdnAndTypeEquals(ResourceRecord actual, ResourceRecord expected) {
-        return actual.getName().equals(expected.getName()) && actual.getType() == expected.getType();
+    static boolean fqdnAndTypeEquals(Record actual, Record expected) {
+        return actual.name.equals(expected.name) && actual.typeCode == expected.typeCode;
     }   
 }
