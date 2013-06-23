@@ -1,4 +1,5 @@
-subprojects {
+// android is not compatible with plugins that load the java plugin
+configure(subprojects.findAll {project -> !project.file('src/main/AndroidManifest.xml').exists() }) {
 // Checkstyle
 apply plugin: 'checkstyle'
 checkstyle {
