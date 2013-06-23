@@ -20,17 +20,4 @@ apply from: file('gradle/release.gradle')
 
 subprojects {
     group = "com.netflix.${githubProjectName}"
-
-    test {
-        useTestNG()
-    }
-
-    dependencies {
-	compile     'com.google.guava:guava:14.0.1'
-        compile     'org.slf4j:slf4j-api:1.7.5'
-        testCompile 'org.testng:testng:6.8.1'
-        testCompile 'ch.qos.logback:logback-classic:1.0.12'
-        testCompile 'com.fasterxml.jackson.core:jackson-databind:2.2.0'
-        testCompile 'com.google.mockwebserver:mockwebserver:20130505'
-    }
 }

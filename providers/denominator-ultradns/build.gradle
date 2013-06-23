@@ -12,6 +12,7 @@ eclipse {
 }
 
 test {
+  useTestNG()
   systemProperty 'ultradns.url', System.getProperty('ultradns.url', '')
   systemProperty 'ultradns.username', System.getProperty('ultradns.username', '')
   systemProperty 'ultradns.password', System.getProperty('ultradns.password', '')
@@ -20,8 +21,10 @@ test {
 
 dependencies {
   compile      project(':denominator-core')
-  provided    'com.squareup.dagger:dagger-compiler:1.0.1'
   compile      project(':feign')
+  provided    'com.squareup.dagger:dagger-compiler:1.0.1'
   testCompile  project(':denominator-core').sourceSets.test.output
+  testCompile  project(':denominator-core').sourceSets.test.output
+  testCompile 'org.testng:testng:6.8.1'
+  testCompile 'com.google.mockwebserver:mockwebserver:20130505'
 }
-
