@@ -1,3 +1,6 @@
+### Version 2.0
+* Added Android Example 
+
 ### Version 1.3.1
 * Profiles like Geo can be specified as maps and serialize naturally as json.
 

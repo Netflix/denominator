@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+    <string name="app_name">Denominator</string>
+    <string name="list_duration">list complete in %sms.</string>
+    <string name="home_title">Denominator Example: %s</string>
+    <string name="init_duration">initialized in %sms</string>
+</resources>
