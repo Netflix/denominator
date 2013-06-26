@@ -13,6 +13,7 @@ import com.google.common.reflect.TypeToken;
 
 import feign.FeignException;
 import feign.Response;
+import feign.RetryableException;
 import feign.codec.ErrorDecoder;
 
 @Test(singleThreaded = true)
@@ -24,6 +25,12 @@ public class UltraDNSErrorDecoderTest {
     public void noBody() throws Throwable {
         Response response = Response.create(INTERNAL_SERVER_ERROR.getStatusCode(), INTERNAL_SERVER_ERROR.getReasonPhrase(),
                 ImmutableListMultimap.<String, String> of(), null);
+        errorDecoder.decode("UltraDNS.accountId()", response, stringToken);
+    }
+
+    @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "UltraDNS.accountId\\(\\) failed with error 9999: System Error")
+    public void systemError() throws Throwable {
+        Response response = responseWithContent("errors/system_error.xml");
         errorDecoder.decode("UltraDNS.accountId()", response, stringToken);
     }
 

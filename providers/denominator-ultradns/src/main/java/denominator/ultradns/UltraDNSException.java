@@ -18,10 +18,13 @@ class UltraDNSException extends FeignException {
         return code;
     }
 
-    /**
-     * there are 51002 potential codes. These are the ones we are handling.
-     */
+    // there are 51002 potential codes. These are the ones we are handling.
+
     static final int UNKNOWN = 0;
+    /**
+     * System Error
+     */
+    static final int SYSTEM_ERROR = 9999;
     /**
      * Zone does not exist in the system.
      */

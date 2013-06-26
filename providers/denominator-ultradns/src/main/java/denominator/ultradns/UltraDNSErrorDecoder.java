@@ -12,6 +12,7 @@ import com.google.common.reflect.TypeToken;
 
 import feign.FeignException;
 import feign.Response;
+import feign.RetryableException;
 import feign.codec.ErrorDecoder;
 import feign.codec.SAXDecoder;
 
@@ -31,6 +32,8 @@ class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
             if (error.description != null)
                 message = format("%s: %s", message, error.description);
             switch (error.code) {
+            case UltraDNSException.SYSTEM_ERROR:
+                throw new RetryableException(message, null);
             case UltraDNSException.UNKNOWN:
                 if (message.indexOf("Cannot find") == -1)
                     break;
