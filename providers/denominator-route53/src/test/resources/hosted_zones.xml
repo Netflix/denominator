@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListHostedZonesResponse xmlns="https://route53.amazonaws.com/doc/2012-02-29/">
+	<HostedZones>
+		<HostedZone>
+			<Id>/hostedzone/Z21DW1QVGID6NG</Id>
+			<Name>example.com.</Name>
+			<CallerReference>a_unique_reference</CallerReference>
+			<Config>
+				<Comment>Migrate an existing domain to Route 53</Comment>
+			</Config>
+			<ResourceRecordSetCount>17</ResourceRecordSetCount>
+		</HostedZone>
+		<HostedZone>
+			<Id>/hostedzone/Z2682N5HXP0BZ4</Id>
+			<Name>example2.com.</Name>
+			<CallerReference>a_unique_reference2</CallerReference>
+			<Config>
+				<Comment>This is my 2nd hosted zone.</Comment>
+			</Config>
+			<ResourceRecordSetCount>117</ResourceRecordSetCount>
+		</HostedZone>
+	</HostedZones>
+	<Marker>Z222222VVVVVVV</Marker>
+	<IsTruncated>true</IsTruncated>
+	<NextMarker>Z333333YYYYYYY</NextMarker>
+	<MaxItems>10</MaxItems>
+</ListHostedZonesResponse>

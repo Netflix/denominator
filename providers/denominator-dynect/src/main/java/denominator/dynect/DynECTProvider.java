@@ -4,63 +4,39 @@ import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.collect.Iterables.filter;
-import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
-import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
-import static org.jclouds.rest.config.BinderUtils.bindHttpApi;
 
-import java.io.Closeable;
-import java.net.URI;
-import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
-import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 
-import org.jclouds.ContextBuilder;
-import org.jclouds.Fallbacks.EmptyFluentIterableOnNotFoundOr404;
-import org.jclouds.Fallbacks.EmptyMultimapOnNotFoundOr404;
-import org.jclouds.concurrent.config.ExecutorServiceModule;
-import org.jclouds.dynect.v3.DynECTApi;
-import org.jclouds.dynect.v3.DynECTExceptions.JobStillRunningException;
-import org.jclouds.dynect.v3.DynECTProviderMetadata;
-import org.jclouds.dynect.v3.domain.GeoService;
-import org.jclouds.dynect.v3.domain.Record;
-import org.jclouds.dynect.v3.filters.AlwaysAddContentType;
-import org.jclouds.dynect.v3.filters.SessionManager;
-import org.jclouds.location.suppliers.ProviderURISupplier;
-import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.rest.annotations.Fallback;
-import org.jclouds.rest.annotations.Headers;
-import org.jclouds.rest.annotations.QueryParams;
-import org.jclouds.rest.annotations.RequestFilters;
-import org.jclouds.rest.annotations.SelectJson;
-
-import com.google.common.base.Supplier;
-import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
-import com.google.inject.Injector;
+import com.google.gson.Gson;
 
 import dagger.Provides;
 import denominator.BasicProvider;
-import denominator.Credentials;
-import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
-import denominator.Provider;
 import denominator.QualifiedResourceRecordSetApi.Factory;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
+import denominator.config.NothingToClose;
 import denominator.config.WeightedUnsupported;
+import denominator.dynect.InvalidatableTokenSupplier.Session;
 import denominator.profile.GeoResourceRecordSetApi;
+import feign.Feign;
+import feign.Feign.Defaults;
+import feign.ReflectiveFeign;
+import feign.RequestTemplate;
+import feign.codec.Decoder;
+import feign.codec.FormEncoder;
 
 public class DynECTProvider extends BasicProvider {
     private final String url;
@@ -75,7 +51,7 @@ public class DynECTProvider extends BasicProvider {
      */
     public DynECTProvider(String url) {
         url = emptyToNull(url);
-        this.url = url != null ? url : new DynECTProviderMetadata().getEndpoint();
+        this.url = url != null ? url : "https://api2.dynect.net/REST";
     }
 
     @Override
@@ -92,7 +68,8 @@ public class DynECTProvider extends BasicProvider {
 
     @Override
     public SetMultimap<String, String> profileToRecordTypes() {
-        return ImmutableSetMultimap.<String, String> builder()
+        return ImmutableSetMultimap
+                .<String, String> builder()
                 // https://manage.dynect.net/help/docs/api2/rest/resources/Geo.html
                 .putAll("geo", "A", "AAAAA", "CNAME", "CERT", "MX", "TXT", "SPF", "PTR", "LOC", "SRV", "RP", "KEY",
                         "DNSKEY", "SSHFP", "DHCID", "NSAP", "PX")
@@ -101,77 +78,31 @@ public class DynECTProvider extends BasicProvider {
 
     @Override
     public Multimap<String, String> credentialTypeToParameterNames() {
-        return ImmutableMultimap.<String, String> builder()
-                .putAll("password", "customer", "username", "password").build();
+        return ImmutableMultimap.<String, String> builder().putAll("password", "customer", "username", "password")
+                .build();
     }
 
-    @dagger.Module(injects = DNSApiManager.class, 
-                   complete = false, // denominator.Provider and denominator.Credentials
-                   includes = { DynECTGeoSupport.class,
-                                WeightedUnsupported.class,
-                                ConcatBasicAndQualifiedResourceRecordSets.class })
+    @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
+            NothingToClose.class, WeightedUnsupported.class, ConcatBasicAndQualifiedResourceRecordSets.class,
+            FeignModule.class })
     public static final class Module {
 
         @Provides
         @Singleton
-        ZoneApi provideZoneApi(DynECTApi api) {
+        ZoneApi provideZoneApi(DynECT api) {
             return new DynECTZoneApi(api);
         }
 
         @Provides
         @Singleton
-        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(DynECTApi api, ReadOnlyApi allApi) {
-            return new DynECTResourceRecordSetApi.Factory(api, allApi);
+        GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(DynECTGeoResourceRecordSetApi.Factory in) {
+            return in;
         }
 
         @Provides
         @Singleton
-        // Dynamic name updates are not currently possible in jclouds.
-        Injector provideInjector(ConvertToJcloudsCredentials credentials, final Provider provider) {
-            Properties overrides = new Properties();
-            // disable url caching
-            overrides.setProperty(PROPERTY_SESSION_INTERVAL, "0");
-            return ContextBuilder.newBuilder(new DynECTProviderMetadata())
-                                 .name(provider.name())
-                                 .credentialsSupplier(credentials)
-                                 .overrides(overrides)
-                                 .modules(ImmutableSet.<com.google.inject.Module> builder()
-                                                      .add(new SLF4JLoggingModule())
-                                                      .add(new ExecutorServiceModule(sameThreadExecutor(),
-                                                                                     sameThreadExecutor()))
-                                                      .add(new com.google.inject.AbstractModule() {
-
-                                                          @Override
-                                                          protected void configure() {
-                                                              bindHttpApi(binder(), ReadOnlyApi.class);
-                                                              bind(ProviderURISupplier.class).toInstance(new ProviderURISupplier() {
-
-                                                                  @Override
-                                                                  public URI get() {
-                                                                      return URI.create(provider.url());
-                                                                  }
-
-                                                                  @Override
-                                                                  public String toString() {
-                                                                      return "DynamicURIFrom(" + provider + ")";
-                                                                  }
-                                                              });
-                                                          }
-                                                      })
-                                                      .build())
-                                 .buildInjector();
-        }
-
-        @Provides
-        @Singleton
-        DynECTApi provideBasicApi(Injector injector) {
-           return injector.getInstance(DynECTApi.class);
-        }
-
-        @Provides
-        @Singleton
-        ReadOnlyApi provideReadOnlyApi(Injector injector) {
-           return injector.getInstance(ReadOnlyApi.class);
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(DynECT api) {
+            return new DynECTResourceRecordSetApi.Factory(api);
         }
 
         @Provides
@@ -180,63 +111,55 @@ public class DynECTProvider extends BasicProvider {
             return ImmutableSetMultimap.<Factory, String> of(in, "geo");
         }
 
+    }
+
+    @dagger.Module(injects = DynECTResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
+            CountryToRegions.class, Defaults.class, ReflectiveFeign.Module.class })
+    public static final class FeignModule {
+
         @Provides
         @Singleton
-        Closeable provideCloseable(DynECTApi api) {
-            return api;
+        Session session(Feign feign, SessionTarget target) {
+            return feign.newInstance(target);
+        }
+
+        @Provides
+        @Named("Auth-Token")
+        public String authToken(InvalidatableTokenSupplier supplier) {
+            return supplier.get();
+        }
+
+        @Provides
+        @Singleton
+        DynECT dynECT(Feign feign, DynECTTarget target) {
+            return feign.newInstance(target);
+        }
+
+        @Provides
+        @Singleton
+        Map<String, Decoder> decoders(GeoResourceRecordSetsDecoder geoDecoder) {
+            Builder<String, Decoder> decoders = ImmutableMap.<String, Decoder> builder();
+            decoders.put("Session#login(String,String,String)", DynECTDecoder.login());
+            decoders.put("DynECT", DynECTDecoder.resourceRecordSets());
+            decoders.put("DynECT#zones()", DynECTDecoder.zones());
+            decoders.put("DynECT#geoRRSetsByZone()", DynECTDecoder.parseDataWith(geoDecoder));
+            decoders.put("DynECT#recordIdsInZoneByNameAndType(String,String,String)", DynECTDecoder.recordIds());
+            decoders.put("DynECT#recordsInZoneByNameAndType(String,String,String)", DynECTDecoder.records());
+            return decoders.build();
+        }
+
+        @Provides
+        @Singleton
+        Map<String, FormEncoder> gsonEncoder() {
+            return ImmutableMap.<String, FormEncoder> of("DynECT", new FormEncoder() {
+                final Gson gson = new Gson();
+
+                @Override
+                public void encodeForm(Map<String, ?> formParams, RequestTemplate base) {
+                    base.body(gson.toJson(formParams));
+                }
+            });
         }
     }
 
-    /**
-     * Temporary api to reduce network calls
-     */
-    @Headers(keys = "API-Version", values = "3.5.0")
-    @RequestFilters({ AlwaysAddContentType.class, SessionManager.class })
-    static interface ReadOnlyApi extends Closeable {
-        @GET
-        @Path("/Geo")
-        @SelectJson("data")
-        @QueryParams(keys = "detail", values = "Y")
-        FluentIterable<GeoService> geos() throws JobStillRunningException;
-
-        @GET
-        @Path("/AllRecord/{zone}")
-        @QueryParams(keys = "detail", values = "Y")
-        @SelectJson("data")
-        @Fallback(EmptyMultimapOnNotFoundOr404.class)
-        Multimap<String, Record<? extends Map<String, Object>>> recordsInZone(@PathParam("zone") String zone)
-                throws JobStillRunningException;
-
-        @GET
-        @Path("/AllRecord/{zone}/{fqdn}")
-        @QueryParams(keys = "detail", values = "Y")
-        @SelectJson("data")
-        @Fallback(EmptyMultimapOnNotFoundOr404.class)
-        Multimap<String, Record<? extends Map<String, Object>>> recordsInZoneByName(@PathParam("zone") String zone,
-                @PathParam("fqdn") String fqdn) throws JobStillRunningException;
-
-        @GET
-        @Path("/{type}Record/{zone}/{fqdn}")
-        @QueryParams(keys = "detail", values = "Y")
-        @SelectJson("data")
-        @Fallback(EmptyFluentIterableOnNotFoundOr404.class)
-        FluentIterable<Record<? extends Map<String, Object>>> recordsInZoneByNameAndType(
-                @PathParam("zone") String zone, @PathParam("fqdn") String fqdn, @PathParam("type") String type)
-                throws JobStillRunningException;
-    }
-
-    static final class ConvertToJcloudsCredentials implements Supplier<org.jclouds.domain.Credentials> {
-        private javax.inject.Provider<Credentials> provider;
-
-        @Inject
-        ConvertToJcloudsCredentials(javax.inject.Provider<Credentials> provider) {
-            this.provider = provider;
-        }
-
-        @Override
-        public org.jclouds.domain.Credentials get() {
-            List<Object> creds = ListCredentials.asList(provider.get());
-            return new org.jclouds.domain.Credentials(creds.get(0) + ":" + creds.get(1), creds.get(2).toString());
-        }
-    }
 }

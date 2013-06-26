@@ -9,13 +9,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import org.jclouds.ultradns.ws.domain.DirectionalPool;
-import org.jclouds.ultradns.ws.domain.DirectionalPoolRecord;
-import org.jclouds.ultradns.ws.domain.DirectionalPoolRecordDetail;
-import org.jclouds.ultradns.ws.domain.IdAndName;
-
 import com.google.common.base.Function;
-import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -25,16 +19,14 @@ import com.google.common.collect.PeekingIterator;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 import denominator.model.profile.Geo;
+import denominator.ultradns.UltraDNS.DirectionalRecord;
 
 /**
- * Generally, this iterator will produce {@link ResourceRecordSet} for
- * only a single record type. However, there are special cases where this can
- * produce multiple. For example, {@link DirectionalPool.RecordType#IPV4} and
+ * Generally, this iterator will produce {@link ResourceRecordSet} for only a
+ * single record type. However, there are special cases where this can produce
+ * multiple. For example, {@link DirectionalPool.RecordType#IPV4} and
  * {@link DirectionalPool.RecordType#IPV6} emit both address ({@code A} or
  * {@code AAAA}) and {@code CNAME} records.
- * 
- * @author adrianc
- * 
  */
 class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>> {
 
@@ -49,24 +41,23 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
         /**
          * @param sortedIterator
          *            only contains records with the same
-         *            {@link DirectionalPoolRecordDetail#name()}, sorted by
+         *            {@link DirectionalRecord#name()}, sorted by
          *            {@link DirectionalRecord#type()},
-         *            {@link DirectionalPoolRecordDetail#getGeolocationGroup()}
-         *            or {@link DirectionalPoolRecordDetail#group()}
+         *            {@link DirectionalRecord#getGeolocationGroup()} or
+         *            {@link DirectionalRecord#group()}
          */
-        Iterator<ResourceRecordSet<?>> create(Iterator<DirectionalPoolRecordDetail> sortedIterator) {
-            LoadingCache<String, Multimap<String, String>> requestScopedGeoCache = 
-                    CacheBuilder.newBuilder().build(getDirectionalGroup);
+        Iterator<ResourceRecordSet<?>> create(Iterator<DirectionalRecord> sortedIterator) {
+            LoadingCache<String, Multimap<String, String>> requestScopedGeoCache = CacheBuilder.newBuilder().build(
+                    getDirectionalGroup);
             return new GroupGeoRecordByNameTypeIterator(requestScopedGeoCache, sortedIterator);
         }
     }
 
     private final Function<String, Multimap<String, String>> getDirectionalGroup;
-    private final PeekingIterator<DirectionalPoolRecordDetail> peekingIterator;
+    private final PeekingIterator<DirectionalRecord> peekingIterator;
 
-    private GroupGeoRecordByNameTypeIterator(
-            Function<String, Multimap<String, String>> getDirectionalGroup,
-            Iterator<DirectionalPoolRecordDetail> sortedIterator) {
+    private GroupGeoRecordByNameTypeIterator(Function<String, Multimap<String, String>> getDirectionalGroup,
+            Iterator<DirectionalRecord> sortedIterator) {
         this.getDirectionalGroup = getDirectionalGroup;
         this.peekingIterator = peekingIterator(sortedIterator);
     }
@@ -78,39 +69,30 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
     public boolean hasNext() {
         if (!peekingIterator.hasNext())
             return false;
-        DirectionalPoolRecordDetail record = peekingIterator.peek();
-        if (record.getRecord().isNoResponseRecord()) {
+        DirectionalRecord record = peekingIterator.peek();
+        if (record.noResponseRecord) {
             // TODO: log as this is unsupported
             peekingIterator.next();
         }
         return peekingIterator.hasNext();
     }
 
-    static Optional<IdAndName> group(DirectionalPoolRecordDetail in) {
-        return in.getGeolocationGroup().or(in.getGroup());
-    }
-
     @Override
     public ResourceRecordSet<?> next() {
-        DirectionalPoolRecordDetail directionalRecord = peekingIterator.next();
-        DirectionalPoolRecord record = directionalRecord.getRecord();
-        IdAndName directionalGroup = group(directionalRecord).get();
+        DirectionalRecord record = peekingIterator.next();
 
-        Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
-                                                                .name(directionalRecord.getName())
-                                                                .type(record.getType())
-                                                                .qualifier(directionalGroup.getName())
-                                                                .ttl(record.getTTL());
+        Builder<Map<String, Object>> builder = ResourceRecordSet.builder().name(record.name).type(record.type)
+                .qualifier(record.geoGroupName).ttl(record.ttl);
 
-        builder.add(forTypeAndRData(record.getType(), record.getRData()));
+        builder.add(forTypeAndRData(record.type, record.rdata));
 
-        Geo profile =  Geo.create(getDirectionalGroup.apply(directionalGroup.getId()));
+        Geo profile = Geo.create(getDirectionalGroup.apply(record.geoGroupId));
         builder.addProfile(profile);
         while (hasNext()) {
-            DirectionalPoolRecordDetail next = peekingIterator.peek();
-            if (typeTTLAndGeoGroupEquals(next, directionalRecord)) {
+            DirectionalRecord next = peekingIterator.peek();
+            if (typeTTLAndGeoGroupEquals(next, record)) {
                 peekingIterator.next();
-                builder.add(forTypeAndRData(record.getType(), next.getRecord().getRData()));
+                builder.add(forTypeAndRData(record.type, next.rdata));
             } else {
                 break;
             }
@@ -123,9 +105,8 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
         throw new UnsupportedOperationException();
     }
 
-    static boolean typeTTLAndGeoGroupEquals(DirectionalPoolRecordDetail actual, DirectionalPoolRecordDetail expected) {
-        return actual.getRecord().getType() == expected.getRecord().getType()
-                && actual.getRecord().getTTL() == expected.getRecord().getTTL()
-                && group(actual).equals(group(expected));
+    static boolean typeTTLAndGeoGroupEquals(DirectionalRecord actual, DirectionalRecord expected) {
+        return actual.type.equals(expected.type) && actual.ttl == expected.ttl
+                && actual.geoGroupId.equals(expected.geoGroupId);
     }
 }

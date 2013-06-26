@@ -1,24 +1,19 @@
 package denominator.ultradns;
 
-import static denominator.model.Zones.toZone;
-
 import java.util.Iterator;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
-import org.jclouds.ultradns.ws.UltraDNSWSApi;
-import org.jclouds.ultradns.ws.domain.IdAndName;
-import org.jclouds.ultradns.ws.domain.Zone;
-
-import com.google.common.base.Function;
-import com.google.common.base.Supplier;
+import dagger.Lazy;
+import denominator.model.Zone;
 
 public final class UltraDNSZoneApi implements denominator.ZoneApi {
-    private final UltraDNSWSApi api;
-    private final Supplier<IdAndName> account;
+    private final UltraDNS api;
+    private final Lazy<String> account;
 
     @Inject
-    UltraDNSZoneApi(UltraDNSWSApi api, Supplier<IdAndName> account) {
+    UltraDNSZoneApi(UltraDNS api, @Named("accountID") Lazy<String> account) {
         this.api = api;
         this.account = account;
     }
@@ -27,14 +22,7 @@ public final class UltraDNSZoneApi implements denominator.ZoneApi {
      * in UltraDNS, zones are scoped to an account.
      */
     @Override
-    public Iterator<denominator.model.Zone> iterator() {
-        return api.getZoneApi().listByAccount(account.get().getId()).transform(ZoneName.INSTANCE).transform(toZone()).iterator();
-    }
-
-    private static enum ZoneName implements Function<Zone, String> {
-        INSTANCE;
-        public String apply(Zone input) {
-            return input.getName();
-        }
+    public Iterator<Zone> iterator() {
+        return api.zonesOfAccount(account.get()).iterator();
     }
 }

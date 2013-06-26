@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ListResourceRecordSetsResponse
+	xmlns="https://route53.amazonaws.com/doc/2012-02-29/">
+	<ResourceRecordSets>
+		<ResourceRecordSet>
+			<Name>example.com.</Name>
+			<Type>SOA</Type>
+			<TTL>900</TTL>
+			<ResourceRecords>
+				<ResourceRecord>
+					<Value>ns-2048.awsdns-64.net. hostmaster.awsdns.com. 1 7200 900 1209600 86400</Value>
+				</ResourceRecord>
+			</ResourceRecords>
+		</ResourceRecordSet>
+		<ResourceRecordSet>
+			<Name>example.com.</Name>
+			<Type>NS</Type>
+			<TTL>172800</TTL>
+			<ResourceRecords>
+				<ResourceRecord>
+					<Value>ns-2048.awsdns-64.com.</Value>
+				</ResourceRecord>
+				<ResourceRecord>
+					<Value>ns-2049.awsdns-65.net.</Value>
+				</ResourceRecord>
+				<ResourceRecord>
+					<Value>ns-2050.awsdns-66.org.</Value>
+				</ResourceRecord>
+				<ResourceRecord>
+					<Value>ns-2051.awsdns-67.co.uk.</Value>
+				</ResourceRecord>
+			</ResourceRecords>
+		</ResourceRecordSet>
+	</ResourceRecordSets>
+	<IsTruncated>true</IsTruncated>
+	<MaxItems>3</MaxItems>
+	<NextRecordName>testdoc2.example.com</NextRecordName>
+	<NextRecordType>NS</NextRecordType>
+</ListResourceRecordSetsResponse>
