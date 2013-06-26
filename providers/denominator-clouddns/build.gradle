@@ -12,6 +12,7 @@ eclipse {
 }
 
 test {
+  useTestNG()
   systemProperty 'clouddns.url', System.getProperty('clouddns.url', '')
   systemProperty 'clouddns.username', System.getProperty('clouddns.username', '')
   systemProperty 'clouddns.apiKey', System.getProperty('clouddns.apiKey', '')
@@ -24,4 +25,6 @@ dependencies {
   compile     'com.google.code.gson:gson:2.2.4'
   provided    'com.squareup.dagger:dagger-compiler:1.0.1'
   testCompile  project(':denominator-core').sourceSets.test.output
+  testCompile 'org.testng:testng:6.8.1'
+  testCompile 'com.google.mockwebserver:mockwebserver:20130505'
 }

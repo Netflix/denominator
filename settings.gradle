@@ -6,4 +6,5 @@ include 'denominator-model', \
 'providers:denominator-ultradns', \
 'providers:denominator-dynect', \
 'providers:denominator-clouddns', \
-'denominator-cli'
+'denominator-cli', \
+'examples:denominator-example-android'

@@ -12,14 +12,20 @@ eclipse {
 }
 
 jar {
-    manifest {
-        attributes("Implementation-Title": "Denominator", "Specification-Version": version, "Implementation-Version": version)
-    }
+  manifest {
+    attributes("Implementation-Title": "Denominator", "Specification-Version": version, "Implementation-Version": version)
+  }
+}
+
+test {
+  useTestNG()
 }
 
 dependencies {
   compile      project(':denominator-model')
+  compile     'com.google.guava:guava:14.0.1'
   compile     'com.squareup.dagger:dagger:1.0.1'
   provided    'com.squareup.dagger:dagger-compiler:1.0.1'
+  testCompile 'org.testng:testng:6.8.1'
+  testCompile 'com.google.mockwebserver:mockwebserver:20130505'
 }
-
