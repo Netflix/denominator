@@ -1,7 +1,11 @@
 package denominator.ultradns;
 
 import static denominator.CredentialsConfiguration.credentials;
+import static denominator.ultradns.UltraDNSTest.getAccountsListOfUser;
+import static denominator.ultradns.UltraDNSTest.getAccountsListOfUserResponse;
 import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfZoneResponseAbsent;
+import static denominator.ultradns.UltraDNSTest.getZonesOfAccount;
+import static denominator.ultradns.UltraDNSTest.getZonesOfAccountResponsePresent;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -23,6 +27,82 @@ import denominator.Denominator;
 
 @Test
 public class UltraDNSProviderDynamicUpdateMockTest {
+
+    @Test
+    public void dynamicAccountIdUpdatesOnEndpoint() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
+        server.enqueue(new MockResponse().setBody(getZonesOfAccountResponsePresent));
+        server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB")));
+        server.enqueue(new MockResponse().setBody(getZonesOfAccountResponsePresent));
+        server.play();
+        
+        try {
+            String initialPath = "/";
+            String updatedPath = "/alt/";
+            URL mockUrl = server.getUrl(initialPath);
+            final AtomicReference<URL> dynamicUrl = new AtomicReference<URL>(mockUrl);
+
+            DNSApi api = Denominator.create(new UltraDNSProvider() {
+                @Override
+                public String url() {
+                    return dynamicUrl.get().toString();
+                }
+            }, credentials("joe", "letmein")).api();
+
+            api.zones().iterator().next();
+            dynamicUrl.set(new URL(mockUrl, updatedPath));
+            api.zones().iterator().next();
+
+            assertEquals(server.getRequestCount(), 4);
+            assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);
+            assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
+            assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);
+            assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"));
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void dynamicAccountIdUpdatesOnCredentials() throws IOException, InterruptedException {
+        final MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
+        server.enqueue(new MockResponse().setBody(getZonesOfAccountResponsePresent));
+        server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB")));
+        server.enqueue(new MockResponse().setBody(getZonesOfAccountResponsePresent));
+        server.play();
+        
+        try {
+            final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(
+                    ListCredentials.from("joe", "letmein"));
+
+            DNSApi api = Denominator.create(new UltraDNSProvider() {
+                @Override
+                public String url() {
+                    return server.getUrl("/").toString();
+                }
+            }, credentials(new Supplier<Credentials>() {
+                @Override
+                public Credentials get() {
+                    return dynamicCredentials.get();
+                }
+            })).api();
+
+
+            api.zones().iterator().next();
+            dynamicCredentials.set(ListCredentials.from("bob", "comeon"));
+            api.zones().iterator().next();
+
+            assertEquals(server.getRequestCount(), 4);
+            assertTrue(new String(server.takeRequest().getBody()).indexOf("letmein") != -1);
+            assertTrue(new String(server.takeRequest().getBody()).indexOf("AAAAAAAAAAAAAAAA") != -1);
+            assertTrue(new String(server.takeRequest().getBody()).indexOf("comeon") != -1);
+            assertTrue(new String(server.takeRequest().getBody()).indexOf("BBBBBBBBBBBBBBBB") != -1);
+        } finally {
+            server.shutdown();
+        }
+    }
 
     @Test
     public void dynamicEndpointUpdates() throws IOException, InterruptedException {

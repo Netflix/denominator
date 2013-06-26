@@ -117,8 +117,8 @@ public class UltraDNSProvider extends BasicProvider {
 
         @Provides
         @Named("accountID")
-        String account(UltraDNS api) {
-            return api.accountId();
+        String account(InvalidatableAccountIdSupplier accountId) {
+            return accountId.get();
         }
 
         @Provides
