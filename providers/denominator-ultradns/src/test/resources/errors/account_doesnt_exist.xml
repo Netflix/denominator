@@ -1,0 +1,14 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+   <soap:Body>
+      <soap:Fault>
+         <faultcode>soap:Server</faultcode>
+         <faultstring>Fault occurred while processing.</faultstring>
+         <detail>
+            <ns1:UltraWSException xmlns:ns1="http://webservice.api.ultra.neustar.com/v01/">
+               <errorCode xsi:type="xs:int" xmlns:ns2="http://schema.ultraservice.neustar.com/v01/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">2401</errorCode>
+               <errorDescription xmlns:ns2="http://schema.ultraservice.neustar.com/v01/">Account not found in the system. ID: AAAAAAAAAAAAAAAA</errorDescription>
+            </ns1:UltraWSException>
+         </detail>
+      </soap:Fault>
+   </soap:Body>
+</soap:Envelope>

@@ -37,7 +37,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("/");
+        URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
@@ -56,7 +56,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains/1234/records HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains/1234/records HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -67,33 +67,33 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("/");
+        URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode())); // no existing records
-
+        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+                "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         try {
             ResourceRecordSetApi api = mockApi(url);
             
             assertFalse(api.iterator().hasNext());
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains/1234/records HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains/1234/records HTTP/1.1");
         } finally {
             server.shutdown();
         }
     }
     
-    String recordsPage1 = "{\"records\":[{\"name\":\"www.denominator.io\",\"id\":\"A-9872761\",\"type\":\"A\",\"data\":\"1.2.3.4\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"},{\"name\":\"www.denominator.io\",\"id\":\"NS-8703385\",\"type\":\"NS\",\"data\":\"dns1.stabletransit.com\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"},{\"name\":\"www.denominator.io\",\"id\":\"NS-8703386\",\"type\":\"NS\",\"data\":\"dns2.stabletransit.com\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"}],\"totalEntries\":3,\"links\":[{\"href\":\"https://dns.api.rackspacecloud.com/v1.0/123123/domains/1234/records?limit=3&offset=3\",\"rel\":\"next\"}]}";
-    String recordsPage2 = "{\"records\":[{\"name\":\"www.denominator.io\",\"id\":\"A-9872761\",\"type\":\"A\",\"data\":\"1.2.3.4\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"},{\"name\":\"www.denominator.io\",\"id\":\"NS-8703385\",\"type\":\"NS\",\"data\":\"dns1.stabletransit.com\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"},{\"name\":\"www.denominator.io\",\"id\":\"NS-8703386\",\"type\":\"NS\",\"data\":\"dns2.stabletransit.com\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"}],\"totalEntries\":3,\"links\":[{\"href\":\"https://dns.api.rackspacecloud.com/v1.0/123123/domains/1234/records?limit=3&offset=0\",\"rel\":\"previous\"}]}";
+    String recordsPage1 = "{\"records\":[{\"name\":\"www.denominator.io\",\"id\":\"A-9872761\",\"type\":\"A\",\"data\":\"1.2.3.4\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"},{\"name\":\"www.denominator.io\",\"id\":\"NS-8703385\",\"type\":\"NS\",\"data\":\"dns1.stabletransit.com\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"},{\"name\":\"www.denominator.io\",\"id\":\"NS-8703386\",\"type\":\"NS\",\"data\":\"dns2.stabletransit.com\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"}],\"totalEntries\":3,\"links\":[{\"href\":\"URL/v1.0/123123/domains/1234/records?limit=3&offset=3\",\"rel\":\"next\"}]}";
+    String recordsPage2 = "{\"records\":[{\"name\":\"www.denominator.io\",\"id\":\"A-9872761\",\"type\":\"A\",\"data\":\"1.2.3.4\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"},{\"name\":\"www.denominator.io\",\"id\":\"NS-8703385\",\"type\":\"NS\",\"data\":\"dns1.stabletransit.com\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"},{\"name\":\"www.denominator.io\",\"id\":\"NS-8703386\",\"type\":\"NS\",\"data\":\"dns2.stabletransit.com\",\"ttl\":600000,\"updated\":\"2013-04-13T14:42:00.000+0000\",\"created\":\"2013-04-13T14:42:00.000+0000\"}],\"totalEntries\":3,\"links\":[{\"href\":\"URL/v1.0/123123/domains/1234/records?limit=3&offset=0\",\"rel\":\"previous\"}]}";
 
     @Test
     public void listPagesWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("/");
+        URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
@@ -113,8 +113,8 @@ public class CloudDNSResourceRecordSetApiMockTest {
 
             assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains/1234/records HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains/1234/records?limit=3&offset=3 HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains/1234/records HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains/1234/records?limit=3&offset=3 HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -127,7 +127,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("/");
+        URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
@@ -146,7 +146,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains/1234/records HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains/1234/records HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -157,19 +157,19 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("/");
+        URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode())); // no existing records
-
+        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+                "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         try {
             ResourceRecordSetApi api = mockApi(url);
             assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains/1234/records HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains/1234/records HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -182,7 +182,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("/");
+        URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
@@ -195,7 +195,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains/1234/records?name=www.denominator.io&type=A HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains/1234/records?name=www.denominator.io&type=A HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -206,19 +206,19 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        final URL url = server.getUrl("/");
+        final URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode())); // no existing records
-        
+        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+                "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));        
         try {
             ResourceRecordSetApi api = mockApi(url);
             assertEquals(api.getByNameAndType("www.denominator.io", "A"), Optional.absent());
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /domains/1234/records?name=www.denominator.io&type=A HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1.0/123123/domains/1234/records?name=www.denominator.io&type=A HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -236,7 +236,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
           public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
              MockResponse response = responseQueue.take();
              if (response.getBody() != null) {
-                String newBody = new String(response.getBody()).replace("URL", url.toString());
+                String newBody = new String(response.getBody()).replace(":\"URL", ":\"" + url.toString());
                 response = response.setBody(newBody);
              }
              return response;

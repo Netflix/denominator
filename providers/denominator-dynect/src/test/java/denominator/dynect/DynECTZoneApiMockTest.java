@@ -19,7 +19,7 @@ import denominator.model.Zone;
 @Test(singleThreaded = true)
 public class DynECTZoneApiMockTest {
 
-    String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.3.8\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+    String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.5.0\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
     String zones ="{\"status\": \"success\", \"data\": [\"/REST/Zone/0.0.0.0.d.6.e.0.0.a.2.ip6.arpa/\", \"/REST/Zone/126.12.44.in-addr.arpa/\", \"/REST/Zone/jclouds.org/\"], \"job_id\": 260657587, \"msgs\": [{\"INFO\": \"get: Your 3 zones\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
     @Test
@@ -30,7 +30,7 @@ public class DynECTZoneApiMockTest {
         server.play();
 
         try {
-            ZoneApi api = mockApi(server.getUrl("/"));
+            ZoneApi api = mockApi(server.getUrl(""));
             Zone zone = api.iterator().next();
             assertEquals(zone.name(), "0.0.0.0.d.6.e.0.0.a.2.ip6.arpa");
             assertFalse(zone.id().isPresent());
@@ -53,7 +53,7 @@ public class DynECTZoneApiMockTest {
         server.play();
 
         try {
-            ZoneApi api = mockApi(server.getUrl("/"));
+            ZoneApi api = mockApi(server.getUrl(""));
             assertFalse(api.iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 2);

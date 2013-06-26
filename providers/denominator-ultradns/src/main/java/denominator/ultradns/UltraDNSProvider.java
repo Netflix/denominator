@@ -1,52 +1,55 @@
 package denominator.ultradns;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.collect.Iterables.filter;
-import static com.google.common.util.concurrent.MoreExecutors.sameThreadExecutor;
-import static org.jclouds.Constants.PROPERTY_SESSION_INTERVAL;
+import static feign.codec.Decoders.firstGroup;
+import static feign.codec.Decoders.transformEachFirstGroup;
+import static java.lang.String.format;
+import static java.util.regex.Pattern.DOTALL;
+import static java.util.regex.Pattern.compile;
 
-import java.io.Closeable;
-import java.net.URI;
-import java.util.List;
+import java.io.Reader;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
-import org.jclouds.ContextBuilder;
-import org.jclouds.concurrent.config.ExecutorServiceModule;
-import org.jclouds.http.HttpRequest;
-import org.jclouds.location.suppliers.ProviderURISupplier;
-import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.ultradns.ws.UltraDNSWSApi;
-import org.jclouds.ultradns.ws.UltraDNSWSProviderMetadata;
-import org.jclouds.ultradns.ws.binders.DirectionalRecordAndGeoGroupToXML;
-import org.jclouds.ultradns.ws.domain.IdAndName;
-
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import com.google.common.base.Function;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
+import com.google.common.io.CharStreams;
+import com.google.common.reflect.TypeToken;
 
 import dagger.Provides;
 import denominator.BasicProvider;
-import denominator.Credentials;
-import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
-import denominator.Provider;
 import denominator.QualifiedResourceRecordSetApi.Factory;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
+import denominator.config.NothingToClose;
 import denominator.config.WeightedUnsupported;
+import denominator.model.Zone;
 import denominator.profile.GeoResourceRecordSetApi;
+import denominator.ultradns.UltraDNSFormEncoders.RecordAndDirectionalGroup;
+import denominator.ultradns.UltraDNSFormEncoders.ZoneAndResourceRecord;
+import feign.Feign;
+import feign.Feign.Defaults;
+import feign.ReflectiveFeign;
+import feign.codec.Decoder;
+import feign.codec.ErrorDecoder;
+import feign.codec.FormEncoder;
 
 public class UltraDNSProvider extends BasicProvider {
     private final String url;
@@ -61,7 +64,7 @@ public class UltraDNSProvider extends BasicProvider {
      */
     public UltraDNSProvider(String url) {
         url = emptyToNull(url);
-        this.url = url != null ? url : new UltraDNSWSProviderMetadata().getEndpoint();
+        this.url = url != null ? url : "https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01";
     }
 
     @Override
@@ -95,94 +98,33 @@ public class UltraDNSProvider extends BasicProvider {
         return ImmutableMultimap.<String, String> builder().putAll("password", "username", "password").build();
     }
 
-    @dagger.Module(injects = DNSApiManager.class,
-                   complete = false, // denominator.Provider and denominator.Credentials
-                   includes = { UltraDNSGeoSupport.class,
-                                WeightedUnsupported.class,
-                                ConcatBasicAndQualifiedResourceRecordSets.class })
+    @dagger.Module(injects = DNSApiManager.class, complete = false, includes = { NothingToClose.class,
+            UltraDNSGeoSupport.class, WeightedUnsupported.class, ConcatBasicAndQualifiedResourceRecordSets.class,
+            FeignModule.class })
     public static final class Module {
 
         @Provides
         @Singleton
-        // Dynamic name updates are not currently possible in jclouds.
-        UltraDNSWSApi provideApi(ConvertToJcloudsCredentials credentials, final Provider provider) {
-            Properties overrides = new Properties();
-            // disable url caching
-            overrides.setProperty(PROPERTY_SESSION_INTERVAL, "0");
-            return ContextBuilder.newBuilder(new UltraDNSWSProviderMetadata())
-                                 .name(provider.name())
-                                 .credentialsSupplier(credentials)
-                                 .overrides(overrides)
-                                 .modules(ImmutableSet.<com.google.inject.Module> builder()
-                                                      .add(new SLF4JLoggingModule())
-                                                      .add(new ExecutorServiceModule(sameThreadExecutor(),
-                                                                                     sameThreadExecutor()))
-                                                      .add(new com.google.inject.AbstractModule() {
-
-                                                          @Override
-                                                          protected void configure() {
-                                                              bind(DirectionalRecordAndGeoGroupToXML.class)
-                                                               .to(ForceOverlapTransferDirectionalRecordAndGeoGroupToXML.class);
-                                                              bind(ProviderURISupplier.class).toInstance(new ProviderURISupplier() {
-
-                                                                  @Override
-                                                                  public URI get() {
-                                                                      return URI.create(provider.url());
-                                                                  }
-
-                                                                  @Override
-                                                                  public String toString() {
-                                                                      return "DynamicURIFrom(" + provider + ")";
-                                                                  }
-                                                              });
-                                                          }
-                                                      })
-                                                      .build())
-                                 .buildApi(UltraDNSWSApi.class);
-        }
-
-        // JCLOUDS-110
-        private static class ForceOverlapTransferDirectionalRecordAndGeoGroupToXML extends
-                DirectionalRecordAndGeoGroupToXML {
-            @SuppressWarnings("unchecked")
-            @Override
-            public <R extends HttpRequest> R bindToRequest(R request, Map<String, Object> postParams) {
-                request = super.bindToRequest(request, postParams);
-                String patched = String.class
-                        .cast(request.getPayload().getRawContent())
-                        .replace("</GeolocationGroupDetails></UpdateDirectionalRecordData>",
-                                 "</GeolocationGroupDetails><forceOverlapTransfer>true</forceOverlapTransfer></UpdateDirectionalRecordData>");
-                return (R) request.toBuilder().payload(patched).build();
-            }
+        GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(UltraDNSGeoResourceRecordSetApi.Factory in) {
+            return in;
         }
 
         @Provides
         @Singleton
-        ZoneApi provideZoneApi(UltraDNSWSApi api, Supplier<IdAndName> account) {
-            return new UltraDNSZoneApi(api, account);
+        ZoneApi provideZoneApi(UltraDNSZoneApi api) {
+            return api;
+        }
+
+        @Provides
+        @Named("accountID")
+        String account(UltraDNS api) {
+            return api.accountId();
         }
 
         @Provides
         @Singleton
-        Supplier<IdAndName> account(final UltraDNSWSApi api) {
-            return Suppliers.memoize(new Supplier<IdAndName>() {
-    
-                @Override
-                public IdAndName get() {
-                    return api.getCurrentAccount();
-                }
-    
-                @Override
-                public String toString() {
-                    return "accountOf(" + api + ")";
-                }
-            });
-        }
-
-        @Provides
-        @Singleton
-        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(UltraDNSWSApi api) {
-            return new UltraDNSResourceRecordSetApi.Factory(api);
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(UltraDNSResourceRecordSetApi.Factory factory) {
+            return factory;
         }
 
         @Provides
@@ -190,26 +132,94 @@ public class UltraDNSProvider extends BasicProvider {
         SetMultimap<Factory, String> factoryToProfiles(GeoResourceRecordSetApi.Factory in) {
             return ImmutableSetMultimap.<Factory, String> of(in, "geo");
         }
+    }
+
+    @dagger.Module(injects = UltraDNSResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
+            Defaults.class, ReflectiveFeign.Module.class })
+    public static final class FeignModule {
 
         @Provides
         @Singleton
-        Closeable provideCloser(UltraDNSWSApi api) {
-            return api;
+        Map<String, Decoder> decoders() {
+            Builder<String, Decoder> decoders = ImmutableMap.<String, Decoder> builder();
+            Decoder saxDecoder = new UltraDNSSAXDecoder();
+            decoders.put("UltraDNS", saxDecoder);
+            decoders.put("UltraDNS#createRRPoolInZoneForNameAndType(String,String,int)",
+                    firstGroup("<RRPoolID[^>]*>([^<]+)</RRPoolID>"));
+            decoders.put("UltraDNS#accountId()", firstGroup("accountID=\"([^\"]+)\""));
+            decoders.put("UltraDNS#zonesOfAccount(String)",
+                    transformEachFirstGroup("zoneName=\"([^\"]+)\"", ZoneFactory.INSTANCE));
+            decoders.put(
+                    "UltraDNS#directionalPoolNameToIdsInZone(String)",
+                    mapEntriesAreGroups(
+                            "dirpoolid=\"([^\"]+)\"[^>]+Pooldname=\"([^\"]+)\"[^>]+DirPoolType=\"GEOLOCATION\"", 2, 1));
+            decoders.put("UltraDNS#createDirectionalPoolInZoneForNameAndType(String,String,String)",
+                    firstGroup("<DirPoolID[^>]*>([^<]+)</DirPoolID>"));
+            decoders.put("UltraDNS#createRecordAndDirectionalGroupInPool(DirectionalRecord,DirectionalGroup,String)",
+                    firstGroup("<DirectionalPoolRecordID[^>]*>([^<]+)</DirectionalPoolRecordID>"));
+            return decoders.build();
+        }
+
+        @Provides
+        @Singleton
+        Map<String, ErrorDecoder> errorDecoders() {
+            return ImmutableMap.<String, ErrorDecoder> of("UltraDNS", new UltraDNSErrorDecoder());
+        }
+
+        @Provides
+        @Singleton
+        Map<String, FormEncoder> formEncoders() {
+            Builder<String, FormEncoder> formEncoders = ImmutableMap.<String, FormEncoder> builder();
+            FormEncoder recordEncoder = new ZoneAndResourceRecord();
+            formEncoders.put("UltraDNS#createRecordInZone(Record,String)", recordEncoder);
+            formEncoders.put("UltraDNS#updateRecordInZone(Record,String)", recordEncoder);
+            FormEncoder recordAndDirectionalGroupEncoder = new RecordAndDirectionalGroup();
+            formEncoders.put(
+                    "UltraDNS#createRecordAndDirectionalGroupInPool(DirectionalRecord,DirectionalGroup,String)",
+                    recordAndDirectionalGroupEncoder);
+            formEncoders.put("UltraDNS#updateRecordAndDirectionalGroup(DirectionalRecord,DirectionalGroup)",
+                    recordAndDirectionalGroupEncoder);
+            return formEncoders.build();
+        }
+
+        @Provides
+        @Singleton
+        UltraDNS ultraDNS(Feign feign, UltraDNSTarget target) {
+            return feign.newInstance(target);
         }
     }
 
-    static final class ConvertToJcloudsCredentials implements Supplier<org.jclouds.domain.Credentials> {
-        private javax.inject.Provider<Credentials> provider;
+    /**
+     * On each match, group {@code keyGroup} will be the key and group
+     * {@code valueGroup} will be added as an entry in the resulting map.
+     */
+    private static Decoder mapEntriesAreGroups(String pattern, final int keyGroup, final int valueGroup) {
+        final Pattern patternForMatcher = compile(checkNotNull(pattern, "pattern"), DOTALL);
+        checkNotNull(pattern, "pattern");
+        return new Decoder() {
+            @Override
+            public Object decode(String methodKey, Reader reader, TypeToken<?> type) throws Throwable {
+                Matcher matcher = patternForMatcher.matcher(CharStreams.toString(reader));
+                ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String> builder();
+                while (matcher.find()) {
+                    builder.put(matcher.group(keyGroup), matcher.group(valueGroup));
+                }
+                return builder.build();
+            }
 
-        @Inject
-        ConvertToJcloudsCredentials(javax.inject.Provider<Credentials> provider) {
-            this.provider = provider;
-        }
+            @Override
+            public String toString() {
+                return format("decode %s into Map entries (group %s -> %s)", patternForMatcher, keyGroup, valueGroup);
+            }
+        };
+    }
+
+    private static enum ZoneFactory implements Function<String, Zone> {
+        INSTANCE;
 
         @Override
-        public org.jclouds.domain.Credentials get() {
-            List<Object> creds = ListCredentials.asList(provider.get());
-            return new org.jclouds.domain.Credentials(creds.get(0).toString(), creds.get(1).toString());
+        public Zone apply(String input) {
+            return Zone.create(input);
         }
-    }
+    };
 }

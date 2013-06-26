@@ -59,7 +59,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
             Iterator<ResourceRecordSet<?>> iterator = api.iterateByName("www.denominator.io.");
             assertEquals(iterator.next(), rrset1);
             assertEquals(iterator.next(), rrset2);
@@ -67,7 +67,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
             assertEquals(server.getRequestCount(), 1);
 
             assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io. HTTP/1.1");
+                    "GET /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io. HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -84,13 +84,13 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertFalse(api.iterateByName("www.denominator.io.").hasNext());
 
             assertEquals(server.getRequestCount(), 1);
 
             assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io. HTTP/1.1");
+                    "GET /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io. HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -104,13 +104,13 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertEquals(api.iterateByNameAndType("www.denominator.io.", "CNAME").next(), rrset1);
 
             assertEquals(server.getRequestCount(), 1);
 
             assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME HTTP/1.1");
+                    "GET /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -124,13 +124,13 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertFalse(api.iterateByNameAndType("www.denominator.io.", "CNAME").hasNext());
 
             assertEquals(server.getRequestCount(), 1);
 
             assertEquals(server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME HTTP/1.1");
+                    "GET /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -144,14 +144,14 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertEquals(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier1).get(), rrset1);
 
             assertEquals(server.getRequestCount(), 1);
 
             assertEquals(
                     server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-East HTTP/1.1");
+                    "GET /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-East HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -167,20 +167,20 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertEquals(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier1), Optional.absent());
 
             assertEquals(server.getRequestCount(), 1);
 
             assertEquals(
                     server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-East HTTP/1.1");
+                    "GET /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-East HTTP/1.1");
         } finally {
             server.shutdown();
         }
     }
 
-    private String createCNAMERecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>MyService-East</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www1.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+    private String createCNAMERecordSet = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\"><ChangeBatch><Changes><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>MyService-East</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www1.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
     private String changeSynced = "<GetChangeResponse><ChangeInfo><Id>/change/C2682N5HXP0BZ4</Id><Status>INSYNC</Status><SubmittedAt>2011-09-10T01:36:41.958Z</SubmittedAt></ChangeInfo></GetChangeResponse>";
 
     @Test
@@ -192,17 +192,17 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
             api.put(rrset1);
 
             assertEquals(server.getRequestCount(), 2);
 
             assertEquals(
                     server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-East HTTP/1.1");
+                    "GET /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-East HTTP/1.1");
 
             RecordedRequest createRRSet = server.takeRequest();
-            assertEquals(createRRSet.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
+            assertEquals(createRRSet.getRequestLine(), "POST /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
             assertEquals(new String(createRRSet.getBody()), createCNAMERecordSet);
         } finally {
             server.shutdown();
@@ -217,20 +217,20 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
             api.put(rrset1);
 
             assertEquals(server.getRequestCount(), 1);
 
             assertEquals(
                     server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-East HTTP/1.1");
+                    "GET /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-East HTTP/1.1");
         } finally {
             server.shutdown();
         }
     }
 
-    private String deleteQualifier1 = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>MyService-East</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www1.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+    private String deleteQualifier1 = "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>MyService-East</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www1.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
 
     @Test
     public void deleteDoesntAffectOtherQualifiers() throws IOException, InterruptedException {
@@ -241,17 +241,17 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
             api.deleteByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier1);
 
             assertEquals(server.getRequestCount(), 2);
 
             assertEquals(
                     server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-East HTTP/1.1");
+                    "GET /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-East HTTP/1.1");
 
             RecordedRequest deleteQualifier1 = server.takeRequest();
-            assertEquals(deleteQualifier1.getRequestLine(), "POST /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
+            assertEquals(deleteQualifier1.getRequestLine(), "POST /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
             assertEquals(new String(deleteQualifier1.getBody()), this.deleteQualifier1);
         } finally {
             server.shutdown();
@@ -265,14 +265,14 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
             api.deleteByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier2);
 
             assertEquals(server.getRequestCount(), 1);
 
             assertEquals(
                     server.takeRequest().getRequestLine(),
-                    "GET /2012-02-29/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-West HTTP/1.1");
+                    "GET /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-West HTTP/1.1");
         } finally {
             server.shutdown();
         }

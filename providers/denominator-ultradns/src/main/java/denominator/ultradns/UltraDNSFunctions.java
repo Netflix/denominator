@@ -1,14 +1,11 @@
-
 package denominator.ultradns;
 
 import java.util.List;
 import java.util.Map;
 
-import org.jclouds.ultradns.ws.domain.ResourceRecord;
-import org.jclouds.ultradns.ws.domain.ResourceRecordDetail;
-
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableMap;
 
 import denominator.ResourceTypeToValue;
@@ -23,42 +20,25 @@ import denominator.model.rdata.SPFData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.SSHFPData;
 import denominator.model.rdata.TXTData;
+import denominator.ultradns.UltraDNS.Record;
 
 final class UltraDNSFunctions {
-    private UltraDNSFunctions() { /* */}
-
-    static Function<ResourceRecordDetail, ResourceRecord> toResourceRecord() {
-        return ToResourceRecord.INSTANCE;
+    private UltraDNSFunctions() { /* */
     }
 
-    // enum singleton pattern
-    private enum ToResourceRecord implements Function<ResourceRecordDetail, ResourceRecord> {
-        INSTANCE;
-
-        @Override
-        public ResourceRecord apply(ResourceRecordDetail in) {
-            return in.getRecord();
-        }
-
-        @Override
-        public String toString() {
-            return "toResourceRecord";
-        }
-    }
-
-    static Function<ResourceRecord, Map<String, Object>> toRdataMap() {
+    static Function<Record, Map<String, Object>> toRdataMap() {
         return ToRdataMap.INSTANCE;
     }
 
-    // enum singleton pattern
-    private enum ToRdataMap implements Function<ResourceRecord, Map<String, Object>> {
+    private static final BiMap<Integer, String> reverseLookup = new ResourceTypeToValue().inverse();
+
+    private enum ToRdataMap implements Function<Record, Map<String, Object>> {
         INSTANCE;
 
         @Override
-        public Map<String, Object> apply(ResourceRecord in) {
-            List<String> parts = in.getRData();
-            String type = new ResourceTypeToValue().inverse().get(in.getType());
-            return forTypeAndRData(type, parts);
+        public Map<String, Object> apply(Record in) {
+            String type = reverseLookup.get(in.typeCode);
+            return forTypeAndRData(type, in.rdata);
         }
 
         @Override
@@ -81,27 +61,17 @@ final class UltraDNSFunctions {
         } else if ("PTR".equals(type)) {
             return PTRData.create(rdata.get(0));
         } else if ("SOA".equals(type)) {
-            return SOAData.builder()
-                          .mname(rdata.get(0))
-                          .rname(rdata.get(1))
-                          .serial(Integer.valueOf(rdata.get(2)))
-                          .refresh(Integer.valueOf(rdata.get(3)))
-                          .retry(Integer.valueOf(rdata.get(4)))
-                          .expire(Integer.valueOf(rdata.get(5)))
-                          .minimum(Integer.valueOf(rdata.get(6))).build();
+            return SOAData.builder().mname(rdata.get(0)).rname(rdata.get(1)).serial(Integer.valueOf(rdata.get(2)))
+                    .refresh(Integer.valueOf(rdata.get(3))).retry(Integer.valueOf(rdata.get(4)))
+                    .expire(Integer.valueOf(rdata.get(5))).minimum(Integer.valueOf(rdata.get(6))).build();
         } else if ("SPF".equals(type)) {
             return SPFData.create(rdata.get(0));
         } else if ("SRV".equals(type)) {
-            return SRVData.builder()
-                          .priority(Integer.valueOf(rdata.get(0)))
-                          .weight(Integer.valueOf(rdata.get(1)))
-                          .port(Integer.valueOf(rdata.get(2)))
-                          .target(rdata.get(3)).build();
+            return SRVData.builder().priority(Integer.valueOf(rdata.get(0))).weight(Integer.valueOf(rdata.get(1)))
+                    .port(Integer.valueOf(rdata.get(2))).target(rdata.get(3)).build();
         } else if ("SSHFP".equals(type)) {
-            return SSHFPData.builder()
-                            .algorithm(Integer.valueOf(rdata.get(0)))
-                            .fptype(Integer.valueOf(rdata.get(1)))
-                            .fingerprint(rdata.get(2)).build();
+            return SSHFPData.builder().algorithm(Integer.valueOf(rdata.get(0))).fptype(Integer.valueOf(rdata.get(1)))
+                    .fingerprint(rdata.get(2)).build();
         } else if ("TXT".equals(type)) {
             return TXTData.create(rdata.get(0));
         } else {
