@@ -11,6 +11,7 @@ import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.io.Resources;
 import com.google.common.reflect.TypeToken;
 
+import feign.FeignException;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 
@@ -18,6 +19,19 @@ import feign.codec.ErrorDecoder;
 public class UltraDNSErrorDecoderTest {
 
     ErrorDecoder errorDecoder = new UltraDNSErrorDecoder();
+
+    @Test(expectedExceptions = FeignException.class, expectedExceptionsMessageRegExp = "status 500 reading UltraDNS.accountId\\(\\)")
+    public void noBody() throws Throwable {
+        Response response = Response.create(INTERNAL_SERVER_ERROR.getStatusCode(), INTERNAL_SERVER_ERROR.getReasonPhrase(),
+                ImmutableListMultimap.<String, String> of(), null);
+        errorDecoder.decode("UltraDNS.accountId()", response, stringToken);
+    }
+
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.accountId\\(\\) failed: Invalid User")
+    public void invalidUser() throws Throwable {
+        Response response = responseWithContent("errors/invalid_user.xml");
+        errorDecoder.decode("UltraDNS.accountId()", response, stringToken);
+    }
 
     @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.accountId\\(\\) failed with error 0")
     public void code0() throws Throwable {
