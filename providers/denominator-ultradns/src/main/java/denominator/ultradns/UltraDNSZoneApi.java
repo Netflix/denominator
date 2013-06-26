@@ -4,16 +4,16 @@ import java.util.Iterator;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 
-import dagger.Lazy;
 import denominator.model.Zone;
 
 public final class UltraDNSZoneApi implements denominator.ZoneApi {
     private final UltraDNS api;
-    private final Lazy<String> account;
+    private final Provider<String> account;
 
     @Inject
-    UltraDNSZoneApi(UltraDNS api, @Named("accountID") Lazy<String> account) {
+    UltraDNSZoneApi(UltraDNS api, @Named("accountID") Provider<String> account) {
         this.api = api;
         this.account = account;
     }
