@@ -1,9 +1,10 @@
 package denominator.route53;
 
+import static denominator.CredentialsConfiguration.anonymous;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
-import static denominator.Denominator.providers;
 import static denominator.Denominator.provider;
+import static denominator.Denominator.providers;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -16,9 +17,9 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
 import dagger.ObjectGraph;
+import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
-import denominator.Credentials.MapCredentials;
 
 public class Route53ProviderTest {
     private static final Provider PROVIDER = new Route53Provider();
@@ -60,7 +61,9 @@ public class Route53ProviderTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. route53 requires one of the following forms: when type is accessKey: accessKey, secretKey; session: accessKey, secretKey, sessionToken")
     public void testCredentialsRequired() {
-        create(PROVIDER).api().zones().iterator();
+        // manually passing anonymous in case this test is executed from EC2
+        // where IAM profiles are present.
+        create(PROVIDER, anonymous()).api().zones().iterator();
     }
 
     @Test
