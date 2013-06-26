@@ -1,0 +1,29 @@
+apply plugin: 'android'
+
+android {
+    compileSdkVersion 8
+    buildToolsVersion "17"
+
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 17
+    }
+}
+
+buildscript {
+    repositories { mavenCentral() }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:0.4.2'
+    }
+}
+
+dependencies {
+    compile files('libs/android-support-v4.jar')
+    compile project(':denominator-core')
+    // swap this out to use a different provider
+    compile project(':providers:denominator-ultradns')
+    // TODO: find a way to have this in compile classpath, but not in apk
+    compile 'com.squareup.dagger:dagger-compiler:1.0.1'
+    compile 'com.squareup:tape:1.1.0'
+    compile 'com.squareup:otto:1.3.3'
+}

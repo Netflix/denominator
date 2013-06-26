@@ -1,8 +1,10 @@
 // GRADLE-2087 workaround, perform after java plugin
 status = project.hasProperty('preferredStatus')?project.preferredStatus:(version.contains('SNAPSHOT')?'snapshot':'release')
 
-subprojects { project ->
-    apply plugin: 'java' // Plugin as major conventions
+// android is not compatible with java plugin
+configure(subprojects.findAll {project -> !project.file('src/main/AndroidManifest.xml').exists() }) {
+
+    project.apply plugin: 'java' // Plugin as major conventions
 
     sourceCompatibility = 1.6
 
@@ -96,5 +98,5 @@ githubPages {
 
 // Generate wrapper, which is distributed as part of source to alleviate the need of installing gradle
 task createWrapper(type: Wrapper) {
-    gradleVersion = '1.5'
+    gradleVersion = '1.6'
 }

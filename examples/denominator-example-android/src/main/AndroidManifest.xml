@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="denominator.example.android"
+          android:versionCode="1"
+          android:versionName="1.0.0">
+
+    <uses-sdk
+            android:minSdkVersion="8"
+            android:targetSdkVersion="17"/>
+
+    <!-- in order to make http calls -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <uses-feature
+            android:name="android.hardware.touchscreen"
+            android:required="false"/>
+    <application
+            android:icon="@drawable/icon"
+            android:label="@string/app_name"
+            android:name=".DenominatorApplication">
+        <activity
+                android:label="@string/app_name"
+                android:name=".ui.HomeActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+            </intent-filter>
+        </activity>
+        <activity
+                android:name=".ui.PreferencesActivity">
+            <intent android:action="android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS"/>
+        </activity>
+
+        <service android:name=".zone.ZoneListTaskService"/>
+
+    </application>
+</manifest>

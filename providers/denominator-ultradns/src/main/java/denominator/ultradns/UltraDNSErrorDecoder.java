@@ -7,6 +7,7 @@ import java.io.IOException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.google.common.base.Strings;
+import com.google.common.io.CharStreams;
 import com.google.common.reflect.TypeToken;
 
 import feign.FeignException;
@@ -19,8 +20,14 @@ class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
     @Override
     public Object decode(String methodKey, Response response, TypeToken<?> type) {
         try {
+            // in case of error parsing, we can access the original contents.
+            response = bufferResponse(response);
             UltraDNSError error = UltraDNSError.class.cast(super.decode(methodKey, response, type));
-            String message = format("%s failed with error %s", methodKey, error.code);
+            if (error == null)
+                throw FeignException.errorStatus(methodKey, response);
+            String message = format("%s failed", methodKey);
+            if (error.code != -1)
+                message = format("%s with error %s", message, error.code);
             if (error.description != null)
                 message = format("%s: %s", message, error.description);
             switch (error.code) {
@@ -63,14 +70,14 @@ class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
 
         @Override
         public UltraDNSError getResult() {
-            return this;
+            return (code == -1 && description == null) ? null : this;
         }
 
         @Override
         public void endElement(String uri, String name, String qName) {
             if (qName.endsWith("errorCode")) {
                 code = Integer.parseInt(currentText.toString().trim());
-            } else if (qName.endsWith("errorDescription")) {
+            } else if (qName.endsWith("errorDescription") || qName.endsWith("faultstring")) {
                 description = Strings.emptyToNull(currentText.toString().trim());
             }
             currentText = new StringBuilder();
@@ -80,5 +87,12 @@ class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
         public void characters(char ch[], int start, int length) {
             currentText.append(ch, start, length);
         }
+    }
+
+    static Response bufferResponse(Response response) throws IOException {
+        if (!response.body().isPresent())
+            return response;
+        String body = CharStreams.toString(response.body().get().asReader());
+        return Response.create(response.status(), response.reason(), response.headers(), body);
     }
 }
