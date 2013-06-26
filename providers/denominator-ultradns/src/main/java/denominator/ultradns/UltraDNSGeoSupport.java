@@ -11,7 +11,6 @@ import com.google.common.collect.ImmutableMultimap.Builder;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Table.Cell;
 
-import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
 
@@ -32,8 +31,7 @@ public class UltraDNSGeoSupport {
     @Provides
     @Singleton
     @Named("geo")
-    CacheLoader<String, Multimap<String, String>> getDirectionalGroup(final UltraDNS api,
-            final @Named("accountID") Lazy<String> account) {
+    CacheLoader<String, Multimap<String, String>> getDirectionalGroup(final UltraDNS api) {
         return new CacheLoader<String, Multimap<String, String>>() {
 
             @Override
