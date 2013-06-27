@@ -1,7 +1,6 @@
 rootProject.name='denominator'
 include 'denominator-model', \
 'denominator-core', \
-'feign', \
 'providers:denominator-route53', \
 'providers:denominator-ultradns', \
 'providers:denominator-dynect', \
