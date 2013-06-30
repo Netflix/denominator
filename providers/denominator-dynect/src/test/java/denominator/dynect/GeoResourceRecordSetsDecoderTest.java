@@ -3,12 +3,13 @@ package denominator.dynect;
 import static org.testng.Assert.assertEquals;
 
 import java.io.InputStreamReader;
+import java.util.Collection;
 import java.util.List;
 
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
@@ -24,13 +25,13 @@ public class GeoResourceRecordSetsDecoderTest {
             new CountryToRegions().provideCountryToRegionIndexer(new CountryToRegions().provideCountriesByRegion()));
 
     @Test
-    public void decodeZoneListWithNext() throws Exception {
-        Response response = Response.create(200, "OK", ImmutableListMultimap.<String, String> of(),
+    public void decodeZoneListWithNext() throws Throwable {
+        Response response = Response.create(200, "OK", ImmutableMap.<String, Collection<String>> of(),
                 new InputStreamReader(getClass().getResourceAsStream("/geoservice.json")), null);
         @SuppressWarnings({ "unchecked", "serial" })
         Multimap<String, ResourceRecordSet<?>> result = (Multimap<String, ResourceRecordSet<?>>) DynECTDecoder.parseDataWith(decoder).decode(null, response,
                 new TypeToken<List<ResourceRecordSet<?>>>() {
-                });
+                }.getType());
 
         assertEquals(result.size(), 3);
         assertEquals(result.keySet(), ImmutableSet.of("denominator.io"));

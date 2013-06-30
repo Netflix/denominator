@@ -1,42 +1,34 @@
 package denominator.clouddns;
 
 import static com.google.common.base.Objects.toStringHelper;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import java.net.URI;
 import java.util.List;
 
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.inject.Named;
 
 import com.google.common.base.Function;
 import com.google.common.collect.ForwardingList;
 import com.google.common.collect.ImmutableList;
 
 import denominator.model.Zone;
+import feign.Body;
 import feign.FeignException;
-import feign.RequestTemplate.Body;
+import feign.Headers;
+import feign.RequestLine;
 
 class RackspaceApis {
     static interface CloudIdentity {
-        @POST
-        @Path("/tokens")
+        @RequestLine("POST /tokens")
         @Body("%7B\"auth\":%7B\"RAX-KSKEY:apiKeyCredentials\":%7B\"username\":\"{username}\",\"apiKey\":\"{apiKey}\"%7D%7D%7D")
-        @Produces(APPLICATION_JSON)
-        TokenIdAndPublicURL apiKeyAuth(URI endpoint, @FormParam("username") String username,
-                @FormParam("apiKey") String apiKey);
+        @Headers("Content-Type: application/json")
+        TokenIdAndPublicURL apiKeyAuth(URI endpoint, @Named("username") String username, @Named("apiKey") String apiKey);
 
-        @POST
-        @Path("/tokens")
+        @RequestLine("POST /tokens")
         @Body("%7B\"auth\":%7B\"passwordCredentials\":%7B\"username\":\"{username}\",\"password\":\"{password}\"%7D%7D%7D")
-        @Produces(APPLICATION_JSON)
-        TokenIdAndPublicURL passwordAuth(URI endpoint, @FormParam("username") String username,
-                @FormParam("password") String password);
+        @Headers("Content-Type: application/json")
+        TokenIdAndPublicURL passwordAuth(URI endpoint, @Named("username") String username,
+                @Named("password") String password);
     }
 
     static class TokenIdAndPublicURL {
@@ -45,24 +37,21 @@ class RackspaceApis {
     }
 
     static interface CloudDNS {
-        @GET
+        @RequestLine("GET")
         ListWithNext<Zone> domains(URI href);
 
-        @GET
-        @Path("/domains")
+        @RequestLine("GET /domains")
         ListWithNext<Zone> domains();
 
-        @GET
+        @RequestLine("GET")
         ListWithNext<Record> records(URI href);
 
-        @GET
-        @Path("/domains/{domainId}/records")
-        ListWithNext<Record> records(@PathParam("domainId") int id);
+        @RequestLine("GET /domains/{domainId}/records")
+        ListWithNext<Record> records(@Named("domainId") int id);
 
-        @GET
-        @Path("/domains/{domainId}/records")
-        ListWithNext<Record> recordsByNameAndType(@PathParam("domainId") int id,
-                @QueryParam("name") String nameFilter, @QueryParam("type") String typeFilter);
+        @RequestLine("GET /domains/{domainId}/records?name={name}&type={type}")
+        ListWithNext<Record> recordsByNameAndType(@Named("domainId") int id, @Named("name") String nameFilter,
+                @Named("type") String typeFilter);
     }
 
     static class Record {

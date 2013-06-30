@@ -66,6 +66,7 @@ public class Route53ResourceRecordSetApiMockTest {
 
             RecordedRequest createRRSet = server.takeRequest();
             assertEquals(createRRSet.getRequestLine(), "POST /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
+            assertEquals(createRRSet.getHeader("Content-Type"), "application/xml");
             assertEquals(new String(createRRSet.getBody()), createARecordSet);
         } finally {
             server.shutdown();

@@ -3,17 +3,16 @@ package denominator.dynect;
 import java.util.List;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
 
 import com.google.common.base.Supplier;
 
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
-import feign.RequestTemplate.Body;
+import feign.Body;
+import feign.RequestLine;
 
 /**
  * gets the last auth token, expiring if the url or credentials changed
@@ -22,11 +21,10 @@ import feign.RequestTemplate.Body;
 @Singleton
 class InvalidatableTokenSupplier implements Supplier<String> {
     interface Session {
-        @POST
-        @Path("/Session")
+        @RequestLine("POST /Session")
         @Body("%7B\"customer_name\":\"{customer_name}\",\"user_name\":\"{user_name}\",\"password\":\"{password}\"%7D")
-        String login(@FormParam("customer_name") String customer, @FormParam("user_name") String user,
-                @FormParam("password") String password);
+        String login(@Named("customer_name") String customer, @Named("user_name") String user,
+                @Named("password") String password);
     }
 
     private final denominator.Provider provider;
