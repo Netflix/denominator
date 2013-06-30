@@ -30,13 +30,14 @@ class Route53ErrorDecoder extends SAXDecoder implements ErrorDecoder {
     }
 
     @Override
-    public Object decode(String methodKey, Response response, TypeToken<?> type) {
+    public Object decode(String methodKey, Response response, TypeToken<?> type) throws IOException {
         try {
             Route53Error error = Route53Error.class.cast(super.decode(methodKey, response, type));
             String message = format("%s failed with error %s", methodKey, error.code);
             if (error.message != null)
                 message = format("%s: %s", message, error.message);
-            if (response.status() == 501 || "RequestExpired".equals(error.code)) {
+            if ("RequestExpired".equals(error.code) || "InternalError".equals(error.code)
+                    || "InternalFailure".equals(error.code)) {
                 throw new RetryableException(message, null);
             } else if ("Throttling".equals(error.code) || "PriorRequestNotComplete".equals(error.code)) {
                 // backoff at least a second.
