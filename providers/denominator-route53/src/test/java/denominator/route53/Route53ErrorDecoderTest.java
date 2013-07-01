@@ -1,7 +1,5 @@
 package denominator.route53;
 
-import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
-
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableListMultimap;
@@ -30,7 +28,38 @@ public class Route53ErrorDecoderTest {
                 + "  </Errors>\n"//
                 + "  <RequestID>dc94a37b0-e297-4ab7-83c8-791a0fc8f613</RequestID>\n"//
                 + "</Response>");
-        errorDecoder.decode("Route53.zones()", response, token);
+        errorDecoder.decode("Route53.zones()", response, TypeToken.of(ZoneList.class));
+    }
+
+    @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error InternalError")
+    public void internalError() throws Throwable {
+        Response response = responseWithContent(""//
+                + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"//
+                + "<Response xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"//
+                + "  <Errors>\n"//
+                + "    <Error>\n"//
+                + "      <Code>InternalError</Code>\n"//
+                + "    </Error>\n"//
+                + "  </Errors>\n"//
+                + "  <RequestID>dc94a37b0-e297-4ab7-83c8-791a0fc8f613</RequestID>\n"//
+                + "</Response>");
+        errorDecoder.decode("Route53.zones()", response, TypeToken.of(ZoneList.class));
+    }
+
+    @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error InternalFailure")
+    public void internalFailure() throws Throwable {
+        Response response = responseWithContent(""//
+                + "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"//
+                + "<Response xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"//
+                + "  <Errors>\n"//
+                + "    <Error>\n"//
+                + "      <Type>Receiver</Type>\n"//
+                + "      <Code>InternalFailure</Code>\n"//
+                + "    </Error>\n"//
+                + "  </Errors>\n"//
+                + "  <RequestID>dc94a37b0-e297-4ab7-83c8-791a0fc8f613</RequestID>\n"//
+                + "</Response>");
+        errorDecoder.decode("Route53.zones()", response, TypeToken.of(ZoneList.class));
     }
 
     @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error Throttling: Rate exceeded")
@@ -46,7 +75,7 @@ public class Route53ErrorDecoderTest {
                 + "  </Errors>\n"//
                 + "  <RequestID>dc94a37b0-e297-4ab7-83c8-791a0fc8f613</RequestID>\n"//
                 + "</Response>");
-        errorDecoder.decode("Route53.zones()", response, token);
+        errorDecoder.decode("Route53.zones()", response, TypeToken.of(ZoneList.class));
     }
 
     @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error PriorRequestNotComplete: The request was rejected because Route 53 was still processing a prior request.")
@@ -62,13 +91,10 @@ public class Route53ErrorDecoderTest {
                 + "  </Errors>\n"//
                 + "  <RequestID>dc94a37b0-e297-4ab7-83c8-791a0fc8f613</RequestID>\n"//
                 + "</Response>");
-        errorDecoder.decode("Route53.zones()", response, token);
+        errorDecoder.decode("Route53.zones()", response, TypeToken.of(ZoneList.class));
     }
 
-    static TypeToken<ZoneList> token = TypeToken.of(ZoneList.class);
-
     static Response responseWithContent(String content) {
-        return Response.create(INTERNAL_SERVER_ERROR.getStatusCode(), INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                ImmutableListMultimap.<String, String> of(), content);
+        return Response.create(500, "ServerError", ImmutableListMultimap.<String, String> of(), content);
     }
 }

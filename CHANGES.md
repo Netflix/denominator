@@ -1,3 +1,6 @@
+### Version 2.0.1
+* improves resiliency to transient errors.
+
 ### Version 2.0
 * Updated to use our new http binder Feign, which dramatically reduces size and initialization.
 * Added Android Example. 

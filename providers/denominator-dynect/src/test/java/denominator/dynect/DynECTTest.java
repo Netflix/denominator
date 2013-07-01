@@ -1,18 +1,19 @@
 package denominator.dynect;
 
-import static javax.ws.rs.core.Response.Status.OK;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.fail;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Iterator;
 
 import org.testng.annotations.Test;
 
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 
+import denominator.model.Zone;
 import feign.Feign;
 
 /**
@@ -20,13 +21,56 @@ import feign.Feign;
  * @author Adrian Cole
  */
 public class DynECTTest {
+    String zones ="{\"status\": \"success\", \"data\": [\"/REST/Zone/0.0.0.0.d.6.e.0.0.a.2.ip6.arpa/\", \"/REST/Zone/126.12.44.in-addr.arpa/\", \"/REST/Zone/denominator.io/\"], \"job_id\": 260657587, \"msgs\": [{\"INFO\": \"get: Your 3 zones\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+
+    @Test
+    public void zonesWhenPresent() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(zones));
+        server.play();
+
+        try {
+            DynECT api = mockApi(server.getUrl(""));
+            Iterator<Zone> iterator = api.zones().iterator();
+            iterator.next();
+            iterator.next();
+            assertEquals(iterator.next(), Zone.create("denominator.io"));
+
+            assertEquals(server.getRequestCount(), 1);
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Zone HTTP/1.1");
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    String incomplete = "{\"status\": \"incomplete\", \"data\": null, \"job_id\": 399831496}";
+
+    @Test
+    public void incompleteRetries() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(incomplete));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(zones));
+        server.play();
+
+        DynECT api = mockApi(server.getUrl(""));
+
+        try {
+            api.zones();
+
+            assertEquals(server.getRequestCount(), 2);
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Zone HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Zone HTTP/1.1");
+        } finally {
+            server.shutdown();
+        }
+    }
 
     String running = "{\"status\": \"running\", \"data\": {}, \"job_id\": 274509427, \"msgs\": [{\"INFO\": \"token: This session already has a job running\", \"SOURCE\": \"API-B\", \"ERR_CD\": \"OPERATION_FAILED\", \"LVL\": \"ERROR\"}]}";
 
     @Test
     public void runningDoesntRetry() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(running));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(running));
         server.play();
 
         DynECT api = mockApi(server.getUrl(""));
@@ -52,7 +96,7 @@ public class DynECTTest {
     @Test
     public void blockedDoesntRetry() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(taskBlocking));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(taskBlocking));
         server.play();
 
         DynECT api = mockApi(server.getUrl(""));
@@ -82,7 +126,7 @@ public class DynECTTest {
     @Test
     public void alreadyExistsDoesntRetry() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(targetExists));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(targetExists));
         server.play();
 
         DynECT api = mockApi(server.getUrl(""));
