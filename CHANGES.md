@@ -1,3 +1,6 @@
+### Version 2.1.0
+* updates to feign 2, which removes jaxrs dependency
+
 ### Version 2.0.1
 * improves resiliency to transient errors.
 
