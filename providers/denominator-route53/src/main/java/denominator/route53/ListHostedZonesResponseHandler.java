@@ -9,9 +9,9 @@ import denominator.model.Zone;
 import denominator.route53.Route53.ZoneList;
 
 /**
- * @see <a href=
+ * See <a href=
  *      "http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListHostedZones.html"
- *      />
+ *      >docs</a>
  */
 public class ListHostedZonesResponseHandler extends DefaultHandler implements
         feign.codec.SAXDecoder.ContentHandlerWithResult {

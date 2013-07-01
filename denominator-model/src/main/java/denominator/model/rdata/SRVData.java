@@ -12,7 +12,7 @@ import com.google.common.collect.ImmutableMap;
 /**
  * Corresponds to the binary representation of the {@code SRV} (Service) RData
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * SRVData rdata = SRVData.builder()
@@ -22,7 +22,7 @@ import com.google.common.collect.ImmutableMap;
  *                        .target(&quot;www.foo.com.&quot;).build()
  * </pre>
  * 
- * @see <a href="http://www.ietf.org/rfc/rfc2782.txt">RFC 2782</a>
+ * See <a href="http://www.ietf.org/rfc/rfc2782.txt">RFC 2782</a>
  */
 public class SRVData extends ForwardingMap<String, Object> {
 
@@ -48,15 +48,6 @@ public class SRVData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #priority()}
-     */
-    @Deprecated
-    public int getPriority() {
-        return priority();
-    }
-
-    /**
      * The priority of this target host. A client MUST attempt to contact the
      * target host with the lowest-numbered priority it can reach; target hosts
      * with the same priority SHOULD be tried in an order defined by the weight
@@ -66,15 +57,6 @@ public class SRVData extends ForwardingMap<String, Object> {
      */
     public int priority() {
         return priority;
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #weight()}
-     */
-    @Deprecated
-    public int getWeight() {
-        return weight();
     }
 
     /**
@@ -89,30 +71,12 @@ public class SRVData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #port()}
-     */
-    @Deprecated
-    public int getPort() {
-        return port();
-    }
-
-    /**
      * The port on this target host of this service.
      * 
      * @since 1.3
      */
     public int port() {
         return port;
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #target()}
-     */
-    @Deprecated
-    public String getTarget() {
-        return target();
     }
 
     /**

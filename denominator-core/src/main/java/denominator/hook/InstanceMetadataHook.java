@@ -18,7 +18,7 @@ import com.google.common.io.Closer;
  * Utilities used for accessing metadata when running on a EC2 instance or
  * otherwise that can access {@code http://169.254.169.254/latest/meta-data/}.
  * 
- * @see <a
+ * See <a
  *      href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html">
  *      documentation</a>
  */

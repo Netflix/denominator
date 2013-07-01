@@ -17,7 +17,7 @@ public interface GeoResourceRecordSetApi extends QualifiedResourceRecordSetApi {
      * that the keys correlate to UN or otherwise defined regions such as
      * {@code North America}. However, this can also include special case keys,
      * such as {@code Fallback} and {@code Anonymous Proxy}.
-     * <p/>
+     * <br>
      * ex.
      * 
      * <pre>
@@ -30,7 +30,7 @@ public interface GeoResourceRecordSetApi extends QualifiedResourceRecordSetApi {
      * }
      * </pre>
      * 
-     * <h4>Note</h4>
+     * <br><br><b>Note</b><br>
      * 
      * The values of this are not guaranteed portable across providers.
      * 

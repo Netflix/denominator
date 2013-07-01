@@ -15,7 +15,7 @@ import denominator.model.ResourceRecordSet;
  * Record sets with this profile are load balanced, differentiated by an integer
  * {@code weight}.
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * Weighted profile = Weighted.create(2);
@@ -75,7 +75,7 @@ public class Weighted extends ForwardingMap<String, Object> {
      * of positive numbers which differentiate the load to send to this record
      * set vs another.
      * 
-     * <h4>Note</h4>
+     * <br><br><b>Note</b><br>
      * 
      * In some implementation, such as UltraDNS, only even number weights are
      * supported! For highest portability, use even numbers between

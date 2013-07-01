@@ -7,9 +7,9 @@ import java.util.List;
 import feign.FeignException;
 
 /**
- * @see <a href=
+ * See <a href=
  *      "http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html#API_ChangeResourceRecordSets_ExampleErrors"
- *      />
+ *      >docs</a>
  */
 public class InvalidChangeBatchException extends FeignException {
 

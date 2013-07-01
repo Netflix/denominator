@@ -56,7 +56,7 @@ public class DNSApi {
      * contain a {@link ResourceRecordSet#qualifier()}. This api is supported
      * by all {@link Provider providers}.
      * 
-     * <h4>Usage</h4>
+     * <br><br><b>Usage</b><br>
      * 
      * The argument to this is {@code zoneId}. It is possible that some zones do
      * not have an id, and in this case the name is used. The following form
@@ -66,7 +66,7 @@ public class DNSApi {
      * api.basicRecordSetsInZone(zone.idOrName());
      * </pre>
      * 
-     * <h4>Beta</h4>
+     * <br><br><b>Beta</b><br>
      * 
      * This is marked beta until the denominator 2.0 model is finalized. If this
      * interface is unaffected following that, we'll remove the Beta status.
@@ -85,7 +85,7 @@ public class DNSApi {
      * {@code zoneId}. This is supported by all {@link Provider providers}, but
      * may only return basic records, if that's all that is supported.
      * 
-     * <h4>Usage</h4>
+     * <br><br><b>Usage</b><br>
      * 
      * The argument to this is {@code zoneId}. It is possible that some zones do
      * not have an id, and in this case the name is used. The following form
@@ -95,7 +95,7 @@ public class DNSApi {
      * api.recordSetsInZone(zone.idOrName());
      * </pre>
      * 
-     * <h4>Beta</h4>
+     * <br><br><b>Beta</b><br>
      * 
      * This is marked beta until the denominator 2.0 model is finalized. If this
      * interface is unaffected following that, we'll remove the Beta status.
@@ -112,7 +112,7 @@ public class DNSApi {
      * Controls DNS records which take into consideration the territory of the
      * caller. These are otherwise known as Directional records.
      * 
-     * <h4>Usage</h4>
+     * <br><br><b>Usage</b><br>
      * 
      * The argument to this is {@code zoneId}. It is possible that some zones do
      * not have an id, and in this case the name is used. The following form
@@ -122,7 +122,7 @@ public class DNSApi {
      * api.geoRecordSetsInZone(zone.idOrName());
      * </pre>
      * 
-     * <h4>Beta</h4>
+     * <br><br><b>Beta</b><br>
      * 
      * This is marked beta until the denominator 2.0 model is finalized. If this
      * interface is unaffected following that, we'll remove the Beta status.
@@ -139,7 +139,7 @@ public class DNSApi {
      * Controls DNS records which take into consideration the load of traffic
      * from the caller. These are otherwise known as weighted records.
      * 
-     * <h4>Usage</h4>
+     * <br><br><b>Usage</b><br>
      * 
      * The argument to this is {@code zoneId}. It is possible that some zones do
      * not have an id, and in this case the name is used. The following form
@@ -149,7 +149,7 @@ public class DNSApi {
      * api.weightedRecordSetsInZone(zone.idOrName());
      * </pre>
      * 
-     * <h4>Beta</h4>
+     * <br><br><b>Beta</b><br>
      * 
      * This is marked beta until the denominator 2.0 model is finalized. If this
      * interface is unaffected following that, we'll remove the Beta status.
