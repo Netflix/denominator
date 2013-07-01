@@ -5,6 +5,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.collect.Iterators.transform;
 
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -13,7 +14,6 @@ import java.util.regex.Pattern;
 import com.google.common.base.Function;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
@@ -116,7 +116,7 @@ class DynECTDecoder extends feign.codec.Decoder {
     }
 
     @Override
-    public Object decode(String methodKey, Reader ireader, TypeToken<?> ignored) throws Throwable {
+    public Object decode(String methodKey, Reader ireader, Type ignored) throws Throwable {
         JsonReader reader = new JsonReader(ireader);
         try {
             ImmutableList.Builder<Message> messages = ImmutableList.<Message> builder();

@@ -4,12 +4,11 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
 import java.io.InputStreamReader;
+import java.util.Collection;
 
 import org.testng.annotations.Test;
 
-import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
@@ -26,10 +25,10 @@ public class Route53DecoderTest {
     Route53Decoder decoder = new Route53Decoder();
 
     @Test
-    public void decodeZoneListWithNext() throws Exception {
-        Response response = Response.create(200, "OK", ImmutableListMultimap.<String, String> of(),
+    public void decodeZoneListWithNext() throws Throwable {
+        Response response = Response.create(200, "OK", ImmutableMap.<String, Collection<String>> of(),
                 new InputStreamReader(getClass().getResourceAsStream("/hosted_zones.xml")), null);
-        ZoneList result = (ZoneList) decoder.decode(null, response, TypeToken.of(ZoneList.class));
+        ZoneList result = (ZoneList) decoder.decode(null, response, ZoneList.class);
 
         assertEquals(result.zones.size(), 2);
         assertEquals(result.zones.get(0), Zone.create("example.com.", "Z21DW1QVGID6NG"));
@@ -38,11 +37,11 @@ public class Route53DecoderTest {
     }
 
     @Test
-    public void decodeBasicResourceRecordSetListWithNext() throws Exception {
-        Response response = Response.create(200, "OK", ImmutableListMultimap.<String, String> of(),
+    public void decodeBasicResourceRecordSetListWithNext() throws Throwable {
+        Response response = Response.create(200, "OK", ImmutableMap.<String, Collection<String>> of(),
                 new InputStreamReader(getClass().getResourceAsStream("/basic_rrsets.xml")), null);
         ResourceRecordSetList result = (ResourceRecordSetList) decoder.decode(null, response,
-                TypeToken.of(ResourceRecordSetList.class));
+                ResourceRecordSetList.class);
 
         assertEquals(result.rrsets.size(), 2);
         assertEquals(result.rrsets.get(0), ResourceRecordSet.<SOAData> builder()//
@@ -72,20 +71,18 @@ public class Route53DecoderTest {
     }
 
     @Test
-    public void decodeAdvancedResourceRecordSetListWithoutNext() throws Exception {
-        Response response = Response.create(200, "OK", ImmutableListMultimap.<String, String> of(),
+    public void decodeAdvancedResourceRecordSetListWithoutNext() throws Throwable {
+        Response response = Response.create(200, "OK", ImmutableMap.<String, Collection<String>> of(),
                 new InputStreamReader(getClass().getResourceAsStream("/advanced_rrsets.xml")), null);
         ResourceRecordSetList result = (ResourceRecordSetList) decoder.decode(null, response,
-                TypeToken.of(ResourceRecordSetList.class));
+                ResourceRecordSetList.class);
 
         assertEquals(result.rrsets.size(), 2);
         assertEquals(result.rrsets.get(0), ResourceRecordSet.<AData> builder()//
                 .name("apple.myzone.com.")//
                 .type("A")//
-                .qualifier("foobar")
-                .ttl(300)//
-                .addProfile(Weighted.create(1))
-                .add(AData.create("1.2.3.4")).build());
+                .qualifier("foobar").ttl(300)//
+                .addProfile(Weighted.create(1)).add(AData.create("1.2.3.4")).build());
 
         // alias has no rdata!
         assertEquals(result.rrsets.get(1), ResourceRecordSet.<AData> builder()//

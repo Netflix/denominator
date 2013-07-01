@@ -1,8 +1,5 @@
 package denominator.dynect;
 
-import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
-import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-
 import javax.inject.Inject;
 
 import denominator.Provider;
@@ -38,7 +35,7 @@ class SessionTarget implements Target<Session> {
     @Override
     public Request apply(RequestTemplate input) {
         input.header("API-Version", "3.5.0");
-        input.header(CONTENT_TYPE, APPLICATION_JSON);
+        input.header("Content-Type", "application/json");
         input.insert(0, url());
         return input.request();
     }

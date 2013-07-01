@@ -1,8 +1,6 @@
 package denominator.clouddns;
 
 import static denominator.CredentialsConfiguration.credentials;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.OK;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
@@ -41,11 +39,11 @@ public class CloudDNSProviderDynamicUpdateMockTest {
         final AtomicReference<URL> dynamicUrl = new AtomicReference<URL>(mockUrl);
         server.setDispatcher(getURLReplacingQueueDispatcher(dynamicUrl));
 
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         try {
             DNSApi api = Denominator.create(new CloudDNSProvider() {
@@ -77,11 +75,11 @@ public class CloudDNSProviderDynamicUpdateMockTest {
         final URL mockUrl = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(new AtomicReference<URL>(mockUrl)));
 
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         try {
 

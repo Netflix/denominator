@@ -1,9 +1,6 @@
 package denominator.ultradns;
 
-import static com.google.common.net.HttpHeaders.CONTENT_TYPE;
-import static com.google.common.net.HttpHeaders.HOST;
 import static java.lang.String.format;
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
 
 import java.net.URI;
 import java.util.List;
@@ -47,9 +44,9 @@ class UltraDNSTarget implements Target<UltraDNS> {
     public Request apply(RequestTemplate in) {
         in.insert(0, url());
         List<Object> creds = ListCredentials.asList(credentials.get());
-        in.body(format(SOAP_TEMPLATE, creds.get(0).toString(), creds.get(1).toString(), in.body().get()));
-        in.header(HOST, URI.create(in.url()).getHost());
-        in.header(CONTENT_TYPE, APPLICATION_XML);
+        in.body(format(SOAP_TEMPLATE, creds.get(0).toString(), creds.get(1).toString(), in.body()));
+        in.header("Host", URI.create(in.url()).getHost());
+        in.header("Content-Type", "application/xml");
         return in.request();
     }
 

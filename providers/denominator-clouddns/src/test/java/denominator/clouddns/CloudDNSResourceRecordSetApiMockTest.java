@@ -2,8 +2,6 @@ package denominator.clouddns;
 
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.model.ResourceRecordSets.a;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
-import static javax.ws.rs.core.Response.Status.OK;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
@@ -40,8 +38,8 @@ public class CloudDNSResourceRecordSetApiMockTest {
         URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(records));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(records));
 
         try {
             ResourceRecordSetApi api = mockApi(url);
@@ -70,8 +68,8 @@ public class CloudDNSResourceRecordSetApiMockTest {
         URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         try {
             ResourceRecordSetApi api = mockApi(url);
@@ -96,9 +94,9 @@ public class CloudDNSResourceRecordSetApiMockTest {
         URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(recordsPage1));
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(recordsPage2));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordsPage1));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordsPage2));
 
         try {
             ResourceRecordSetApi api = mockApi(url);
@@ -130,8 +128,8 @@ public class CloudDNSResourceRecordSetApiMockTest {
         URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(recordsByName));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordsByName));
 
         try {
             ResourceRecordSetApi api = mockApi(url);
@@ -160,8 +158,8 @@ public class CloudDNSResourceRecordSetApiMockTest {
         URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         try {
             ResourceRecordSetApi api = mockApi(url);
@@ -185,8 +183,8 @@ public class CloudDNSResourceRecordSetApiMockTest {
         URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(recordsByNameAndType));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordsByNameAndType));
 
         try {
             ResourceRecordSetApi api = mockApi(url);
@@ -209,8 +207,8 @@ public class CloudDNSResourceRecordSetApiMockTest {
         final URL url = server.getUrl("");
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
-        server.enqueue(new MockResponse().setResponseCode(OK.getStatusCode()).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));        
         try {
             ResourceRecordSetApi api = mockApi(url);

@@ -4,70 +4,54 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
+import javax.inject.Named;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
-import feign.RequestTemplate.Body;
+import feign.Body;
+import feign.RequestLine;
 
 public interface DynECT {
-    @GET
-    @Path("/Zone")
+    @RequestLine("GET /Zone")
     List<Zone> zones();
 
-    @PUT
-    @Path("/Zone/{zone}")
+    @RequestLine("PUT /Zone/{zone}")
     @Body("{\"publish\":true}")
-    void publish(@PathParam("zone") String zone);
+    void publish(@Named("zone") String zone);
 
-    @GET
-    @Path("/AllRecord/{zone}?detail=Y")
-    Iterator<ResourceRecordSet<?>> rrsets(@PathParam("zone") String zone);
+    @RequestLine("GET /AllRecord/{zone}?detail=Y")
+    Iterator<ResourceRecordSet<?>> rrsets(@Named("zone") String zone);
 
-    @GET
-    @Path("/Geo?detail=Y")
+    @RequestLine("GET /Geo?detail=Y")
     Multimap<String, ResourceRecordSet<?>> geoRRSetsByZone();
 
-    @GET
-    @Path("/AllRecord/{zone}?detail=Y")
-    Iterator<ResourceRecordSet<?>> rrsetsInZone(@PathParam("zone") String zone);
+    @RequestLine("GET /AllRecord/{zone}?detail=Y")
+    Iterator<ResourceRecordSet<?>> rrsetsInZone(@Named("zone") String zone);
 
-    @GET
-    @Path("/AllRecord/{zone}/{fqdn}?detail=Y")
-    Iterator<ResourceRecordSet<?>> rrsetsInZoneByName(@PathParam("zone") String zone, @PathParam("fqdn") String fqdn);
+    @RequestLine("GET /AllRecord/{zone}/{fqdn}?detail=Y")
+    Iterator<ResourceRecordSet<?>> rrsetsInZoneByName(@Named("zone") String zone, @Named("fqdn") String fqdn);
 
-    @GET
-    @Path("/{type}Record/{zone}/{fqdn}?detail=Y")
-    Iterator<ResourceRecordSet<?>> rrsetsInZoneByNameAndType(@PathParam("zone") String zone,
-            @PathParam("fqdn") String fqdn, @PathParam("type") String type);
+    @RequestLine("GET /{type}Record/{zone}/{fqdn}?detail=Y")
+    Iterator<ResourceRecordSet<?>> rrsetsInZoneByNameAndType(@Named("zone") String zone, @Named("fqdn") String fqdn,
+            @Named("type") String type);
 
-    @GET
-    @Path("/{type}Record/{zone}/{fqdn}")
-    List<String> recordIdsInZoneByNameAndType(@PathParam("zone") String zone, @PathParam("fqdn") String fqdn,
-            @PathParam("type") String type);
+    @RequestLine("GET /{type}Record/{zone}/{fqdn}")
+    List<String> recordIdsInZoneByNameAndType(@Named("zone") String zone, @Named("fqdn") String fqdn,
+            @Named("type") String type);
 
-    @GET
-    @Path("/{type}Record/{zone}/{fqdn}?detail=Y")
-    Iterator<Record> recordsInZoneByNameAndType(@PathParam("zone") String zone, @PathParam("fqdn") String fqdn,
-            @PathParam("type") String type);
+    @RequestLine("GET /{type}Record/{zone}/{fqdn}?detail=Y")
+    Iterator<Record> recordsInZoneByNameAndType(@Named("zone") String zone, @Named("fqdn") String fqdn,
+            @Named("type") String type);
 
-    @POST
-    @Path("/{type}Record/{zone}/{fqdn}")
-    void scheduleCreateRecord(@PathParam("zone") String zone, @PathParam("fqdn") String fqdn,
-            @PathParam("type") String type, @FormParam("ttl") int ttl, @FormParam("rdata") Map<String, Object> rdata);
+    @RequestLine("POST /{type}Record/{zone}/{fqdn}")
+    void scheduleCreateRecord(@Named("zone") String zone, @Named("fqdn") String fqdn, @Named("type") String type,
+            @Named("ttl") int ttl, @Named("rdata") Map<String, Object> rdata);
 
-    @DELETE
-    @Path("/{recordId}")
-    void scheduleDeleteRecord(@PathParam("recordId") String recordId);
+    @RequestLine("DELETE /{recordId}")
+    void scheduleDeleteRecord(@Named("recordId") String recordId);
 
     static class Record {
         long id;

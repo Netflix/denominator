@@ -1,7 +1,6 @@
 package denominator.clouddns;
 
 import static denominator.CredentialsConfiguration.credentials;
-import static javax.ws.rs.core.Response.Status.NOT_FOUND;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
@@ -66,7 +65,7 @@ public class CloudDNSZoneApiMockTest {
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(NOT_FOUND.getStatusCode()).setBody(
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
 
         try {

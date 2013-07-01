@@ -1,30 +1,23 @@
 package denominator.route53;
 
-import static javax.ws.rs.core.MediaType.APPLICATION_XML;
-
 import java.util.List;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.inject.Named;
 
 import com.google.common.collect.ForwardingList;
 import com.google.common.collect.ImmutableList;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
+import feign.Headers;
+import feign.RequestLine;
 
 interface Route53 {
-    @GET
-    @Path("/2012-12-12/hostedzone")
+    @RequestLine("GET /2012-12-12/hostedzone")
     ZoneList zones();
 
-    @GET
-    @Path("/2012-12-12/hostedzone")
-    ZoneList zones(@QueryParam("marker") String marker);
+    @RequestLine("GET /2012-12-12/hostedzone?marker={marker}")
+    ZoneList zones(@Named("marker") String marker);
 
     static class ZoneList extends ForwardingList<Zone> {
 
@@ -37,24 +30,19 @@ interface Route53 {
         }
     }
 
-    @GET
-    @Path("/2012-12-12/hostedzone/{zoneId}/rrset")
-    ResourceRecordSetList rrsets(@PathParam("zoneId") String zoneId);
+    @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset")
+    ResourceRecordSetList rrsets(@Named("zoneId") String zoneId);
 
-    @GET
-    @Path("/2012-12-12/hostedzone/{zoneId}/rrset")
-    ResourceRecordSetList rrsetsStartingAtName(@PathParam("zoneId") String zoneId, @QueryParam("name") String name);
+    @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset?name={name}")
+    ResourceRecordSetList rrsetsStartingAtName(@Named("zoneId") String zoneId, @Named("name") String name);
 
-    @GET
-    @Path("/2012-12-12/hostedzone/{zoneId}/rrset")
-    ResourceRecordSetList rrsetsStartingAtNameAndType(@PathParam("zoneId") String zoneId,
-            @QueryParam("name") String name, @QueryParam("type") String type);
+    @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset?name={name}&type={type}")
+    ResourceRecordSetList rrsetsStartingAtNameAndType(@Named("zoneId") String zoneId, @Named("name") String name,
+            @Named("type") String type);
 
-    @GET
-    @Path("/2012-12-12/hostedzone/{zoneId}/rrset")
-    ResourceRecordSetList rrsetsStartingAtNameTypeAndIdentifier(@PathParam("zoneId") String zoneId,
-            @QueryParam("name") String name, @QueryParam("type") String type,
-            @QueryParam("identifier") String identifier);
+    @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset?name={name}&type={type}&identifier={identifier}")
+    ResourceRecordSetList rrsetsStartingAtNameTypeAndIdentifier(@Named("zoneId") String zoneId,
+            @Named("name") String name, @Named("type") String type, @Named("identifier") String identifier);
 
     static class ResourceRecordSetList extends ForwardingList<ResourceRecordSet<?>> {
 
@@ -78,10 +66,9 @@ interface Route53 {
         }
     }
 
-    @POST
-    @Path("/2012-12-12/hostedzone/{zoneId}/rrset")
-    @Produces(APPLICATION_XML)
-    void changeBatch(@PathParam("zoneId") String zoneId, List<ActionOnResourceRecordSet> changes)
+    @RequestLine("POST /2012-12-12/hostedzone/{zoneId}/rrset")
+    @Headers("Content-Type: application/xml")
+    void changeBatch(@Named("zoneId") String zoneId, List<ActionOnResourceRecordSet> changes)
             throws InvalidChangeBatchException;
 
     static class ActionOnResourceRecordSet {

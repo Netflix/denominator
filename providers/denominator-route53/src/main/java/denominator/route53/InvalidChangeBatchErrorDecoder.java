@@ -3,9 +3,8 @@ package denominator.route53;
 import static feign.codec.Decoders.eachFirstGroup;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.List;
-
-import com.google.common.reflect.TypeToken;
 
 import feign.FeignException;
 import feign.Response;
@@ -16,7 +15,7 @@ class InvalidChangeBatchErrorDecoder implements ErrorDecoder {
     Decoder messagesDecoder = eachFirstGroup("<Message>([^<]+)</Message>");
 
     @Override
-    public Object decode(String methodKey, Response response, TypeToken<?> type) {
+    public Object decode(String methodKey, Response response, Type type) throws Throwable {
         try {
             @SuppressWarnings("unchecked")
             List<String> messages = List.class.cast(messagesDecoder.decode(methodKey, response, type));

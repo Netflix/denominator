@@ -3,12 +3,12 @@ package denominator.ultradns;
 import static java.lang.String.format;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
-import com.google.common.reflect.TypeToken;
 
 import feign.FeignException;
 import feign.Response;
@@ -19,7 +19,7 @@ import feign.codec.SAXDecoder;
 class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
 
     @Override
-    public Object decode(String methodKey, Response response, TypeToken<?> type) {
+    public Object decode(String methodKey, Response response, Type type) throws Throwable {
         try {
             // in case of error parsing, we can access the original contents.
             response = bufferResponse(response);
@@ -61,7 +61,7 @@ class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
     }
 
     @Override
-    protected ContentHandlerWithResult typeToNewHandler(TypeToken<?> type) {
+    protected ContentHandlerWithResult typeToNewHandler(Type type) {
         return new UltraDNSError();
     }
 
@@ -93,9 +93,9 @@ class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
     }
 
     static Response bufferResponse(Response response) throws IOException {
-        if (!response.body().isPresent())
+        if (response.body() == null)
             return response;
-        String body = CharStreams.toString(response.body().get().asReader());
+        String body = CharStreams.toString(response.body().asReader());
         return Response.create(response.status(), response.reason(), response.headers(), body);
     }
 }

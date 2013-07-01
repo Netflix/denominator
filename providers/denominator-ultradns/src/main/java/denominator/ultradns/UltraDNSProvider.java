@@ -12,6 +12,7 @@ import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -20,7 +21,6 @@ import java.util.regex.Pattern;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
 import com.google.common.collect.ImmutableMultimap;
@@ -29,7 +29,6 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
 import com.google.common.io.CharStreams;
-import com.google.common.reflect.TypeToken;
 
 import dagger.Provides;
 import denominator.BasicProvider;
@@ -48,6 +47,7 @@ import feign.Feign;
 import feign.Feign.Defaults;
 import feign.ReflectiveFeign;
 import feign.codec.Decoder;
+import feign.codec.Decoders.ApplyFirstGroup;
 import feign.codec.ErrorDecoder;
 import feign.codec.FormEncoder;
 
@@ -198,7 +198,7 @@ public class UltraDNSProvider extends BasicProvider {
         checkNotNull(pattern, "pattern");
         return new Decoder() {
             @Override
-            public Object decode(String methodKey, Reader reader, TypeToken<?> type) throws Throwable {
+            public Object decode(String methodKey, Reader reader, Type type) throws Throwable {
                 Matcher matcher = patternForMatcher.matcher(CharStreams.toString(reader));
                 ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String> builder();
                 while (matcher.find()) {
@@ -214,7 +214,7 @@ public class UltraDNSProvider extends BasicProvider {
         };
     }
 
-    private static enum ZoneFactory implements Function<String, Zone> {
+    private static enum ZoneFactory implements ApplyFirstGroup<Zone> {
         INSTANCE;
 
         @Override
