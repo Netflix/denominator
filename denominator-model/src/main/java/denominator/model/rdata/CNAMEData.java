@@ -12,13 +12,13 @@ import com.google.common.collect.ImmutableMap;
  * Corresponds to the binary representation of the {@code CNAME} (Canonical
  * Name) RData
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * CNAMEData rdata = CNAMEData.create("cname.foo.com.");
  * </pre>
  * 
- * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
+ * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class CNAMEData extends ForwardingMap<String, Object> {
 
@@ -32,15 +32,6 @@ public class CNAMEData extends ForwardingMap<String, Object> {
     private CNAMEData(String cname) {
         this.cname = checkNotNull(cname, "cname");
         this.delegate = ImmutableMap.<String, Object> of("cname", cname);
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #cname()}
-     */
-    @Deprecated
-    public String getCname() {
-        return cname();
     }
 
     /**

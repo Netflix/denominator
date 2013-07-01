@@ -6,7 +6,6 @@ import static denominator.model.ResourceRecordSets.ns;
 import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.model.ResourceRecordSets.ptr;
 import static denominator.model.ResourceRecordSets.spf;
-import static denominator.model.ResourceRecordSets.toProfile;
 import static denominator.model.ResourceRecordSets.tryFindProfile;
 import static denominator.model.ResourceRecordSets.txt;
 import static denominator.model.ResourceRecordSets.withoutProfile;
@@ -122,26 +121,6 @@ public class ResourceRecordSetsTest {
         assertTrue(withoutProfile().apply(aRRS));
     }
 
-    @Deprecated
-    public void deprecatedProfileContainsTypeReturnsFalseOnNull() {
-        assertFalse(profileContainsType(Geo.class).apply(null));
-    }
-
-    @Deprecated
-    public void deprecatedProfileContainsTypeReturnsFalseOnDifferentType() {
-        assertFalse(profileContainsType(String.class).apply(geoRRS));
-    }
-
-    @Deprecated
-    public void deprecatedProfileContainsTypeReturnsFalseOnAbsent() {
-        assertFalse(profileContainsType(Geo.class).apply(aRRS));
-    }
-
-    @Deprecated
-    public void deprecatedProfileContainsTypeReturnsTrueOnSameType() {
-        assertTrue(profileContainsType(Geo.class).apply(geoRRS));
-    }
-
     public void profileContainsTypeReturnsFalseOnNull() {
         assertFalse(profileContainsType("geo").apply(null));
     }
@@ -158,11 +137,6 @@ public class ResourceRecordSetsTest {
         assertTrue(profileContainsType("geo").apply(geoRRS));
     }
 
-    @Deprecated
-    public void toProfileReturnsNullOnNull() {
-        assertEquals(toProfile(Geo.class).apply(null), null);
-    }
-
     static final class Foo extends ForwardingMap<String, Object> {
 
         @Override
@@ -170,21 +144,6 @@ public class ResourceRecordSetsTest {
             return null;
         }
 
-    }
-
-    @Deprecated
-    public void toProfileReturnsNullOnDifferentType() {
-        assertEquals(toProfile(Foo.class).apply(geoRRS), null);
-    }
-
-    @Deprecated
-    public void toProfileReturnsNullOnAbsent() {
-        assertEquals(toProfile(Geo.class).apply(aRRS), null);
-    }
-
-    @Deprecated
-    public void toProfileReturnsProfileOnSameType() {
-        assertEquals(toProfile(Geo.class).apply(geoRRS), geo);
     }
 
     public void tryFindProfileReturnsAbsentOnDifferentType() {

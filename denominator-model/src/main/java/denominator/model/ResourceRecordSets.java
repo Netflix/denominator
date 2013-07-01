@@ -10,8 +10,6 @@ import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 
-import denominator.model.profile.Geo;
-import denominator.model.profile.Weighted;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
@@ -183,47 +181,11 @@ public class ResourceRecordSets {
     }
 
     /**
-     * returns true if {@link ResourceRecordSet#profiles() profile} contains a
-     * value is assignable from {@code type}.
-     * 
-     * @param type
-     *            expected type of the profile
-     * 
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #profileContainsType(String)}
-     */
-    @Deprecated
-    public static Predicate<ResourceRecordSet<?>> profileContainsType(final Class<?> type) {
-        checkNotNull(type, "type");
-        return new Predicate<ResourceRecordSet<?>>() {
-
-            @Override
-            public boolean apply(ResourceRecordSet<?> input) {
-                if (input == null)
-                    return false;
-                if (input.profiles().isEmpty())
-                    return false;
-                for (Map<String, Object> profile : input.profiles()) {
-                    if (type.isAssignableFrom(profile.getClass()))
-                        return true;
-                }
-                return false;
-            }
-
-            @Override
-            public String toString() {
-                return "ProfileContainsTypeTo(" + type + ")";
-            }
-        };
-
-    }
-
-    /**
-     * returns true if {@link ResourceRecordSet#profiles() profile} contains a
+     * Returns true if {@link ResourceRecordSet#profiles() profile} contains a
      * value is where the value of key {@code type} corresponds to the parameter
      * {@code type}.
      * 
-     * <p/>
+     * <br>
      * Ex.
      * 
      * <pre>
@@ -263,47 +225,6 @@ public class ResourceRecordSets {
         @Override
         public String toString() {
             return "ProfileContainsTypeTo(" + type + ")";
-        }
-    }
-
-    /**
-     * returns value of {@link ResourceRecordSet#profiles() profile}, if matches
-     * the input {@code type} and is not null;
-     * 
-     * @param type
-     *            expected type of profile
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link Geo#asGeo(ResourceRecordSet)} or
-     *             {@link Weighted#asWeighted(ResourceRecordSet)}
-     */
-    @Deprecated
-    public static <C extends Map<String, Object>> Function<ResourceRecordSet<?>, C> toProfile(Class<C> type) {
-        return new ToProfileFunction<C>(type);
-    }
-
-    private static final class ToProfileFunction<C> implements Function<ResourceRecordSet<?>, C> {
-        private final Class<C> type;
-
-        private ToProfileFunction(Class<C> type) {
-            this.type = checkNotNull(type, "type");
-        }
-
-        @Override
-        public C apply(ResourceRecordSet<?> input) {
-            if (input == null)
-                return null;
-            if (input.profiles().isEmpty())
-                return null;
-            for (Map<String, Object> profile : input.profiles()) {
-                if (type.isAssignableFrom(profile.getClass()))
-                    return type.cast(profile);
-            }
-            return null;
-        }
-
-        @Override
-        public String toString() {
-            return "ToProfile(" + type + ")";
         }
     }
 

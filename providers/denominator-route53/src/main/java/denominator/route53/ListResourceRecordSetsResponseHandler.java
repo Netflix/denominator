@@ -11,7 +11,7 @@ import denominator.route53.Route53.ResourceRecordSetList;
 import denominator.route53.Route53.ResourceRecordSetList.NextRecord;
 
 /**
- * @see <a href=
+ * See <a href=
  *      "http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListResourceRecordSets.html"
  *      />
  */

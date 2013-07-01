@@ -31,7 +31,7 @@ import dagger.Provides;
  * ultraDns = Denominator.create(new UltraDNSProvider(), credentials(username, password));
  * </pre>
  * 
- * <h4>Alternative</h4>
+ * <br><br><b>Alternative</b><br>
  * 
  * This class implies use of reflection to lookup the dagger module associated
  * with the provider. You can alternatively not use this class and instead use
@@ -71,7 +71,7 @@ public final class Denominator {
      * Returns the currently configured {@link Provider providers} from
      * {@link ServiceLoader#load(Class)}.
      * 
-     * <h4>Performance Note</h4>
+     * <br><br><b>Performance Note</b><br>
      * 
      * The implicit call {@link ServiceLoader#load(Class)} can add delays
      * measurable in 10s to hundreds of milliseconds depending on the number of

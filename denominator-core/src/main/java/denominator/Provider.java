@@ -14,12 +14,12 @@ import denominator.model.Zone;
 /**
  * Metadata about a provider of DNS services.
  * 
- * <h3>Writing a Provider</h3>
+ * <br><br><b>Writing a Provider</b><br>
  * 
  * The current implementation of {@link Denominator#create(Provider, Object...)}
  * expects all {@code Provider} implementations to expose a static inner class
  * named {@code Module}.
- * <p/>
+ * <br>
  * The inner class is expected to have a {@link dagger.Module} annotation such
  * as below:
  * 
@@ -33,7 +33,7 @@ import denominator.model.Zone;
  * Look at {@link denominator.mock.MockProvider.Module} for an example of a
  * valid provider module.
  * 
- * <h3>Expected Use</h3>
+ * <br><br><b>Expected Use</b><br>
  * Provider instances are bound in {@link javax.inject.Singleton} scope.
  * However, results of all methods are permitted to change at runtime. For
  * example, a change to the value returned by {@link #url()} should affect
@@ -60,7 +60,7 @@ public interface Provider {
     /**
      * The set of basic {@link ResourceRecordSet#type() record types} that
      * are supported by {@link ResourceRecordSetApi} commands.
-     * <p/>
+     * <br>
      * For example:
      * 
      * <pre>
@@ -73,7 +73,7 @@ public interface Provider {
      * Maps a {@link ResourceRecordSet#profiles() profile} {@code type} value to
      * a collection of supported record types. If empty, the provider does not
      * support advanced records.
-     * <p/>
+     * <br>
      * For example:
      * 
      * <pre>
@@ -104,7 +104,7 @@ public interface Provider {
      * ordered list of labels that describe the credential parts required to
      * authenticate, for example {@code ["username", "password"]}.
      * 
-     * <h3>Credential Type</h3>
+     * <br><br><b>Credential Type</b><br>
      * 
      * The credential type keys intend to easily disambiguate cases where
      * multiple means of authentication exist, or where authentication means
@@ -116,14 +116,14 @@ public interface Provider {
      * both {@code password} and {@code apiAccessKey} authentication require the
      * same number of parts.
      * 
-     * <h3>Credential Labels</h3>
+     * <br><br><b>Credential Labels</b><br>
      * 
      * Values are an ordered list of labels that describe the credential parts
      * required to authenticate, for example {@code ["username", "password"]}.
      * This information is targeted at users who may otherwise be confused what
      * secrets are necessary for this provider.
      * 
-     * <h4>Example</h4>
+     * <br><br><b>Example</b><br>
      * 
      * Given an entry with values: {@code ["accessKey", "secretKey"]}, we know
      * the order of the parameters in a {@code Iterable}-based Credentials
@@ -135,13 +135,13 @@ public interface Provider {
      * return new BasicAWSCredentials(creds.get(&quot;accessKey&quot;).toString(), creds.get(&quot;secretKey&quot;).toString());
      * </pre>
      * 
-     * <h3>Formatting</h3>
+     * <br><br><b>Formatting</b><br>
      * 
      * Both the keys and the values of this {@link Multimap Multimap} are in
      * {@link com.google.common.base.CaseFormat#LOWER_CAMEL lowerCamel} case.
      * 
      * 
-     * <h3>Implementation Expectations</h3>
+     * <br><br><b>Implementation Expectations</b><br>
      * 
      * The implementing provider should throw an
      * {@link IllegalArgumentException} if it is ever supplied with an incorrect

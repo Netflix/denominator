@@ -20,7 +20,7 @@ public interface QualifiedResourceRecordSetApi extends ReadOnlyResourceRecordSet
      * type}, and {@link ResourceRecordSet#qualifier() qualifier} corresponding
      * to {@code rrset}.  If no records exist, they will be added.
      * 
-     * <p/>
+     * <br>
      * Example of replacing the {@code A} record set for
      * {@code www.denominator.io.} qualified as {@code US-West}:
      * 
