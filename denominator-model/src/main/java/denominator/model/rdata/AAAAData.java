@@ -14,13 +14,13 @@ import com.google.common.net.InetAddresses;
 /**
  * Corresponds to the binary representation of the {@code AAAA} (Address) RData
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * AAAAData rdata = AAAAData.create(&quot;1234:ab00:ff00::6b14:abcd&quot;);
  * </pre>
  * 
- * @see <aaaa href="http://www.ietf.org/rfc/rfc3596.txt">RFC 3596</aaaa>
+ * See <a href="http://www.ietf.org/rfc/rfc3596.txt">RFC 3596</a>
  */
 public class AAAAData extends ForwardingMap<String, Object> {
 
@@ -44,15 +44,6 @@ public class AAAAData extends ForwardingMap<String, Object> {
                 "%s should be a ipv6 address", ipv6address);
         this.address = ipv6address;
         this.delegate = ImmutableMap.<String, Object> of("address", ipv6address);
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #address()}
-     */
-    @Deprecated
-    public String getAddress() {
-        return address();
     }
 
     /**

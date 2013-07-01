@@ -119,7 +119,7 @@ public class Route53Provider extends BasicProvider {
         }
 
         /**
-         * @see <a
+         * See <a
          *      href="http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html">valid
          *      weights</a>
          */

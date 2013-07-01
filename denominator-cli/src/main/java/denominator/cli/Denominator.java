@@ -229,7 +229,7 @@ public class Denominator {
          * This avoids service loader lookup which adds runtime and build
          * complexity.
          * 
-         * <h3>Note</h3>
+         * <br><br><b>Note</b><br>
          * 
          * update this code block when adding new providers to the CLI.
          */
@@ -270,7 +270,7 @@ public class Denominator {
     /**
      * Lazy to avoid loading the classes unless they are requested.
      * 
-     * <h3>Note</h3>
+     * <br><br><b>Note</b><br>
      * 
      * update this code block when adding new providers to the CLI.
      */

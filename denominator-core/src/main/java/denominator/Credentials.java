@@ -15,12 +15,12 @@ import com.google.common.collect.Iterables;
  * type of Credentials a Provider can use are found via
  * {@link Provider#credentialTypeToParameterNames()}.
  * 
- * <h4>All Credentials are Anonymous, implement Map or List</h4>
+ * <br><br><b>All Credentials are Anonymous, implement Map or List</b><br>
  * 
  * You must either subclass roots listed here, or ensure your implementation
  * classes implement {@code Map<String, ?>} or {@code List<?>}.
  * 
- * <h4>Validation Rules</h4>
+ * <br><br><b>Validation Rules</b><br>
  * <ul>
  * <li>{@link AnonymousCredentials}, null, or empty credentials are permitted
  * when {@link Provider#credentialTypeToParameterNames()} is empty</li>
@@ -32,13 +32,13 @@ import com.google.common.collect.Iterables;
  * {@link Provider#credentialTypeToParameterNames()}</li>
  * </ul>
  * 
- * <h4>Parameters</h4>
+ * <br><br><b>Parameters</b><br>
  * 
  * While most credential parameters are Strings, and most providers will be able
  * to coerce parameters from Strings, if you choose to create your own
  * Credential implementations, allow users to pass {@code Object} parameters of
  * the correct type where possible.
- * <p/>
+ * <br>
  * For example, certain providers may prefer a {@code Certificate} or
  * {@code PrivateKey} parameter vs a relatively expensive coercion from a
  * PEM-encoded String.
@@ -57,13 +57,13 @@ public interface Credentials {
      * Credentials where the position and count of parameters is enough to
      * differentiate one type of credentials from another.
      * 
-     * <h4>Example</h4>
+     * <br><br><b>Example</b><br>
      * 
      * In {@code route53}, one can use normal {@code accessKey} credentials, or
      * temporary ones from {code STS}. In this case, you can get by simply by
      * differentiating on count of parameters.
      * 
-     * <p/>
+     * <br>
      * Normally, the caller passes:
      * 
      * <pre>
@@ -114,7 +114,7 @@ public interface Credentials {
          * type. The following will coerce anything that implements {@code Map}
          * or {@code List} to {@code ListCredentials}.
          * 
-         * <h4>Example</h4> The following example is how this could be used from
+         * <br><br><b>Example</b><br> The following example is how this could be used from
          * within a method in {@link Provider} to simplify credential conversion
          * regardless of input type.
          * 
@@ -151,13 +151,13 @@ public interface Credentials {
      * Credentials in the form of named parameters, useful when a provider
      * accepts two different credential types with the same count of parameters.
      * 
-     * <h4>Example</h4>
+     * <br><br><b>Example</b><br>
      * 
      * In OpenStack, both {@code accessKey} and {@code password} credentials
      * require two parts. In this case, {@code MapCredentials} can name the
      * parts to differentiate them.
      * 
-     * <p/>
+     * <br>
      * For example, when using {@code password}, the caller passes:
      * 
      * <pre>

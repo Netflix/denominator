@@ -14,7 +14,7 @@ import com.google.common.base.Optional;
  * {@code domain}, as denominator focuses on configuration aspects of DNS.
  * 
  * @since 1.2
- * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
+ * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class Zone {
     /**
@@ -76,7 +76,7 @@ public class Zone {
      * In implementation, this method is the same as calling:
      * {@code zone.id().or(zone.name())}
      * 
-     * <p/>
+     * <br>
      * If {@code denominator.Provider#supportsDuplicateZoneNames()} is true,
      * this will return an id.
      * 

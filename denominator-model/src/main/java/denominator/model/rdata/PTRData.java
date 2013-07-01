@@ -11,13 +11,13 @@ import com.google.common.collect.ImmutableMap;
 /**
  * Corresponds to the binary representation of the {@code PTR} (Pointer) RData
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * PTRData rdata = PTRData.create("ptr.foo.com.");
  * </pre>
  * 
- * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
+ * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class PTRData extends ForwardingMap<String, Object> {
 
@@ -31,15 +31,6 @@ public class PTRData extends ForwardingMap<String, Object> {
     private PTRData(String ptrdname) {
         this.ptrdname = checkNotNull(ptrdname, "ptrdname");
         this.delegate = ImmutableMap.<String, Object> of("ptrdname", ptrdname);
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #ptrdname()}
-     */
-    @Deprecated
-    public String getPtrdname() {
-        return ptrdname();
     }
 
     /**

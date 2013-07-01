@@ -12,7 +12,7 @@ import com.google.common.collect.ImmutableMap;
 /**
  * Corresponds to the binary representation of the {@code SSHFP} (SSH Fingerprint) RData
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * SSHFPData rdata = SSHFPData.builder()
@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableMap;
  * SSHFPData rdata = SSHFPData.createDSA(&quot;123456789abcdef67890123456789abcdef67890&quot;);
  * </pre>
  * 
- * @see <a href="http://www.rfc-editor.org/rfc/rfc4255.txt">RFC 4255</a>
+ * See <a href="http://www.rfc-editor.org/rfc/rfc4255.txt">RFC 4255</a>
  */
 public class SSHFPData extends ForwardingMap<String, Object> {
 
@@ -59,15 +59,6 @@ public class SSHFPData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #algorithm()}
-     */
-    @Deprecated
-    public int getAlgorithm() {
-        return algorithm();
-    }
-
-    /**
      * This algorithm number octet describes the algorithm of the public key.
      * @return most often {@code 1} for {@code RSA} or {@code 2} for {@code DSA}. 
      * 
@@ -75,15 +66,6 @@ public class SSHFPData extends ForwardingMap<String, Object> {
      */
     public int algorithm() {
         return algorithm;
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #fptype()}
-     */
-    @Deprecated
-    public int getType() {
-        return fptype();
     }
 
     /**
@@ -96,15 +78,6 @@ public class SSHFPData extends ForwardingMap<String, Object> {
      */
     public int fptype() {
         return fptype;
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #fingerprint()}
-     */
-    @Deprecated
-    public String getFingerprint() {
-        return fingerprint();
     }
 
     /**

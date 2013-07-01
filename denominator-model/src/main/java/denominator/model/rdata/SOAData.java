@@ -13,7 +13,7 @@ import com.google.common.collect.ImmutableMap;
  * Corresponds to the binary representation of the {@code SOA} (Start of
  * Authority) RData
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * SOAData rdata = SOAData.builder()
@@ -26,7 +26,7 @@ import com.google.common.collect.ImmutableMap;
  *                        .minimum(60).build()
  * </pre>
  * 
- * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
+ * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class SOAData extends ForwardingMap<String, Object> {
 
@@ -64,15 +64,6 @@ public class SOAData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #mname()}
-     */
-    @Deprecated
-    public String getMname() {
-        return mname();
-    }
-
-    /**
      * domain-name of the name server that was the original or primary source of
      * data for this zone
      * 
@@ -80,15 +71,6 @@ public class SOAData extends ForwardingMap<String, Object> {
      */
     public String mname() {
         return mname;
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #rname()}
-     */
-    @Deprecated
-    public String getRname() {
-        return rname();
     }
 
     /**
@@ -102,15 +84,6 @@ public class SOAData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #serial()}
-     */
-    @Deprecated
-    public int getSerial() {
-        return serial();
-    }
-
-    /**
      * version number of the original copy of the zone.
      * 
      * @since 1.3
@@ -120,30 +93,12 @@ public class SOAData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #refresh()}
-     */
-    @Deprecated
-    public int getRefresh() {
-        return refresh();
-    }
-
-    /**
      * time interval before the zone should be refreshed
      * 
      * @since 1.3
      */
     public int refresh() {
         return refresh;
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #retry()}
-     */
-    @Deprecated
-    public int getRetry() {
-        return retry();
     }
 
     /**
@@ -157,15 +112,6 @@ public class SOAData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #expire()}
-     */
-    @Deprecated
-    public int getExpire() {
-        return expire();
-    }
-
-    /**
      * time value that specifies the upper limit on the time interval that can
      * elapse before the zone is no longer authoritative.
      * 
@@ -173,15 +119,6 @@ public class SOAData extends ForwardingMap<String, Object> {
      */
     public int expire() {
         return expire;
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #minimum()}
-     */
-    @Deprecated
-    public int getMinimum() {
-        return minimum();
     }
 
     /**

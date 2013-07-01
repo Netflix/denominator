@@ -92,10 +92,10 @@ class ResourceRecordSetHandler extends DefaultHandler implements feign.codec.SAX
     }
 
     /**
-     * @see <a
+     * See <a
      *      href="http://aws.amazon.com/route53/faqs/#Supported_DNS_record_types">supported
      *      types</a>
-     * @see <a
+     * See <a
      *      href="http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/ResourceRecordTypes.html">record
      *      type formats</a>
      */

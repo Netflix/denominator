@@ -14,13 +14,13 @@ import com.google.common.net.InetAddresses;
 /**
  * Corresponds to the binary representation of the {@code A} (Address) RData
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * AData rdata = AData.create(&quot;192.0.2.1&quot;);
  * </pre>
  * 
- * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
+ * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class AData extends ForwardingMap<String, Object> {
 
@@ -44,15 +44,6 @@ public class AData extends ForwardingMap<String, Object> {
                 "%s should be a ipv4 address", ipv4address);
         this.address = ipv4address;
         this.delegate = ImmutableMap.<String, Object> of("address", ipv4address);
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #address()}
-     */
-    @Deprecated
-    public String getAddress() {
-        return address();
     }
 
     /**
