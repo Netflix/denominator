@@ -22,6 +22,7 @@ import com.google.gson.stream.JsonToken;
 import denominator.dynect.DynECT.Record;
 import denominator.dynect.DynECTException.Message;
 import denominator.model.Zone;
+import feign.RetryableException;
 import feign.codec.Decoder;
 
 /**
@@ -115,7 +116,7 @@ class DynECTDecoder extends feign.codec.Decoder {
     }
 
     @Override
-    public Object decode(String methodKey, Reader ireader, TypeToken<?> type) throws Throwable {
+    public Object decode(String methodKey, Reader ireader, TypeToken<?> ignored) throws Throwable {
         JsonReader reader = new JsonReader(ireader);
         try {
             ImmutableList.Builder<Message> messages = ImmutableList.<Message> builder();
@@ -154,6 +155,8 @@ class DynECTDecoder extends feign.codec.Decoder {
                 }
             }
             reader.endObject();
+            if ("incomplete".equals(status))
+                throw new RetryableException(messages.build().toString(), null);
             throw new DynECTException(methodKey, status, messages.build());
         } finally {
             reader.close();

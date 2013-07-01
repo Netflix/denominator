@@ -1,50 +1,60 @@
 package denominator.clouddns;
 
-import static java.util.regex.Pattern.DOTALL;
-import static java.util.regex.Pattern.compile;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.Reader;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import com.google.common.io.CharStreams;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
 import feign.codec.Decoder;
 
-/**
- * Using regex as the form of the json is sparse and would otherwise require
- * fully mapping the object or ~100lines of parser code.
- */
 class KeystoneAccessDecoder extends Decoder {
-    private final Pattern pattern;
+    // rax:dns
     private final String type;
 
-    /**
-     * @param type
-     *            ex {@code rax:dns}
-     */
     KeystoneAccessDecoder(String type) {
-        this.pattern = compile("^.*token[\":{\\s]+id\":\"([^\"]+)\"(.*" + type
-                + "\"[^\\]]+publicURL\":\\s*\"([^\"]+)\")?", DOTALL);
-        this.type = type;
+        this.type = checkNotNull(type, "type was null");
     }
 
     @Override
-    public TokenIdAndPublicURL decode(String methodKey, Reader reader, TypeToken<?> type) throws Throwable {
-        Matcher matcher = pattern.matcher(CharStreams.toString(reader));
-        if (matcher.find()) {
-            TokenIdAndPublicURL record = new TokenIdAndPublicURL();
-            record.tokenId = matcher.group(1);
-            record.publicURL = matcher.group(3).replace("\\", "");
-            return record;
+    public TokenIdAndPublicURL decode(String methodKey, Reader reader, TypeToken<?> ignored) throws Throwable {
+        JsonObject access = new JsonParser().parse(reader).getAsJsonObject().get("access").getAsJsonObject();
+        JsonElement tokenField = access.get("token");
+        if (isNull(tokenField)) {
+            return null;
         }
-        return null;
+        JsonElement idField = tokenField.getAsJsonObject().get("id");
+        if (isNull(idField)) {
+            return null;
+        }
+
+        TokenIdAndPublicURL tokenUrl = new TokenIdAndPublicURL();
+        tokenUrl.tokenId = idField.getAsString();
+
+        for (JsonElement s : access.get("serviceCatalog").getAsJsonArray()) {
+            JsonObject service = s.getAsJsonObject();
+            JsonElement typeField = service.get("type");
+            JsonElement endpointsField = service.get("endpoints");
+            if (!isNull(typeField) && !isNull(endpointsField) && type.equals(typeField.getAsString())) {
+                for (JsonElement e : endpointsField.getAsJsonArray()) {
+                    JsonObject endpoint = e.getAsJsonObject();
+                    tokenUrl.publicURL = endpoint.get("publicURL").getAsString();
+                }
+            }
+        }
+        return tokenUrl;
     }
 
     @Override
     public String toString() {
         return "KeystoneAccessDecoder(" + type + ")";
+    }
+
+    static boolean isNull(JsonElement element) {
+        return element == null || element.isJsonNull();
     }
 };
