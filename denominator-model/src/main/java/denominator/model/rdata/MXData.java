@@ -13,13 +13,13 @@ import com.google.common.collect.ImmutableMap;
  * Corresponds to the binary representation of the {@code MX} (Mail Exchange)
  * RData
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * MXData rdata = MXData.create(1, "mail.jclouds.org");
  * </pre>
  * 
- * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
+ * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class MXData extends ForwardingMap<String, Object> {
 
@@ -41,15 +41,6 @@ public class MXData extends ForwardingMap<String, Object> {
     }
 
     /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #preference()}
-     */
-    @Deprecated
-    public int getPreference() {
-        return preference();
-    }
-
-    /**
      * specifies the preference given to this RR among others at the same owner.
      * Lower values are preferred.
      * 
@@ -57,15 +48,6 @@ public class MXData extends ForwardingMap<String, Object> {
      */
     public int preference() {
         return preference;
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #exchange()}
-     */
-    @Deprecated
-    public String getExchange() {
-        return exchange();
     }
 
     /**

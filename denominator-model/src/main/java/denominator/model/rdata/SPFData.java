@@ -11,7 +11,7 @@ import com.google.common.collect.ImmutableMap;
 /**
  * Corresponds to the binary representation of the {@code SPF} (Sender Policy Framework) RData
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * import static denominator.model.rdata.SPFData.spf;
@@ -19,7 +19,7 @@ import com.google.common.collect.ImmutableMap;
  * SPFData rdata = spf("v=spf1 +mx a:colo.example.com/28 -all");
  * </pre>
  * 
- * @see <a href="http://tools.ietf.org/html/rfc4408#section-3.1.1">RFC 4408</a>
+ * See <a href="http://tools.ietf.org/html/rfc4408#section-3.1.1">RFC 4408</a>
  */
 public class SPFData extends ForwardingMap<String, Object> {
 
@@ -33,15 +33,6 @@ public class SPFData extends ForwardingMap<String, Object> {
     private SPFData(String txtdata) {
         this.txtdata = checkNotNull(txtdata, "txtdata");
         this.delegate = ImmutableMap.<String, Object> of("txtdata", txtdata);
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #txtdata()}
-     */
-    @Deprecated
-    public String getTxtdata() {
-        return txtdata();
     }
 
     /**

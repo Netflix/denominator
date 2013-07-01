@@ -52,7 +52,7 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
      * {@link ResourceRecordSet#type()} corresponding to {@code rrset}. If no
      * records exists, they will be added.
      * 
-     * <p/>
+     * <br>
      * Example of replacing the {@code A} record set for
      * {@code www.denominator.io.}:
      * 

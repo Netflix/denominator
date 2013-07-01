@@ -25,7 +25,7 @@ import denominator.model.profile.Geo;
  *            RData type shared across elements. This may be empty in the case
  *            of special profile such as `alias`.
  * 
- * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
+ * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class ResourceRecordSet<D extends Map<String, Object>> {
 

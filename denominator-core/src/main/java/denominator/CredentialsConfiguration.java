@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.inject.Provider;
-
 import com.google.common.annotations.Beta;
 import com.google.common.base.Supplier;
 
@@ -181,11 +179,11 @@ public class CredentialsConfiguration {
      * checks that the supplied input is valid, or throws an
      * {@code IllegalArgumentException} if not. Users of this are guaranteed
      * that the {@code input} matches the count of parameters of a credential
-     * type listed in {@link Provider#credentialTypeToParameterNames()}.
+     * type listed in {@link denominator.Provider#credentialTypeToParameterNames()}.
      * 
-     * <h4>Coercion to {@code AnonymousCredentials}</h4>
+     * <br><br><b>Coercion to {@code AnonymousCredentials}</b><br>
      * 
-     * if {@link Provider#credentialTypeToParameterNames()} is empty, then no
+     * if {@link denominator.Provider#credentialTypeToParameterNames()} is empty, then no
      * credentials are required. When this is true, the following cases will
      * return {@code AnonymousCredentials}.
      * <ul>
@@ -195,7 +193,7 @@ public class CredentialsConfiguration {
      * {@code List}</li>
      * </ul>
      * 
-     * <h4>Validation Rules</h4>
+     * <br><br><b>Validation Rules</b><br>
      * 
      * See {@link Credentials} for Validation Rules
      * 

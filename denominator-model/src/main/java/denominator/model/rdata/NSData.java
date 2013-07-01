@@ -12,13 +12,13 @@ import com.google.common.collect.ImmutableMap;
  * Corresponds to the binary representation of the {@code NS} (Name Server)
  * RData
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * NSData rdata = NSData.create("ns.foo.com.");
  * </pre>
  * 
- * @see <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
+ * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class NSData extends ForwardingMap<String, Object> {
 
@@ -32,15 +32,6 @@ public class NSData extends ForwardingMap<String, Object> {
     private NSData(String nsdname) {
         this.nsdname = checkNotNull(nsdname, "nsdname");
         this.delegate = ImmutableMap.<String, Object> of("nsdname", nsdname);
-    }
-
-    /**
-     * @deprecated Will be removed in denominator 2.0. Please use
-     *             {@link #nsdname()}
-     */
-    @Deprecated
-    public String getNsdname() {
-        return nsdname();
     }
 
     /**

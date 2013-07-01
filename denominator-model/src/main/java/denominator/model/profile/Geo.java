@@ -19,7 +19,7 @@ import denominator.model.ResourceRecordSet;
 /**
  * Record sets with this profile are visible to the regions specified.
  * 
- * <h4>Example</h4>
+ * <br><br><b>Example</b><br>
  * 
  * <pre>
  * Geo profile = Geo.create(ImmutableMultimap.of(&quot;United States (US)&quot;, &quot;Maryland&quot;));
