@@ -2,6 +2,7 @@ package denominator.ultradns;
 
 import static java.util.Locale.US;
 
+import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,7 +32,8 @@ import feign.codec.SAXDecoder;
 class UltraDNSSAXDecoder extends SAXDecoder {
 
     @Override
-    protected ContentHandlerWithResult typeToNewHandler(TypeToken<?> type) {
+    protected ContentHandlerWithResult typeToNewHandler(Type t) {
+        TypeToken<?> type = TypeToken.of(t);
         if (RR_LIST.equals(type))
             return new RecordListHandler();
         else if (RRPOOL_LIST.equals(type))

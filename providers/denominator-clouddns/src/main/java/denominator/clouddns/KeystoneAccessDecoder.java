@@ -3,8 +3,8 @@ package denominator.clouddns;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.io.Reader;
+import java.lang.reflect.Type;
 
-import com.google.common.reflect.TypeToken;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -21,7 +21,7 @@ class KeystoneAccessDecoder extends Decoder {
     }
 
     @Override
-    public TokenIdAndPublicURL decode(String methodKey, Reader reader, TypeToken<?> ignored) throws Throwable {
+    public TokenIdAndPublicURL decode(String methodKey, Reader reader, Type ignored) throws Throwable {
         JsonObject access = new JsonParser().parse(reader).getAsJsonObject().get("access").getAsJsonObject();
         JsonElement tokenField = access.get("token");
         if (isNull(tokenField)) {

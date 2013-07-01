@@ -5,6 +5,7 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.collect.Iterables.filter;
 
+import java.lang.reflect.Type;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -21,7 +22,6 @@ import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Range;
 import com.google.common.collect.SetMultimap;
-import com.google.common.reflect.TypeToken;
 
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
@@ -167,10 +167,10 @@ public class Route53Provider extends BasicProvider {
 
     static class Route53Decoder extends SAXDecoder {
         @Override
-        protected ContentHandlerWithResult typeToNewHandler(TypeToken<?> type) {
-            if (type.getRawType() == ZoneList.class)
+        protected ContentHandlerWithResult typeToNewHandler(Type type) {
+            if (type == ZoneList.class)
                 return new ListHostedZonesResponseHandler();
-            else if (type.getRawType() == ResourceRecordSetList.class)
+            else if (type == ResourceRecordSetList.class)
                 return new ListResourceRecordSetsResponseHandler();
             throw new UnsupportedOperationException(type + "");
         }

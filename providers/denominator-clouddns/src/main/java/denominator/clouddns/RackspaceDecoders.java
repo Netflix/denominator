@@ -4,11 +4,11 @@ import static com.google.common.collect.Ordering.usingToString;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.net.URI;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 
 import denominator.clouddns.RackspaceApis.ListWithNext;
@@ -74,7 +74,7 @@ class RackspaceDecoders {
         protected abstract X build(JsonReader reader) throws IOException;
 
         @Override
-        public ListWithNext<X> decode(String methodKey, Reader ireader, TypeToken<?> type) throws Throwable {
+        public ListWithNext<X> decode(String methodKey, Reader ireader, Type type) throws Throwable {
             Builder<X> builder = ImmutableList.<X> builder();
             String nextUrl = null;
             JsonReader reader = new JsonReader(ireader);
