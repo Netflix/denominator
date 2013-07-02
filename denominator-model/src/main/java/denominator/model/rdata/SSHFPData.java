@@ -1,83 +1,78 @@
 package denominator.model.rdata;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.Map;
-
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableMap;
+import java.util.LinkedHashMap;
 
 /**
- * Corresponds to the binary representation of the {@code SSHFP} (SSH Fingerprint) RData
+ * Corresponds to the binary representation of the {@code SSHFP} (SSH
+ * Fingerprint) RData
  * 
- * <br><br><b>Example</b><br>
+ * <br>
+ * <br>
+ * <b>Example</b><br>
  * 
  * <pre>
- * SSHFPData rdata = SSHFPData.builder()
- *                            .algorithm(2)
- *                            .fptype(1)
- *                            .fingerprint(&quot;123456789abcdef67890123456789abcdef67890&quot;).build();
- *  // or shortcut
+ * SSHFPData rdata = SSHFPData.builder().algorithm(2).fptype(1).fingerprint(&quot;123456789abcdef67890123456789abcdef67890&quot;)
+ *         .build();
+ * // or shortcut
  * SSHFPData rdata = SSHFPData.createDSA(&quot;123456789abcdef67890123456789abcdef67890&quot;);
  * </pre>
  * 
  * See <a href="http://www.rfc-editor.org/rfc/rfc4255.txt">RFC 4255</a>
  */
-public class SSHFPData extends ForwardingMap<String, Object> {
+public class SSHFPData extends LinkedHashMap<String, Object> {
 
     /**
-     * @param fingerprint {@code DSA} {@code SHA-1} fingerprint 
+     * @param fingerprint
+     *            {@code DSA} {@code SHA-1} fingerprint
      */
     public static SSHFPData createDSA(String fingerprint) {
         return builder().algorithm(2).fptype(1).fingerprint(fingerprint).build();
     }
 
     /**
-     * @param fingerprint {@code RSA} {@code SHA-1} fingerprint 
+     * @param fingerprint
+     *            {@code RSA} {@code SHA-1} fingerprint
      */
     public static SSHFPData createRSA(String fingerprint) {
         return builder().algorithm(1).fptype(1).fingerprint(fingerprint).build();
     }
 
-    private final int algorithm;
-    private final int fptype;
-    private final String fingerprint;
-
     @ConstructorProperties({ "algorithm", "fptype", "fingerprint" })
-    private SSHFPData(int algorithm, int fptype, String fingerprint) {
+    SSHFPData(int algorithm, int fptype, String fingerprint) {
         checkArgument(algorithm >= 0, "algorithm of %s must be unsigned", fingerprint);
-        this.algorithm = algorithm;
         checkArgument(fptype >= 0, "fptype of %s must be unsigned", fingerprint);
-        this.fptype = fptype;
-        this.fingerprint = checkNotNull(fingerprint, "fingerprint");
-        this.delegate = ImmutableMap.<String, Object> builder()
-                                    .put("algorithm", algorithm)
-                                    .put("fptype", fptype)
-                                    .put("fingerprint", fingerprint).build();
+        checkNotNull(fingerprint, "fingerprint");
+        put("algorithm", algorithm);
+        put("fptype", fptype);
+        put("fingerprint", fingerprint);
     }
 
     /**
      * This algorithm number octet describes the algorithm of the public key.
-     * @return most often {@code 1} for {@code RSA} or {@code 2} for {@code DSA}. 
+     * 
+     * @return most often {@code 1} for {@code RSA} or {@code 2} for {@code DSA}
+     *         .
      * 
      * @since 1.3
      */
     public int algorithm() {
-        return algorithm;
+        return Integer.class.cast(get("algorithm"));
     }
 
     /**
-     * The fingerprint fptype octet describes the message-digest algorithm used to
-     * calculate the fingerprint of the public key.
+     * The fingerprint fptype octet describes the message-digest algorithm used
+     * to calculate the fingerprint of the public key.
      * 
      * @return most often {@code 1} for {@code SHA-1}
      * 
      * @since 1.3
      */
     public int fptype() {
-        return fptype;
+        return Integer.class.cast(get("fptype"));
     }
 
     /**
@@ -86,7 +81,7 @@ public class SSHFPData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public String fingerprint() {
-        return fingerprint;
+        return get("fingerprint").toString();
     }
 
     public final static class Builder {
@@ -127,11 +122,5 @@ public class SSHFPData extends ForwardingMap<String, Object> {
         return new Builder();
     }
 
-    // transient to avoid serializing by default, for example in json
-    private final transient ImmutableMap<String, Object> delegate;
-    
-    @Override
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
+    private static final long serialVersionUID = 1L;
 }

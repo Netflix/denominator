@@ -7,6 +7,8 @@ import static java.lang.String.format;
 import static java.util.logging.Logger.getAnonymousLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Iterator;
@@ -17,7 +19,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -39,7 +40,7 @@ public abstract class BaseWeightedReadOnlyLiveTest extends BaseProviderLiveTest 
         skipIfNoCredentials();
         for (Zone zone : zones()) {
             for (ResourceRecordSet<?> weightedRRS : weightedApi(zone)) {
-                assertTrue(weightedRRS.qualifier().isPresent(), "Weighted record sets should include a qualifier: " + weightedRRS);
+                assertNotNull(weightedRRS.qualifier(), "Weighted record sets should include a qualifier: " + weightedRRS);
                 checkWeightedRRS(weightedRRS);
 
                 Weighted weighted = asWeighted(weightedRRS);
@@ -54,10 +55,10 @@ public abstract class BaseWeightedReadOnlyLiveTest extends BaseProviderLiveTest 
                 assertTrue(byNameAndType.hasNext(), "could not list by name and type: " + weightedRRS);
                 assertTrue(Iterators.elementsEqual(weightedApi(zone).iterateByNameAndType(weightedRRS.name(), weightedRRS.type()), byNameAndType));
                 
-                Optional<ResourceRecordSet<?>> byNameTypeAndQualifier = weightedApi(zone)
-                        .getByNameTypeAndQualifier(weightedRRS.name(), weightedRRS.type(), weightedRRS.qualifier().get());
-                assertTrue(byNameTypeAndQualifier.isPresent(), "could not lookup by name, type, and qualifier: " + weightedRRS);
-                assertEquals(byNameTypeAndQualifier.get(), weightedRRS);
+                ResourceRecordSet<?> byNameTypeAndQualifier = weightedApi(zone).getByNameTypeAndQualifier(
+                        weightedRRS.name(), weightedRRS.type(), weightedRRS.qualifier());
+                assertNotNull(byNameTypeAndQualifier, "could not lookup by name, type, and qualifier: " + weightedRRS);
+                assertEquals(byNameTypeAndQualifier, weightedRRS);
             }
         }
         logRecordSummary();
@@ -65,7 +66,7 @@ public abstract class BaseWeightedReadOnlyLiveTest extends BaseProviderLiveTest 
 
     static void checkWeightedRRS(ResourceRecordSet<?> weightedRRS) {
         assertFalse(weightedRRS.profiles().isEmpty(), "Profile absent: " + weightedRRS);
-        checkNotNull(weightedRRS.qualifier().orNull(), "Qualifier: ResourceRecordSet %s", weightedRRS);
+        checkNotNull(weightedRRS.qualifier(), "Qualifier: ResourceRecordSet %s", weightedRRS);
 
         Weighted weighted = asWeighted(weightedRRS);
         assertTrue(weighted.weight() >= 0, "Weight negative on ResourceRecordSet: " + weightedRRS);
@@ -121,7 +122,7 @@ public abstract class BaseWeightedReadOnlyLiveTest extends BaseProviderLiveTest 
     private void testGetByNameTypeAndQualifierWhenAbsent() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertEquals(weightedApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"), Optional.absent());
+            assertNull(weightedApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"));
             break;
         }
     }

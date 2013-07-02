@@ -1,16 +1,11 @@
 package denominator;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.util.EnumSet;
-import java.util.Set;
-
-import com.google.common.annotations.Beta;
-import com.google.common.base.Function;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableBiMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Some apis use numerical type value of a resource record rather than their
@@ -18,9 +13,17 @@ import com.google.common.collect.ImmutableBiMap;
  * commonly use. Note that this does not complain a complete mapping and may
  * need updates over time.
  */
-@Beta
-public class ResourceTypeToValue extends ForwardingMap<String, Integer> implements Function<Object, String>,
-        BiMap<String, Integer> {
+public class ResourceTypeToValue {
+
+    private static Map<String, Integer> lookup = new LinkedHashMap<String, Integer>();
+    private static Map<Integer, String> inverse = new LinkedHashMap<Integer, String>();
+
+    static {
+        for (ResourceTypes r : EnumSet.allOf(ResourceTypes.class)) {
+            lookup.put(r.name(), r.value);
+            inverse.put(r.value, r.name());
+        }
+    }
 
     /**
      * look up the value (ex. {@code 28}) for the mnemonic name (ex.
@@ -36,6 +39,22 @@ public class ResourceTypeToValue extends ForwardingMap<String, Integer> implemen
         checkArgument(lookup.containsKey(type), "%s do not include %s; types: %s", ResourceTypes.class.getSimpleName(),
                 type, EnumSet.allOf(ResourceTypes.class));
         return lookup.get(type);
+    }
+
+    /**
+     * look up a mnemonic name (ex. {@code AAAA} ) by its value (ex. {@code 28}
+     * ).
+     * 
+     * @param type
+     *            type to look up. ex {@code 28}
+     * @throws IllegalArgumentException
+     *             if the type was not configured.
+     */
+    public static String lookup(Integer type) throws IllegalArgumentException {
+        checkNotNull(type, "resource type was null");
+        checkArgument(inverse.containsKey(type), "%s do not include %s; types: %s",
+                ResourceTypes.class.getSimpleName(), type, EnumSet.allOf(ResourceTypes.class));
+        return inverse.get(type);
     }
 
     /**
@@ -106,44 +125,5 @@ public class ResourceTypeToValue extends ForwardingMap<String, Integer> implemen
         private ResourceTypes(int value) {
             this.value = value;
         }
-    }
-
-    @Override
-    protected ImmutableBiMap<String, Integer> delegate() {
-        return lookup;
-    }
-
-    private static final ImmutableBiMap<String, Integer> lookup;
-
-    static {
-        ImmutableBiMap.Builder<String, Integer> builder = ImmutableBiMap.builder();
-        for (ResourceTypes r : EnumSet.allOf(ResourceTypes.class)) {
-            builder.put(r.name(), r.value);
-        }
-        lookup = builder.build();
-    }
-
-    /**
-     * @see ImmutableBiMap#forcePut(Object, Object)
-     */
-    @Deprecated
-    @Override
-    public Integer forcePut(String key, Integer value) {
-        return lookup.forcePut(key, value);
-    }
-
-    @Override
-    public Set<Integer> values() {
-        return lookup.values();
-    }
-
-    @Override
-    public BiMap<Integer, String> inverse() {
-        return lookup.inverse();
-    }
-
-    @Override
-    public String apply(Object input) {
-        return lookup(checkNotNull(input, "resource type was null").toString()).toString();
     }
 }

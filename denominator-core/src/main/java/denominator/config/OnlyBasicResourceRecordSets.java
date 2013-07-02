@@ -1,11 +1,9 @@
 package denominator.config;
 
+import java.util.Collections;
 import java.util.Iterator;
 
 import javax.inject.Singleton;
-
-import com.google.common.base.Optional;
-import com.google.common.collect.Iterators;
 
 import dagger.Module;
 import dagger.Provides;
@@ -53,15 +51,15 @@ public class OnlyBasicResourceRecordSets {
 
         @Override
         public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
-            Optional<ResourceRecordSet<?>> rrs = api.getByNameAndType(name, type);
-            if (rrs.isPresent())
-                return Iterators.<ResourceRecordSet<?>> forArray(rrs.get());
-            return Iterators.emptyIterator();
+            ResourceRecordSet<?> rrs = api.getByNameAndType(name, type);
+            if (rrs != null)
+                return Collections.<ResourceRecordSet<?>> singleton(rrs).iterator();
+            return Collections.<ResourceRecordSet<?>> emptySet().iterator();
         }
 
         @Override
-        public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier) {
-            return Optional.absent();
+        public ResourceRecordSet<?> getByNameTypeAndQualifier(String name, String type, String qualifier) {
+            return null;
         }
 
         @Override

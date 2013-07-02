@@ -2,8 +2,6 @@ package denominator.config;
 
 import javax.inject.Singleton;
 
-import com.google.common.base.Optional;
-
 import dagger.Module;
 import dagger.Provides;
 import denominator.DNSApiManager;
@@ -21,8 +19,8 @@ public class GeoUnsupported {
         return new GeoResourceRecordSetApi.Factory() {
 
             @Override
-            public Optional<GeoResourceRecordSetApi> create(String idOrName) {
-                return Optional.absent();
+            public GeoResourceRecordSetApi create(String idOrName) {
+                return null;
             }
 
         };

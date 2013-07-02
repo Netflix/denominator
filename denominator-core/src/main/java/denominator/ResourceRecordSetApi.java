@@ -2,16 +2,14 @@ package denominator;
 
 import java.util.Iterator;
 
-import com.google.common.base.Optional;
-
 import denominator.model.ResourceRecordSet;
 
 public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
 
     /**
      * Iterates across all basic record sets in the zone (those with no
-     * {@link ResourceRecordSet#profiles() profile}). Implementations are
-     * lazy when possible.
+     * {@link ResourceRecordSet#profiles() profile}). Implementations are lazy
+     * when possible.
      * 
      * @return iterator which is lazy where possible
      * @throws IllegalArgumentException
@@ -39,12 +37,12 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
      * @param type
      *            {@link ResourceRecordSet#type() type} of the rrset
      * 
-     * @return present if a resource record exists with the same {@code name}
+     * @return null unless a resource record exists with the same {@code name}
      *         and {@code type}
      * @throws IllegalArgumentException
      *             if the zone {@code idOrName} is not found.
      */
-    Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type);
+    ResourceRecordSet<?> getByNameAndType(String name, String type);
 
     /**
      * Idempotently replaces any existing records with

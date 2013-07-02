@@ -1,23 +1,23 @@
 package denominator.mock;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Predicates.in;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Multimaps.filterValues;
+
+import static denominator.common.Preconditions.checkArgument;
 import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.model.profile.Geo.asGeo;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
+import java.util.SortedSet;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Multimap;
-
 import denominator.Provider;
+import denominator.common.Filter;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import denominator.model.profile.Geo;
@@ -25,20 +25,20 @@ import denominator.profile.GeoResourceRecordSetApi;
 
 public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRecordSetApi implements
         GeoResourceRecordSetApi {
-    private static final Predicate<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
+    private static final Filter<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
 
-    private final Set<String> supportedTypes;
-    private final Multimap<String, String> supportedRegions;
+    private final Collection<String> supportedTypes;
+    private final Map<String, Collection<String>> supportedRegions;
 
-    MockGeoResourceRecordSetApi(Provider provider, Multimap<Zone, ResourceRecordSet<?>> records, Zone zone,
-            Multimap<String, String> supportedRegions) {
-        super(provider, records, zone);
+    MockGeoResourceRecordSetApi(Provider provider, SortedSet<ResourceRecordSet<?>> records,
+            Map<String, Collection<String>> supportedRegions) {
+        super(provider, records, IS_GEO);
         this.supportedTypes = provider.profileToRecordTypes().get("geo");
         this.supportedRegions = supportedRegions;
     }
 
     @Override
-    public Multimap<String, String> supportedRegions() {
+    public Map<String, Collection<String>> supportedRegions() {
         return supportedRegions;
     }
 
@@ -55,14 +55,26 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
                 if (toTest.qualifier().equals(rrset.qualifier()))
                     continue;
                 Geo currentGeo = asGeo(toTest);
-                Multimap<String, String> without = filterValues(currentGeo.regions(),
-                        not(in(newGeo.regions().values())));
-                records.remove(zone, toTest);
-                records.put(zone, ResourceRecordSet.<Map<String, Object>> builder() //
+                Map<String, Collection<String>> without = new LinkedHashMap<String, Collection<String>>();
+                for (Entry<String, Collection<String>> entry : currentGeo.regions().entrySet()) {
+                    if (newGeo.regions().containsKey(entry.getKey())) {
+                        List<String> territories = new ArrayList<String>(entry.getValue().size());
+                        for (String territory : entry.getValue()) {
+                            if (!newGeo.regions().get(entry.getKey()).contains(territory)) {
+                                territories.add(territory);
+                            }
+                        }
+                        without.put(entry.getKey(), territories);
+                    } else {
+                        without.put(entry.getKey(), entry.getValue());
+                    }
+                }
+                records.remove(toTest);
+                records.add(ResourceRecordSet.<Map<String, Object>> builder() //
                         .name(toTest.name())//
                         .type(toTest.type())//
-                        .qualifier(toTest.qualifier().get())//
-                        .ttl(toTest.ttl().orNull())//
+                        .qualifier(toTest.qualifier())//
+                        .ttl(toTest.ttl())//
                         .addProfile(Geo.create(without))//
                         .addAll(toTest.rdata()).build());
             }
@@ -71,26 +83,25 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
 
     public static final class Factory implements GeoResourceRecordSetApi.Factory {
 
-        private final Multimap<Zone, ResourceRecordSet<?>> records;
+        private final Map<Zone, SortedSet<ResourceRecordSet<?>>> records;
         private Provider provider;
-        private final Multimap<String, String> supportedRegions;
+        private final Map<String, Collection<String>> supportedRegions;
 
         // wildcard types are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
-        Factory(Multimap<Zone, ResourceRecordSet> records, Provider provider,
-                @Named("geo") Multimap<String, String> supportedRegions) {
-            this.records = Multimap.class.cast(filterValues(Multimap.class.cast(records), IS_GEO));
+        Factory(Map<Zone, SortedSet<ResourceRecordSet>> records, Provider provider,
+                @Named("geo") Map<String, Collection<String>> supportedRegions) {
+            this.records = Map.class.cast(records);
             this.provider = provider;
             this.supportedRegions = supportedRegions;
         }
 
         @Override
-        public Optional<GeoResourceRecordSetApi> create(String idOrName) {
+        public GeoResourceRecordSetApi create(String idOrName) {
             Zone zone = Zone.create(idOrName);
             checkArgument(records.keySet().contains(zone), "zone %s not found", idOrName);
-            return Optional.<GeoResourceRecordSetApi> of(new MockGeoResourceRecordSetApi(provider, records, zone,
-                    supportedRegions));
+            return new MockGeoResourceRecordSetApi(provider, records.get(zone), supportedRegions);
         }
     }
 }

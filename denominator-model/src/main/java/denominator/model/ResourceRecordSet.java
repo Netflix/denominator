@@ -1,18 +1,14 @@
 package denominator.model;
 
-import static com.google.common.base.Objects.equal;
-import static com.google.common.base.Objects.toStringHelper;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
-import com.google.common.primitives.UnsignedInteger;
 
 import denominator.model.profile.Geo;
 
@@ -25,27 +21,29 @@ import denominator.model.profile.Geo;
  *            RData type shared across elements. This may be empty in the case
  *            of special profile such as `alias`.
  * 
- * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
+ *            See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class ResourceRecordSet<D extends Map<String, Object>> {
 
     private final String name;
     private final String type;
-    private final Optional<String> qualifier;
-    private final Optional<Integer> ttl;
-    private final ImmutableList<D> rdata;
-    private final ImmutableList<Map<String, Object>> profiles;
+    private final String qualifier;
+    private final Integer ttl;
+    private final List<D> rdata;
+    private final List<Map<String, Object>> profiles;
 
     @ConstructorProperties({ "name", "type", "qualifier", "ttl", "rdata", "profiles" })
-    ResourceRecordSet(String name, String type, Optional<String> qualifier, Optional<Integer> ttl, ImmutableList<D> rdata,
-            ImmutableList<Map<String, Object>> profiles) {
+    ResourceRecordSet(String name, String type, String qualifier, Integer ttl, List<D> rdata,
+            List<Map<String, Object>> profiles) {
         this.name = checkNotNull(name, "name");
-        checkArgument(name.length() <= 255, "Name must be limited to 255 characters"); 
+        checkArgument(name.length() <= 255, "Name must be limited to 255 characters");
         this.type = checkNotNull(type, "type of %s", name);
-        this.qualifier = checkNotNull(qualifier, "qualifier of %s %s", name, type);
-        this.ttl = checkNotNull(ttl, "ttl of %s %s", name, type);
-        checkArgument(UnsignedInteger.fromIntBits(this.ttl.or(0)).longValue() <= 0x7FFFFFFFL, // Per RFC 2181 
-                "Invalid ttl value: %s, must be 0-2147483647", this.ttl);
+        this.qualifier = qualifier;
+        this.ttl = ttl;
+        if (ttl != null) {
+            boolean rfc2181 = ttl >= 0 && ttl.longValue() <= 0x7FFFFFFFL;
+            checkArgument(rfc2181, "Invalid ttl value: %s, must be 0-2147483647", this.ttl);
+        }
         this.rdata = checkNotNull(rdata, "rdata  of %s %s", name, type);
         this.profiles = checkNotNull(profiles, "profiles of %s %s", name, type);
     }
@@ -75,9 +73,10 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      * present when there's a {@link #profiles() profile} such as {@link Geo
      * geo}, which is otherwise ambiguous on name, type.
      * 
+     * @return qualifier or null.
      * @since 1.3
      */
-    public Optional<String> qualifier() {
+    public String qualifier() {
         return qualifier;
     }
 
@@ -85,26 +84,27 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      * the time interval that the resource record may be cached. Zero implies it
      * is not cached. Absent means default for the zone.
      * 
+     * @return ttl or null.
      * @since 1.3
      */
-    public Optional<Integer> ttl() {
+    public Integer ttl() {
         return ttl;
     }
 
     /**
-     * server-side profiles of the record set, often controls visibility based on
-     * client origin, latency or server health. If empty, this is a basic record,
-     * visible to all resolvers.
+     * server-side profiles of the record set, often controls visibility based
+     * on client origin, latency or server health. If empty, this is a basic
+     * record, visible to all resolvers.
      * 
      * For example, if this record set is intended for resolvers in Utah,
      * profiles will include a Map whose entries include {@code type -> "geo"},
      * and is an instance of {@link denominator.model.profile.Geo}, where
-     * {@link denominator.model.profile.Geo#regions()} contains something
-     * like `Utah` or `US-UT`.
+     * {@link denominator.model.profile.Geo#regions()} contains something like
+     * `Utah` or `US-UT`.
      * 
      * @since 1.3
      */
-    public ImmutableList<Map<String, Object>> profiles() {
+    public List<Map<String, Object>> profiles() {
         return profiles;
     }
 
@@ -120,7 +120,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(name, type, qualifier, rdata, profiles);
+        return 37 * Arrays.hashCode(new Object[] { name, type, qualifier, rdata, profiles });
     }
 
     @Override
@@ -130,19 +130,29 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
         if (obj == null || !(obj instanceof ResourceRecordSet))
             return false;
         ResourceRecordSet<?> that = ResourceRecordSet.class.cast(obj);
-        return equal(this.name, that.name) && equal(this.type, that.type) && equal(this.qualifier, that.qualifier)
-                && equal(this.rdata, that.rdata) && equal(this.profiles, that.profiles);
+        if (qualifier == null) {
+            if (that.qualifier != null)
+                return false;
+        } else if (!qualifier.equals(that.qualifier))
+            return false;
+        return this.name.equals(that.name) && this.type.equals(that.type) && this.rdata.equals(that.rdata)
+                && this.profiles.equals(that.profiles);
     }
 
     @Override
     public String toString() {
-        return toStringHelper(this).omitNullValues()
-                                   .add("name", name)
-                                   .add("type", type)
-                                   .add("qualifier", qualifier.orNull())
-                                   .add("ttl", ttl.orNull())
-                                   .add("rdata", rdata.isEmpty() ? null : rdata)
-                                   .add("profiles", profiles.isEmpty() ? null : profiles).toString();
+        StringBuilder builder = new StringBuilder().append('{');
+        builder.append("name=").append(name).append(',');
+        builder.append("type=").append(type);
+        if (qualifier != null)
+            builder.append(',').append("qualifier=").append(qualifier);
+        if (ttl != null)
+            builder.append(',').append("ttl=").append(ttl);
+        if (!rdata.isEmpty())
+            builder.append(',').append("rdata=").append(rdata);
+        if (!profiles.isEmpty())
+            builder.append(',').append("profiles=").append(profiles);
+        return builder.append('}').toString();
     }
 
     public static <D extends Map<String, Object>> Builder<D> builder() {
@@ -160,7 +170,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      */
     public static class Builder<D extends Map<String, Object>> extends AbstractRecordSetBuilder<D, D, Builder<D>> {
 
-        private ImmutableList.Builder<D> rdata = ImmutableList.builder();
+        private List<D> rdata = new ArrayList<D>();
 
         /**
          * adds a value to the builder.
@@ -186,7 +196,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
          * </pre>
          */
         public Builder<D> addAll(D... rdata) {
-            this.rdata.addAll(ImmutableList.copyOf(checkNotNull(rdata, "rdata")));
+            this.rdata.addAll(Arrays.asList(checkNotNull(rdata, "rdata")));
             return this;
         }
 
@@ -200,14 +210,14 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
          * builder.addAll(otherRecordSet);
          * </pre>
          */
-        public <R extends D> Builder<D> addAll(Iterable<R> rdata) {
+        public <R extends D> Builder<D> addAll(Collection<R> rdata) {
             this.rdata.addAll(checkNotNull(rdata, "rdata"));
             return this;
         }
 
         @Override
-        protected ImmutableList<D> rdataValues() {
-            return rdata.build();
+        protected List<D> rdataValues() {
+            return rdata;
         }
     }
 }

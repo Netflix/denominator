@@ -22,7 +22,7 @@ public class GeoTest {
     Geo geo = Geo.create(ImmutableMultimap.<String, String> builder()//
             .put("US", "US-VA")//
             .put("US", "US-CA")//
-            .put("IM", "IM").build());
+            .put("IM", "IM").build().asMap());
 
     String asJson = "{\"type\":\"geo\",\"regions\":{\"US\":[\"US-VA\",\"US-CA\"],\"IM\":[\"IM\"]}}";
 
@@ -58,7 +58,7 @@ public class GeoTest {
         Geo.asGeo(geoWhereRegionsAreMultimapStringString);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "expected regions values to be a subtype of Iterable<String>, not String")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "expected regions values to be a subtype of Collection<String>, not String")
     public void asGeoMultivalueTerritories() {
         Map<String, Object> geoWhereRegionsAreMultimapStringString = ImmutableMap.<String, Object> builder()//
                 .put("type", "geo")//

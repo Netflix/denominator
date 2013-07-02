@@ -11,7 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Utilities, typically adapted from guava, so as to avoid dependency conflicts.
+ * Utilities, inspired by or adapted from guava.
  */
 public class Util {
     private Util() { // no instances

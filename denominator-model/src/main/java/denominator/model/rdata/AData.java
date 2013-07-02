@@ -1,20 +1,17 @@
 package denominator.model.rdata;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.net.Inet4Address;
-import java.util.Map;
-
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.net.InetAddresses;
+import java.util.LinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code A} (Address) RData
  * 
- * <br><br><b>Example</b><br>
+ * <br>
+ * <br>
+ * <b>Example</b><br>
  * 
  * <pre>
  * AData rdata = AData.create(&quot;192.0.2.1&quot;);
@@ -22,7 +19,7 @@ import com.google.common.net.InetAddresses;
  * 
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class AData extends ForwardingMap<String, Object> {
+public class AData extends LinkedHashMap<String, Object> {
 
     /**
      * 
@@ -30,20 +27,16 @@ public class AData extends ForwardingMap<String, Object> {
      *            valid ipv4 address. ex. {@code 192.0.2.1}
      * @throws IllegalArgumentException
      *             if the address is malformed or not ipv4
-     * @see InetAddresses#forString(String)
      */
     public static AData create(String ipv4address) throws IllegalArgumentException {
         return new AData(ipv4address);
     }
 
-    private final String address;
-
     @ConstructorProperties("address")
-    private AData(String ipv4address) {
-        checkArgument(InetAddresses.forString(checkNotNull(ipv4address, "address")) instanceof Inet4Address,
-                "%s should be a ipv4 address", ipv4address);
-        this.address = ipv4address;
-        this.delegate = ImmutableMap.<String, Object> of("address", ipv4address);
+    AData(String address) {
+        checkNotNull(address, "address");
+        checkArgument(address.indexOf('.') != -1, "%s should be a ipv4 address", address);
+        put("address", address);
     }
 
     /**
@@ -52,14 +45,8 @@ public class AData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public String address() {
-        return address;
+        return get("address").toString();
     }
 
-    // transient to avoid serializing by default, for example in json
-    private final transient ImmutableMap<String, Object> delegate;
-
-    @Override
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
+    private static final long serialVersionUID = 1L;
 }

@@ -1,20 +1,14 @@
 package denominator.model;
 
-import static com.google.common.base.Objects.equal;
-import static com.google.common.base.Objects.toStringHelper;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-
-import com.google.common.base.Objects;
-import com.google.common.base.Optional;
 
 /**
  * A zone is a delegated portion of DNS. We use the word {@code zone} instead of
  * {@code domain}, as denominator focuses on configuration aspects of DNS.
  * 
- * @since 1.2
- * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
+ * @since 1.2 See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class Zone {
     /**
@@ -36,16 +30,16 @@ public class Zone {
      *            nullable; corresponds to {@link #id()}
      */
     public static Zone create(String name, String id) {
-        return new Zone(name, Optional.fromNullable(id));
+        return new Zone(name, id);
     }
 
     private final String name;
-    private final Optional<String> id;
+    private final String id;
 
     @ConstructorProperties({ "name", "id" })
-    Zone(String name, Optional<String> id) {
+    Zone(String name, String id) {
         this.name = checkNotNull(name, "name");
-        this.id = checkNotNull(id, "id of %s", name);
+        this.id = id;
     }
 
     /**
@@ -60,11 +54,11 @@ public class Zone {
      * When present, the service supports multiple zones with the same
      * {@link #name}. When absent, it doesn't. The value is likely to have been
      * system generated. Even if a provider has an id associated with a zone, if
-     * it isn't used by their api calls, this method will return absent.
+     * it isn't used by their api calls, this method will return null.
      * 
      * @see #idOrName()
      */
-    public Optional<String> id() {
+    public String id() {
         return id;
     }
 
@@ -83,12 +77,12 @@ public class Zone {
      * @return {@link #id() id} or {@link #name() name} if absent
      */
     public String idOrName() {
-        return id().or(name());
+        return id != null ? id : name;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(name, id);
+        return 37 * name.hashCode() + (id != null ? id.hashCode() : 0);
     }
 
     @Override
@@ -98,11 +92,22 @@ public class Zone {
         if (obj == null || !(obj instanceof Zone))
             return false;
         Zone that = Zone.class.cast(obj);
-        return equal(this.name, that.name) && equal(this.id, that.id);
+        if (!this.name.equals(that.name))
+            return false;
+        if (id == null) {
+            if (that.id != null)
+                return false;
+        } else if (!id.equals(that.id))
+            return false;
+        return true;
     }
 
     @Override
     public String toString() {
-        return toStringHelper(this).omitNullValues().add("name", name).add("id", id.orNull()).toString();
+        StringBuilder builder = new StringBuilder().append("Zone{");
+        builder.append("name=").append(name);
+        if (id != null)
+            builder.append(", ").append("id=").append(id);
+        return builder.append('}').toString();
     }
 }

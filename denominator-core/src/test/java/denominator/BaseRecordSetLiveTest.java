@@ -1,15 +1,13 @@
 package denominator;
-
-import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.collect.Iterators.any;
 import static com.google.common.collect.Maps.filterKeys;
 import static com.google.common.collect.Ordering.usingToString;
-import static denominator.model.ResourceRecordSets.nameEqualTo;
-import static denominator.model.ResourceRecordSets.typeEqualTo;
+import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Iterator;
@@ -20,7 +18,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -42,10 +39,10 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
         for (Zone zone : zones()) {
             for (ResourceRecordSet<?> rrs : rrsApi(zone)) {
                 checkRRS(rrs);
-                assertFalse(rrs.qualifier().isPresent(), "Only basic record sets should be returned. found: " + rrs);
-                Optional<ResourceRecordSet<?>> byNameAndType = rrsApi(zone).getByNameAndType(rrs.name(), rrs.type());
-                assertTrue(byNameAndType.isPresent(), "could not lookup by name and type: " + rrs);
-                assertEquals(byNameAndType.get(), rrs);
+                assertTrue(rrs.qualifier() == null, "Only basic record sets should be returned. found: " + rrs);
+                ResourceRecordSet<?> byNameAndType = rrsApi(zone).getByNameAndType(rrs.name(), rrs.type());
+                assertTrue(byNameAndType != null, "could not lookup by name and type: " + rrs);
+                assertEquals(byNameAndType, rrs);
             }
         }
     }
@@ -86,7 +83,7 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
     private void testGetByNameAndTypeWhenAbsent() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertEquals(rrsApi(zone).getByNameAndType("ARGHH." + zone.name(), "TXT"), Optional.absent());
+            assertNull(rrsApi(zone).getByNameAndType("ARGHH." + zone.name(), "TXT"));
             break;
         }
     }
@@ -116,17 +113,16 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
                                           .ttl(1800)
                                           .add(recordSet.rdata().get(0)).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
-                .getByNameAndType(recordSet.name(), recordSet.type());
+        ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
         assertPresent(rrs, zone, recordSet.name(), recordSet.type());
 
-        checkRRS(rrs.get());
-        assertEquals(rrs.get().name(), recordSet.name());
-        assertEquals(rrs.get().ttl().get(), Integer.valueOf(1800));
-        assertEquals(rrs.get().type(), recordSet.type());
-        assertEquals(rrs.get().rdata().size(), 1);
-        assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(0));
+        checkRRS(rrs);
+        assertEquals(rrs.name(), recordSet.name());
+        assertEquals(rrs.ttl(), Integer.valueOf(1800));
+        assertEquals(rrs.type(), recordSet.type());
+        assertEquals(rrs.rdata().size(), 1);
+        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
     }
 
     @Test(dependsOnMethods = "putNewRRS", dataProvider = "simpleRecords")
@@ -140,17 +136,16 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
                     .ttl(200000)
                     .add(recordSet.rdata().get(0)).build());;
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
-                .getByNameAndType(recordSet.name(), recordSet.type());
+        ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
         assertPresent(rrs, zone, recordSet.name(), recordSet.type());
 
-        checkRRS(rrs.get());
-        assertEquals(rrs.get().name(), recordSet.name());
-        assertEquals(rrs.get().type(), recordSet.type());
-        assertEquals(rrs.get().ttl().get(), Integer.valueOf(200000));
-        assertEquals(rrs.get().rdata().size(), 1);
-        assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(0));
+        checkRRS(rrs);
+        assertEquals(rrs.name(), recordSet.name());
+        assertEquals(rrs.type(), recordSet.type());
+        assertEquals(rrs.ttl(), Integer.valueOf(200000));
+        assertEquals(rrs.rdata().size(), 1);
+        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
     }
 
     @Test(dependsOnMethods = "putChangingTTL", dataProvider = "simpleRecords")
@@ -161,8 +156,8 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
         rrsApi(zone).deleteByNameAndType(recordSet.name(), recordSet.type());
 
         String failureMessage = format("recordset(%s, %s) still exists in %s", recordSet.name(), recordSet.type(), zone);
-        assertFalse(rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type()).isPresent(), failureMessage);
-        assertFalse(any(rrsApi(zone).iterator(), and(nameEqualTo(recordSet.name()), typeEqualTo(recordSet.type()))),
+        assertTrue(rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type()) == null, failureMessage);
+        assertFalse(any(rrsApi(zone).iterator(), predicate(nameAndTypeEqualTo(recordSet.name(), recordSet.type()))),
                 failureMessage);
 
         // test no exception if re-applied

@@ -1,37 +1,33 @@
 package denominator.model.rdata;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.Map;
-
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableMap;
+import java.util.LinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code CNAME} (Canonical
  * Name) RData
  * 
- * <br><br><b>Example</b><br>
+ * <br>
+ * <br>
+ * <b>Example</b><br>
  * 
  * <pre>
- * CNAMEData rdata = CNAMEData.create("cname.foo.com.");
+ * CNAMEData rdata = CNAMEData.create(&quot;cname.foo.com.&quot;);
  * </pre>
  * 
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class CNAMEData extends ForwardingMap<String, Object> {
+public class CNAMEData extends LinkedHashMap<String, Object> {
 
     public static CNAMEData create(String cname) {
         return new CNAMEData(cname);
     }
 
-    private final String cname;
-
     @ConstructorProperties("cname")
-    private CNAMEData(String cname) {
-        this.cname = checkNotNull(cname, "cname");
-        this.delegate = ImmutableMap.<String, Object> of("cname", cname);
+    CNAMEData(String cname) {
+        put("cname", checkNotNull(cname, "cname"));
     }
 
     /**
@@ -41,14 +37,8 @@ public class CNAMEData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public String cname() {
-        return cname;
+        return get("cname").toString();
     }
 
-    // transient to avoid serializing by default, for example in json
-    private final transient ImmutableMap<String, Object> delegate;
-    
-    @Override
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
+    private static final long serialVersionUID = 1L;
 }

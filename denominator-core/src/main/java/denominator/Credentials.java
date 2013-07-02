@@ -1,26 +1,29 @@
 package denominator;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.google.common.collect.ForwardingList;
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
 
 /**
  * Abstractly encapsulates credentials used by a Provider. Descriptions of what
  * type of Credentials a Provider can use are found via
  * {@link Provider#credentialTypeToParameterNames()}.
  * 
- * <br><br><b>All Credentials are Anonymous, implement Map or List</b><br>
+ * <br>
+ * <br>
+ * <b>All Credentials are Anonymous, implement Map or List</b><br>
  * 
  * You must either subclass roots listed here, or ensure your implementation
  * classes implement {@code Map<String, ?>} or {@code List<?>}.
  * 
- * <br><br><b>Validation Rules</b><br>
+ * <br>
+ * <br>
+ * <b>Validation Rules</b><br>
  * <ul>
  * <li>{@link AnonymousCredentials}, null, or empty credentials are permitted
  * when {@link Provider#credentialTypeToParameterNames()} is empty</li>
@@ -32,13 +35,14 @@ import com.google.common.collect.Iterables;
  * {@link Provider#credentialTypeToParameterNames()}</li>
  * </ul>
  * 
- * <br><br><b>Parameters</b><br>
+ * <br>
+ * <br>
+ * <b>Parameters</b><br>
  * 
  * While most credential parameters are Strings, and most providers will be able
  * to coerce parameters from Strings, if you choose to create your own
  * Credential implementations, allow users to pass {@code Object} parameters of
- * the correct type where possible.
- * <br>
+ * the correct type where possible. <br>
  * For example, certain providers may prefer a {@code Certificate} or
  * {@code PrivateKey} parameter vs a relatively expensive coercion from a
  * PEM-encoded String.
@@ -57,7 +61,9 @@ public interface Credentials {
      * Credentials where the position and count of parameters is enough to
      * differentiate one type of credentials from another.
      * 
-     * <br><br><b>Example</b><br>
+     * <br>
+     * <br>
+     * <b>Example</b><br>
      * 
      * In {@code route53}, one can use normal {@code accessKey} credentials, or
      * temporary ones from {code STS}. In this case, you can get by simply by
@@ -79,11 +85,14 @@ public interface Credentials {
      * 
      * @see Provider#credentialTypeToParameterNames()
      */
-    public static abstract class ListCredentials extends ForwardingList<Object> implements Credentials {
+    public static class ListCredentials extends ArrayList<Object> implements Credentials {
+
+        protected ListCredentials(Collection<?> args) {
+            super(args);
+        }
 
         /**
-         * returns a {@code Credentials} view of the input
-         * {@code parts}.
+         * returns a {@code Credentials} view of the input {@code parts}.
          * 
          * @param parts
          *            corresponds directly to the credentials needed by a
@@ -94,19 +103,14 @@ public interface Credentials {
         public static Credentials from(final List<?> parts) {
             if (parts == null || parts.isEmpty())
                 return AnonymousCredentials.INSTANCE;
-            return new ListCredentials() {
-                @SuppressWarnings("unchecked")
-                protected List<Object> delegate() {
-                    return List.class.cast(parts);
-                }
-            };
+            return new ListCredentials(parts);
         }
 
         /**
          * see {@link #from(List)}
          */
         public static Credentials from(Object... parts) {
-            return from(ImmutableList.copyOf(checkNotNull(parts, "credentials")));
+            return from(Arrays.asList(checkNotNull(parts, "credentials")));
         }
 
         /**
@@ -114,9 +118,12 @@ public interface Credentials {
          * type. The following will coerce anything that implements {@code Map}
          * or {@code List} to {@code ListCredentials}.
          * 
-         * <br><br><b>Example</b><br> The following example is how this could be used from
-         * within a method in {@link Provider} to simplify credential conversion
-         * regardless of input type.
+         * <br>
+         * <br>
+         * <b>Example</b><br>
+         * The following example is how this could be used from within a method
+         * in {@link Provider} to simplify credential conversion regardless of
+         * input type.
          * 
          * <pre>
          * Credentials validatedInput = CredentialsConfiguration.firstValidCredentialsForProvider(sources, this);
@@ -128,30 +135,31 @@ public interface Credentials {
          * @throws IllegalArgumentException
          *             if input is not a {@code Map} or {@code List}, or it is
          *             empty.
-         *             
+         * 
          */
         public static List<Object> asList(Credentials in) throws IllegalArgumentException {
             checkNotNull(in, "credentials");
             if (in instanceof ListCredentials) {
                 return ListCredentials.class.cast(in);
             } else if (in instanceof Map || in instanceof List) {
-                Iterable<?> values = (in instanceof Map) ? Map.class.cast(in).values() : List.class.cast(in);
-                if (Iterables.isEmpty(values))
+                Collection<?> values = (in instanceof Map) ? Map.class.cast(in).values() : List.class.cast(in);
+                if (values.isEmpty())
                     throw new IllegalArgumentException("cannot convert empty credentials to List<Object>");
-                return ImmutableList.copyOf(values);
+                return new ArrayList<Object>(values);
             }
             throw new IllegalArgumentException("cannot convert " + in.getClass() + " to ListCredentials");
         }
 
-        protected ListCredentials() {
-        }
+        private static final long serialVersionUID = 1L;
     }
 
     /**
      * Credentials in the form of named parameters, useful when a provider
      * accepts two different credential types with the same count of parameters.
      * 
-     * <br><br><b>Example</b><br>
+     * <br>
+     * <br>
+     * <b>Example</b><br>
      * 
      * In OpenStack, both {@code accessKey} and {@code password} credentials
      * require two parts. In this case, {@code MapCredentials} can name the
@@ -172,7 +180,11 @@ public interface Credentials {
      * 
      * @see Provider#credentialTypeToParameterNames()
      */
-    public static abstract class MapCredentials extends ForwardingMap<String, Object> implements Credentials {
+    public static class MapCredentials extends LinkedHashMap<String, Object> implements Credentials {
+
+        protected MapCredentials(Map<String, ?> kwargs) {
+            super(kwargs);
+        }
 
         /**
          * returns a {@code Credentials} view of the input {@code kwargs}
@@ -184,17 +196,11 @@ public interface Credentials {
          *         {@link AnonymousCredentials} if null or empty
          */
         public static Credentials from(final Map<String, ?> kwargs) {
-            if (kwargs == null ||kwargs.isEmpty())
+            if (kwargs == null || kwargs.isEmpty())
                 return AnonymousCredentials.INSTANCE;
-            return new MapCredentials() {
-                @SuppressWarnings("unchecked")
-                protected Map<String, Object> delegate() {
-                    return Map.class.cast(kwargs);
-                }
-            };
+            return new MapCredentials(kwargs);
         }
 
-        protected MapCredentials() {
-        }
+        private static final long serialVersionUID = 1L;
     }
 }

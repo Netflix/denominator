@@ -9,7 +9,7 @@ import java.util.Set;
 
 import org.testng.annotations.Test;
 
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 
 import denominator.Provider;
@@ -21,7 +21,7 @@ public class MockProviderTest {
     public void testMockMetadata() {
         assertEquals(PROVIDER.name(), "mock");
         assertEquals(PROVIDER.supportsDuplicateZoneNames(), false);
-        assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMultimap.of());
+        assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMap.of());
     }
 
     @Test

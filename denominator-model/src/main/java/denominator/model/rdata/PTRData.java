@@ -1,36 +1,32 @@
 package denominator.model.rdata;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.Map;
-
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableMap;
+import java.util.LinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code PTR} (Pointer) RData
  * 
- * <br><br><b>Example</b><br>
+ * <br>
+ * <br>
+ * <b>Example</b><br>
  * 
  * <pre>
- * PTRData rdata = PTRData.create("ptr.foo.com.");
+ * PTRData rdata = PTRData.create(&quot;ptr.foo.com.&quot;);
  * </pre>
  * 
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class PTRData extends ForwardingMap<String, Object> {
+public class PTRData extends LinkedHashMap<String, Object> {
 
     public static PTRData create(String ptrdname) {
         return new PTRData(ptrdname);
     }
 
-    private final String ptrdname;
-
     @ConstructorProperties("ptrdname")
-    private PTRData(String ptrdname) {
-        this.ptrdname = checkNotNull(ptrdname, "ptrdname");
-        this.delegate = ImmutableMap.<String, Object> of("ptrdname", ptrdname);
+    PTRData(String ptrdname) {
+        put("ptrdname", checkNotNull(ptrdname, "ptrdname"));
     }
 
     /**
@@ -39,14 +35,8 @@ public class PTRData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public String ptrdname() {
-        return ptrdname;
+        return get("ptrdname").toString();
     }
 
-    // transient to avoid serializing by default, for example in json
-    private final transient ImmutableMap<String, Object> delegate;
-    
-    @Override
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
+    private static final long serialVersionUID = 1L;
 }

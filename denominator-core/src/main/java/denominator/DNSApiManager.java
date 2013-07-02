@@ -1,7 +1,5 @@
 package denominator;
 
-import static com.google.common.base.Objects.toStringHelper;
-
 import java.io.Closeable;
 import java.io.IOException;
 
@@ -45,9 +43,9 @@ public class DNSApiManager implements Closeable {
     public void close() throws IOException {
         closer.close();
     }
-    
+
     @Override
     public String toString() {
-        return toStringHelper(this).add("provider", provider).toString();
+        return provider.toString();
     }
 }

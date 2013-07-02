@@ -2,8 +2,6 @@ package denominator.config;
 
 import javax.inject.Singleton;
 
-import com.google.common.base.Optional;
-
 import dagger.Module;
 import dagger.Provides;
 import denominator.DNSApiManager;
@@ -19,12 +17,10 @@ public class WeightedUnsupported {
     @Singleton
     WeightedResourceRecordSetApi.Factory provideWeightedResourceRecordSetApiFactory() {
         return new WeightedResourceRecordSetApi.Factory() {
-
             @Override
-            public Optional<WeightedResourceRecordSetApi> create(String idOrName) {
-                return Optional.absent();
+            public WeightedResourceRecordSetApi create(String idOrName) {
+                return null;
             }
-
         };
     }
 }

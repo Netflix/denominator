@@ -1,18 +1,18 @@
 package denominator;
 
 import static com.google.common.base.Functions.toStringFunction;
-import static com.google.common.collect.Iterators.transform;
 import static denominator.CredentialsConfiguration.anonymous;
 import static denominator.CredentialsConfiguration.checkValidForProvider;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
-import static denominator.model.Zones.toName;
-import static denominator.model.Zones.toZone;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
@@ -21,9 +21,10 @@ import javax.inject.Singleton;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
 
 import dagger.Provides;
 import denominator.Credentials.ListCredentials;
@@ -77,7 +78,7 @@ public class DynamicCredentialsProviderExampleTest {
             CustomerUsernamePassword cup = creds.get();
             // normally, the credentials object would be used to invoke a remote
             // command. in this case, we don't and say we did :)
-            return transform(ImmutableList.of(cup.customer, cup.username, cup.password).iterator(), toZone());
+            return Iterators.forArray(Zone.create(cup.customer), Zone.create(cup.username), Zone.create(cup.password));
         }
     }
 
@@ -95,9 +96,9 @@ public class DynamicCredentialsProviderExampleTest {
          * inform the user that we need credentials with 3 parameters.
          */
         @Override
-        public Multimap<String, String> credentialTypeToParameterNames() {
+        public Map<String, Collection<String>> credentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
-                    .putAll("username", "customer", "username", "password").build();
+                    .putAll("username", "customer", "username", "password").build().asMap();
         }
 
         @dagger.Module(injects = DNSApiManager.class,
@@ -149,8 +150,8 @@ public class DynamicCredentialsProviderExampleTest {
             @SuppressWarnings("rawtypes")
             @Provides
             @Singleton
-            Multimap<Zone, ResourceRecordSet> provideData() {
-                return ImmutableMultimap.of();
+            Map<Zone, SortedSet<ResourceRecordSet>> provideRecords() {
+                return ImmutableMap.<Zone, SortedSet<ResourceRecordSet>> of();
             }
     
             /**
@@ -168,7 +169,7 @@ public class DynamicCredentialsProviderExampleTest {
         }
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. dynamic requires customer, username, password")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. dynamic requires customer,username,password")
     public void testCredentialsRequired() {
         // shouldn't exception here, as credentials aren't yet used
         DNSApiManager mgr = create(new DynamicCredentialsProvider(), anonymous());
@@ -177,7 +178,7 @@ public class DynamicCredentialsProviderExampleTest {
         zones.iterator();
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. dynamic requires customer, username, password")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. dynamic requires customer,username,password")
     public void testThreePartCredentialsRequired() {
         // shouldn't exception here, as credentials aren't yet used
         DNSApiManager mgr = create(new DynamicCredentialsProvider(), credentials("username", "password"));
@@ -190,15 +191,17 @@ public class DynamicCredentialsProviderExampleTest {
     public void testImplicitDynamicCredentialsUpdate() {
         DNSApiManager mgr = create(new DynamicCredentialsProvider());
         ZoneApi zones = mgr.api().zones();
-        assertEquals(ImmutableList.copyOf(transform(zones.iterator(), toName())), ImmutableList.of("acme", "wily", "coyote"));
-        assertEquals(ImmutableList.copyOf(transform(zones.iterator(), toName())), ImmutableList.of("acme", "road", "runner"));
+        assertEquals(ImmutableList.copyOf(zones.iterator()),
+                ImmutableList.of(Zone.create("acme"), Zone.create("wily"), Zone.create("coyote")));
+        assertEquals(ImmutableList.copyOf(zones.iterator()),
+                ImmutableList.of(Zone.create("acme"), Zone.create("road"), Zone.create("runner")));
         // now, if the supplier doesn't supply a set of credentials, we should
         // get a correct message
         try {
             ImmutableList.copyOf(zones.iterator());
             fail();
         } catch (IllegalArgumentException e) {
-            assertEquals(e.getMessage(), "no credentials supplied. dynamic requires customer, username, password");
+            assertEquals(e.getMessage(), "no credentials supplied. dynamic requires customer,username,password");
         }
     }
 
