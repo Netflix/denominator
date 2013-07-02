@@ -62,7 +62,7 @@ email.netflix.com.                                 A     3600   192.0.2.1
 
 ## Code
 
-Denominator exposes a portable [model](https://github.com/Netflix/denominator/wiki/Models) implemented by pluggable `Provider`s such as `route53`, `ultradns`, `dynect`, `clouddns`, or `mock`.  Under the covers, providers are [Dagger](http://square.github.com/dagger/) modules.  Except for the mock, all current providers bind to [jclouds](https://github.com/jclouds/jclouds) libraries.  That said, denominator has no core dependencies outside guava and dagger, so developers are free to implement providers however they choose.
+Denominator exposes a portable [model](https://github.com/Netflix/denominator/wiki/Models) implemented by pluggable `Provider`s such as `route53`, `ultradns`, `dynect`, `clouddns`, or `mock`.  Under the covers, providers are [Dagger](http://square.github.com/dagger/) modules.  Except for the mock, all current providers bind to http requests via [feign](https://github.com/Netflix/feign), which keeps the distribution light.
 
 ### Binaries
 
@@ -167,7 +167,7 @@ $ ./gradlew clean test install
 * For questions, please tag `denominator` in [StackOverflow](http://stackoverflow.com).
 * For bugs and enhancements, please use [Github Issues](https://github.com/Netflix/denominator/issues).
 * For email discussions, please post to the [user forum](https://groups.google.com/forum/?fromgroups#!forum/denominator-user)
-* For discussions on design and internals, please join #jclouds on irc freenode or post to the [dev forum](https://groups.google.com/forum/?fromgroups#!forum/denominator-dev)
+* For discussions on design and internals, please join #denominator on irc freenode or post to the [dev forum](https://groups.google.com/forum/?fromgroups#!forum/denominator-dev)
  
 ## LICENSE
 
