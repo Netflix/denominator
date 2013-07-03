@@ -11,10 +11,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.testng.annotations.Test;
 
-import com.google.common.base.Supplier;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 
+import dagger.Module;
+import dagger.Provides;
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.DNSApi;
@@ -66,18 +67,19 @@ public class Route53ProviderDynamicUpdateMockTest {
         try {
 
             final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(ListCredentials.from("accessKey", "secretKey"));
-
+            @Module(complete = false, library = true, overrides = true)
+            class OverrideCredentials {
+                @Provides
+                public Credentials get() {
+                    return dynamicCredentials.get();
+                }
+            }
             DNSApi api = Denominator.create(new Route53Provider() {
                 @Override
                 public String url() {
                     return server.getUrl("/").toString();
                 }
-            }, credentials(new Supplier<Credentials>(){
-                @Override
-                public Credentials get() {
-                    return dynamicCredentials.get();
-                }
-            })).api();
+            }, new OverrideCredentials()).api();
 
             assertFalse(api.zones().iterator().hasNext());
             dynamicCredentials.set(ListCredentials.from("accessKey2", "secretKey2"));

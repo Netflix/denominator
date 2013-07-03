@@ -1,28 +1,27 @@
 package denominator.route53;
 
-import static com.google.common.base.Predicates.and;
-import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.peekingIterator;
-import static com.google.common.collect.Iterators.tryFind;
+import static denominator.common.Util.filter;
+import static denominator.common.Util.nextOrNull;
+import static denominator.common.Util.peekingIterator;
+import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
-import static denominator.model.ResourceRecordSets.qualifierEqualTo;
-import static denominator.model.ResourceRecordSets.typeEqualTo;
+import static denominator.model.ResourceRecordSets.nameTypeAndQualifierEqualTo;
+import static denominator.model.ResourceRecordSets.notNull;
 import static denominator.model.ResourceRecordSets.withoutProfile;
 import static denominator.route53.Route53.ActionOnResourceRecordSet.create;
 import static denominator.route53.Route53.ActionOnResourceRecordSet.delete;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.PeekingIterator;
-
 import denominator.AllProfileResourceRecordSetApi;
+import denominator.common.Filter;
+import denominator.common.PeekingIterator;
 import denominator.model.ResourceRecordSet;
 import denominator.route53.Route53.ActionOnResourceRecordSet;
 import denominator.route53.Route53.ResourceRecordSetList;
@@ -44,7 +43,7 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
      */
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
-        return lazyIterateRRSets(api.rrsets(zoneId), NotAlias.INSTANCE);
+        return lazyIterateRRSets(api.rrsets(zoneId), notAlias());
     }
 
     /**
@@ -53,64 +52,60 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
      */
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
-        Predicate<ResourceRecordSet<?>> filter = and(nameEqualTo(name), NotAlias.INSTANCE);
+        Filter<ResourceRecordSet<?>> filter = andNotAlias(nameEqualTo(name));
         return lazyIterateRRSets(api.rrsetsStartingAtName(zoneId, name), filter);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
-        Predicate<ResourceRecordSet<?>> filter = and(nameEqualTo(name), typeEqualTo(type), NotAlias.INSTANCE);
+        Filter<ResourceRecordSet<?>> filter = andNotAlias(nameAndTypeEqualTo(name,type));
         return lazyIterateRRSets(api.rrsetsStartingAtNameAndType(zoneId, name, type), filter);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
-    public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier) {
-        Predicate<ResourceRecordSet<?>> filter = and(nameEqualTo(name), typeEqualTo(type), qualifierEqualTo(qualifier),
-                NotAlias.INSTANCE);
+    public ResourceRecordSet<?> getByNameTypeAndQualifier(String name, String type, String qualifier) {
+        Filter<ResourceRecordSet<?>> filter = andNotAlias(nameTypeAndQualifierEqualTo(name, type, qualifier));
         ResourceRecordSetList first = api.rrsetsStartingAtNameTypeAndIdentifier(zoneId, name, type, qualifier);
-        Iterator<ResourceRecordSet<?>> iterator = lazyIterateRRSets(first, filter);
-        return Optional.<ResourceRecordSet<?>> fromNullable(iterator.hasNext() ? iterator.next() : null);
+        return nextOrNull(lazyIterateRRSets(first, filter));
     }
 
-    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
-        return tryFind(iterateByNameAndType(name, type), withoutProfile());
+    public ResourceRecordSet<?> getByNameAndType(String name, String type) {
+        return nextOrNull(filter(iterateByNameAndType(name, type), withoutProfile()));
     }
 
     @Override
     public void put(ResourceRecordSet<?> rrset) {
-        Builder<ActionOnResourceRecordSet> changes = ImmutableList.<ActionOnResourceRecordSet> builder();
-        Optional<ResourceRecordSet<?>> oldRRS;
-        if (rrset.qualifier().isPresent()) {
-            oldRRS = getByNameTypeAndQualifier(rrset.name(), rrset.type(), rrset.qualifier().get());
+        List<ActionOnResourceRecordSet> changes = new ArrayList<ActionOnResourceRecordSet>();
+        ResourceRecordSet<?> oldRRS;
+        if (rrset.qualifier() != null) {
+            oldRRS = getByNameTypeAndQualifier(rrset.name(), rrset.type(), rrset.qualifier());
         } else {
             oldRRS = getByNameAndType(rrset.name(), rrset.type());
         }
-        if (oldRRS.isPresent()) {
-            if (oldRRS.get().ttl().equals(rrset.ttl()) && oldRRS.get().equals(rrset))
+        if (oldRRS != null) {
+            if (oldRRS.ttl().equals(rrset.ttl()) && oldRRS.equals(rrset))
                 return;
-            changes.add(delete(oldRRS.get()));
+            changes.add(delete(oldRRS));
         }
         changes.add(create(rrset));
-        api.changeBatch(zoneId, changes.build());
+        api.changeBatch(zoneId, changes);
     }
 
     @Override
     public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
-        Optional<ResourceRecordSet<?>> oldRRS = getByNameTypeAndQualifier(name, type, qualifier);
-        if (!oldRRS.isPresent())
+        ResourceRecordSet<?> oldRRS = getByNameTypeAndQualifier(name, type, qualifier);
+        if (oldRRS == null)
             return;
-        api.changeBatch(zoneId, ImmutableList.of(delete(oldRRS.get())));
+        api.changeBatch(zoneId, Arrays.asList(delete(oldRRS)));
     }
 
     @Override
     public void deleteByNameAndType(String name, String type) {
-        Builder<ActionOnResourceRecordSet> changes = ImmutableList.<ActionOnResourceRecordSet> builder();
+        List<ActionOnResourceRecordSet> changes = new ArrayList<ActionOnResourceRecordSet>();
         for (Iterator<ResourceRecordSet<?>> it = iterateByNameAndType(name, type); it.hasNext();) {
             changes.add(delete(it.next()));
         }
-        api.changeBatch(zoneId, changes.build());
+        api.changeBatch(zoneId, changes);
     }
 
     static final class Factory implements denominator.AllProfileResourceRecordSetApi.Factory {
@@ -128,12 +123,24 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
         }
     }
 
-    private static enum NotAlias implements Predicate<ResourceRecordSet<?>> {
-        INSTANCE;
+    private static Filter<ResourceRecordSet<?>> notAlias(){
+        return new AndNotAlias(notNull());
+    }
+
+    private static Filter<ResourceRecordSet<?>> andNotAlias(Filter<ResourceRecordSet<?>> first){
+        return new AndNotAlias(first);
+    }
+
+    private static class AndNotAlias implements Filter<ResourceRecordSet<?>> {
+        private final Filter<ResourceRecordSet<?>> first;
+
+        private AndNotAlias(Filter<ResourceRecordSet<?>> first) {
+            this.first = first;
+        }
 
         @Override
         public boolean apply(ResourceRecordSet<?> input) {
-            if (input == null)
+            if (!first.apply(input))
                 return false;
             if (input.profiles().isEmpty())
                 return true;
@@ -146,7 +153,7 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
     }
 
     Iterator<ResourceRecordSet<?>> lazyIterateRRSets(final ResourceRecordSetList first,
-            final Predicate<ResourceRecordSet<?>> filter) {
+            final Filter<ResourceRecordSet<?>> filter) {
         if (first.next == null)
             return filter(first.iterator(), filter);
         return new Iterator<ResourceRecordSet<?>>() {

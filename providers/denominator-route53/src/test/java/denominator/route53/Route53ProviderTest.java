@@ -30,7 +30,7 @@ public class Route53ProviderTest {
         assertEquals(PROVIDER.supportsDuplicateZoneNames(), true);
         assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
                 .putAll("accessKey", "accessKey", "secretKey")
-                .putAll("session", "accessKey", "secretKey", "sessionToken").build());
+                .putAll("session", "accessKey", "secretKey", "sessionToken").build().asMap());
     }
 
     @Test
@@ -59,7 +59,7 @@ public class Route53ProviderTest {
         assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. route53 requires one of the following forms: when type is accessKey: accessKey, secretKey; session: accessKey, secretKey, sessionToken")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. route53 requires one of the following forms: when type is accessKey: accessKey,secretKey; session: accessKey,secretKey,sessionToken")
     public void testCredentialsRequired() {
         // manually passing anonymous in case this test is executed from EC2
         // where IAM profiles are present.

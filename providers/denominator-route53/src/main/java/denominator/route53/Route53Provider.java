@@ -1,27 +1,18 @@
 package denominator.route53;
 
-import static com.google.common.base.Predicates.in;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.base.Strings.emptyToNull;
-import static com.google.common.collect.Iterables.filter;
-
 import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
-
-import com.google.common.collect.ContiguousSet;
-import com.google.common.collect.DiscreteDomain;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Range;
-import com.google.common.collect.SetMultimap;
 
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
@@ -54,8 +45,7 @@ public class Route53Provider extends BasicProvider {
      *            if empty or null use default
      */
     public Route53Provider(String url) {
-        url = emptyToNull(url);
-        this.url = url != null ? url : "https://route53.amazonaws.com";
+        this.url = url == null || url.isEmpty() ? "https://route53.amazonaws.com" : url;
     }
 
     @Override
@@ -66,15 +56,18 @@ public class Route53Provider extends BasicProvider {
     // http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
     @Override
     public Set<String> basicRecordTypes() {
-        return ImmutableSet.of("A", "AAAA", "CNAME", "MX", "NS", "PTR", "SOA", "SPF", "SRV", "TXT");
+        Set<String> types = new LinkedHashSet<String>();
+        types.addAll(Arrays.asList("A", "AAAA", "CNAME", "MX", "NS", "PTR", "SOA", "SPF", "SRV", "TXT"));
+        return types;
     }
 
     // http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
     @Override
-    public SetMultimap<String, String> profileToRecordTypes() {
-        return ImmutableSetMultimap.<String, String> builder()
-                .putAll("weighted", "A", "AAAA", "CNAME", "MX", "PTR", "SPF", "SRV", "TXT")//
-                .putAll("roundRobin", filter(basicRecordTypes(), not(in(ImmutableSet.of("SOA", "CNAME"))))).build();
+    public Map<String, Collection<String>> profileToRecordTypes() {
+        Map<String, Collection<String>> profileToRecordTypes = new LinkedHashMap<String, Collection<String>>();
+        profileToRecordTypes.put("weighted", Arrays.asList("A", "AAAA", "CNAME", "MX", "PTR", "SPF", "SRV", "TXT"));
+        profileToRecordTypes.put("roundRobin", Arrays.asList("A", "AAAA", "MX", "NS", "PTR", "SPF", "SRV", "TXT"));
+        return profileToRecordTypes;
     }
 
     @Override
@@ -83,10 +76,11 @@ public class Route53Provider extends BasicProvider {
     }
 
     @Override
-    public Multimap<String, String> credentialTypeToParameterNames() {
-        return ImmutableMultimap.<String, String> builder()//
-                .putAll("accessKey", "accessKey", "secretKey")//
-                .putAll("session", "accessKey", "secretKey", "sessionToken").build();
+    public Map<String, Collection<String>> credentialTypeToParameterNames() {
+        Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
+        options.put("accessKey", Arrays.asList("accessKey", "secretKey"));
+        options.put("session", Arrays.asList("accessKey", "secretKey", "sessionToken"));
+        return options;
     }
 
     @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
@@ -127,7 +121,10 @@ public class Route53Provider extends BasicProvider {
         @Singleton
         @Named("weighted")
         SortedSet<Integer> provideSupportedWeights() {
-            return ContiguousSet.create(Range.closed(0, 255), DiscreteDomain.integers());
+            SortedSet<Integer> supportedWeights = new TreeSet<Integer>();
+            for (int i = 0; i <= 255; i++)
+                supportedWeights.add(i);
+            return Collections.unmodifiableSortedSet(supportedWeights);
         }
     }
 
@@ -141,27 +138,33 @@ public class Route53Provider extends BasicProvider {
         }
 
         @Provides
-        public Map<String, String> authHeaders(InvalidatableAuthenticationHeadersSupplier supplier) {
-            return supplier.get();
+        public Map<String, String> authHeaders(InvalidatableAuthenticationHeadersProvider provider) {
+            return provider.get();
         }
 
         @Provides
         @Singleton
         Map<String, Decoder> decoders() {
-            return ImmutableMap.<String, Decoder> of("Route53", new Route53Decoder());
+            Map<String, Decoder> decoders = new LinkedHashMap<String, Decoder>();
+            decoders.put("Route53", new Route53Decoder());
+            return decoders;
         }
 
         @Provides
         @Singleton
         Map<String, ErrorDecoder> errorDecoders() {
-            return ImmutableMap.<String, ErrorDecoder> of("Route53", new Route53ErrorDecoder(),
-                    "Route53#changeBatch(String,List)", new InvalidChangeBatchErrorDecoder());
+            Map<String, ErrorDecoder> errorDecoders = new LinkedHashMap<String, ErrorDecoder>();
+            errorDecoders.put("Route53", new Route53ErrorDecoder());
+            errorDecoders.put("Route53#changeBatch(String,List)", new InvalidChangeBatchErrorDecoder());
+            return errorDecoders;
         }
 
         @Provides
         @Singleton
         Map<String, BodyEncoder> bodyEncoders() {
-            return ImmutableMap.<String, BodyEncoder> of("Route53#changeBatch(String,List)", new EncodeChanges());
+            Map<String, BodyEncoder> bodyEncoders = new LinkedHashMap<String, BodyEncoder>();
+            bodyEncoders.put("Route53#changeBatch(String,List)", new EncodeChanges());
+            return bodyEncoders;
         }
     }
 

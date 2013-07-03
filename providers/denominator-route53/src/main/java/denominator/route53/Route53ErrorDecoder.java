@@ -1,15 +1,12 @@
 package denominator.route53;
 
 import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Date;
 
 import org.xml.sax.helpers.DefaultHandler;
-
-import com.google.common.base.Ticker;
 
 import feign.FeignException;
 import feign.Response;
@@ -19,14 +16,9 @@ import feign.codec.SAXDecoder;
 
 class Route53ErrorDecoder extends SAXDecoder implements ErrorDecoder {
 
-    private final Ticker ticker;
-
-    public Route53ErrorDecoder(Ticker ticker) {
-        this.ticker = ticker;
-    }
-
-    public Route53ErrorDecoder() {
-        this(Ticker.systemTicker());
+    // visible for testing;
+    protected long currentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
     @Override
@@ -41,7 +33,7 @@ class Route53ErrorDecoder extends SAXDecoder implements ErrorDecoder {
                 throw new RetryableException(message, null);
             } else if ("Throttling".equals(error.code) || "PriorRequestNotComplete".equals(error.code)) {
                 // backoff at least a second.
-                throw new RetryableException(message, new Date(NANOSECONDS.toMillis(ticker.read()) + 1000));
+                throw new RetryableException(message, new Date(currentTimeMillis() + 1000));
             } else if (error.code.startsWith("NoSuch")) {
                 // consider fallback
             }
