@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
 
 import javax.inject.Provider;
 
@@ -22,7 +22,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Table;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 
@@ -31,6 +30,7 @@ import denominator.Credentials.ListCredentials;
 import denominator.model.Zone;
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
+import denominator.ultradns.UltraDNS.NameAndType;
 import denominator.ultradns.UltraDNS.Record;
 import feign.Feign;
 
@@ -156,19 +156,20 @@ public class UltraDNSTest {
 
             assertEquals(records.size(), 2);
 
-            assertEquals(records.get(0).id, "04023A2507B6468F");
-            assertEquals(records.get(0).created, iso8601SimpleDateFormat.parse("2010-10-02T16:57:16.000Z"));
-            assertEquals(records.get(0).name, "www.denominator.io.");
-            assertEquals(records.get(0).typeCode, 1);
-            assertEquals(records.get(0).ttl, 3600);
-            assertEquals(records.get(0).rdata.get(0), "1.2.3.4");
+            // sorted
+            assertEquals(records.get(1).id, "04023A2507B6468F");
+            assertEquals(records.get(1).created, iso8601SimpleDateFormat.parse("2010-10-02T16:57:16.000Z"));
+            assertEquals(records.get(1).name, "www.denominator.io.");
+            assertEquals(records.get(1).typeCode, 1);
+            assertEquals(records.get(1).ttl, 3600);
+            assertEquals(records.get(1).rdata.get(0), "1.2.3.4");
 
-            assertEquals(records.get(1).id, "0B0338C2023F7969");
-            assertEquals(records.get(1).created, iso8601SimpleDateFormat.parse("2009-10-12T12:02:23.000Z"));
-            assertEquals(records.get(1).name, "denominator.io.");
-            assertEquals(records.get(1).typeCode, 2);
-            assertEquals(records.get(1).ttl, 86400);
-            assertEquals(records.get(1).rdata.get(0), "pdns2.ultradns.net.");
+            assertEquals(records.get(0).id, "0B0338C2023F7969");
+            assertEquals(records.get(0).created, iso8601SimpleDateFormat.parse("2009-10-12T12:02:23.000Z"));
+            assertEquals(records.get(0).name, "denominator.io.");
+            assertEquals(records.get(0).typeCode, 2);
+            assertEquals(records.get(0).ttl, 86400);
+            assertEquals(records.get(0).rdata.get(0), "pdns2.ultradns.net.");
 
             assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfZone);
         } finally {
@@ -383,11 +384,17 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            Table<String, String, String> pools = mockApi(server.getUrl("")).rrPoolNameTypeToIdInZone("denominator.io.");
+            Map<NameAndType, String> pools = mockApi(server.getUrl("")).rrPoolNameTypeToIdInZone("denominator.io.");
             assertEquals(pools.size(), 2);
 
-            assertEquals(pools.get("app-uswest1.denominator.io.", "A"), "000000000000002");
-            assertEquals(pools.get("app-uswest2.denominator.io.", "A"), "000000000000003");
+            NameAndType one = new NameAndType();
+            one.name = "app-uswest1.denominator.io.";
+            one.type = "A";
+            assertEquals(pools.get(one), "000000000000002", pools.toString());
+            NameAndType two = new NameAndType();
+            two.name = "app-uswest2.denominator.io.";
+            two.type = "A";
+            assertEquals(pools.get(two), "000000000000003", pools.toString());
 
             assertEquals(new String(server.takeRequest().getBody()), getLoadBalancingPoolsByZone);
         } finally {
@@ -450,19 +457,20 @@ public class UltraDNSTest {
 
             assertEquals(records.size(), 2);
 
-            assertEquals(records.get(0).id, "04023A2507B6468F");
-            assertEquals(records.get(0).created, iso8601SimpleDateFormat.parse("2010-10-02T16:57:16.000Z"));
-            assertEquals(records.get(0).name, "www.denominator.io.");
-            assertEquals(records.get(0).typeCode, 1);
-            assertEquals(records.get(0).ttl, 3600);
-            assertEquals(records.get(0).rdata.get(0), "1.2.3.4");
+            // sorted
+            assertEquals(records.get(1).id, "04023A2507B6468F");
+            assertEquals(records.get(1).created, iso8601SimpleDateFormat.parse("2010-10-02T16:57:16.000Z"));
+            assertEquals(records.get(1).name, "www.denominator.io.");
+            assertEquals(records.get(1).typeCode, 1);
+            assertEquals(records.get(1).ttl, 3600);
+            assertEquals(records.get(1).rdata.get(0), "1.2.3.4");
 
-            assertEquals(records.get(1).id, "0B0338C2023F7969");
-            assertEquals(records.get(1).created, iso8601SimpleDateFormat.parse("2009-10-12T12:02:23.000Z"));
-            assertEquals(records.get(1).name, "denominator.io.");
-            assertEquals(records.get(1).typeCode, 2);
-            assertEquals(records.get(1).ttl, 86400);
-            assertEquals(records.get(1).rdata.get(0), "pdns2.ultradns.net.");
+            assertEquals(records.get(0).id, "0B0338C2023F7969");
+            assertEquals(records.get(0).created, iso8601SimpleDateFormat.parse("2009-10-12T12:02:23.000Z"));
+            assertEquals(records.get(0).name, "denominator.io.");
+            assertEquals(records.get(0).typeCode, 2);
+            assertEquals(records.get(0).ttl, 86400);
+            assertEquals(records.get(0).rdata.get(0), "pdns2.ultradns.net.");
 
             assertEquals(new String(server.takeRequest().getBody()), getRRPoolRecords);
         } finally {
@@ -692,23 +700,24 @@ public class UltraDNSTest {
             assertEquals(records.get(0).ttl, 300);
             assertEquals(records.get(0).rdata.get(0), "srv-000000001.eu-west-1.elb.amazonaws.com.");
 
-            assertEquals(records.get(1).geoGroupId, "C000000000000002");
-            assertEquals(records.get(1).geoGroupName, "US");
-            assertFalse(records.get(1).noResponseRecord);
-            assertEquals(records.get(1).id, "A000000000000002");
-            assertEquals(records.get(1).name, "www.denominator.io.");
-            assertEquals(records.get(1).type, "CNAME");
-            assertEquals(records.get(1).ttl, 300);
-            assertEquals(records.get(1).rdata.get(0), "srv-000000001.us-east-1.elb.amazonaws.com.");
-
-            assertEquals(records.get(2).geoGroupId, "C000000000000003");
-            assertEquals(records.get(2).geoGroupName, "Everywhere Else");
+            // sorted
+            assertEquals(records.get(2).geoGroupId, "C000000000000002");
+            assertEquals(records.get(2).geoGroupName, "US");
             assertFalse(records.get(2).noResponseRecord);
-            assertEquals(records.get(2).id, "A000000000000003");
+            assertEquals(records.get(2).id, "A000000000000002");
             assertEquals(records.get(2).name, "www.denominator.io.");
             assertEquals(records.get(2).type, "CNAME");
-            assertEquals(records.get(2).ttl, 60);
-            assertEquals(records.get(2).rdata.get(0), "srv-000000002.us-east-1.elb.amazonaws.com.");
+            assertEquals(records.get(2).ttl, 300);
+            assertEquals(records.get(2).rdata.get(0), "srv-000000001.us-east-1.elb.amazonaws.com.");
+
+            assertEquals(records.get(1).geoGroupId, "C000000000000003");
+            assertEquals(records.get(1).geoGroupName, "Everywhere Else");
+            assertFalse(records.get(1).noResponseRecord);
+            assertEquals(records.get(1).id, "A000000000000003");
+            assertEquals(records.get(1).name, "www.denominator.io.");
+            assertEquals(records.get(1).type, "CNAME");
+            assertEquals(records.get(1).ttl, 60);
+            assertEquals(records.get(1).rdata.get(0), "srv-000000002.us-east-1.elb.amazonaws.com.");
 
             assertEquals(new String(server.takeRequest().getBody()), format(getDirectionalDNSRecordsForHost));
         } finally {
@@ -931,7 +940,7 @@ public class UltraDNSTest {
             group.name = "Mexas";
             group.regionToTerritories = ImmutableMultimap.<String, String> builder()//
                     .putAll("United States (US)", "Maryland", "Texas")//
-                    .build();
+                    .build().asMap();
 
             assertEquals(
                     mockApi(server.getUrl("")).createRecordAndDirectionalGroupInPool(record, group, "060339AA04175655"),
@@ -983,7 +992,7 @@ public class UltraDNSTest {
             group.name = "Mexas";
             group.regionToTerritories = ImmutableMultimap.<String, String> builder()//
                     .putAll("United States (US)", "Maryland", "Texas")//
-                    .build();
+                    .build().asMap();
 
             mockApi(server.getUrl("")).updateRecordAndDirectionalGroup(record, group);
 
@@ -1052,10 +1061,10 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            Table<String, Integer, SortedSet<String>> group = mockApi(server.getUrl("")).getRegionsByIdAndName();
-            assertEquals(group.get("Anonymous Proxy (A1)", 14), ImmutableSortedSet.of("Anonymous Proxy"));
+            Map<String, Collection<String>> group = mockApi(server.getUrl("")).availableRegions();
+            assertEquals(group.get("Anonymous Proxy (A1)"), ImmutableSortedSet.of("Anonymous Proxy"));
             assertEquals(
-                    group.get("Antarctica", 3),
+                    group.get("Antarctica"),
                     ImmutableSortedSet.<String> naturalOrder().add("Antarctica").add("Bouvet Island")
                             .add("French Southern Territories").build());
 
