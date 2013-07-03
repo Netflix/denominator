@@ -6,11 +6,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.Toast;
 
-import com.google.common.base.Stopwatch;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-
-import java.util.concurrent.TimeUnit;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import javax.inject.Singleton;
 
@@ -47,7 +44,7 @@ public class DenominatorApplication extends Application {
   public void onCreate() {
     Log.i(TAG, " creating");
     super.onCreate();
-    Stopwatch watch = new Stopwatch().start();
+    long start = System.currentTimeMillis();
     @Module(injects = DenominatorApplication.class, complete = false)
     class ApplicationModule {
       @Provides
@@ -56,14 +53,13 @@ public class DenominatorApplication extends Application {
         return DenominatorApplication.this;
       }
     }
-    Object[] modulesForGraph = ImmutableList.builder()
-        .add(new DenominatorProvider())
-        .add(new CredentialsFromPreferencesModule())
-        .add(new ApplicationModule())
-        .add(new ZoneListModule())
-        .build().toArray();
+    Object[] modulesForGraph = new Object[4];
+    modulesForGraph[0] = new DenominatorProvider();
+    modulesForGraph[1] = new CredentialsFromPreferencesModule();
+    modulesForGraph[2] = new ApplicationModule();
+    modulesForGraph[3] = new ZoneListModule();
     applicationGraph = ObjectGraph.create(modulesForGraph);
-    long duration = watch.elapsed(TimeUnit.MILLISECONDS);
+    long duration = System.currentTimeMillis() - start;
     String durationMessage = getString(R.string.init_duration, duration);
     Toast.makeText(this, durationMessage, LENGTH_SHORT).show();
     Log.i(TAG, " created");
@@ -88,13 +84,13 @@ public class DenominatorApplication extends Application {
         return Credentials.AnonymousCredentials.INSTANCE;
       }
       SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-      String credentialType = provider.credentialTypeToParameterNames().keys().iterator().next();
-      ImmutableMap.Builder<String, String> creds = ImmutableMap.builder();
+      String credentialType = provider.credentialTypeToParameterNames().keySet().iterator().next();
+      Map<String, String> creds = new LinkedHashMap<String, String>();
       for (String parameter : provider.credentialTypeToParameterNames().get(credentialType)) {
         String value = sp.getString(parameter, null);
         creds.put(parameter, value);
       }
-      return Credentials.MapCredentials.from(creds.build());
+      return Credentials.MapCredentials.from(creds);
     }
   }
 }

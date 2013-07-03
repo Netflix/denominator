@@ -55,9 +55,9 @@ public class ZoneListFragment extends Fragment {
       TextView name = new TextView(activity);
       name.setText(zone.name());
       row.addView(name);
-      if (zone.id().isPresent()) {
+      if (zone.id() != null) {
         TextView id = new TextView(activity);
-        id.setText(zone.id().get());
+        id.setText(zone.id());
         row.addView(id);
       }
       zones.addView(row);
