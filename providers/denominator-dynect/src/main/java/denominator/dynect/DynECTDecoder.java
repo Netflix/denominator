@@ -1,8 +1,6 @@
 package denominator.dynect;
 
-import static com.google.common.base.Functions.compose;
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterators.transform;
+import static denominator.common.Preconditions.checkState;
 
 import java.io.Reader;
 import java.lang.reflect.Type;
@@ -13,9 +11,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
@@ -37,7 +33,11 @@ class DynECTDecoder extends feign.codec.Decoder {
         return parseDataWith(sessionValid, TokenDecoder.INSTANCE);
     }
 
-    private static enum TokenDecoder implements Function<JsonReader, String> {
+    interface Parser<T> {
+        T apply(JsonReader reader);
+    }
+
+    private static enum TokenDecoder implements Parser<String> {
         INSTANCE;
 
         @Override
@@ -54,42 +54,31 @@ class DynECTDecoder extends feign.codec.Decoder {
         return parseDataWith(sessionValid, ZonesDecoder.INSTANCE);
     }
 
-    private static enum ZonesDecoder implements Function<JsonReader, List<Zone>> {
+    private static enum ZonesDecoder implements Parser<List<Zone>> {
         INSTANCE;
 
         @Override
         public List<Zone> apply(JsonReader reader) {
-            Iterator<JsonElement> data = new JsonParser().parse(reader).getAsJsonArray().iterator();
-            return ImmutableList.copyOf(transform(data,
-                    compose(ToZone.INSTANCE, firstGroupFunction("/REST.*/([^/]+)/?$"))));
+            List<Zone> zones = new ArrayList<Zone>();
+            JsonArray data = new JsonParser().parse(reader).getAsJsonArray();
+            for (String name : toFirstGroup("/REST.*/([^/]+)/?$", data)) {
+                zones.add(Zone.create(name));
+            }
+            return zones;
         }
     }
-
-    private static enum ToZone implements Function<String, Zone> {
-        INSTANCE;
-        @Override
-        public Zone apply(String input) {
-            return Zone.create(input);
-        }
-
-        @Override
-        public String toString() {
-            return "Zone";
-        }
-    };
 
     public static Decoder recordIds(AtomicReference<Boolean> sessionValid) {
         return parseDataWith(sessionValid, RecordIdsDecoder.INSTANCE);
     }
 
-    private static enum RecordIdsDecoder implements Function<JsonReader, List<String>> {
+    private static enum RecordIdsDecoder implements Parser<List<String>> {
         INSTANCE;
 
         @Override
         public List<String> apply(JsonReader reader) {
-            Iterator<JsonElement> data = new JsonParser().parse(reader).getAsJsonArray().iterator();
-            return ImmutableList.copyOf(transform(data,
-                    firstGroupFunction("/REST/([a-zA-Z]+Record/[^\"]+/[^\"]+/[0-9]+)")));
+            JsonArray data = new JsonParser().parse(reader).getAsJsonArray();
+            return toFirstGroup("/REST/([a-zA-Z]+Record/[^\"]+/[^\"]+/[0-9]+)", data);
         }
     }
 
@@ -97,24 +86,27 @@ class DynECTDecoder extends feign.codec.Decoder {
         return parseDataWith(sessionValid, RecordsByNameAndTypeDecoder.INSTANCE);
     }
 
-    private static enum RecordsByNameAndTypeDecoder implements Function<JsonReader, Iterator<Record>> {
+    private static enum RecordsByNameAndTypeDecoder implements Parser<Iterator<Record>> {
         INSTANCE;
 
         @Override
         public Iterator<Record> apply(JsonReader reader) {
-            Iterator<JsonElement> data = new JsonParser().parse(reader).getAsJsonArray().iterator();
-            return transform(data, ToRecord.INSTANCE);
+            List<Record> records = new ArrayList<Record>();
+            for (JsonElement data : new JsonParser().parse(reader).getAsJsonArray()) {
+                records.add(ToRecord.INSTANCE.apply(data));
+            }
+            return records.iterator();
         }
     }
 
-    static Decoder parseDataWith(AtomicReference<Boolean> sessionValid, Function<JsonReader, ?> fn) {
+    static Decoder parseDataWith(AtomicReference<Boolean> sessionValid, Parser<?> fn) {
         return new DynECTDecoder(sessionValid, fn);
     }
 
     private final AtomicReference<Boolean> sessionValid;
-    private final Function<JsonReader, ?> fn;
+    private final Parser<?> fn;
 
-    DynECTDecoder(AtomicReference<Boolean> sessionValid, Function<JsonReader, ?> fn) {
+    DynECTDecoder(AtomicReference<Boolean> sessionValid, Parser<?> fn) {
         this.sessionValid = sessionValid;
         this.fn = fn;
     }
@@ -145,7 +137,7 @@ class DynECTDecoder extends feign.codec.Decoder {
                             if ("INFO".equals(fieldName)) {
                                 message.info = reader.nextString();
                             } else if ("ERR_CD".equals(fieldName) && reader.peek() != JsonToken.NULL) {
-                                message.code = Optional.fromNullable(reader.nextString());
+                                message.code = reader.nextString();
                             } else {
                                 reader.skipValue();
                             }
@@ -177,17 +169,14 @@ class DynECTDecoder extends feign.codec.Decoder {
         }
     }
 
-    private static Function<JsonElement, String> firstGroupFunction(String pattern) {
-
-        final Pattern compiled = Pattern.compile(pattern);
-        return new Function<JsonElement, String>() {
-
-            public String apply(JsonElement in) {
-                Matcher matcher = compiled.matcher(in.getAsString());
-                checkState(matcher.find() && matcher.groupCount() == 1, "%s didn't match %s", in, compiled);
-                return matcher.group(1);
-            }
-        };
+    private static List<String> toFirstGroup(String pattern, JsonArray elements) {
+        Pattern compiled = Pattern.compile(pattern);
+        List<String> results = new ArrayList<String>(elements.size());
+        for (JsonElement in : elements) {
+            Matcher matcher = compiled.matcher(in.getAsString());
+            checkState(matcher.find() && matcher.groupCount() == 1, "%s didn't match %s", in, compiled);
+            results.add(matcher.group(1));
+        }
+        return results;
     }
-
 }

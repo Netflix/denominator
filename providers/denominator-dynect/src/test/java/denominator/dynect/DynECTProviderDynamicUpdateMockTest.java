@@ -2,6 +2,7 @@ package denominator.dynect;
 
 import static denominator.CredentialsConfiguration.credentials;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
 import java.net.URL;
@@ -9,11 +10,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 
+import dagger.Module;
+import dagger.Provides;
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.DNSApi;
@@ -44,7 +45,7 @@ public class DynECTProviderDynamicUpdateMockTest {
                 }
             }, credentials("customer", "joe", "letmein")).api();
 
-            assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertNull(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
 
             assertEquals(server.getRequestCount(), 4);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
@@ -78,9 +79,9 @@ public class DynECTProviderDynamicUpdateMockTest {
                 }
             }, credentials("customer", "joe", "letmein")).api();
 
-            assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertNull(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
             dynamicUrl.set(new URL(mockUrl, updatedPath));
-            assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertNull(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
 
             assertEquals(server.getRequestCount(), 4);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
@@ -104,21 +105,24 @@ public class DynECTProviderDynamicUpdateMockTest {
         try {
             final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(ListCredentials.from("customer", "joe", "letmein"));
 
+            @Module(complete = false, library = true, overrides = true)
+            class OverrideCredentials {
+                @Provides
+                public Credentials get() {
+                    return dynamicCredentials.get();
+                }
+            }
+
             DNSApi api = Denominator.create(new DynECTProvider() {
                 @Override
                 public String url() {
                     return server.getUrl("").toString();
                 }
-            }, credentials(new Supplier<Credentials>(){
-                @Override
-                public Credentials get() {
-                    return dynamicCredentials.get();
-                }
-            })).api();
+            }, new OverrideCredentials()).api();
 
-            assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertNull(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
             dynamicCredentials.set(ListCredentials.from("customer2", "bob", "comeon"));
-            assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertNull(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
 
             assertEquals(server.getRequestCount(), 4);
             assertEquals(new String(server.takeRequest().getBody()), "{\"customer_name\":\"customer\",\"user_name\":\"joe\",\"password\":\"letmein\"}");

@@ -4,8 +4,6 @@ import static java.lang.String.format;
 
 import java.util.List;
 
-import com.google.common.base.Optional;
-
 import feign.FeignException;
 
 public class DynECTException extends FeignException {
@@ -36,10 +34,13 @@ public class DynECTException extends FeignException {
     private static final long serialVersionUID = 1L;
 
     public static class Message {
-        Optional<String> code = Optional.absent();
+        String code;
         String info;
 
-        public Optional<String> code() {
+        /**
+         * nullable
+         */
+        public String code() {
             return code;
         }
 
@@ -49,8 +50,8 @@ public class DynECTException extends FeignException {
 
         @Override
         public String toString() {
-            if (code.isPresent()) {
-                return code.get() + ": " + info;
+            if (code != null) {
+                return code + ": " + info;
             }
             return info;
         }

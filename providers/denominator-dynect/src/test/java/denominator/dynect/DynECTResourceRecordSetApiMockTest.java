@@ -6,6 +6,7 @@ import static denominator.CredentialsConfiguration.credentials;
 import static denominator.model.ResourceRecordSets.a;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
 import java.net.URL;
@@ -13,7 +14,6 @@ import java.util.Iterator;
 
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Resources;
@@ -299,7 +299,7 @@ public class DynECTResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl(""));
-            assertEquals(api.getByNameAndType("www.denominator.io", "A").get(),
+            assertEquals(api.getByNameAndType("www.denominator.io", "A"),
                     a("www.denominator.io", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
 
             assertEquals(server.getRequestCount(), 2);
@@ -319,7 +319,7 @@ public class DynECTResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl(""));
-            assertEquals(api.getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertNull(api.getByNameAndType("www.denominator.io", "A"));
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");

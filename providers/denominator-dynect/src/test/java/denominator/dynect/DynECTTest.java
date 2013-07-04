@@ -8,11 +8,16 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
 
+import javax.inject.Singleton;
+
 import org.testng.annotations.Test;
 
+import com.google.gson.Gson;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 
+import dagger.Module;
+import dagger.Provides;
 import denominator.model.Zone;
 import feign.Feign;
 
@@ -130,11 +135,11 @@ public class DynECTTest {
 
             assertEquals(e.status(), "failure");
             assertEquals(e.messages().size(), 3);
-            assertEquals(e.messages().get(0).code().get(), "ILLEGAL_OPERATION");
+            assertEquals(e.messages().get(0).code(), "ILLEGAL_OPERATION");
             assertEquals(e.messages().get(0).info(), "zone: Operation blocked by current task");
-            assertFalse(e.messages().get(1).code().isPresent());
+            assertFalse(e.messages().get(1).code() != null);
             assertEquals(e.messages().get(1).info(), "task_name: ProvisionZone");
-            assertFalse(e.messages().get(1).code().isPresent());
+            assertFalse(e.messages().get(1).code() != null);
             assertEquals(e.messages().get(2).info(), "task_id: 39120953");
         } finally {
             server.shutdown();
@@ -160,9 +165,9 @@ public class DynECTTest {
 
             assertEquals(e.status(), "failure");
             assertEquals(e.messages().size(), 2);
-            assertEquals(e.messages().get(0).code().get(), "TARGET_EXISTS");
+            assertEquals(e.messages().get(0).code(), "TARGET_EXISTS");
             assertEquals(e.messages().get(0).info(), "name: Name already exists");
-            assertFalse(e.messages().get(1).code().isPresent());
+            assertFalse(e.messages().get(1).code() != null);
             assertEquals(e.messages().get(1).info(), "create: You already have this zone.");
         } finally {
             server.shutdown();
@@ -179,11 +184,19 @@ public class DynECTTest {
     };
 
     static DynECT mockApi(final URL url) {
+        @Module(library = true)
+        class GsonModule{
+            @Provides
+            @Singleton
+            Gson provideGson(){
+                return new Gson();
+            }
+        }
         return Feign.create(new DynECTTarget(new DynECTProvider() {
             @Override
             public String url() {
                 return url.toString();
             }
-        }, lazyToken), new DynECTProvider.FeignModule());
+        }, lazyToken), new DynECTProvider.FeignModule(), new GsonModule());
     }
 }

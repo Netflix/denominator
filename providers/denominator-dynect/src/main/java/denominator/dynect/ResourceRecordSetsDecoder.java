@@ -1,24 +1,25 @@
 package denominator.dynect;
 
-import static com.google.common.collect.Iterators.peekingIterator;
+import static denominator.common.Util.peekingIterator;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.base.Function;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.PeekingIterator;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 
+import denominator.common.PeekingIterator;
 import denominator.dynect.DynECT.Record;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 
-class ResourceRecordSetsDecoder implements Function<JsonReader, Iterator<ResourceRecordSet<?>>> {
+class ResourceRecordSetsDecoder implements DynECTDecoder.Parser<Iterator<ResourceRecordSet<?>>> {
     @Override
     public Iterator<ResourceRecordSet<?>> apply(JsonReader reader) {
         JsonParser parser = new JsonParser();
@@ -29,22 +30,20 @@ class ResourceRecordSetsDecoder implements Function<JsonReader, Iterator<Resourc
         if (data.isJsonArray()) {
             return new GroupByRecordNameAndTypeIterator(data.getAsJsonArray().iterator());
         } else if (data.isJsonObject()) {
-            return new GroupByRecordNameAndTypeIterator(FluentIterable.from(data.getAsJsonObject().entrySet())
-                    .transformAndConcat(GetValue.INSTANCE).iterator());
+            List<JsonElement> elements = new ArrayList<JsonElement>();
+            for (Entry<String, JsonElement> entry : data.getAsJsonObject().entrySet()) {
+                if (entry.getValue() instanceof JsonArray) {
+                    for (JsonElement element : entry.getValue().getAsJsonArray())
+                        elements.add(element);
+                }
+            }
+            return new GroupByRecordNameAndTypeIterator(elements.iterator());
         } else {
             throw new IllegalStateException("unknown format: " + data);
         }
     }
 
-    private static enum GetValue implements Function<Map.Entry<String, JsonElement>, Iterable<JsonElement>> {
-        INSTANCE;
-        @Override
-        public Iterable<JsonElement> apply(Entry<String, JsonElement> input) {
-            return input.getValue().getAsJsonArray();
-        }
-    }
-
-    private static class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>> {
+    static class GroupByRecordNameAndTypeIterator extends PeekingIterator<ResourceRecordSet<?>> {
 
         private final PeekingIterator<JsonElement> peekingIterator;
 
@@ -53,17 +52,17 @@ class ResourceRecordSetsDecoder implements Function<JsonReader, Iterator<Resourc
         }
 
         @Override
-        public boolean hasNext() {
-            return peekingIterator.hasNext();
-        }
-
-        @Override
-        public ResourceRecordSet<?> next() {
+        protected ResourceRecordSet<?> computeNext() {
+            if (!peekingIterator.hasNext())
+                return endOfData();
             JsonElement current = peekingIterator.next();
             Record record = ToRecord.INSTANCE.apply(current);
-            Builder<Map<String, Object>> builder = ResourceRecordSet.builder().name(record.name).type(record.type)
-                    .ttl(record.ttl).add(record.rdata);
-            while (hasNext()) {
+            Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
+                                                                    .name(record.name)
+                                                                    .type(record.type)
+                                                                    .ttl(record.ttl)
+                                                                    .add(record.rdata);
+            while (peekingIterator.hasNext()) {
                 JsonElement next = peekingIterator.peek();
                 if (next == null || next.isJsonNull())
                     continue;
@@ -75,11 +74,6 @@ class ResourceRecordSetsDecoder implements Function<JsonReader, Iterator<Resourc
                 }
             }
             return builder.build();
-        }
-
-        @Override
-        public void remove() {
-            throw new UnsupportedOperationException();
         }
     }
 

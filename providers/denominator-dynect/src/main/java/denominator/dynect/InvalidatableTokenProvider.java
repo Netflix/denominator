@@ -8,8 +8,6 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import com.google.common.base.Supplier;
-
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import feign.Body;
@@ -20,7 +18,7 @@ import feign.RequestLine;
  */
 // similar to guava MemoizingSupplier
 @Singleton
-class InvalidatableTokenSupplier implements Supplier<String> {
+class InvalidatableTokenProvider implements Provider<String> {
     interface Session {
         @RequestLine("POST /Session")
         @Body("%7B\"customer_name\":\"{customer_name}\",\"user_name\":\"{user_name}\",\"password\":\"{password}\"%7D")
@@ -39,8 +37,8 @@ class InvalidatableTokenSupplier implements Supplier<String> {
     transient String value;
 
     @Inject
-    InvalidatableTokenSupplier(denominator.Provider provider, Session session,
-            javax.inject.Provider<Credentials> credentials, AtomicReference<Boolean> sessionValid) {
+    InvalidatableTokenProvider(denominator.Provider provider, Session session, Provider<Credentials> credentials,
+            AtomicReference<Boolean> sessionValid) {
         this.provider = provider;
         this.session = session;
         this.credentials = credentials;
