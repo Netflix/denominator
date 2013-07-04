@@ -133,7 +133,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl("/"));
-            assertEquals(api.getByNameAndType("www.denominator.io.", "A").get(),
+            assertEquals(api.getByNameAndType("www.denominator.io.", "A"),
                     a("www.denominator.io.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
             assertEquals(server.getRequestCount(), 1);
 

@@ -4,6 +4,7 @@ import static denominator.CredentialsConfiguration.credentials;
 import static denominator.model.ResourceRecordSets.a;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
 import java.net.URL;
@@ -13,7 +14,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
@@ -49,7 +49,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
                 ResourceRecordSet<?> record = records.next();
                 
                 assertEquals(record.name(), "www.denominator.io");
-                assertEquals(record.ttl().get().intValue(), 600000);
+                assertEquals(record.ttl().intValue(), 600000);
             }
 
             assertEquals(server.getRequestCount(), 2);
@@ -106,7 +106,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
                 ResourceRecordSet<?> record = records.next();
                 
                 assertEquals(record.name(), "www.denominator.io");
-                assertEquals(record.ttl().get().intValue(), 600000);
+                assertEquals(record.ttl().intValue(), 600000);
             }
 
             assertEquals(server.getRequestCount(), 3);
@@ -139,7 +139,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
             	ResourceRecordSet<?> record = records.next();
             	
             	assertEquals(record.name(), "www.denominator.io");
-            	assertEquals(record.ttl().get().intValue(), 600000);
+            	assertEquals(record.ttl().intValue(), 600000);
             }
 
             assertEquals(server.getRequestCount(), 2);
@@ -188,7 +188,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
 
         try {
             ResourceRecordSetApi api = mockApi(url);
-            assertEquals(api.getByNameAndType("www.denominator.io", "A").get(),
+            assertEquals(api.getByNameAndType("www.denominator.io", "A"),
                     a("www.denominator.io", 600000, ImmutableList.of("1.2.3.4", "5.6.7.8")));
 
             assertEquals(server.getRequestCount(), 2);
@@ -212,7 +212,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));        
         try {
             ResourceRecordSetApi api = mockApi(url);
-            assertEquals(api.getByNameAndType("www.denominator.io", "A"), Optional.absent());
+            assertNull(api.getByNameAndType("www.denominator.io", "A"));
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");

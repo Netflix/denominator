@@ -29,7 +29,7 @@ public class CloudDNSProviderTest {
         assertEquals(PROVIDER.supportsDuplicateZoneNames(), true);
         assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
                 .putAll("password", "username", "password")
-                .putAll("apiKey", "username", "apiKey").build());
+                .putAll("apiKey", "username", "apiKey").build().asMap());
     }
 
     @Test
@@ -50,7 +50,7 @@ public class CloudDNSProviderTest {
         assertEquals(manager.api().zones().getClass(), CloudDNSZoneApi.class);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. clouddns requires one of the following forms: when type is password: username, password; apiKey: username, apiKey")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. clouddns requires one of the following forms: when type is password: username,password; apiKey: username,apiKey")
     public void testCredentialsRequired() {
         create(PROVIDER).api().zones().iterator();
     }

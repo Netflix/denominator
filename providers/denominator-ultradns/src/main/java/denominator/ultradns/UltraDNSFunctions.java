@@ -1,14 +1,11 @@
 package denominator.ultradns;
 
+import static denominator.common.Util.join;
+
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.BiMap;
-import com.google.common.collect.ImmutableMap;
-
-import denominator.ResourceTypeToValue;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
@@ -20,31 +17,9 @@ import denominator.model.rdata.SPFData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.SSHFPData;
 import denominator.model.rdata.TXTData;
-import denominator.ultradns.UltraDNS.Record;
 
 final class UltraDNSFunctions {
     private UltraDNSFunctions() { /* */
-    }
-
-    static Function<Record, Map<String, Object>> toRdataMap() {
-        return ToRdataMap.INSTANCE;
-    }
-
-    private static final BiMap<Integer, String> reverseLookup = new ResourceTypeToValue().inverse();
-
-    private enum ToRdataMap implements Function<Record, Map<String, Object>> {
-        INSTANCE;
-
-        @Override
-        public Map<String, Object> apply(Record in) {
-            String type = reverseLookup.get(in.typeCode);
-            return forTypeAndRData(type, in.rdata);
-        }
-
-        @Override
-        public String toString() {
-            return "toRdataMap";
-        }
     }
 
     static Map<String, Object> forTypeAndRData(String type, List<String> rdata) {
@@ -75,8 +50,9 @@ final class UltraDNSFunctions {
         } else if ("TXT".equals(type)) {
             return TXTData.create(rdata.get(0));
         } else {
-            return ImmutableMap.<String, Object> of("rdata", Joiner.on(' ').join(rdata));
+            Map<String, Object> map = new LinkedHashMap<String, Object>();
+            map.put("rdata", join(' ', rdata));
+            return map;
         }
     }
-
 }

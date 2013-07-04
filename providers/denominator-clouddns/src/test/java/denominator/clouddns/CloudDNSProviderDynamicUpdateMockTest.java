@@ -12,12 +12,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.testng.annotations.Test;
 
-import com.google.common.base.Supplier;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.QueueDispatcher;
 import com.google.mockwebserver.RecordedRequest;
 
+import dagger.Module;
+import dagger.Provides;
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.DNSApi;
@@ -86,17 +87,20 @@ public class CloudDNSProviderDynamicUpdateMockTest {
             final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(
                     ListCredentials.from("jclouds-joe", "letmein"));
 
+            @Module(complete = false, library = true, overrides = true)
+            class OverrideCredentials {
+                @Provides
+                public Credentials get() {
+                    return dynamicCredentials.get();
+                }
+            }
+
             DNSApi api = Denominator.create(new CloudDNSProvider() {
                 @Override
                 public String url() {
                     return mockUrl.toString();
                 }
-            }, credentials(new Supplier<Credentials>() {
-                @Override
-                public Credentials get() {
-                    return dynamicCredentials.get();
-                }
-            })).api();
+            }, new OverrideCredentials()).api();
 
             assertFalse(api.zones().iterator().hasNext());
             dynamicCredentials.set(ListCredentials.from("jclouds-bob", "comeon"));

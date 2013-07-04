@@ -1,14 +1,13 @@
 package denominator;
 
-import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.collect.Iterators.any;
 import static com.google.common.collect.Maps.filterKeys;
-import static denominator.model.ResourceRecordSets.nameEqualTo;
-import static denominator.model.ResourceRecordSets.typeEqualTo;
+import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 import java.util.Map;
 
@@ -16,7 +15,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 
 import denominator.model.ResourceRecordSet;
@@ -53,17 +51,16 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
                                           .ttl(1800)
                                           .add(recordSet.rdata().get(0)).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
-                .getByNameAndType(recordSet.name(), recordSet.type());
+        ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
         assertPresent(rrs, zone, recordSet.name(), recordSet.type());
 
-        checkRRS(rrs.get());
-        assertEquals(rrs.get().name(), recordSet.name());
-        assertEquals(rrs.get().ttl().get(), Integer.valueOf(1800));
-        assertEquals(rrs.get().type(), recordSet.type());
-        assertEquals(rrs.get().rdata().size(), 1);
-        assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(0));
+        checkRRS(rrs);
+        assertEquals(rrs.name(), recordSet.name());
+        assertEquals(rrs.ttl(), Integer.valueOf(1800));
+        assertEquals(rrs.type(), recordSet.type());
+        assertEquals(rrs.rdata().size(), 1);
+        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
     }
 
     @Test(dependsOnMethods = "putNewRRS", dataProvider = "roundRobinRecords")
@@ -78,17 +75,16 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
                     .add(recordSet.rdata().get(0))
                     .add(recordSet.rdata().get(1)).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
-                .getByNameAndType(recordSet.name(), recordSet.type());
+        ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
         assertPresent(rrs, zone, recordSet.name(), recordSet.type());
 
-        checkRRS(rrs.get());
-        assertEquals(rrs.get().name(), recordSet.name());
-        assertEquals(rrs.get().type(), recordSet.type());
-        assertEquals(rrs.get().rdata().size(), 2);
-        assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(0));
-        assertEquals(rrs.get().rdata().get(1), recordSet.rdata().get(1));
+        checkRRS(rrs);
+        assertEquals(rrs.name(), recordSet.name());
+        assertEquals(rrs.type(), recordSet.type());
+        assertEquals(rrs.rdata().size(), 2);
+        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
+        assertEquals(rrs.rdata().get(1), recordSet.rdata().get(1));
     }
 
     @Test(dependsOnMethods = "putAddingRData", dataProvider = "roundRobinRecords")
@@ -103,18 +99,17 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
                     .add(recordSet.rdata().get(0))
                     .add(recordSet.rdata().get(1)).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
-                .getByNameAndType(recordSet.name(), recordSet.type());
+        ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
         assertPresent(rrs, zone, recordSet.name(), recordSet.type());
 
-        checkRRS(rrs.get());
-        assertEquals(rrs.get().name(), recordSet.name());
-        assertEquals(rrs.get().type(), recordSet.type());
-        assertEquals(rrs.get().ttl().get(), Integer.valueOf(200000));
-        assertEquals(rrs.get().rdata().size(), 2);
-        assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(0));
-        assertEquals(rrs.get().rdata().get(1), recordSet.rdata().get(1));
+        checkRRS(rrs);
+        assertEquals(rrs.name(), recordSet.name());
+        assertEquals(rrs.type(), recordSet.type());
+        assertEquals(rrs.ttl(), Integer.valueOf(200000));
+        assertEquals(rrs.rdata().size(), 2);
+        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
+        assertEquals(rrs.rdata().get(1), recordSet.rdata().get(1));
     }
 
     @Test(dependsOnMethods = "putChangingTTL", dataProvider = "roundRobinRecords")
@@ -128,16 +123,15 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
                     .ttl(200000)
                     .add(recordSet.rdata().get(0)).build());
 
-        Optional<ResourceRecordSet<?>> rrs = rrsApi(zone)
-                .getByNameAndType(recordSet.name(), recordSet.type());
+        ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
         assertPresent(rrs, zone, recordSet.name(), recordSet.type());
 
-        checkRRS(rrs.get());
-        assertEquals(rrs.get().name(), recordSet.name());
-        assertEquals(rrs.get().type(), recordSet.type());
-        assertEquals(rrs.get().rdata().size(), 1);
-        assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(0));
+        checkRRS(rrs);
+        assertEquals(rrs.name(), recordSet.name());
+        assertEquals(rrs.type(), recordSet.type());
+        assertEquals(rrs.rdata().size(), 1);
+        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
     }
 
     @Test(dependsOnMethods = "putRemovingRData", dataProvider = "roundRobinRecords")
@@ -148,8 +142,8 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
         rrsApi(zone).deleteByNameAndType(recordSet.name(), recordSet.type());
 
         String failureMessage = format("recordset(%s, %s) still exists in %s", recordSet.name(), recordSet.type(), zone);
-        assertFalse(rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type()).isPresent(), failureMessage);
-        assertFalse(any(rrsApi(zone).iterator(), and(nameEqualTo(recordSet.name()), typeEqualTo(recordSet.type()))),
+        assertTrue(rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type()) == null, failureMessage);
+        assertFalse(any(rrsApi(zone).iterator(), predicate(nameAndTypeEqualTo(recordSet.name(), recordSet.type()))),
                 failureMessage);
 
         // test no exception if re-applied

@@ -1,19 +1,18 @@
 package denominator.model.rdata;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.Map;
-
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableMap;
+import java.util.LinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code SOA} (Start of
  * Authority) RData
  * 
- * <br><br><b>Example</b><br>
+ * <br>
+ * <br>
+ * <b>Example</b><br>
  * 
  * <pre>
  * SOAData rdata = SOAData.builder()
@@ -28,39 +27,24 @@ import com.google.common.collect.ImmutableMap;
  * 
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class SOAData extends ForwardingMap<String, Object> {
-
-    private final String mname;
-    private final String rname;
-    private final int serial;
-    private final int refresh;
-    private final int retry;
-    private final int expire;
-    private final int minimum;
+public class SOAData extends LinkedHashMap<String, Object> {
 
     @ConstructorProperties({ "mname", "rname", "serial", "refresh", "retry", "expire", "minimum" })
-    private SOAData(String mname, String rname, int serial, int refresh, int retry,
-            int expire, int minimum) {
-        this.mname = checkNotNull(mname, "mname");
-        this.rname = checkNotNull(rname, "rname of %s", mname);
+    SOAData(String mname, String rname, int serial, int refresh, int retry, int expire, int minimum) {
+        checkNotNull(mname, "mname");
+        checkNotNull(rname, "rname of %s", mname);
         checkArgument(serial >= 0, "serial of %s must be unsigned", mname);
-        this.serial = serial;
         checkArgument(refresh >= 0, "refresh of %s must be unsigned", mname);
-        this.refresh = refresh;
         checkArgument(retry >= 0, "retry of %s must be unsigned", mname);
-        this.retry = retry;
         checkArgument(expire >= 0, "expire of %s must be unsigned", mname);
-        this.expire = expire;
         checkArgument(minimum >= 0, "minimum of %s must be unsigned", mname);
-        this.minimum = minimum;
-        this.delegate = ImmutableMap.<String, Object> builder()
-                                    .put("mname", mname)
-                                    .put("rname", rname)
-                                    .put("serial", serial)
-                                    .put("refresh", refresh)
-                                    .put("retry", retry)
-                                    .put("expire", expire)
-                                    .put("minimum", minimum).build();
+        put("mname", mname);
+        put("rname", rname);
+        put("serial", serial);
+        put("refresh", refresh);
+        put("retry", retry);
+        put("expire", expire);
+        put("minimum", minimum);
     }
 
     /**
@@ -70,7 +54,7 @@ public class SOAData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public String mname() {
-        return mname;
+        return get("mname").toString();
     }
 
     /**
@@ -80,7 +64,7 @@ public class SOAData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public String rname() {
-        return rname;
+        return get("rname").toString();
     }
 
     /**
@@ -89,7 +73,7 @@ public class SOAData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public int serial() {
-        return serial;
+        return Integer.class.cast(get("serial"));
     }
 
     /**
@@ -98,7 +82,7 @@ public class SOAData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public int refresh() {
-        return refresh;
+        return Integer.class.cast(get("refresh"));
     }
 
     /**
@@ -108,7 +92,7 @@ public class SOAData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public int retry() {
-        return retry;
+        return Integer.class.cast(get("retry"));
     }
 
     /**
@@ -118,7 +102,7 @@ public class SOAData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public int expire() {
-        return expire;
+        return Integer.class.cast(get("expire"));
     }
 
     /**
@@ -127,7 +111,7 @@ public class SOAData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public int minimum() {
-        return minimum;
+        return Integer.class.cast(get("minimum"));
     }
 
     public SOAData.Builder toBuilder() {
@@ -213,11 +197,5 @@ public class SOAData extends ForwardingMap<String, Object> {
         return new Builder();
     }
 
-    // transient to avoid serializing by default, for example in json
-    private final transient ImmutableMap<String, Object> delegate;
-    
-    @Override
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
+    private static final long serialVersionUID = 1L;
 }

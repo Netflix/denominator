@@ -1,31 +1,28 @@
 package denominator.model.profile;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
 import static denominator.model.ResourceRecordSets.tryFindProfile;
 
 import java.beans.ConstructorProperties;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
-
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableMultimap.Builder;
-import com.google.common.collect.Multimap;
 
 import denominator.model.ResourceRecordSet;
 
 /**
  * Record sets with this profile are visible to the regions specified.
  * 
- * <br><br><b>Example</b><br>
+ * <br>
+ * <br>
+ * <b>Example</b><br>
  * 
  * <pre>
- * Geo profile = Geo.create(ImmutableMultimap.of(&quot;United States (US)&quot;, &quot;Maryland&quot;));
+ * Geo profile = Geo.create(Multimap.of(&quot;United States (US)&quot;, &quot;Maryland&quot;));
  * </pre>
  */
-public class Geo extends ForwardingMap<String, Object> {
+public class Geo extends LinkedHashMap<String, Object> {
 
     /**
      * returns a Geo view of the {@code profile} or null if no geo profile
@@ -41,14 +38,12 @@ public class Geo extends ForwardingMap<String, Object> {
             return Geo.class.cast(profile);
         if (profile.get("regions") instanceof Map) {
             Map<?, ?> regions = Map.class.cast(profile.get("regions"));
-            Builder<String, String> builder = ImmutableMultimap.<String, String> builder();
             for (Map.Entry<?, ?> entry : regions.entrySet()) {
-                checkArgument(entry.getValue() instanceof Iterable,
-                        "expected regions values to be a subtype of Iterable<String>, not %s",//
+                checkArgument(entry.getValue() instanceof Collection,
+                        "expected regions values to be a subtype of Collection<String>, not %s",//
                         entry.getValue().getClass().getSimpleName());
-                builder.putAll(entry.getKey().toString(), Iterable.class.cast(entry.getValue()));
             }
-            return new Geo(builder.build());
+            return new Geo(Map.class.cast(regions));
         } else {
             throw new IllegalArgumentException(
                     "expected profile to have a Map<String, Collection<String>> regions field, not "
@@ -62,7 +57,7 @@ public class Geo extends ForwardingMap<String, Object> {
      * @since 1.3.1
      */
     public static Geo asGeo(ResourceRecordSet<?> rrset) {
-        return asGeo(tryFindProfile(rrset, "geo").orNull());
+        return asGeo(tryFindProfile(rrset, "geo"));
     }
 
     /**
@@ -71,19 +66,14 @@ public class Geo extends ForwardingMap<String, Object> {
      * 
      * @since 1.3
      */
-    public static Geo create(Multimap<String, String> regions) {
+    public static Geo create(Map<String, Collection<String>> regions) {
         return new Geo(regions);
     }
 
-    private final String type = "geo";
-    private final Map<String, Collection<String>> regions;
-
     @ConstructorProperties({ "regions" })
-    private Geo(Multimap<String, String> regionsAsMultimap) {
-        checkNotNull(regionsAsMultimap, "regions");
-        this.regionsAsMultimap = ImmutableMultimap.copyOf(regionsAsMultimap);
-        this.regions = regionsAsMultimap.asMap();
-        this.delegate = ImmutableMap.<String, Object> builder().put("type", type).put("regions", regions).build();
+    private Geo(Map<String, Collection<String>> regions) {
+        put("type", "geo");
+        put("regions", checkNotNull(regions, "regions"));
     }
 
     /**
@@ -93,16 +83,10 @@ public class Geo extends ForwardingMap<String, Object> {
      * 
      * @since 1.3
      */
-    public Multimap<String, String> regions() {
-        return regionsAsMultimap;
+    @SuppressWarnings("unchecked")
+    public Map<String, Collection<String>> regions() {
+        return Map.class.cast(get("regions"));
     }
 
-    // transient to avoid serializing by default, for example in json
-    private final transient ImmutableMap<String, Object> delegate;
-    private final transient Multimap<String, String> regionsAsMultimap;
-
-    @Override
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
+    private static final long serialVersionUID = 1L;
 }

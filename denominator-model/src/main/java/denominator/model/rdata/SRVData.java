@@ -1,18 +1,17 @@
 package denominator.model.rdata;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.Map;
-
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableMap;
+import java.util.LinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code SRV} (Service) RData
  * 
- * <br><br><b>Example</b><br>
+ * <br>
+ * <br>
+ * <b>Example</b><br>
  * 
  * <pre>
  * SRVData rdata = SRVData.builder()
@@ -24,27 +23,18 @@ import com.google.common.collect.ImmutableMap;
  * 
  * See <a href="http://www.ietf.org/rfc/rfc2782.txt">RFC 2782</a>
  */
-public class SRVData extends ForwardingMap<String, Object> {
-
-    private final int priority;
-    private final int weight;
-    private final int port;
-    private final String target;
+public class SRVData extends LinkedHashMap<String, Object> {
 
     @ConstructorProperties({ "priority", "weight", "port", "target" })
-    private SRVData(int priority, int weight, int port, String target) {
+    SRVData(int priority, int weight, int port, String target) {
         checkArgument(priority <= 0xFFFF, "priority must be 0-65535");
         checkArgument(weight <= 0xFFFF, "weight must be 0-65535");
         checkArgument(port <= 0xFFFF, "port must be 0-65535");
-        this.priority = priority;
-        this.weight = weight;
-        this.port = port;
-        this.target = checkNotNull(target, "target");
-        this.delegate = ImmutableMap.<String, Object> builder()
-                                    .put("priority", priority)
-                                    .put("weight", weight)
-                                    .put("port", port)
-                                    .put("target", target).build();
+        checkNotNull(target, "target");
+        put("priority", priority);
+        put("weight", weight);
+        put("port", port);
+        put("target", target);
     }
 
     /**
@@ -56,7 +46,7 @@ public class SRVData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public int priority() {
-        return priority;
+        return Integer.class.cast(get("priority"));
     }
 
     /**
@@ -67,7 +57,7 @@ public class SRVData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public int weight() {
-        return weight;
+        return Integer.class.cast(get("weight"));
     }
 
     /**
@@ -76,7 +66,7 @@ public class SRVData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public int port() {
-        return port;
+        return Integer.class.cast(get("port"));
     }
 
     /**
@@ -86,7 +76,7 @@ public class SRVData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public String target() {
-        return target;
+        return get("target").toString();
     }
 
     public SRVData.Builder toBuilder() {
@@ -144,11 +134,5 @@ public class SRVData extends ForwardingMap<String, Object> {
         return new Builder();
     }
 
-    // transient to avoid serializing by default, for example in json
-    private final transient ImmutableMap<String, Object> delegate;
-    
-    @Override
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
+    private static final long serialVersionUID = 1L;
 }

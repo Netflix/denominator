@@ -2,7 +2,7 @@ package denominator.hook;
 
 import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.net.URI;
 
@@ -31,8 +31,8 @@ public class InstanceMetadataHookTest {
         server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
         server.play();
         try {
-            assertFalse(InstanceMetadataHook.get(server.getUrl(InstanceMetadataHook.DEFAULT_URI.getPath()).toURI(),
-                    "public-hostname").isPresent());
+            assertNull(InstanceMetadataHook.get(server.getUrl(InstanceMetadataHook.DEFAULT_URI.getPath()).toURI(),
+                    "public-hostname"));
 
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "GET /latest/meta-data/public-hostname HTTP/1.1");
@@ -47,7 +47,7 @@ public class InstanceMetadataHookTest {
         try {
             assertEquals(
                     InstanceMetadataHook.get(server.getUrl(InstanceMetadataHook.DEFAULT_URI.getPath()).toURI(),
-                            "public-hostname").get(), "ec2-50-17-85-234.compute-1.amazonaws.com");
+                            "public-hostname"), "ec2-50-17-85-234.compute-1.amazonaws.com");
 
         } finally {
             assertEquals(server.takeRequest().getRequestLine(), "GET /latest/meta-data/public-hostname HTTP/1.1");

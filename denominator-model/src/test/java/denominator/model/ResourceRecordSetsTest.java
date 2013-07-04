@@ -2,15 +2,20 @@ package denominator.model;
 
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.cname;
+import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
+import static denominator.model.ResourceRecordSets.nameEqualTo;
+import static denominator.model.ResourceRecordSets.nameTypeAndQualifierEqualTo;
 import static denominator.model.ResourceRecordSets.ns;
 import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.model.ResourceRecordSets.ptr;
 import static denominator.model.ResourceRecordSets.spf;
+import static denominator.model.ResourceRecordSets.toProfileTypes;
 import static denominator.model.ResourceRecordSets.tryFindProfile;
 import static denominator.model.ResourceRecordSets.txt;
 import static denominator.model.ResourceRecordSets.withoutProfile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Map;
@@ -18,10 +23,8 @@ import java.util.Map;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
@@ -44,46 +47,30 @@ public class ResourceRecordSetsTest {
                                                      .add(AData.create("192.0.2.1")).build();
 
     public void nameEqualToReturnsFalseOnNull() {
-        assertFalse(ResourceRecordSets.nameEqualTo(aRRS.name()).apply(null));
+        assertFalse(nameEqualTo(aRRS.name()).apply(null));
     }
 
     public void nameEqualToReturnsFalseOnDifferentName() {
-        assertFalse(ResourceRecordSets.nameEqualTo("www.foo.com").apply(aRRS));
+        assertFalse(nameEqualTo("www.foo.com").apply(aRRS));
     }
 
     public void nameEqualToReturnsTrueOnSameName() {
-        assertTrue(ResourceRecordSets.nameEqualTo(aRRS.name()).apply(aRRS));
+        assertTrue(nameEqualTo(aRRS.name()).apply(aRRS));
     }
 
     public void typeEqualToReturnsFalseOnNull() {
-        assertFalse(ResourceRecordSets.typeEqualTo(aRRS.type()).apply(null));
+        assertFalse(nameAndTypeEqualTo(aRRS.name(), aRRS.type()).apply(null));
     }
 
     public void typeEqualToReturnsFalseOnDifferentType() {
-        assertFalse(ResourceRecordSets.typeEqualTo("TXT").apply(aRRS));
+        assertFalse(nameAndTypeEqualTo(aRRS.name(), "TXT").apply(aRRS));
     }
 
     public void typeEqualToReturnsTrueOnSameType() {
-        assertTrue(ResourceRecordSets.typeEqualTo(aRRS.type()).apply(aRRS));
+        assertTrue(nameAndTypeEqualTo(aRRS.name(), aRRS.type()).apply(aRRS));
     }
 
-    public void containsRDataReturnsFalseOnNull() {
-        assertFalse(ResourceRecordSets.containsRData(aRRS.rdata().get(0)).apply(null));
-    }
-
-    public void containsRDataReturnsFalseWhenRDataDifferent() {
-        assertFalse(ResourceRecordSets.containsRData(AData.create("198.51.100.1")).apply(aRRS));
-    }
-
-    public void containsRDataReturnsTrueWhenRDataEqual() {
-        assertTrue(ResourceRecordSets.containsRData(AData.create("192.0.2.1")).apply(aRRS));
-    }
-
-    public void containsRDataReturnsTrueWhenRDataEqualButDifferentType() {
-        assertTrue(ResourceRecordSets.containsRData(ImmutableMap.of("address", "192.0.2.1")).apply(aRRS));
-    }
-
-    Geo geo = Geo.create(ImmutableMultimap.of("US", "US-VA"));
+    Geo geo = Geo.create(ImmutableMultimap.of("US", "US-VA").asMap());
 
     ResourceRecordSet<AData> geoRRS = ResourceRecordSet.<AData> builder()
                                                        .name("www.denominator.io.")
@@ -94,19 +81,19 @@ public class ResourceRecordSetsTest {
                                                        .addProfile(geo).build();
 
     public void qualifierEqualToReturnsFalseOnNull() {
-        assertFalse(ResourceRecordSets.qualifierEqualTo(geoRRS.qualifier().get()).apply(null));
+        assertFalse(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), geoRRS.qualifier()).apply(null));
     }
 
     public void qualifierEqualToReturnsFalseOnDifferentQualifier() {
-        assertFalse(ResourceRecordSets.qualifierEqualTo("TXT").apply(geoRRS));
+        assertFalse(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), "TXT").apply(geoRRS));
     }
 
     public void qualifierEqualToReturnsFalseOnAbsentQualifier() {
-        assertFalse(ResourceRecordSets.qualifierEqualTo("TXT").apply(aRRS));
+        assertFalse(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), "TXT").apply(aRRS));
     }
 
     public void qualifierEqualToReturnsTrueOnSameQualifier() {
-        assertTrue(ResourceRecordSets.qualifierEqualTo(geoRRS.qualifier().get()).apply(geoRRS));
+        assertTrue(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), geoRRS.qualifier()).apply(geoRRS));
     }
 
     public void withoutProfileReturnsFalseOnNull() {
@@ -147,19 +134,19 @@ public class ResourceRecordSetsTest {
     }
 
     public void tryFindProfileReturnsAbsentOnDifferentType() {
-        assertEquals(tryFindProfile(aRRS, "geo"), Optional.absent());
+        assertNull(tryFindProfile(aRRS, "geo"));
     }
 
     public void tryFindProfileReturnsProfileOnSameType() {
-        assertEquals(tryFindProfile(geoRRS, "geo").get(), geo);
+        assertEquals(tryFindProfile(geoRRS, "geo"), geo);
     }
 
     public void toProfileTypesEmptyOnBasicRRSet() {
-        assertEquals(ResourceRecordSets.toProfileTypes(aRRS), ImmutableSet.of());
+        assertEquals(toProfileTypes(aRRS), ImmutableSet.of());
     }
 
     public void toProfileTypesWithSingleProfile() {
-        assertEquals(ResourceRecordSets.toProfileTypes(geoRRS), ImmutableSet.of("geo"));
+        assertEquals(toProfileTypes(geoRRS), ImmutableSet.of("geo"));
     }
 
     public void toProfileTypesWithMultipleProfile() {
@@ -172,7 +159,7 @@ public class ResourceRecordSetsTest {
                 .addProfile(geo)
                 .addProfile(Weighted.create(2))
                 .build();
-        assertEquals(ResourceRecordSets.toProfileTypes(geoWeightedRRS), ImmutableSet.of("geo", "weighted"));
+        assertEquals(toProfileTypes(geoWeightedRRS), ImmutableSet.of("geo", "weighted"));
     }
 
     @DataProvider(name = "a")

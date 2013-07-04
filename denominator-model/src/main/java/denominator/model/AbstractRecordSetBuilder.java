@@ -1,11 +1,11 @@
 package denominator.model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkNotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
 
 /**
  * Capable of building record sets from rdata input types expressed as {@code E}
@@ -19,9 +19,9 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
 
     private String name;
     private String type;
-    private Optional<String> qualifier = Optional.absent();
-    private Optional<Integer> ttl = Optional.absent();
-    private ImmutableList.Builder<Map<String, Object>> profile = ImmutableList.builder();
+    private String qualifier;
+    private Integer ttl;
+    private List<Map<String, Object>> profile = new ArrayList<Map<String, Object>>();
 
     /**
      * @see ResourceRecordSet#name()
@@ -46,7 +46,7 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
      */
     @SuppressWarnings("unchecked")
     public B qualifier(String qualifier) {
-        this.qualifier = Optional.fromNullable(qualifier);
+        this.qualifier = qualifier;
         return (B) this;
     }
 
@@ -55,7 +55,7 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
      */
     @SuppressWarnings("unchecked")
     public B ttl(Integer ttl) {
-        this.ttl = Optional.fromNullable(ttl);
+        this.ttl = ttl;
         return (B) this;
     }
 
@@ -85,7 +85,7 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
      * </pre>
      */
     @SuppressWarnings("unchecked")
-    public B addAllProfile(Iterable<Map<String, Object>> profile) {
+    public B addAllProfile(Collection<Map<String, Object>> profile) {
         this.profile.addAll(checkNotNull(profile, "profile"));
         return (B) this;
     }
@@ -94,17 +94,18 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
      * @see ResourceRecordSet#profiles()
      */
     @SuppressWarnings("unchecked")
-    public B profile(Iterable<Map<String, Object>> profile) {
-        this.profile = ImmutableList.<Map<String, Object>> builder().addAll(profile);
+    public B profile(Collection<Map<String, Object>> profile) {
+        this.profile = new ArrayList<Map<String, Object>>();
+        this.profile.addAll(profile);
         return (B) this;
     }
 
     public ResourceRecordSet<D> build() {
-        return new ResourceRecordSet<D>(name, type, qualifier, ttl, rdataValues(), profile.build());
+        return new ResourceRecordSet<D>(name, type, qualifier, ttl, rdataValues(), profile);
     }
 
     /**
      * aggregate collected rdata values
      */
-    protected abstract ImmutableList<D> rdataValues();
+    protected abstract List<D> rdataValues();
 }

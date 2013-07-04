@@ -6,7 +6,7 @@ import static denominator.model.profile.Weighted.asWeighted;
 import static denominator.profile.BaseWeightedReadOnlyLiveTest.checkWeightedRRS;
 import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.util.Map;
 
@@ -14,7 +14,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -67,19 +66,19 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
                                                       .put("weight", 0).build())
                                               .add(recordSet.rdata().get(i)).build());
     
-            Optional<ResourceRecordSet<?>> rrs = weightedApi(zone)
+            ResourceRecordSet<?> rrs = weightedApi(zone)
                     .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier);
     
             assertPresent(rrs, zone, recordSet.name(), recordSet.type(), qualifier);
     
-            checkWeightedRRS(rrs.get());
-            assertEquals(rrs.get().name(), recordSet.name());
-            assertEquals(rrs.get().ttl().get(), Integer.valueOf(1800));
-            assertEquals(rrs.get().type(), recordSet.type());
-            assertEquals(rrs.get().qualifier().get(), qualifier);
-            assertEquals(asWeighted(rrs.get()).weight(), 0);
-            assertEquals(rrs.get().rdata().size(), 1);
-            assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(i++));
+            checkWeightedRRS(rrs);
+            assertEquals(rrs.name(), recordSet.name());
+            assertEquals(rrs.ttl(), Integer.valueOf(1800));
+            assertEquals(rrs.type(), recordSet.type());
+            assertEquals(rrs.qualifier(), qualifier);
+            assertEquals(asWeighted(rrs).weight(), 0);
+            assertEquals(rrs.rdata().size(), 1);
+            assertEquals(rrs.rdata().get(0), recordSet.rdata().get(i++));
         }
     }
 
@@ -99,12 +98,12 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
                                                .add(recordSet.rdata().get(0)).build());
 
         ResourceRecordSet<?> rrs1 = weightedApi(zone).getByNameTypeAndQualifier(
-                recordSet.name(), recordSet.type(), qualifier1).get();
+                recordSet.name(), recordSet.type(), qualifier1);
 
         assertEquals(asWeighted(rrs1).weight(), heaviest);
 
         ResourceRecordSet<?> rrs2 = weightedApi(zone).getByNameTypeAndQualifier(
-                recordSet.name(), recordSet.type(), qualifier2).get();
+                recordSet.name(), recordSet.type(), qualifier2);
 
         assertEquals(asWeighted(rrs2).weight(), 0);
     }
@@ -116,10 +115,10 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
 
         weightedApi(zone).deleteByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier1);
 
-        Optional<ResourceRecordSet<?>> rrs = weightedApi(zone)
+        ResourceRecordSet<?> rrs = weightedApi(zone)
                 .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier1);
 
-        assertFalse(rrs.isPresent(), format("recordset(%s, %s, %s) still present in %s",
+        assertNull(rrs, format("recordset(%s, %s, %s) still present in %s",
                 recordSet.name(), recordSet.type(), qualifier1, zone));
 
         rrs = weightedApi(zone)
@@ -136,7 +135,7 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
         rrs = allApi(zone)
                 .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier2);
 
-        assertFalse(rrs.isPresent(), format("recordset(%s, %s, %s) still present in %s",
+        assertNull(rrs, format("recordset(%s, %s, %s) still present in %s",
                 recordSet.name(), recordSet.type(), qualifier2, zone));
     }
 }

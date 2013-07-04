@@ -1,8 +1,5 @@
 package denominator;
 
-import com.google.common.annotations.Beta;
-import com.google.common.base.Optional;
-
 import denominator.model.ResourceRecordSet;
 
 /**
@@ -11,26 +8,21 @@ import denominator.model.ResourceRecordSet;
  * 
  * @since 1.3
  */
-@Beta
 public interface QualifiedResourceRecordSetApi extends ReadOnlyResourceRecordSetApi {
 
     /**
      * Idempotently replaces any existing records with
      * {@link ResourceRecordSet#name() name}, {@link ResourceRecordSet#type()
      * type}, and {@link ResourceRecordSet#qualifier() qualifier} corresponding
-     * to {@code rrset}.  If no records exist, they will be added.
+     * to {@code rrset}. If no records exist, they will be added.
      * 
      * <br>
      * Example of replacing the {@code A} record set for
      * {@code www.denominator.io.} qualified as {@code US-West}:
      * 
      * <pre>
-     * rrsApi.put(ResourceRecordSet.&lt;AData&gt; builder()
-     *                             .name("www.denominator.io.")
-     *                             .type("A")
-     *                             .qualifier("US-West")
-     *                             .ttl(3600)
-     *                             .add(AData.create("192.0.2.1")).build());
+     * rrsApi.put(ResourceRecordSet.&lt;AData&gt; builder().name(&quot;www.denominator.io.&quot;).type(&quot;A&quot;).qualifier(&quot;US-West&quot;).ttl(3600)
+     *         .add(AData.create(&quot;192.0.2.1&quot;)).build());
      * </pre>
      * 
      * @param rrset
@@ -61,6 +53,9 @@ public interface QualifiedResourceRecordSetApi extends ReadOnlyResourceRecordSet
     void deleteByNameTypeAndQualifier(String name, String type, String qualifier);
 
     static interface Factory {
-        Optional<? extends QualifiedResourceRecordSetApi> create(String idOrName);
+        /**
+         * @return null if this feature isn't supported on the provider.
+         */
+        QualifiedResourceRecordSetApi create(String idOrName);
     }
 }

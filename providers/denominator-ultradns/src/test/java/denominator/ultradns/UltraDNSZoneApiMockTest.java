@@ -8,6 +8,7 @@ import static denominator.ultradns.UltraDNSTest.getZonesOfAccountResponseAbsent;
 import static denominator.ultradns.UltraDNSTest.getZonesOfAccountResponsePresent;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
 import java.net.URL;
@@ -35,7 +36,7 @@ public class UltraDNSZoneApiMockTest {
             ZoneApi api = mockApi(server.getUrl("/"));
             Zone zone = api.iterator().next();
             assertEquals(zone.name(), "denominator.io.");
-            assertFalse(zone.id().isPresent());
+            assertNull(zone.id());
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);

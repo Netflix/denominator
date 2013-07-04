@@ -1,13 +1,12 @@
 package denominator.dynect;
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.inject.Named;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Multimap;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
@@ -26,7 +25,7 @@ public interface DynECT {
     Iterator<ResourceRecordSet<?>> rrsets(@Named("zone") String zone);
 
     @RequestLine("GET /Geo?detail=Y")
-    Multimap<String, ResourceRecordSet<?>> geoRRSetsByZone();
+    Map<String, Collection<ResourceRecordSet<?>>> geoRRSetsByZone();
 
     @RequestLine("GET /AllRecord/{zone}?detail=Y")
     Iterator<ResourceRecordSet<?>> rrsetsInZone(@Named("zone") String zone);
@@ -58,6 +57,6 @@ public interface DynECT {
         String name;
         String type;
         int ttl;
-        Map<String, Object> rdata = ImmutableMap.of();
+        Map<String, Object> rdata = new LinkedHashMap<String, Object>();
     }
 }

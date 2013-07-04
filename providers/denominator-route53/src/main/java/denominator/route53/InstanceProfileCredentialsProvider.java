@@ -1,18 +1,18 @@
 package denominator.route53;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static denominator.CredentialsConfiguration.checkValidForProvider;
+import static denominator.common.Preconditions.checkNotNull;
+import static java.util.regex.Pattern.DOTALL;
 
 import java.net.URI;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.inject.Provider;
-
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
 
 import dagger.Module;
 import dagger.Provides;
@@ -24,7 +24,7 @@ import denominator.hook.InstanceMetadataHook;
  * Credentials supplier implementation that loads credentials from the Amazon
  * EC2 Instance Metadata Service.
  */
-@Module(injects = InvalidatableAuthenticationHeadersSupplier.class, complete = false)
+@Module(injects = InstanceProfileCredentialsProvider.class, complete = false, library = true)
 public class InstanceProfileCredentialsProvider {
     private final Provider<String> iipJsonProvider;
 
@@ -50,8 +50,12 @@ public class InstanceProfileCredentialsProvider {
         return "ParseIIPJsonFrom(" + iipJsonProvider + ")";
     }
 
-    private static final Map<String, String> keyMap = ImmutableMap.of("AccessKeyId", "accessKey", "SecretAccessKey",
-            "secretKey", "Token", "sessionToken");
+    private static final Map<String, String> keyMap = new LinkedHashMap<String, String>();
+    static {
+        keyMap.put("AccessKeyId", "accessKey");
+        keyMap.put("SecretAccessKey", "secretKey");
+        keyMap.put("Token", "sessionToken");
+    }
 
     /**
      * IAM Instance Profile format is simple, non-nested json.
@@ -77,16 +81,19 @@ public class InstanceProfileCredentialsProvider {
      */
     static Map<String, String> parseJson(String in) {
         if (in == null)
-            return ImmutableMap.of();
+            return Collections.emptyMap();
         String noBraces = in.replace('{', ' ').replace('}', ' ').trim();
-        Builder<String, String> builder = ImmutableMap.<String, String> builder();
-        for (Entry<String, String> entry : Splitter.on(',').withKeyValueSeparator(" : ").split(noBraces).entrySet()) {
-            String key = keyMap.get(entry.getKey().replace('"', ' ').trim());
+        Map<String, String> builder = new LinkedHashMap<String, String>();
+        Matcher matcher = JSON_FIELDS.matcher(noBraces);
+        while (matcher.find()) {
+            String key = keyMap.get(matcher.group(1));
             if (key != null)
-                builder.put(key, entry.getValue().replace('"', ' ').trim());
+                builder.put(key, matcher.group(2));
         }
-        return builder.build();
+        return builder;
     }
+
+    private static final Pattern JSON_FIELDS = Pattern.compile("\"([^\"]+)\" *: *\"([^\"]+)", DOTALL);
 
     /**
      * default means to grab instance credentials, or return null
@@ -108,10 +115,10 @@ public class InstanceProfileCredentialsProvider {
 
         @Override
         public String get() {
-            ImmutableList<String> roles = InstanceMetadataHook.list(baseUri, "iam/security-credentials/");
+            List<String> roles = InstanceMetadataHook.list(baseUri, "iam/security-credentials/");
             if (roles.isEmpty())
                 return null;
-            return InstanceMetadataHook.get(baseUri, "iam/security-credentials/" + roles.get(0)).orNull();
+            return InstanceMetadataHook.get(baseUri, "iam/security-credentials/" + roles.get(0));
         }
 
         @Override

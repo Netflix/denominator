@@ -1,18 +1,14 @@
 package denominator;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Maps.uniqueIndex;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.lang.reflect.Constructor;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ServiceLoader;
 
 import javax.inject.Singleton;
-
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
 
 import dagger.Module;
 import dagger.ObjectGraph;
@@ -31,7 +27,9 @@ import dagger.Provides;
  * ultraDns = Denominator.create(new UltraDNSProvider(), credentials(username, password));
  * </pre>
  * 
- * <br><br><b>Alternative</b><br>
+ * <br>
+ * <br>
+ * <b>Alternative</b><br>
  * 
  * This class implies use of reflection to lookup the dagger module associated
  * with the provider. You can alternatively not use this class and instead use
@@ -71,7 +69,9 @@ public final class Denominator {
      * Returns the currently configured {@link Provider providers} from
      * {@link ServiceLoader#load(Class)}.
      * 
-     * <br><br><b>Performance Note</b><br>
+     * <br>
+     * <br>
+     * <b>Performance Note</b><br>
      * 
      * The implicit call {@link ServiceLoader#load(Class)} can add delays
      * measurable in 10s to hundreds of milliseconds depending on the number of
@@ -99,11 +99,7 @@ public final class Denominator {
      *             credentials.
      */
     public static DNSApiManager create(Provider in, Object... modules) {
-        Object[] modulesForGraph = ImmutableList.builder()
-                                                .add(provider(in))
-                                                .add(instantiateModule(in))
-                                                .add(Optional.fromNullable(modules).or(new Object[]{}))
-                                                .build().toArray();
+        Object[] modulesForGraph = modulesForGraph(in, modules).toArray();
         try {
             return ObjectGraph.create(modulesForGraph).get(DNSApiManager.class);
         } catch (IllegalStateException e) {
@@ -115,6 +111,16 @@ public final class Denominator {
             }
             throw e;
         }
+    }
+
+    private static List<Object> modulesForGraph(Provider in, Object... modules) {
+        List<Object> modulesForGraph = new ArrayList<Object>(3);
+        modulesForGraph.add(provider(in));
+        modulesForGraph.add(instantiateModule(in));
+        if (modules != null)
+            for (Object module : modules)
+                modulesForGraph.add(module);
+        return modulesForGraph;
     }
 
     private static Object instantiateModule(Provider in) throws IllegalArgumentException {
@@ -165,20 +171,25 @@ public final class Denominator {
      */
     public static DNSApiManager create(String providerName, Object... modules) throws IllegalArgumentException {
         checkNotNull(providerName, "providerName");
-        Map<String, Provider> allProvidersByName = uniqueIndex(providers(), new Function<Provider, String>() {
-            public String apply(Provider input) {
-                return input.name();
+        Provider matchedProvider = null;
+        List<String> providerNames = new ArrayList<String>();
+        for (Provider provider : providers()) {
+            if (provider.name().equals(providerName)) {
+                matchedProvider = provider;
+                break;
             }
-        });
-        checkArgument(allProvidersByName.containsKey(providerName),
-                "provider %s not in set of configured providers: %s", providerName, allProvidersByName.keySet());
-        return create(allProvidersByName.get(providerName), modules);
+            providerNames.add(provider.name());
+        }
+        checkArgument(matchedProvider != null, "provider %s not in set of configured providers: %s", providerName,
+                providerNames);
+        return create(matchedProvider, modules);
     }
 
     /**
      * Use this when building {@link DNSApiManager} via Dagger.
      * 
      * ex. when no runtime changes to the provider are necessary:
+     * 
      * <pre>
      * ultraDns = ObjectGraph.create(provider(new UltraDNSProvider()),
      *                               new UltraDNSProvider.Module(),
@@ -190,7 +201,7 @@ public final class Denominator {
      * <pre>
      * Provider fromDiscovery = new UltraDNSProvider() {
      *     public String getUrl() {
-     *         return discovery.getUrlFor("ultradns");
+     *         return discovery.getUrlFor(&quot;ultradns&quot;);
      *     }
      * };
      * 

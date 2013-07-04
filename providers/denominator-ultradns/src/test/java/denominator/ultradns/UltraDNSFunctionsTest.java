@@ -7,11 +7,11 @@ import java.util.Map;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import denominator.ResourceTypeToValue;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import denominator.ultradns.UltraDNS.Record;
-
 
 @Test
 public class UltraDNSFunctionsTest {
@@ -48,6 +48,7 @@ public class UltraDNSFunctionsTest {
 
     @Test(dataProvider = "records")
     public void toRdataMap(Record input, Map<String, Object> map ) {
-        assertEquals(UltraDNSFunctions.toRdataMap().apply(input), map);
+        String type = ResourceTypeToValue.lookup(input.typeCode);
+        assertEquals(UltraDNSFunctions.forTypeAndRData(type, input.rdata), map);
     }
 }

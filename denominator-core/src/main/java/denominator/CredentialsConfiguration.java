@@ -1,17 +1,13 @@
 package denominator;
 
-import static com.google.common.base.Joiner.on;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Iterables.getOnlyElement;
+import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.join;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-
-import com.google.common.annotations.Beta;
-import com.google.common.base.Supplier;
 
 import dagger.Module;
 import dagger.Provides;
@@ -92,11 +88,11 @@ public class CredentialsConfiguration {
         return new ConstantCredentials(credentials);
     }
 
-    @Module(complete = false, 
-            // only used for dns services that authenticate
-            library = true,
-            // override any built-in credentials
-            overrides = true)
+    @Module(complete = false,
+    // only used for dns services that authenticate
+    library = true,
+    // override any built-in credentials
+    overrides = true)
     static final class ConstantCredentials {
         private final Credentials creds;
 
@@ -130,62 +126,19 @@ public class CredentialsConfiguration {
     }
 
     /**
-     * @param credentials
-     *            {@link Supplier#get()} will be called each time credentials
-     *            are needed, facilitating runtime credential changes.
-     */
-    public static DynamicCredentials credentials(Supplier<Credentials> credentials) {
-        return new DynamicCredentials(credentials);
-    }
-
-    @Module(complete = false, 
-            // only used for dns services that authenticate
-            library = true,
-            // override any built-in credentials
-            overrides = true)
-    static final class DynamicCredentials {
-        private final Supplier<Credentials> creds;
-
-        private DynamicCredentials(Supplier<Credentials> creds) {
-            this.creds = checkNotNull(creds, "creds");
-        }
-
-        @Provides
-        public Credentials get(denominator.Provider provider) {
-            return checkValidForProvider(creds.get(), provider);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj instanceof DynamicCredentials) {
-                DynamicCredentials that = DynamicCredentials.class.cast(obj);
-                return this.creds.equals(that.creds);
-            }
-            return false;
-        }
-
-        @Override
-        public int hashCode() {
-            return creds.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "DynamicCredentials(" + creds + ")";
-        }
-    }
-
-    /**
      * checks that the supplied input is valid, or throws an
      * {@code IllegalArgumentException} if not. Users of this are guaranteed
      * that the {@code input} matches the count of parameters of a credential
-     * type listed in {@link denominator.Provider#credentialTypeToParameterNames()}.
+     * type listed in
+     * {@link denominator.Provider#credentialTypeToParameterNames()}.
      * 
-     * <br><br><b>Coercion to {@code AnonymousCredentials}</b><br>
+     * <br>
+     * <br>
+     * <b>Coercion to {@code AnonymousCredentials}</b><br>
      * 
-     * if {@link denominator.Provider#credentialTypeToParameterNames()} is empty, then no
-     * credentials are required. When this is true, the following cases will
-     * return {@code AnonymousCredentials}.
+     * if {@link denominator.Provider#credentialTypeToParameterNames()} is
+     * empty, then no credentials are required. When this is true, the following
+     * cases will return {@code AnonymousCredentials}.
      * <ul>
      * <li>when {@code input} is null</li>
      * <li>when {@code input} is an instance of {@code AnonymousCredentials}</li>
@@ -193,7 +146,9 @@ public class CredentialsConfiguration {
      * {@code List}</li>
      * </ul>
      * 
-     * <br><br><b>Validation Rules</b><br>
+     * <br>
+     * <br>
+     * <b>Validation Rules</b><br>
      * 
      * See {@link Credentials} for Validation Rules
      * 
@@ -259,7 +214,6 @@ public class CredentialsConfiguration {
      * @param provider
      *            provider they are invalid for
      */
-    @Beta
     public static String exceptionMessage(Credentials input, denominator.Provider provider) {
         StringBuilder msg = new StringBuilder();
         if (input == null || input == AnonymousCredentials.INSTANCE)
@@ -268,14 +222,13 @@ public class CredentialsConfiguration {
             msg.append("incorrect credentials supplied. ");
         msg.append(provider.name()).append(" requires ");
 
-        Map<String, Collection<String>> credentialTypeToParameterNames = provider.credentialTypeToParameterNames()
-                .asMap();
+        Map<String, Collection<String>> credentialTypeToParameterNames = provider.credentialTypeToParameterNames();
         if (credentialTypeToParameterNames.size() == 1) {
-            msg.append(on(", ").join(getOnlyElement(credentialTypeToParameterNames.values())));
+            msg.append(join(',', credentialTypeToParameterNames.values().iterator().next().toArray()));
         } else {
             msg.append("one of the following forms: when type is ");
             for (Entry<String, Collection<String>> entry : credentialTypeToParameterNames.entrySet()) {
-                msg.append(entry.getKey()).append(": ").append(on(", ").join(entry.getValue())).append("; ");
+                msg.append(entry.getKey()).append(": ").append(join(',', entry.getValue().toArray())).append("; ");
             }
             msg.trimToSize();
             msg.setLength(msg.length() - 2);// remove last '; '

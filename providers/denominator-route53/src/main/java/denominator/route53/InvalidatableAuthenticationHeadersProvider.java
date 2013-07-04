@@ -1,13 +1,11 @@
 package denominator.route53;
 
-import static com.google.common.base.Charsets.UTF_8;
-import static com.google.common.base.Throwables.propagate;
-import static com.google.common.io.BaseEncoding.base64;
-import static com.google.common.net.HttpHeaders.DATE;
 import static java.util.Locale.US;
 
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -15,15 +13,14 @@ import java.util.concurrent.TimeUnit;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
+import javax.inject.Provider;
 
-import com.google.common.base.Supplier;
-import com.google.common.collect.Maps;
-
+import sun.misc.BASE64Encoder;
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 
 // http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/RESTAuthentication.html
-public class InvalidatableAuthenticationHeadersSupplier implements Supplier<Map<String, String>> {
+public class InvalidatableAuthenticationHeadersProvider {
     private final javax.inject.Provider<Credentials> credentials;
     private final long durationMillis;
 
@@ -36,7 +33,7 @@ public class InvalidatableAuthenticationHeadersSupplier implements Supplier<Map<
     transient Map<String, String> value;
 
     @Inject
-    InvalidatableAuthenticationHeadersSupplier(javax.inject.Provider<Credentials> credentials) {
+    InvalidatableAuthenticationHeadersProvider(Provider<Credentials> credentials) {
         this.credentials = credentials;
         // variance allowed is 5 minutes, so only re-hashing every 1m.
         this.durationMillis = TimeUnit.MINUTES.toMillis(1);
@@ -46,7 +43,6 @@ public class InvalidatableAuthenticationHeadersSupplier implements Supplier<Map<
         expirationMillis = 0;
     }
 
-    @Override
     public Map<String, String> get() {
         long currentTime = System.currentTimeMillis();
         Credentials currentCreds = credentials.get();
@@ -80,8 +76,8 @@ public class InvalidatableAuthenticationHeadersSupplier implements Supplier<Map<
         String signature = sign(rfc1123Date, secretKey);
         String auth = String.format(AUTH_FORMAT, accessKey, signature);
 
-        Map<String, String> canContainNull = Maps.newLinkedHashMap();
-        canContainNull.put(DATE, rfc1123Date);
+        Map<String, String> canContainNull = new LinkedHashMap<String, String>();
+        canContainNull.put("Date", rfc1123Date);
         canContainNull.put("X-Amzn-Authorization", auth);
         // will remove if token is not set
         canContainNull.put("X-Amz-Security-Token", token);
@@ -93,13 +89,14 @@ public class InvalidatableAuthenticationHeadersSupplier implements Supplier<Map<
             Mac mac = Mac.getInstance(HMACSHA256);
             mac.init(new SecretKeySpec(secretKey.getBytes(UTF_8), HMACSHA256));
             byte[] result = mac.doFinal(rfc1123Date.getBytes(UTF_8));
-            return base64().encode(result);
+            return new BASE64Encoder().encode(result);
         } catch (Exception e) {
-            throw propagate(e);
+            throw new RuntimeException(e);
         }
     }
 
     private static final String AUTH_FORMAT = "AWS3-HTTPS AWSAccessKeyId=%s,Algorithm=HmacSHA256,Signature=%s";
     private static final String HMACSHA256 = "HmacSHA256";
     private static final SimpleDateFormat RFC1123 = new SimpleDateFormat("EEE, dd MMM yyyyy HH:mm:ss Z", US);
+    private static final Charset UTF_8 = Charset.forName("UTF-8");
 }

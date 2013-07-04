@@ -4,11 +4,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.google.common.base.Stopwatch;
 import com.squareup.tape.Task;
 
 import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -49,9 +47,9 @@ public class ZoneList implements Task<ZoneList.Callback> {
       public void run() {
         Log.i(TAG, "Listing Zones in " + mgr.provider().name());
         try {
-          Stopwatch watch = new Stopwatch().start();
+          long start = System.currentTimeMillis();
           final Iterator<Zone> zones = mgr.api().zones().iterator();
-          final long duration = watch.elapsed(TimeUnit.MILLISECONDS);
+          final long duration = System.currentTimeMillis() - start;
           Log.i(TAG, "success! " + mgr.provider().name());
           MAIN_THREAD.post(new Runnable() {
             @Override

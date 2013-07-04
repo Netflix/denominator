@@ -2,12 +2,13 @@ package denominator.profile;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterators.size;
-import static com.google.common.collect.Ordering.usingToString;
 import static denominator.model.profile.Geo.asGeo;
 import static java.lang.String.format;
 import static java.util.logging.Logger.getAnonymousLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Iterator;
@@ -18,7 +19,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -47,7 +47,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
             for (ResourceRecordSet<?> geoRRS : geoApi(zone)) {
-                assertTrue(geoRRS.qualifier().isPresent(), "Geo record sets should include a qualifier: " + geoRRS);
+                assertNotNull(geoRRS.qualifier(), "Geo record sets should include a qualifier: " + geoRRS);
                 checkGeoRRS(geoRRS);
                 assertTrue(manager.provider().profileToRecordTypes().get("geo").contains(geoRRS.type()));
 
@@ -59,10 +59,10 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
                 assertTrue(byNameAndType.hasNext(), "could not list by name and type: " + geoRRS);
                 assertTrue(Iterators.elementsEqual(geoApi(zone).iterateByNameAndType(geoRRS.name(), geoRRS.type()), byNameAndType));
                 
-                Optional<ResourceRecordSet<?>> byNameTypeAndQualifier = geoApi(zone)
-                        .getByNameTypeAndQualifier(geoRRS.name(), geoRRS.type(), geoRRS.qualifier().get());
-                assertTrue(byNameTypeAndQualifier.isPresent(), "could not lookup by name, type, and qualifier: " + geoRRS);
-                assertEquals(byNameTypeAndQualifier.get(), geoRRS);
+                ResourceRecordSet<?> byNameTypeAndQualifier = geoApi(zone).getByNameTypeAndQualifier(geoRRS.name(),
+                        geoRRS.type(), geoRRS.qualifier());
+                assertNotNull(byNameTypeAndQualifier, "could not lookup by name, type, and qualifier: " + geoRRS);
+                assertEquals(byNameTypeAndQualifier, geoRRS);
             }
         }
         logRecordSummary();
@@ -70,7 +70,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
 
     static void checkGeoRRS(ResourceRecordSet<?> geoRRS) {
         assertFalse(geoRRS.profiles().isEmpty(), "Profile absent: " + geoRRS);
-        checkNotNull(geoRRS.qualifier().orNull(), "Qualifier: ResourceRecordSet %s", geoRRS);
+        checkNotNull(geoRRS.qualifier(), "Qualifier: ResourceRecordSet %s", geoRRS);
 
         Geo geo = asGeo(geoRRS);
         assertTrue(!geo.regions().isEmpty(), "Regions empty on Geo: " + geoRRS);
@@ -98,7 +98,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
                 withName.add(geoRRSet);
             }
             List<ResourceRecordSet<?>> fromApi = Lists.newArrayList(geoApi(zone).iterateByName(name));
-            assertEquals(usingToString().immutableSortedCopy(fromApi), usingToString().immutableSortedCopy(withName));
+            assertEquals(json.toJson(fromApi), json.toJson(withName));
             break;
         }
     }
@@ -125,7 +125,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testGetByNameTypeAndQualifierWhenAbsent() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertEquals(geoApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"), Optional.absent());
+            assertNull(geoApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"));
             break;
         }
     }

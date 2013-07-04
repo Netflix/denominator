@@ -1,5 +1,10 @@
 package denominator.dynect;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -7,16 +12,9 @@ import java.util.Map.Entry;
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.common.base.Function;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 
 import denominator.model.ResourceRecordSet;
@@ -24,44 +22,41 @@ import denominator.model.ResourceRecordSet.Builder;
 import denominator.model.profile.Geo;
 import denominator.model.profile.Weighted;
 
-class GeoResourceRecordSetsDecoder implements Function<JsonReader, Multimap<String, ResourceRecordSet<?>>> {
+class GeoResourceRecordSetsDecoder implements DynECTDecoder.Parser<Map<String, Collection<ResourceRecordSet<?>>>> {
 
-    private final Gson gson = new Gson();
+    private final Gson gson;
     private final ToBuilders toBuilders;
 
-    /**
-     * @param countryIndexer
-     *            {@link Geo#regions()} is indexed, but
-     *            {@link GeoRegionGroup#getCountries()} is not. This function
-     *            will index the countries so that they match the denominator
-     *            model.
-     */
     @Inject
-    GeoResourceRecordSetsDecoder(@Named("geo") Function<List<String>, Multimap<String, String>> countryIndexer) {
-        this.toBuilders = new ToBuilders(countryIndexer);
+    GeoResourceRecordSetsDecoder(Gson gson, @Named("geo") final Map<String, Collection<String>> regions) {
+        this.gson = gson;
+        this.toBuilders = new ToBuilders(regions);
     }
 
-    @SuppressWarnings("serial")
     private static final TypeToken<List<GeoService>> GEO_TOKEN = new TypeToken<List<GeoService>>() {
     };
 
-    @Override
-    public Multimap<String, ResourceRecordSet<?>> apply(JsonReader reader) {
+    public Map<String, Collection<ResourceRecordSet<?>>> apply(JsonReader reader) {
         List<GeoService> geoServices = gson.fromJson(reader, GEO_TOKEN.getType());
-        ImmutableMultimap.Builder<String, ResourceRecordSet<?>> rrsets = ImmutableMultimap.builder();
+        Map<String, Collection<ResourceRecordSet<?>>> rrsets = new LinkedHashMap<String, Collection<ResourceRecordSet<?>>>();
         for (GeoService geo : geoServices) {
-            for (Builder<?> rrset : FluentIterable.from(geo.groups).transformAndConcat(toBuilders)) {
-                for (Node node : geo.nodes) {
-                    rrsets.put(node.zone, rrset.name(node.fqdn).build());
+            for (GeoRegionGroup geoGroup : geo.groups) {
+                for (Builder<?> rrset : toBuilders.apply(geoGroup)) {
+                    for (Node node : geo.nodes) {
+                        if (!rrsets.containsKey(node.zone)) {
+                            rrsets.put(node.zone, new ArrayList<ResourceRecordSet<?>>());
+                        }
+                        rrsets.get(node.zone).add(rrset.name(node.fqdn).build());
+                    }
                 }
             }
         }
-        return rrsets.build();
+        return rrsets;
     }
 
     private static class GeoService {
-        List<Node> nodes = Lists.newArrayList();
-        List<GeoRegionGroup> groups = Lists.newArrayList();
+        List<Node> nodes = new ArrayList<Node>();
+        List<GeoRegionGroup> groups = new ArrayList<GeoRegionGroup>();
     }
 
     private class Node {
@@ -73,25 +68,31 @@ class GeoResourceRecordSetsDecoder implements Function<JsonReader, Multimap<Stri
         String service_name;
         String name;
         // aaaa_weight
-        Map<String, List<Integer>> weight = Maps.newLinkedHashMap();
-        List<String> countries = Lists.newArrayList();
+        Map<String, List<Integer>> weight = new LinkedHashMap<String, List<Integer>>();
+        List<String> countries = new ArrayList<String>();
         // spf_rdata
-        Map<String, List<JsonElement>> rdata = Maps.newLinkedHashMap();
+        Map<String, List<JsonElement>> rdata = new LinkedHashMap<String, List<JsonElement>>();
         // dhcid_ttl
-        Map<String, Integer> ttl = Maps.newLinkedHashMap();
+        Map<String, Integer> ttl = new LinkedHashMap<String, Integer>();
     }
 
-    private static class ToBuilders implements Function<GeoRegionGroup, List<ResourceRecordSet.Builder<?>>> {
-        private Function<List<String>, Multimap<String, String>> countryIndexer;
+    private static class ToBuilders {
+        private final Map<String, Collection<String>> regions;
+        private final Map<String, String> countryToRegions;
 
-        private ToBuilders(Function<List<String>, Multimap<String, String>> countryIndexer) {
-            this.countryIndexer = countryIndexer;
+        private ToBuilders(@Named("geo") final Map<String, Collection<String>> regions) {
+            this.regions = regions;
+            Map<String, String> countryToRegions = new HashMap<String, String>(regions.values().size());
+            for (Entry<String, Collection<String>> entry : regions.entrySet()) {
+                for (String country : entry.getValue())
+                    countryToRegions.put(country, entry.getKey());
+            }
+            this.countryToRegions = countryToRegions;
         }
 
-        @Override
-        public ImmutableList<Builder<?>> apply(GeoRegionGroup creepyGeoRegionGroup) {
-            ImmutableList.Builder<ResourceRecordSet.Builder<?>> rrsets = ImmutableList.builder();
-            Geo geo = Geo.create(countryIndexer.apply(creepyGeoRegionGroup.countries));
+        public List<Builder<?>> apply(GeoRegionGroup creepyGeoRegionGroup) {
+            List<ResourceRecordSet.Builder<?>> rrsets = new ArrayList<ResourceRecordSet.Builder<?>>();
+            Geo geo = Geo.create(indexCountries(creepyGeoRegionGroup.countries));
 
             for (Entry<String, List<JsonElement>> entry : creepyGeoRegionGroup.rdata.entrySet()) {
                 if (entry.getValue().isEmpty())
@@ -116,7 +117,26 @@ class GeoResourceRecordSetsDecoder implements Function<JsonReader, Multimap<Stri
                 }
                 rrsets.add(rrset);
             }
-            return rrsets.build();
+            return rrsets;
+        }
+
+        private Map<String, Collection<String>> indexCountries(List<String> countries) {
+            Map<String, Collection<String>> indexed = new LinkedHashMap<String, Collection<String>>();
+            for (String country : countries) {
+                // special case the "all countries" condition
+                if (regions.containsKey(country)) {
+                    indexed.put(country, Arrays.asList(country));
+                } else if (countryToRegions.containsKey(country)) {
+                    String region = countryToRegions.get(country);
+                    if (!indexed.containsKey(region)) {
+                        indexed.put(region, new ArrayList<String>());
+                    }
+                    indexed.get(region).add(country);
+                } else {
+                    // TODO log not found
+                }
+            }
+            return indexed;
         }
     }
 }

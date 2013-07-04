@@ -19,7 +19,7 @@ public class ResourceRecordSetTest {
 
         assertEquals(record.name(), "www.denominator.io.");
         assertEquals(record.type(), "A");
-        assertEquals(record.ttl().get(), Integer.valueOf(3600));
+        assertEquals(record.ttl(), Integer.valueOf(3600));
         assertEquals(record.rdata().get(0), AData.create("192.0.2.1"));
     }
 

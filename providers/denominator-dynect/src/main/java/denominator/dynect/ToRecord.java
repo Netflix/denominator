@@ -1,19 +1,18 @@
 package denominator.dynect;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 
 import denominator.dynect.DynECT.Record;
 
-enum ToRecord implements Function<JsonElement, Record> {
+enum ToRecord {
     INSTANCE;
-    @Override
+
     public Record apply(JsonElement element) {
         JsonObject current = element.getAsJsonObject();
         Record record = new Record();
@@ -26,7 +25,7 @@ enum ToRecord implements Function<JsonElement, Record> {
     }
 
     static Map<String, Object> toRData(JsonObject rdata) {
-        ImmutableMap.Builder<String, Object> builder = ImmutableMap.<String, Object> builder();
+        Map<String, Object> builder = new LinkedHashMap<String, Object>();
         for (Entry<String, JsonElement> entry : rdata.entrySet()) {
             // values are never nested
             JsonPrimitive value = entry.getValue().getAsJsonPrimitive();
@@ -36,6 +35,6 @@ enum ToRecord implements Function<JsonElement, Record> {
                 builder.put(entry.getKey(), value.getAsString());
             }
         }
-        return builder.build();
+        return builder;
     }
 }

@@ -1,11 +1,13 @@
 package denominator.ultradns;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static denominator.ResourceTypeToValue.lookup;
+import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkState;
 
 import java.util.List;
 import java.util.Map;
+
+import denominator.ultradns.UltraDNS.NameAndType;
 
 class UltraDNSRoundRobinPoolApi {
     private final UltraDNS api;
@@ -37,14 +39,18 @@ class UltraDNSRoundRobinPoolApi {
             // TODO: implement default fallback
             if (e.code() != UltraDNSException.POOL_ALREADY_EXISTS)
                 throw e;
-            return api.rrPoolNameTypeToIdInZone(zoneName).get(name, type);
+            NameAndType nameAndType = new NameAndType();
+            nameAndType.name = name;
+            nameAndType.type = type;
+            return api.rrPoolNameTypeToIdInZone(zoneName).get(nameAndType);
         }
     }
 
     void deletePool(String name, String type) {
-        checkNotNull(name, "pool name was null");
-        checkNotNull(type, "pool record type was null");
-        String poolId = api.rrPoolNameTypeToIdInZone(zoneName).get(name, type);
+        NameAndType nameAndType = new NameAndType();
+        nameAndType.name = checkNotNull(name, "pool name was null");
+        nameAndType.type = checkNotNull(type, "pool record type was null");
+        String poolId = api.rrPoolNameTypeToIdInZone(zoneName).get(nameAndType);
         if (poolId != null) {
             if (api.recordsInRRPool(poolId).isEmpty()) {
                 try {

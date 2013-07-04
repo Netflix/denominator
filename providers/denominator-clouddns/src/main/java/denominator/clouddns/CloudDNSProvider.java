@@ -1,18 +1,13 @@
 package denominator.clouddns;
 
-import static com.google.common.base.Strings.emptyToNull;
-
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Singleton;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.SetMultimap;
 
 import dagger.Provides;
 import denominator.BasicProvider;
@@ -46,8 +41,7 @@ public class CloudDNSProvider extends BasicProvider {
      *            if empty or null use default
      */
     public CloudDNSProvider(String url) {
-        url = emptyToNull(url);
-        this.url = url != null ? url : "https://identity.api.rackspacecloud.com/v2.0";
+        this.url = url == null || url.isEmpty() ? "https://identity.api.rackspacecloud.com/v2.0" : url;
     }
 
     @Override
@@ -59,13 +53,17 @@ public class CloudDNSProvider extends BasicProvider {
     // http://docs.rackspace.com/cdns/api/v1.0/cdns-devguide/content/supported_record_types.htm
     @Override
     public Set<String> basicRecordTypes() {
-        return ImmutableSet.of("A", "AAAA", "CNAME", "MX", "NS", "PTR", "SRV", "TXT");
+        Set<String> types = new LinkedHashSet<String>();
+        types.addAll(Arrays.asList("A", "AAAA", "CNAME", "MX", "NS", "PTR", "SRV", "TXT"));
+        return types;
     }
 
     // TODO: verify when write support is added
     @Override
-    public SetMultimap<String, String> profileToRecordTypes() {
-        return ImmutableSetMultimap.<String, String> builder().putAll("roundRobin", basicRecordTypes()).build();
+    public Map<String, Collection<String>> profileToRecordTypes() {
+        Map<String, Collection<String>> profileToRecordTypes = new LinkedHashMap<String, Collection<String>>();
+        profileToRecordTypes.put("roundRobin", basicRecordTypes());
+        return profileToRecordTypes;
     }
 
     @Override
@@ -74,10 +72,11 @@ public class CloudDNSProvider extends BasicProvider {
     }
 
     @Override
-    public Multimap<String, String> credentialTypeToParameterNames() {
-        return ImmutableMultimap.<String, String> builder()
-                                .putAll("password", "username", "password")
-                                .putAll("apiKey", "username", "apiKey").build();
+    public Map<String, Collection<String>> credentialTypeToParameterNames() {
+        Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
+        options.put("password", Arrays.asList("username", "password"));
+        options.put("apiKey", Arrays.asList("username", "apiKey"));
+        return options;
     }
 
     @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, //
@@ -117,7 +116,7 @@ public class CloudDNSProvider extends BasicProvider {
         @Provides
         @Singleton
         Map<String, Decoder> decoders() {
-            ImmutableMap.Builder<String, Decoder> decoders = ImmutableMap.<String, Decoder> builder();
+            Map<String, Decoder> decoders = new LinkedHashMap<String, Decoder>();
             decoders.put("CloudIdentity", new KeystoneAccessDecoder("rax:dns"));
             Decoder domainListDecoder = new DomainListDecoder();
             decoders.put("CloudDNS#domains(URI)", domainListDecoder);
@@ -126,11 +125,11 @@ public class CloudDNSProvider extends BasicProvider {
             decoders.put("CloudDNS#records(URI)", recordListDecoder);
             decoders.put("CloudDNS#records(int)", recordListDecoder);
             decoders.put("CloudDNS#recordsByNameAndType(int,String,String)", recordListDecoder);
-            return decoders.build();
+            return decoders;
         }
 
         @Provides
-        public TokenIdAndPublicURL urlAndToken(InvalidatableAuthSupplier supplier) {
+        public TokenIdAndPublicURL urlAndToken(InvalidatableAuthProvider supplier) {
             return supplier.get();
         }
     }

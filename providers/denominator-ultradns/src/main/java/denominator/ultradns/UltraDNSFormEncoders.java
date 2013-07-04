@@ -1,12 +1,11 @@
 package denominator.ultradns;
 
+import static denominator.common.Util.join;
 import static java.lang.String.format;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import com.google.common.base.Joiner;
 
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
@@ -93,9 +92,9 @@ class UltraDNSFormEncoders {
         private static String geo(DirectionalGroup group) {
             StringBuilder groupData = new StringBuilder();
             groupData.append("<GeolocationGroupDetails groupName=\"").append(group.name).append("\">");
-            for (Entry<String, Collection<String>> region : group.regionToTerritories.asMap().entrySet()) {
+            for (Entry<String, Collection<String>> region : group.regionToTerritories.entrySet()) {
                 groupData.append("<GeolocationGroupDefinitionData regionName=\"").append(region.getKey()).append('"');
-                groupData.append(" territoryNames=\"").append(Joiner.on(';').join(region.getValue())).append("\" />");
+                groupData.append(" territoryNames=\"").append(join(';', region.getValue().toArray())).append("\" />");
             }
             groupData.append("</GeolocationGroupDetails>");
             return groupData.toString();

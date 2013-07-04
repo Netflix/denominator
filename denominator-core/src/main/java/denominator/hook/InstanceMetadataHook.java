@@ -1,26 +1,25 @@
 package denominator.hook;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.slurp;
+import static denominator.common.Util.split;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
-
-import com.google.common.base.Optional;
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Closer;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Utilities used for accessing metadata when running on a EC2 instance or
  * otherwise that can access {@code http://169.254.169.254/latest/meta-data/}.
  * 
- * See <a
- *      href="http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html">
- *      documentation</a>
+ * See <a href=
+ * "http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AESDG-chapter-instancedata.html"
+ * > documentation</a>
  */
 public class InstanceMetadataHook {
 
@@ -39,7 +38,7 @@ public class InstanceMetadataHook {
      * @return empty if {@code metadataService} service cannot be contacted or
      *         no data at path.
      */
-    public static ImmutableList<String> list(String path) {
+    public static List<String> list(String path) {
         return list(DEFAULT_URI, path);
     }
 
@@ -55,12 +54,12 @@ public class InstanceMetadataHook {
      * @return empty if {@code metadataService} service cannot be contacted or
      *         no data at path.
      */
-    public static ImmutableList<String> list(URI metadataService, String path) {
+    public static List<String> list(URI metadataService, String path) {
         checkArgument(checkNotNull(path, "path").endsWith("/"), "path must end with '/'; %s provided", path);
-        Optional<String> content = get(metadataService, path);
-        if (content.isPresent())
-            return ImmutableList.copyOf(Splitter.on('\n').split(content.get()));
-        return ImmutableList.<String> of();
+        String content = get(metadataService, path);
+        if (content != null)
+            return split('\n', content);
+        return Collections.<String> emptyList();
     }
 
     /**
@@ -70,10 +69,10 @@ public class InstanceMetadataHook {
      * @param path
      *            path to the metadata desired. ex. {@code public-ipv4} or
      *            {@code iam/security-credentials/role-name}
-     * @return empty if {@code metadataService} service cannot be contacted or
-     *         no data at path.
+     * @return null if {@code metadataService} service cannot be contacted or no
+     *         data at path.
      */
-    public static Optional<String> get(String path) {
+    public static String get(String path) {
         return get(DEFAULT_URI, path);
     }
 
@@ -86,26 +85,27 @@ public class InstanceMetadataHook {
      * @param path
      *            path to the metadata desired. ex. {@code public-ipv4} or
      *            {@code iam/security-credentials/role-name}
-     * @return empty if {@code metadataService} service cannot be contacted or
-     *         no data at path.
+     * @return null if {@code metadataService} service cannot be contacted or no
+     *         data at path.
      */
-    public static Optional<String> get(URI metadataService, String path) {
+    public static String get(URI metadataService, String path) {
         checkNotNull(metadataService, "metadataService");
         checkArgument(metadataService.getPath().endsWith("/"), "metadataService must end with '/'; %s provided",
                 metadataService);
         checkNotNull(path, "path");
-        Closer closer = Closer.create();
+        InputStream stream = null;
         try {
-            InputStream stream = closer.register(openStream(metadataService + path));
-            byte[] bytes = ByteStreams.toByteArray(stream);
-            if (bytes == null || bytes.length == 0)
-                return Optional.<String> absent();
-            return Optional.of(new String(bytes));
+            stream = openStream(metadataService + path);
+            String content = slurp(new InputStreamReader(stream));
+            if (content.isEmpty())
+                return null;
+            return content;
         } catch (IOException e) {
-            return Optional.<String> absent();
+            return null;
         } finally {
             try {
-                closer.close();
+                if (stream != null)
+                    stream.close();
             } catch (IOException e) {
             }
         }

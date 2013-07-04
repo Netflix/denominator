@@ -1,19 +1,15 @@
 package denominator.route53;
 
-import static com.google.common.base.CaseFormat.LOWER_CAMEL;
-import static com.google.common.base.CaseFormat.UPPER_CAMEL;
+import static denominator.common.Util.split;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
-
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.primitives.Ints;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
@@ -30,26 +26,21 @@ import denominator.model.rdata.SRVData;
 import denominator.model.rdata.TXTData;
 
 class ResourceRecordSetHandler extends DefaultHandler implements feign.codec.SAXDecoder.ContentHandlerWithResult {
-    private List<String> profiles = ImmutableList.of("Failover", "Region", "HealthCheckId");
+    private static final List<String> profileFields = Arrays.asList("Failover", "Region", "HealthCheckId");
+    private static final List<String> aliasFields = Arrays.asList("HostedZoneId", "DNSName", "EvaluateTargetHealth");
 
     private StringBuilder currentText = new StringBuilder();
     private Builder<Map<String, Object>> builder = ResourceRecordSet.builder();
-    private ImmutableList.Builder<Map<String, Object>> profile = ImmutableList.builder();
-    private ImmutableMap.Builder<String, Object> alias = ImmutableMap.<String, Object> builder();
+    private List<Map<String, Object>> profiles = new ArrayList<Map<String, Object>>();
+    private Map<String, Object> alias = new LinkedHashMap<String, Object>();
 
     @Override
     public ResourceRecordSet<?> getResult() {
-        try {
-            if (!alias.build().isEmpty()) {
-                profile.add(alias.put("type", "alias").build());
-            }
-            return builder.profile(profile.build()).build();
-        } finally {
-            builder = ResourceRecordSet.builder();
-            profile = ImmutableList.builder();
-            alias = ImmutableMap.<String, Object> builder();
-            currentType =  null;
+        if (!alias.isEmpty()) {
+            alias.put("type", "alias");
+            profiles.add(alias);
         }
+        return builder.profile(profiles).build();
     }
 
     @Override
@@ -65,16 +56,16 @@ class ResourceRecordSetHandler extends DefaultHandler implements feign.codec.SAX
         } else if (qName.equals("Type")) {
             builder.type(currentType = currentText.toString().trim());
         } else if (qName.equals("TTL")) {
-            builder.ttl(Ints.tryParse(currentText.toString().trim()));
+            builder.ttl(Integer.parseInt(currentText.toString().trim()));
         } else if (qName.equals("Value")) {
             builder.add(parseTextFormat(currentType, currentText.toString().trim()));
-        } else if (ImmutableSet.of("HostedZoneId", "DNSName", "EvaluateTargetHealth").contains(qName)) {
+        } else if (aliasFields.contains(qName)) {
             alias.put(qName, currentText.toString().trim());
         } else if (qName.equals("SetIdentifier")) {
             builder.qualifier(currentText.toString().trim());
         } else if ("Weight".equals(qName)) {
-            profile.add(Weighted.create(Ints.tryParse(currentText.toString().trim())));
-        } else if (profiles.contains(qName)) {
+            profiles.add(Weighted.create(Integer.parseInt(currentText.toString().trim())));
+        } else if (profileFields.contains(qName)) {
             addProfile(qName, currentText.toString().trim());
         }
         currentText = new StringBuilder();
@@ -86,9 +77,16 @@ class ResourceRecordSetHandler extends DefaultHandler implements feign.codec.SAX
     }
 
     private void addProfile(String key, Object value) {
-        profile.add(ImmutableMap.<String, Object> builder() //
-                .put("type", UPPER_CAMEL.to(LOWER_CAMEL, key)) //
-                .put(key, value).build());
+        Map<String, Object> profile = new LinkedHashMap<String, Object>();
+        profile.put("type", lowerFirst(key));
+        profile.put(key, value);
+        profiles.add(profile);
+    }
+
+    private static String lowerFirst(String key) {
+        char c[] = key.toCharArray();
+        c[0] = Character.toLowerCase(c[0]);
+        return new String(c);
     }
 
     /**
@@ -107,14 +105,14 @@ class ResourceRecordSetHandler extends DefaultHandler implements feign.codec.SAX
         } else if ("CNAME".equals(type)) {
             return CNAMEData.create(rdata);
         } else if ("MX".equals(type)) {
-            ImmutableList<String> parts = split(rdata);
+            List<String> parts = split(' ', rdata);
             return MXData.create(Integer.valueOf(parts.get(0)), parts.get(1));
         } else if ("NS".equals(type)) {
             return NSData.create(rdata);
         } else if ("PTR".equals(type)) {
             return PTRData.create(rdata);
         } else if ("SOA".equals(type)) {
-            ImmutableList<String> parts = split(rdata);
+            List<String> parts = split(' ', rdata);
             return SOAData.builder().mname(parts.get(0)).rname(parts.get(1)).serial(Integer.valueOf(parts.get(2)))
                     .refresh(Integer.valueOf(parts.get(3))).retry(Integer.valueOf(parts.get(4)))
                     .expire(Integer.valueOf(parts.get(5))).minimum(Integer.valueOf(parts.get(6))).build();
@@ -122,18 +120,16 @@ class ResourceRecordSetHandler extends DefaultHandler implements feign.codec.SAX
             // unquote
             return SPFData.create(rdata.substring(1, rdata.length() - 1));
         } else if ("SRV".equals(type)) {
-            ImmutableList<String> parts = split(rdata);
+            List<String> parts = split(' ', rdata);
             return SRVData.builder().priority(Integer.valueOf(parts.get(0))).weight(Integer.valueOf(parts.get(1)))
                     .port(Integer.valueOf(parts.get(2))).target(parts.get(3)).build();
         } else if ("TXT".equals(type)) {
             // unquote
             return TXTData.create(rdata.substring(1, rdata.length() - 1));
         } else {
-            return ImmutableMap.<String, Object> of("rdata", rdata);
+            Map<String, Object> unknown = new LinkedHashMap<String, Object>();
+            unknown.put("rdata", rdata);
+            return unknown;
         }
-    }
-
-    private static ImmutableList<String> split(String rdata) {
-        return ImmutableList.copyOf(Splitter.on(' ').split(rdata));
     }
 }

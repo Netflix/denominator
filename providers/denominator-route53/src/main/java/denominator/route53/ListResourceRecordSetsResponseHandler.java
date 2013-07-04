@@ -3,10 +3,6 @@ package denominator.route53;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-
-import denominator.model.ResourceRecordSet;
 import denominator.route53.Route53.ResourceRecordSetList;
 import denominator.route53.Route53.ResourceRecordSetList.NextRecord;
 
@@ -18,25 +14,18 @@ import denominator.route53.Route53.ResourceRecordSetList.NextRecord;
 class ListResourceRecordSetsResponseHandler extends DefaultHandler implements
         feign.codec.SAXDecoder.ContentHandlerWithResult {
 
-    private final ResourceRecordSetHandler resourceRecordSetHandler = new ResourceRecordSetHandler();
+    private ResourceRecordSetHandler resourceRecordSetHandler = new ResourceRecordSetHandler();
 
     private StringBuilder currentText = new StringBuilder();
-    private Builder<ResourceRecordSet<?>> builder = ImmutableList.<ResourceRecordSet<?>> builder();
+    private ResourceRecordSetList rrsets = new ResourceRecordSetList();
     private NextRecord next = null;
 
     private boolean inResourceRecordSets;
 
     @Override
     public ResourceRecordSetList getResult() {
-        try {
-            ResourceRecordSetList list = new ResourceRecordSetList();
-            list.rrsets = builder.build();
-            list.next = next;
-            return list;
-        } finally {
-            builder = ImmutableList.<ResourceRecordSet<?>> builder();
-            next = null;
-        }
+        rrsets.next = next;
+        return rrsets;
     }
 
     @Override
@@ -55,7 +44,8 @@ class ListResourceRecordSetsResponseHandler extends DefaultHandler implements
             if ("ResourceRecordSets".equals(qName)) {
                 inResourceRecordSets = false;
             } else if (qName.equals("ResourceRecordSet")) {
-                builder.add(resourceRecordSetHandler.getResult());
+                rrsets.add(resourceRecordSetHandler.getResult());
+                resourceRecordSetHandler = new ResourceRecordSetHandler();
             } else {
                 resourceRecordSetHandler.endElement(uri, name, qName);
             }

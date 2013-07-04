@@ -1,57 +1,45 @@
 package denominator.ultradns;
 
-import static com.google.common.base.Functions.toStringFunction;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
-import static com.google.common.collect.Iterables.transform;
-import static com.google.common.collect.Iterators.concat;
-import static com.google.common.collect.Iterators.emptyIterator;
-import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Lists.newArrayList;
 import static denominator.ResourceTypeToValue.lookup;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.concat;
+import static denominator.common.Util.filter;
+import static denominator.common.Util.nextOrNull;
+import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.profileContainsType;
-import static denominator.model.ResourceRecordSets.typeEqualTo;
 import static denominator.model.profile.Geo.asGeo;
 import static denominator.ultradns.UltraDNSFunctions.forTypeAndRData;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Ordering;
-
 import dagger.Lazy;
 import denominator.Provider;
+import denominator.common.Filter;
 import denominator.model.ResourceRecordSet;
 import denominator.profile.GeoResourceRecordSetApi;
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
-import denominator.ultradns.UltraDNS.Record;
 
 final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
-    private static final Predicate<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
+    private static final Filter<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
     private static final int DEFAULT_TTL = 300;
 
-    private final Set<String> supportedTypes;
-    private final Multimap<String, String> regions;
+    private final Collection<String> supportedTypes;
+    private final Map<String, Collection<String>> regions;
     private final UltraDNS api;
     private final GroupGeoRecordByNameTypeIterator.Factory iteratorFactory;
     private final String zoneName;
 
-    UltraDNSGeoResourceRecordSetApi(Set<String> supportedTypes, Multimap<String, String> regions, UltraDNS api,
+    UltraDNSGeoResourceRecordSetApi(Collection<String> supportedTypes, Map<String, Collection<String>> regions, UltraDNS api,
             GroupGeoRecordByNameTypeIterator.Factory iteratorFactory, String zoneName) {
         this.supportedTypes = supportedTypes;
         this.regions = regions;
@@ -61,19 +49,21 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     }
 
     @Override
-    public Multimap<String, String> supportedRegions() {
+    public Map<String, Collection<String>> supportedRegions() {
         return regions;
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
-        return concat(Iterables.transform(api.directionalPoolNameToIdsInZone(zoneName).keySet(),
-                new Function<String, Iterator<ResourceRecordSet<?>>>() {
-                    @Override
-                    public Iterator<ResourceRecordSet<?>> apply(String poolName) {
-                        return iteratorForDNameAndDirectionalType(poolName, 0);
-                    }
-                }).iterator());
+        List<Iterable<ResourceRecordSet<?>>> eachPool = new ArrayList<Iterable<ResourceRecordSet<?>>>();
+        for (final String poolName : api.directionalPoolNameToIdsInZone(zoneName).keySet()) {
+            eachPool.add(new Iterable<ResourceRecordSet<?>>() {
+                public Iterator<ResourceRecordSet<?>> iterator() {
+                    return iteratorForDNameAndDirectionalType(poolName, 0);
+                }
+            });
+        }
+        return concat(eachPool);
     }
 
     @Override
@@ -85,58 +75,56 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
         checkNotNull(name, "description");
         checkNotNull(type, "type");
+        Filter<ResourceRecordSet<?>> filter = nameAndTypeEqualTo(name, type);
         if (!supportedTypes.contains(type)) {
-            return emptyIterator();
+            return Collections.<ResourceRecordSet<?>> emptyList().iterator();
         }
         if ("CNAME".equals(type)) {
             // retain original type (this will filter out A, AAAA)
             return filter(
                     concat(iteratorForDNameAndDirectionalType(name, lookup("A")),
-                            iteratorForDNameAndDirectionalType(name, lookup("AAAA"))), typeEqualTo(type));
+                            iteratorForDNameAndDirectionalType(name, lookup("AAAA"))), filter);
         } else if ("A".equals(type) || "AAAA".equals(type)) {
             int dirType = "AAAA".equals(type) ? lookup("AAAA") : lookup("A");
             Iterator<ResourceRecordSet<?>> iterator = iteratorForDNameAndDirectionalType(name, dirType);
             // retain original type (this will filter out CNAMEs)
-            return filter(iterator, typeEqualTo(type));
+            return filter(iterator, filter);
         } else {
             return iteratorForDNameAndDirectionalType(name, dirType(type));
         }
     }
 
     @Override
-    public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier) {
+    public ResourceRecordSet<?> getByNameTypeAndQualifier(String name, String type, String qualifier) {
         checkNotNull(name, "description");
         checkNotNull(type, "type");
         checkNotNull(qualifier, "qualifier");
         if (!supportedTypes.contains(type)) {
-            return Optional.absent();
+            return null;
         }
-        List<DirectionalRecord> records = recordsByNameTypeAndQualifier(name, type, qualifier);
-        Iterator<ResourceRecordSet<?>> iterator = iteratorFactory.create(records.iterator());
-        if (iterator.hasNext())
-            return Optional.<ResourceRecordSet<?>> of(iterator.next());
-        return Optional.absent();
+        Iterator<DirectionalRecord> records = recordsByNameTypeAndQualifier(name, type, qualifier);
+        return nextOrNull(iteratorFactory.create(records));
     }
 
-    private List<DirectionalRecord> recordsByNameTypeAndQualifier(String name, String type, String qualifier) {
+    private Iterator<DirectionalRecord> recordsByNameTypeAndQualifier(String name, String type, String qualifier) {
         if ("CNAME".equals(type)) {
-            return FluentIterable
-                    .from(Iterables.concat(recordsForNameTypeAndQualifier(name, "A", qualifier),
-                            recordsForNameTypeAndQualifier(name, "AAAA", qualifier))).filter(isCNAME).toList();
+            return filter(concat(recordsForNameTypeAndQualifier(name, "A", qualifier),
+                    recordsForNameTypeAndQualifier(name, "AAAA", qualifier)), isCNAME);
         } else {
             return recordsForNameTypeAndQualifier(name, type, qualifier);
         }
     }
 
-    private List<DirectionalRecord> recordsForNameTypeAndQualifier(String name, String type, String qualifier) {
+    private Iterator<DirectionalRecord> recordsForNameTypeAndQualifier(String name, String type, String qualifier) {
         try {
-            return api.directionalRecordsInZoneAndGroupByNameAndType(zoneName, qualifier, name, dirType(type));
+            return api.directionalRecordsInZoneAndGroupByNameAndType(zoneName, qualifier, name, dirType(type))
+                    .iterator();
         } catch (UltraDNSException e) {
             // TODO: implement default fallback
             switch (e.code()) {
             case UltraDNSException.GROUP_NOT_FOUND:
             case UltraDNSException.DIRECTIONALPOOL_NOT_FOUND:
-                return ImmutableList.of();
+                return Collections.<DirectionalRecord> emptyList().iterator();
             }
             throw e;
         }
@@ -145,20 +133,22 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     @Override
     public void put(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        checkArgument(rrset.qualifier().isPresent(), "no qualifier on: %s", rrset);
+        checkArgument(rrset.qualifier() != null, "no qualifier on: %s", rrset);
         checkArgument(IS_GEO.apply(rrset), "%s failed on: %s", IS_GEO, rrset);
         checkArgument(supportedTypes.contains(rrset.type()), "%s not a supported type for geo: %s", rrset.type(),
                 supportedTypes);
-        int ttlToApply = rrset.ttl().or(DEFAULT_TTL);
-        String group = rrset.qualifier().get();
+        int ttlToApply = rrset.ttl() != null ? rrset.ttl() : DEFAULT_TTL;
+        String group = rrset.qualifier();
 
-        Multimap<String, String> regions = asGeo(rrset).regions();
+        Map<String, Collection<String>> regions = asGeo(rrset).regions();
         DirectionalGroup directionalGroup = new DirectionalGroup();
         directionalGroup.name = group;
         directionalGroup.regionToTerritories = regions;
 
-        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset.rdata());
-        for (DirectionalRecord record : recordsByNameTypeAndQualifier(rrset.name(), rrset.type(), group)) {
+        List<Map<String, Object>> recordsLeftToCreate = new ArrayList<Map<String, Object>>(rrset.rdata());
+        Iterator<DirectionalRecord> iterator = recordsByNameTypeAndQualifier(rrset.name(), rrset.type(), group);
+        while (iterator.hasNext()) {
+            DirectionalRecord record = iterator.next();
             Map<String, Object> rdata = forTypeAndRData(record.type, record.rdata);
             if (recordsLeftToCreate.contains(rdata)) {
                 recordsLeftToCreate.remove(rdata);
@@ -199,7 +189,9 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
             record.ttl = ttlToApply;
 
             for (Map<String, Object> rdata : recordsLeftToCreate) {
-                record.rdata = ImmutableList.copyOf(transform(rdata.values(), toStringFunction()));
+                for (Object rdatum : rdata.values()) {
+                    record.rdata.add(rdatum.toString());
+                }
                 api.createRecordAndDirectionalGroupInPool(record, directionalGroup, poolId);
             }
         }
@@ -217,9 +209,10 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
     @Override
     public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
-        for (Record record : recordsByNameTypeAndQualifier(name, type, qualifier)) {
+        Iterator<DirectionalRecord> record = recordsByNameTypeAndQualifier(name, type, qualifier);
+        while (record.hasNext()) {
             try {
-                api.deleteDirectionalRecord(record.id);
+                api.deleteDirectionalRecord(record.next().id);
             } catch (UltraDNSException e) {
                 // TODO: implement default fallback
                 if (e.code() != UltraDNSException.DIRECTIONALPOOL_RECORD_NOT_FOUND)
@@ -235,33 +228,22 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         } catch (UltraDNSException e) {
             // TODO: implement default fallback
             if (e.code() == UltraDNSException.DIRECTIONALPOOL_NOT_FOUND) {
-                list = ImmutableList.of();
+                list = Collections.emptyList();
             } else {
                 throw e;
             }
         }
-        return iteratorFactory.create(byTypeAndGeoGroup.immutableSortedCopy(list).iterator());
+        return iteratorFactory.create(list.iterator());
     }
 
-    private static final Ordering<DirectionalRecord> byTypeAndGeoGroup = new Ordering<DirectionalRecord>() {
-
-        @Override
-        public int compare(DirectionalRecord left, DirectionalRecord right) {
-            checkState(left.geoGroupName != null, "expected record to be in a geolocation qualifier: %s", left);
-            checkState(right.geoGroupName != null, "expected record to be in a geolocation qualifier: %s", right);
-            return ComparisonChain.start().compare(left.type, right.type)
-                    .compare(left.geoGroupName, right.geoGroupName).result();
-        }
-    };
-
     static final class Factory implements GeoResourceRecordSetApi.Factory {
-        private final Set<String> supportedTypes;
-        private final Lazy<Multimap<String, String>> regions;
+        private final Collection<String> supportedTypes;
+        private final Lazy<Map<String, Collection<String>>> regions;
         private final UltraDNS api;
         private final GroupGeoRecordByNameTypeIterator.Factory iteratorFactory;
 
         @Inject
-        Factory(Provider provider, @Named("geo") Lazy<Multimap<String, String>> regions, UltraDNS api,
+        Factory(Provider provider, @Named("geo") Lazy<Map<String, Collection<String>>> regions, UltraDNS api,
                 GroupGeoRecordByNameTypeIterator.Factory iteratorFactory) {
             this.supportedTypes = provider.profileToRecordTypes().get("geo");
             this.regions = regions;
@@ -270,14 +252,13 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         }
 
         @Override
-        public Optional<GeoResourceRecordSetApi> create(String idOrName) {
+        public GeoResourceRecordSetApi create(String idOrName) {
             checkNotNull(idOrName, "idOrName was null");
-            return Optional.<GeoResourceRecordSetApi> of(new UltraDNSGeoResourceRecordSetApi(supportedTypes, regions
-                    .get(), api, iteratorFactory, idOrName));
+            return new UltraDNSGeoResourceRecordSetApi(supportedTypes, regions.get(), api, iteratorFactory, idOrName);
         }
     }
 
-    private final Predicate<DirectionalRecord> isCNAME = new Predicate<DirectionalRecord>() {
+    private final Filter<DirectionalRecord> isCNAME = new Filter<DirectionalRecord>() {
         @Override
         public boolean apply(DirectionalRecord input) {
             return "CNAME".equals(input.type);

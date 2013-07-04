@@ -30,9 +30,9 @@ public class Route53DecoderTest {
                 new InputStreamReader(getClass().getResourceAsStream("/hosted_zones.xml")), null);
         ZoneList result = (ZoneList) decoder.decode(null, response, ZoneList.class);
 
-        assertEquals(result.zones.size(), 2);
-        assertEquals(result.zones.get(0), Zone.create("example.com.", "Z21DW1QVGID6NG"));
-        assertEquals(result.zones.get(1), Zone.create("example2.com.", "Z2682N5HXP0BZ4"));
+        assertEquals(result.size(), 2);
+        assertEquals(result.get(0), Zone.create("example.com.", "Z21DW1QVGID6NG"));
+        assertEquals(result.get(1), Zone.create("example2.com.", "Z2682N5HXP0BZ4"));
         assertEquals(result.next, "Z333333YYYYYYY");
     }
 
@@ -43,8 +43,8 @@ public class Route53DecoderTest {
         ResourceRecordSetList result = (ResourceRecordSetList) decoder.decode(null, response,
                 ResourceRecordSetList.class);
 
-        assertEquals(result.rrsets.size(), 2);
-        assertEquals(result.rrsets.get(0), ResourceRecordSet.<SOAData> builder()//
+        assertEquals(result.size(), 2);
+        assertEquals(result.get(0), ResourceRecordSet.<SOAData> builder()//
                 .name("example.com.")//
                 .type("SOA")//
                 .ttl(900)//
@@ -57,7 +57,7 @@ public class Route53DecoderTest {
                         .expire(1209600)//
                         .minimum(86400)//
                         .build()).build());
-        assertEquals(result.rrsets.get(1), ResourceRecordSet.<NSData> builder()//
+        assertEquals(result.get(1), ResourceRecordSet.<NSData> builder()//
                 .name("example.com.")//
                 .type("NS")//
                 .ttl(172800)//
@@ -77,15 +77,15 @@ public class Route53DecoderTest {
         ResourceRecordSetList result = (ResourceRecordSetList) decoder.decode(null, response,
                 ResourceRecordSetList.class);
 
-        assertEquals(result.rrsets.size(), 2);
-        assertEquals(result.rrsets.get(0), ResourceRecordSet.<AData> builder()//
+        assertEquals(result.size(), 2);
+        assertEquals(result.get(0), ResourceRecordSet.<AData> builder()//
                 .name("apple.myzone.com.")//
                 .type("A")//
                 .qualifier("foobar").ttl(300)//
                 .addProfile(Weighted.create(1)).add(AData.create("1.2.3.4")).build());
 
         // alias has no rdata!
-        assertEquals(result.rrsets.get(1), ResourceRecordSet.<AData> builder()//
+        assertEquals(result.get(1), ResourceRecordSet.<AData> builder()//
                 .name("fooo.myzone.com.")//
                 .type("A")//
                 .addProfile(ImmutableMap.<String, Object> builder()//

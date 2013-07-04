@@ -2,9 +2,6 @@ package denominator.profile;
 
 import java.util.SortedSet;
 
-import com.google.common.annotations.Beta;
-import com.google.common.base.Optional;
-
 import denominator.QualifiedResourceRecordSetApi;
 import denominator.model.profile.Weighted;
 
@@ -14,7 +11,6 @@ import denominator.model.profile.Weighted;
  * 
  * @since 1.3
  */
-@Beta
 public interface WeightedResourceRecordSetApi extends QualifiedResourceRecordSetApi {
 
     /**
@@ -24,7 +20,10 @@ public interface WeightedResourceRecordSetApi extends QualifiedResourceRecordSet
     SortedSet<Integer> supportedWeights();
 
     static interface Factory extends QualifiedResourceRecordSetApi.Factory {
+        /**
+         * @return null if this feature isn't supported on the provider.
+         */
         @Override
-        Optional<WeightedResourceRecordSetApi> create(String idOrName);
+        WeightedResourceRecordSetApi create(String idOrName);
     }
 }

@@ -3,6 +3,7 @@ package denominator.dynect;
 import static denominator.CredentialsConfiguration.credentials;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
 import java.net.URL;
@@ -40,7 +41,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             .qualifier("Europe")
             .ttl(300)
             .add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
-            .addProfile(Geo.create(ImmutableMultimap.of("13", "13")))
+            .addProfile(Geo.create(ImmutableMultimap.of("13", "13").asMap()))
             .build();
 
     ResourceRecordSet<CNAMEData> everywhereElse = ResourceRecordSet.<CNAMEData> builder()
@@ -55,7 +56,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
                                                     .put("12", "12")
                                                     .put("17", "17")
                                                     .put("15", "15")
-                                                    .put("14", "14").build()))                                                   
+                                                    .put("14", "14").build().asMap()))                                                   
             .build();
     
     ResourceRecordSet<CNAMEData> fallback = ResourceRecordSet.<CNAMEData> builder()
@@ -66,7 +67,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
             .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
                                                     .put("Unknown IP", "@!")
-                                                    .put("Fallback", "@@").build()))
+                                                    .put("Fallback", "@@").build().asMap()))
             .build();
 
     @Test
@@ -185,7 +186,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
-            assertEquals(api.getByNameTypeAndQualifier("srv.denominator.io", "CNAME", "Fallback").get(), fallback);
+            assertEquals(api.getByNameTypeAndQualifier("srv.denominator.io", "CNAME", "Fallback"), fallback);
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
@@ -204,7 +205,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
 
         try {
             GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
-            assertFalse(api.getByNameTypeAndQualifier("www.denominator.io", "A", "Fallback").isPresent());
+            assertNull(api.getByNameTypeAndQualifier("www.denominator.io", "A", "Fallback"));
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
@@ -220,7 +221,6 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             public String url() {
                 return url.toString();
             }
-        }, credentials("jclouds", "joe", "letmein")).api()
-                                                    .geoRecordSetsInZone("denominator.io").get();
+        }, credentials("jclouds", "joe", "letmein")).api().geoRecordSetsInZone("denominator.io");
     }
 }

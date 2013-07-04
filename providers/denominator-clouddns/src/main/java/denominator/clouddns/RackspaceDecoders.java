@@ -1,14 +1,12 @@
 package denominator.clouddns;
 
-import static com.google.common.collect.Ordering.usingToString;
-
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.net.URI;
+import java.util.Collections;
+import java.util.Comparator;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
 import com.google.gson.stream.JsonReader;
 
 import denominator.clouddns.RackspaceApis.ListWithNext;
@@ -75,8 +73,7 @@ class RackspaceDecoders {
 
         @Override
         public ListWithNext<X> decode(String methodKey, Reader ireader, Type type) throws Throwable {
-            Builder<X> builder = ImmutableList.<X> builder();
-            String nextUrl = null;
+            ListWithNext<X> records = new ListWithNext<X>();
             JsonReader reader = new JsonReader(ireader);
             reader.beginObject();
             while (reader.hasNext()) {
@@ -85,7 +82,7 @@ class RackspaceDecoders {
                     reader.beginArray();
                     while (reader.hasNext()) {
                         reader.beginObject();
-                        builder.add(build(reader));
+                        records.add(build(reader));
                         reader.endObject();
                     }
                     reader.endArray();
@@ -105,8 +102,11 @@ class RackspaceDecoders {
                                 reader.skipValue();
                             }
                         }
-                        if ("next".equals(currentRel))
-                            nextUrl = currentHref;
+                        if ("next".equals(currentRel)) {
+                            if (currentHref != null) {
+                                records.next = URI.create(currentHref);
+                            }
+                        }
                         reader.endObject();
                     }
                     reader.endArray();
@@ -116,12 +116,20 @@ class RackspaceDecoders {
             }
             reader.endObject();
             reader.close();
-            ListWithNext<X> records = new ListWithNext<X>();
-            records.records = usingToString().sortedCopy(builder.build());
-            if (nextUrl != null) {
-                records.next = URI.create(nextUrl);
-            }
+            Collections.sort(records, toStringComparator());
             return records;
         }
     }
+
+    @SuppressWarnings("unchecked")
+    private static <X> Comparator<X> toStringComparator() {
+        return Comparator.class.cast(TO_STRING_COMPARATOR);
+    }
+
+    private static final Comparator<Object> TO_STRING_COMPARATOR = new Comparator<Object>() {
+        @Override
+        public int compare(Object left, Object right) {
+            return left.toString().compareTo(right.toString());
+        }
+    };
 }

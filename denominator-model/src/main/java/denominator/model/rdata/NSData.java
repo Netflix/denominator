@@ -1,37 +1,33 @@
 package denominator.model.rdata;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.Map;
-
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableMap;
+import java.util.LinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code NS} (Name Server)
  * RData
  * 
- * <br><br><b>Example</b><br>
+ * <br>
+ * <br>
+ * <b>Example</b><br>
  * 
  * <pre>
- * NSData rdata = NSData.create("ns.foo.com.");
+ * NSData rdata = NSData.create(&quot;ns.foo.com.&quot;);
  * </pre>
  * 
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class NSData extends ForwardingMap<String, Object> {
+public class NSData extends LinkedHashMap<String, Object> {
 
     public static NSData create(String nsdname) {
         return new NSData(nsdname);
     }
 
-    private final String nsdname;
-
     @ConstructorProperties("nsdname")
-    private NSData(String nsdname) {
-        this.nsdname = checkNotNull(nsdname, "nsdname");
-        this.delegate = ImmutableMap.<String, Object> of("nsdname", nsdname);
+    NSData(String nsdname) {
+        put("nsdname", checkNotNull(nsdname, "nsdname"));
     }
 
     /**
@@ -41,14 +37,8 @@ public class NSData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public String nsdname() {
-        return nsdname;
+        return get("nsdname").toString();
     }
 
-    // transient to avoid serializing by default, for example in json
-    private final transient ImmutableMap<String, Object> delegate;
-    
-    @Override
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
+    private static final long serialVersionUID = 1L;
 }

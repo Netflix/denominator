@@ -52,7 +52,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                                         "Slovenia", "Spain", "Svalbard and Jan Mayen", "Sweden", "Switzerland",
                                         "Ukraine", "Undefined Europe",
                                         "United Kingdom - England, Northern Ireland, Scotland, Wales",
-                                        "Vatican City").build()))                             
+                                        "Vatican City").build().asMap()))                             
             .build();
 
     ResourceRecordSet<CNAMEData> us = ResourceRecordSet.<CNAMEData> builder()
@@ -74,7 +74,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                                         "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas",
                                         "Undefined United States", "United States Minor Outlying Islands", "Utah",
                                         "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin",
-                                        "Wyoming").build())).build();
+                                        "Wyoming").build().asMap())).build();
     
     ResourceRecordSet<CNAMEData> everywhereElse = ResourceRecordSet.<CNAMEData> builder()
             .name("srv.denominator.io.")
@@ -140,7 +140,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                                         "Pitcairn", "Samoa", "Solomon Islands", "Tokelau", "Tonga", "Tuvalu",
                                         "Undefined Australia / Oceania", "Vanuatu", "Wallis and Futuna")
                                 .putAll("Antarctica", "Antarctica", "Bouvet Island", "French Southern Territories")
-                                .build())).build();
+                                .build().asMap())).build();
 
     private String getAccountsListOfUserResponse = "<soap:Envelope><soap:Body><ns1:getAccountsListOfUserResponse><AccountsList><ns2:AccountDetailsData accountID=\"AAAAAAAAAAAAAAAA\" accountName=\"denominator\" /></AccountsList></ns1:getAccountsListOfUserResponse></soap:Body></soap:Envelope>";
     private String getDirectionalPoolsOfZone = format(SOAP_TEMPLATE, "<v01:getDirectionalPoolsOfZone><zoneName>denominator.io.</zoneName></v01:getDirectionalPoolsOfZone>");
@@ -375,10 +375,10 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             ResourceRecordSet<CNAMEData> lessOfEurope = ResourceRecordSet.<CNAMEData> builder()
                                                                          .name(europe.name())
                                                                          .type(europe.type())
-                                                                         .qualifier(europe.qualifier().orNull())
-                                                                         .ttl(europe.ttl().orNull())
+                                                                         .qualifier(europe.qualifier())
+                                                                         .ttl(europe.ttl())
                                                                          .addAll(europe.rdata())
-                                                                         .addProfile(Geo.create(ImmutableMultimap.of("Europe", "Aland Islands")))                             
+                                                                         .addProfile(Geo.create(ImmutableMultimap.of("Europe", "Aland Islands").asMap()))                             
                                                                          .build();
             api.put(lessOfEurope);
 
@@ -427,7 +427,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             ResourceRecordSet<CNAMEData> lessTTL = ResourceRecordSet.<CNAMEData> builder()
                                                                          .name(europe.name())
                                                                          .type(europe.type())
-                                                                         .qualifier(europe.qualifier().orNull())
+                                                                         .qualifier(europe.qualifier())
                                                                          .ttl(600)
                                                                          .addAll(europe.rdata())
                                                                          .addAllProfile(europe.profiles())                             
@@ -457,7 +457,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             public String url() {
                 return url.toString();
             }
-        }, credentials("joe", "letmein")).api().geoRecordSetsInZone("denominator.io.").get();
+        }, credentials("joe", "letmein")).api().geoRecordSetsInZone("denominator.io.");
     }
 
     private static final String SOAP_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body>%s</soapenv:Body></soapenv:Envelope>";

@@ -27,7 +27,7 @@ public class PreferencesActivity extends PreferenceActivity {
     if (provider.credentialTypeToParameterNames().isEmpty()) {
       return root;
     }
-    String credentialType = provider.credentialTypeToParameterNames().keys().iterator().next();
+    String credentialType = provider.credentialTypeToParameterNames().keySet().iterator().next();
     root.setTitle(credentialType + " credentials for provider " + provider.name());
     for (String parameter : provider.credentialTypeToParameterNames().get(credentialType)) {
       EditTextPreference cred = new EditTextPreference(this);

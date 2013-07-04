@@ -28,7 +28,7 @@ public class DynECTProviderTest {
         assertEquals(PROVIDER.name(), "dynect");
         assertEquals(PROVIDER.supportsDuplicateZoneNames(), false);
         assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
-                .putAll("password", "customer", "username", "password").build());
+                .putAll("password", "customer", "username", "password").build().asMap());
     }
 
     @Test
@@ -50,12 +50,12 @@ public class DynECTProviderTest {
         assertEquals(manager.api().zones().getClass(), DynECTZoneApi.class);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. dynect requires customer, username, password")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. dynect requires customer,username,password")
     public void testCredentialsRequired() {
         create(PROVIDER).api().zones().iterator();
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. dynect requires customer, username, password")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. dynect requires customer,username,password")
     public void testThreePartCredentialsRequired() {
         create(PROVIDER, credentials("username", "password")).api().zones().iterator();
     }

@@ -3,7 +3,7 @@ package denominator.dynect;
 import javax.inject.Inject;
 
 import denominator.Provider;
-import denominator.dynect.InvalidatableTokenSupplier.Session;
+import denominator.dynect.InvalidatableTokenProvider.Session;
 import feign.Request;
 import feign.RequestTemplate;
 import feign.Target;
