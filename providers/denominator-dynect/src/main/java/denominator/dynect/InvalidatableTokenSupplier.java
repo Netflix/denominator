@@ -1,6 +1,7 @@
 package denominator.dynect;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -30,25 +31,26 @@ class InvalidatableTokenSupplier implements Supplier<String> {
     private final denominator.Provider provider;
     private final Session session;
     private final Provider<Credentials> credentials;
+    private final AtomicReference<Boolean> sessionValid;
     transient volatile String lastUrl;
     transient volatile int lastCredentialsHashCode;
-    transient volatile boolean initialized;
     // "value" does not need to be volatile; visibility piggy-backs
     // on above
     transient String value;
 
     @Inject
     InvalidatableTokenSupplier(denominator.Provider provider, Session session,
-            javax.inject.Provider<Credentials> credentials) {
+            javax.inject.Provider<Credentials> credentials, AtomicReference<Boolean> sessionValid) {
         this.provider = provider;
         this.session = session;
         this.credentials = credentials;
+        this.sessionValid = sessionValid;
         // for toString
         this.lastUrl = provider.url();
     }
 
     public void invalidate() {
-        initialized = false;
+        sessionValid.set(false);
     }
 
     @Override
@@ -63,7 +65,7 @@ class InvalidatableTokenSupplier implements Supplier<String> {
                     lastUrl = currentUrl;
                     String t = auth(currentCreds);
                     value = t;
-                    initialized = true;
+                    sessionValid.set(true);
                     return t;
                 }
             }
@@ -72,7 +74,7 @@ class InvalidatableTokenSupplier implements Supplier<String> {
     }
 
     private boolean needsRefresh(String currentUrl, Credentials currentCreds) {
-        return !initialized || currentCreds.hashCode() != lastCredentialsHashCode || !currentUrl.equals(lastUrl);
+        return !sessionValid.get() || currentCreds.hashCode() != lastCredentialsHashCode || !currentUrl.equals(lastUrl);
     }
 
     private String auth(Credentials currentCreds) {
