@@ -6,8 +6,10 @@ import static com.google.common.collect.Iterators.transform;
 
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,8 +33,8 @@ import feign.codec.Decoder;
  */
 class DynECTDecoder extends feign.codec.Decoder {
 
-    static Decoder login() {
-        return parseDataWith(TokenDecoder.INSTANCE);
+    static Decoder login(AtomicReference<Boolean> sessionValid) {
+        return parseDataWith(sessionValid, TokenDecoder.INSTANCE);
     }
 
     private static enum TokenDecoder implements Function<JsonReader, String> {
@@ -44,12 +46,12 @@ class DynECTDecoder extends feign.codec.Decoder {
         }
     }
 
-    static Decoder resourceRecordSets() {
-        return parseDataWith(new ResourceRecordSetsDecoder());
+    static Decoder resourceRecordSets(AtomicReference<Boolean> sessionValid) {
+        return parseDataWith(sessionValid, new ResourceRecordSetsDecoder());
     }
 
-    static Decoder zones() {
-        return parseDataWith(ZonesDecoder.INSTANCE);
+    static Decoder zones(AtomicReference<Boolean> sessionValid) {
+        return parseDataWith(sessionValid, ZonesDecoder.INSTANCE);
     }
 
     private static enum ZonesDecoder implements Function<JsonReader, List<Zone>> {
@@ -76,8 +78,8 @@ class DynECTDecoder extends feign.codec.Decoder {
         }
     };
 
-    public static Decoder recordIds() {
-        return parseDataWith(RecordIdsDecoder.INSTANCE);
+    public static Decoder recordIds(AtomicReference<Boolean> sessionValid) {
+        return parseDataWith(sessionValid, RecordIdsDecoder.INSTANCE);
     }
 
     private static enum RecordIdsDecoder implements Function<JsonReader, List<String>> {
@@ -91,8 +93,8 @@ class DynECTDecoder extends feign.codec.Decoder {
         }
     }
 
-    static Decoder records() {
-        return parseDataWith(RecordsByNameAndTypeDecoder.INSTANCE);
+    static Decoder records(AtomicReference<Boolean> sessionValid) {
+        return parseDataWith(sessionValid, RecordsByNameAndTypeDecoder.INSTANCE);
     }
 
     private static enum RecordsByNameAndTypeDecoder implements Function<JsonReader, Iterator<Record>> {
@@ -105,13 +107,15 @@ class DynECTDecoder extends feign.codec.Decoder {
         }
     }
 
-    static Decoder parseDataWith(Function<JsonReader, ?> fn) {
-        return new DynECTDecoder(fn);
+    static Decoder parseDataWith(AtomicReference<Boolean> sessionValid, Function<JsonReader, ?> fn) {
+        return new DynECTDecoder(sessionValid, fn);
     }
 
+    private final AtomicReference<Boolean> sessionValid;
     private final Function<JsonReader, ?> fn;
 
-    DynECTDecoder(Function<JsonReader, ?> fn) {
+    DynECTDecoder(AtomicReference<Boolean> sessionValid, Function<JsonReader, ?> fn) {
+        this.sessionValid = sessionValid;
         this.fn = fn;
     }
 
@@ -119,7 +123,7 @@ class DynECTDecoder extends feign.codec.Decoder {
     public Object decode(String methodKey, Reader ireader, Type ignored) throws Throwable {
         JsonReader reader = new JsonReader(ireader);
         try {
-            ImmutableList.Builder<Message> messages = ImmutableList.<Message> builder();
+            List<Message> messages = new ArrayList<Message>();
             String status = "failed";
             // sometimes the response starts with an array
             if (reader.peek() == JsonToken.BEGIN_ARRAY)
@@ -155,9 +159,19 @@ class DynECTDecoder extends feign.codec.Decoder {
                 }
             }
             reader.endObject();
-            if ("incomplete".equals(status))
-                throw new RetryableException(messages.build().toString(), null);
-            throw new DynECTException(methodKey, status, messages.build());
+            if ("incomplete".equals(status)) {
+                throw new RetryableException(messages.toString(), null);
+            } else if (!messages.isEmpty() ){
+                for (Message message : messages) {
+                    if ("token: This session already has a job running".equals(message.info())) {
+                        throw new RetryableException(messages.toString(), null);
+                    } else if ("login: IP address does not match current session".equals(message.info())) {
+                        sessionValid.set(false);
+                        throw new RetryableException(messages.toString(), null);
+                    }
+                }
+            }
+            throw new DynECTException(methodKey, status, messages);
         } finally {
             reader.close();
         }
