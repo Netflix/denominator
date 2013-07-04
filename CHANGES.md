@@ -1,3 +1,6 @@
+### Version 2.1.1
+* backfills dynect session invalidation logic from issue #106
+
 ### Version 2.1.0
 * updates to feign 2, which removes jaxrs dependency
 

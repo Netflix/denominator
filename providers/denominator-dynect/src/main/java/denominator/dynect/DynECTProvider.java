@@ -4,9 +4,16 @@ import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Strings.emptyToNull;
 import static com.google.common.collect.Iterables.filter;
+import static denominator.dynect.DynECTDecoder.login;
+import static denominator.dynect.DynECTDecoder.parseDataWith;
+import static denominator.dynect.DynECTDecoder.recordIds;
+import static denominator.dynect.DynECTDecoder.records;
+import static denominator.dynect.DynECTDecoder.resourceRecordSets;
+import static denominator.dynect.DynECTDecoder.zones;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -137,14 +144,20 @@ public class DynECTProvider extends BasicProvider {
 
         @Provides
         @Singleton
-        Map<String, Decoder> decoders(GeoResourceRecordSetsDecoder geoDecoder) {
+        AtomicReference<Boolean> sessionValid(){
+            return new AtomicReference<Boolean>(false);
+        }
+
+        @Provides
+        @Singleton
+        Map<String, Decoder> decoders(AtomicReference<Boolean> sessionValid, GeoResourceRecordSetsDecoder geoDecoder) {
             Builder<String, Decoder> decoders = ImmutableMap.<String, Decoder> builder();
-            decoders.put("Session#login(String,String,String)", DynECTDecoder.login());
-            decoders.put("DynECT", DynECTDecoder.resourceRecordSets());
-            decoders.put("DynECT#zones()", DynECTDecoder.zones());
-            decoders.put("DynECT#geoRRSetsByZone()", DynECTDecoder.parseDataWith(geoDecoder));
-            decoders.put("DynECT#recordIdsInZoneByNameAndType(String,String,String)", DynECTDecoder.recordIds());
-            decoders.put("DynECT#recordsInZoneByNameAndType(String,String,String)", DynECTDecoder.records());
+            decoders.put("Session#login(String,String,String)", login(sessionValid));
+            decoders.put("DynECT", resourceRecordSets(sessionValid));
+            decoders.put("DynECT#zones()", zones(sessionValid));
+            decoders.put("DynECT#geoRRSetsByZone()", parseDataWith(sessionValid, geoDecoder));
+            decoders.put("DynECT#recordIdsInZoneByNameAndType(String,String,String)", recordIds(sessionValid));
+            decoders.put("DynECT#recordsInZoneByNameAndType(String,String,String)", records(sessionValid));
             return decoders.build();
         }
 
