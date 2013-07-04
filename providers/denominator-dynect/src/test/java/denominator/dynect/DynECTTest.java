@@ -68,24 +68,44 @@ public class DynECTTest {
     String running = "{\"status\": \"running\", \"data\": {}, \"job_id\": 274509427, \"msgs\": [{\"INFO\": \"token: This session already has a job running\", \"SOURCE\": \"API-B\", \"ERR_CD\": \"OPERATION_FAILED\", \"LVL\": \"ERROR\"}]}";
 
     @Test
-    public void runningDoesntRetry() throws IOException, InterruptedException {
+    public void runningRetries() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(running));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(zones));
+
         server.play();
 
         DynECT api = mockApi(server.getUrl(""));
 
         try {
             api.zones();
-            fail();
-        } catch (DynECTException e) {
-            assertEquals(server.getRequestCount(), 1);
-            assertEquals(e.getMessage(), "DynECT#zones() status running: [OPERATION_FAILED: token: This session already has a job running]");
 
-            assertEquals(e.status(), "running");
-            assertEquals(e.messages().size(), 1);
-            assertEquals(e.messages().get(0).code().get(), "OPERATION_FAILED");
-            assertEquals(e.messages().get(0).info(), "token: This session already has a job running");
+            assertEquals(server.getRequestCount(), 2);
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Zone HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Zone HTTP/1.1");
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    String mismatch = "{\"status\": \"failure\", \"data\": {}, \"job_id\": 305900967, \"msgs\": [{\"INFO\": \"login: IP address does not match current session\", \"SOURCE\": \"BLL\", \"ERR_CD\": \"INVALID_DATA\", \"LVL\": \"ERROR\"}, {\"INFO\": \"login: There was a problem with your credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+
+    @Test
+    public void ipMisMatchRetries() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(mismatch));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(zones));
+
+        server.play();
+
+        DynECT api = mockApi(server.getUrl(""));
+
+        try {
+            api.zones();
+
+            assertEquals(server.getRequestCount(), 2);
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Zone HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Zone HTTP/1.1");
         } finally {
             server.shutdown();
         }

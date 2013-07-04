@@ -24,6 +24,38 @@ public class DynECTProviderDynamicUpdateMockTest {
 
     String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.5.0\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
+    String mismatch = "{\"status\": \"failure\", \"data\": {}, \"job_id\": 305900967, \"msgs\": [{\"INFO\": \"login: IP address does not match current session\", \"SOURCE\": \"BLL\", \"ERR_CD\": \"INVALID_DATA\", \"LVL\": \"ERROR\"}, {\"INFO\": \"login: There was a problem with your credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+
+    @Test
+    public void ipMisMatchInvalidatesAndRetries() throws IOException, InterruptedException {
+        final MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setBody(mismatch));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.play();
+
+        try {
+
+            DNSApi api = Denominator.create(new DynECTProvider() {
+                @Override
+                public String url() {
+                    return server.getUrl("").toString();
+                }
+            }, credentials("customer", "joe", "letmein")).api();
+
+            assertEquals(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"), Optional.absent());
+
+            assertEquals(server.getRequestCount(), 4);
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
+        } finally {
+            server.shutdown();
+        }
+    }
+
     @Test
     public void dynamicEndpointUpdates() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();

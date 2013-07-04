@@ -1,5 +1,6 @@
 package denominator.dynect;
 
+import static com.google.common.util.concurrent.Atomics.newReference;
 import static org.testng.Assert.assertEquals;
 
 import java.io.InputStreamReader;
@@ -29,9 +30,9 @@ public class GeoResourceRecordSetsDecoderTest {
         Response response = Response.create(200, "OK", ImmutableMap.<String, Collection<String>> of(),
                 new InputStreamReader(getClass().getResourceAsStream("/geoservice.json")), null);
         @SuppressWarnings({ "unchecked", "serial" })
-        Multimap<String, ResourceRecordSet<?>> result = (Multimap<String, ResourceRecordSet<?>>) DynECTDecoder.parseDataWith(decoder).decode(null, response,
-                new TypeToken<List<ResourceRecordSet<?>>>() {
-                }.getType());
+        Multimap<String, ResourceRecordSet<?>> result = Multimap.class.cast(DynECTDecoder.parseDataWith(
+                newReference(true), decoder).decode(null, response, new TypeToken<List<ResourceRecordSet<?>>>() {
+        }.getType()));
 
         assertEquals(result.size(), 3);
         assertEquals(result.keySet(), ImmutableSet.of("denominator.io"));
