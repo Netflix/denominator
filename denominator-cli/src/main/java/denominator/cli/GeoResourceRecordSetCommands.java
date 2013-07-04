@@ -2,6 +2,7 @@ package denominator.cli;
 
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
+import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
 import static denominator.cli.Denominator.idOrName;
 import static denominator.model.profile.Geo.asGeo;
@@ -18,7 +19,6 @@ import java.util.Map.Entry;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -49,7 +49,7 @@ class GeoResourceRecordSetCommands {
         @Override
         protected Iterator<String> doRun(DNSApiManager mgr) {
             return FluentIterable
-                    .from(mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().supportedRegions().asMap()
+                    .from(mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).supportedRegions()
                             .entrySet()).transform(new Function<Map.Entry<String, Collection<String>>, String>() {
                         @Override
                         public String apply(Entry<String, Collection<String>> input) {
@@ -70,11 +70,11 @@ class GeoResourceRecordSetCommands {
         public Iterator<String> doRun(DNSApiManager mgr) {
             Iterator<ResourceRecordSet<?>> iterator;
             if (name != null && type != null)
-                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().iterateByNameAndType(name, type);
+                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByNameAndType(name, type);
             if (name != null)
-                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().iterateByName(name);
+                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByName(name);
             else
-                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get().iterator();
+                iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterator();
             return transform(iterator, GeoResourceRecordSetToString.INSTANCE);
         }
     }
@@ -91,9 +91,10 @@ class GeoResourceRecordSetCommands {
         public String group;
 
         public Iterator<String> doRun(DNSApiManager mgr) {
-            GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get();
-            Optional<ResourceRecordSet<?>> result = api.getByNameTypeAndQualifier(name, type, group);
-            return forArray(result.transform(GeoResourceRecordSetToString.INSTANCE).or(""));
+            GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName));
+            ResourceRecordSet<?> rrs = api.getByNameTypeAndQualifier(name, type, group);
+            return rrs != null ? singletonIterator(GeoResourceRecordSetToString.INSTANCE.apply(rrs))
+                    : singletonIterator("");
         }
     }
 
@@ -123,16 +124,16 @@ class GeoResourceRecordSetCommands {
 
                 @Override
                 public String next() {
-                    GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).get();
-                    Optional<ResourceRecordSet<?>> rrs = api.getByNameTypeAndQualifier(name, type, group);
-                    if (rrs.isPresent() && rrs.get().ttl().or(Integer.MAX_VALUE).intValue() != ttl) {
+                    GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName));
+                    ResourceRecordSet<?> rrs = api.getByNameTypeAndQualifier(name, type, group);
+                    if (rrs != null && rrs.ttl() != null && rrs.ttl().intValue() != ttl) {
                         api.put(ResourceRecordSet.<Map<String, Object>> builder()
                                                  .name(name)
                                                  .type(type)
                                                  .qualifier(group)
                                                  .ttl(ttl)
-                                                 .addAllProfile(rrs.get().profiles())
-                                                 .addAll(rrs.get().rdata()).build());
+                                                 .addAllProfile(rrs.profiles())
+                                                 .addAll(rrs.rdata()).build());
                     }
                     done = true;
                     return ";; ok";

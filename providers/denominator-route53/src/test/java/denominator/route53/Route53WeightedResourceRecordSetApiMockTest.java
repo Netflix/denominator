@@ -3,6 +3,7 @@ package denominator.route53;
 import static denominator.CredentialsConfiguration.credentials;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
 import java.net.URL;
@@ -10,7 +11,6 @@ import java.util.Iterator;
 
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
@@ -145,7 +145,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
 
         try {
             WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
-            assertEquals(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier1).get(), rrset1);
+            assertEquals(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier1), rrset1);
 
             assertEquals(server.getRequestCount(), 1);
 
@@ -168,7 +168,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
 
         try {
             WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
-            assertEquals(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier1), Optional.absent());
+            assertNull(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier1));
 
             assertEquals(server.getRequestCount(), 1);
 
@@ -284,6 +284,6 @@ public class Route53WeightedResourceRecordSetApiMockTest {
             public String url() {
                 return url.toString();
             }
-        }, credentials("accessKey", "secretKey")).api().weightedRecordSetsInZone("Z1PA6795UKMFR9").get();
+        }, credentials("accessKey", "secretKey")).api().weightedRecordSetsInZone("Z1PA6795UKMFR9");
     }
 }

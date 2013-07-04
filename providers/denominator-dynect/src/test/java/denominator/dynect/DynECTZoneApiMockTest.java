@@ -33,7 +33,7 @@ public class DynECTZoneApiMockTest {
             ZoneApi api = mockApi(server.getUrl(""));
             Zone zone = api.iterator().next();
             assertEquals(zone.name(), "0.0.0.0.d.6.e.0.0.a.2.ip6.arpa");
-            assertFalse(zone.id().isPresent());
+            assertFalse(zone.id() != null);
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");

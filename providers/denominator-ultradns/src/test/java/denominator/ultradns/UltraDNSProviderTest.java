@@ -28,7 +28,7 @@ public class UltraDNSProviderTest {
         assertEquals(PROVIDER.name(), "ultradns");
         assertEquals(PROVIDER.supportsDuplicateZoneNames(), false);
         assertEquals(PROVIDER.credentialTypeToParameterNames(), ImmutableMultimap.<String, String> builder()
-                .putAll("password", "username", "password").build());
+                .putAll("password", "username", "password").build().asMap());
     }
 
     @Test
@@ -49,12 +49,12 @@ public class UltraDNSProviderTest {
         assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. ultradns requires username, password")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. ultradns requires username,password")
     public void testCredentialsRequired() {
         create(PROVIDER).api().zones().iterator();
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. ultradns requires username, password")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. ultradns requires username,password")
     public void testTwoPartCredentialsRequired() {
         create(PROVIDER, credentials("customer", "username", "password")).api().zones().iterator();
     }

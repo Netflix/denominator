@@ -5,6 +5,7 @@ import static java.lang.String.format;
 import static java.util.logging.Logger.getAnonymousLogger;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import java.util.Iterator;
@@ -15,7 +16,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -38,7 +38,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
                 recordTypeCounts.getUnchecked(rrs.type()).addAndGet(rrs.rdata().size());
                 checkRRS(rrs);
                 checkListByNameAndTypeConsistent(zone, rrs);
-                if (rrs.qualifier().isPresent()) {
+                if (rrs.qualifier() != null) {
                     checkGetByNameTypeAndQualifierConsistent(zone, rrs);
                 }
             }
@@ -47,11 +47,10 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     }
 
     protected void checkGetByNameTypeAndQualifierConsistent(Zone zone, ResourceRecordSet<?> rrs) {
-        Optional<ResourceRecordSet<?>> byNameTypeAndQualifier = allApi(zone).getByNameTypeAndQualifier(
-                rrs.name(), rrs.type(), rrs.qualifier().get());
-        assertTrue(byNameTypeAndQualifier.isPresent(), "could not lookup by name, type, and qualifier: "
-                + rrs);
-        assertEquals(byNameTypeAndQualifier.get(), rrs);
+        ResourceRecordSet<?> byNameTypeAndQualifier = allApi(zone).getByNameTypeAndQualifier(rrs.name(), rrs.type(),
+                rrs.qualifier());
+        assertTrue(byNameTypeAndQualifier != null, "could not lookup by name, type, and qualifier: " + rrs);
+        assertEquals(byNameTypeAndQualifier, rrs);
     }
 
     protected void checkListByNameAndTypeConsistent(Zone zone, ResourceRecordSet<?> rrs) {
@@ -106,7 +105,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
     private void testGetByNameTypeAndGroupWhenAbsent() {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
-            assertEquals(allApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"), Optional.absent());
+            assertNull(allApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"));
             break;
         }
     }

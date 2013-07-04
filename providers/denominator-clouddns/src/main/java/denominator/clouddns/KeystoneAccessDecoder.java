@@ -1,6 +1,6 @@
 package denominator.clouddns;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.io.Reader;
 import java.lang.reflect.Type;

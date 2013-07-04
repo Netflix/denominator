@@ -1,22 +1,22 @@
 package denominator.mock;
 
 import java.util.Iterator;
+import java.util.Map;
+import java.util.SortedSet;
 
 import javax.inject.Inject;
-
-import com.google.common.collect.Multimap;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 
 public final class MockZoneApi implements denominator.ZoneApi {
-    private final Multimap<Zone, ResourceRecordSet<?>> data;
+    private final Map<Zone, SortedSet<ResourceRecordSet<?>>> data;
 
     // wildcard types are not currently injectable in dagger
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Inject
-    MockZoneApi(Multimap<Zone, ResourceRecordSet> data) {
-        this.data = Multimap.class.cast(data);
+    MockZoneApi(Map<Zone, SortedSet<ResourceRecordSet>> data) {
+        this.data = Map.class.cast(data);
     }
 
     @Override

@@ -2,10 +2,13 @@ package denominator;
 
 import static org.testng.Assert.assertEquals;
 
+import java.util.Collection;
+import java.util.Map;
+
 import org.testng.annotations.Test;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Multimap;
 
 import denominator.mock.MockProvider;
 
@@ -21,21 +24,21 @@ public class ProviderTest {
     public void testDefaultProviderNameIsLowercase() {
         BareProvider provider = new BareProvider();
         assertEquals(provider.name(), "bare");
-        assertEquals(provider.credentialTypeToParameterNames(), ImmutableMultimap.of());
+        assertEquals(provider.credentialTypeToParameterNames(), ImmutableMap.of());
     }
 
     public void testCredentialTypeToParameterNamesDefaultsToEmpty() {
         BareProvider provider = new BareProvider();
-        assertEquals(provider.credentialTypeToParameterNames(), ImmutableMultimap.of());
+        assertEquals(provider.credentialTypeToParameterNames(), ImmutableMap.of());
     }
 
     static class ValidCredentialParametersProvider extends BasicProvider {
 
         @Override
-        public Multimap<String, String> credentialTypeToParameterNames() {
+        public Map<String, Collection<String>> credentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("accessKey", "accessKey", "secretKey")
-                    .putAll("stsSession", "accessKey", "secretKey", "sessionToken").build();
+                    .putAll("stsSession", "accessKey", "secretKey", "sessionToken").build().asMap();
         }
 
         @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)
@@ -50,10 +53,10 @@ public class ProviderTest {
     static class InvalidCredentialKeyProvider extends BasicProvider {
 
         @Override
-        public Multimap<String, String> credentialTypeToParameterNames() {
+        public Map<String, Collection<String>> credentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("accessKey", "accessKey", "secretKey")
-                    .putAll("STS_SESSION", "accessKey", "secretKey", "sessionToken").build();
+                    .putAll("STS_SESSION", "accessKey", "secretKey", "sessionToken").build().asMap();
         }
 
         @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)
@@ -69,10 +72,10 @@ public class ProviderTest {
     static class InvalidCredentialParameterProvider extends BasicProvider {
 
         @Override
-        public Multimap<String, String> credentialTypeToParameterNames() {
+        public Map<String, Collection<String>> credentialTypeToParameterNames() {
             return ImmutableMultimap.<String, String> builder()
                     .putAll("accessKey", "accessKey", "secretKey")
-                    .putAll("stsSession", "access.key", "secret.key", "session.token").build();
+                    .putAll("stsSession", "access.key", "secret.key", "session.token").build().asMap();
         }
 
         @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)

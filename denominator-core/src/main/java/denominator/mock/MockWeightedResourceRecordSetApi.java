@@ -1,34 +1,31 @@
 package denominator.mock;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Multimaps.filterValues;
+import static denominator.common.Preconditions.checkArgument;
 import static denominator.model.ResourceRecordSets.profileContainsType;
 
-import java.util.Set;
+import java.util.Collection;
+import java.util.Map;
 import java.util.SortedSet;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Multimap;
-
 import denominator.Provider;
+import denominator.common.Filter;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import denominator.profile.WeightedResourceRecordSetApi;
 
 public final class MockWeightedResourceRecordSetApi extends MockAllProfileResourceRecordSetApi implements
         WeightedResourceRecordSetApi {
-    private static final Predicate<ResourceRecordSet<?>> IS_WEIGHTED = profileContainsType("weighted");
+    private static final Filter<ResourceRecordSet<?>> IS_WEIGHTED = profileContainsType("weighted");
 
-    private final Set<String> supportedTypes;
+    private final Collection<String> supportedTypes;
     private final SortedSet<Integer> supportedWeights;
 
-    MockWeightedResourceRecordSetApi(Provider provider, Multimap<Zone, ResourceRecordSet<?>> records, Zone zone,
+    MockWeightedResourceRecordSetApi(Provider provider, SortedSet<ResourceRecordSet<?>> records,
             SortedSet<Integer> supportedWeights) {
-        super(provider, records, zone);
+        super(provider, records, IS_WEIGHTED);
         this.supportedTypes = provider.profileToRecordTypes().get("weighted");
         this.supportedWeights = supportedWeights;
     }
@@ -47,26 +44,25 @@ public final class MockWeightedResourceRecordSetApi extends MockAllProfileResour
 
     public static final class Factory implements WeightedResourceRecordSetApi.Factory {
 
-        private final Multimap<Zone, ResourceRecordSet<?>> records;
+        private final Map<Zone, SortedSet<ResourceRecordSet<?>>> records;
         private Provider provider;
         private final SortedSet<Integer> supportedWeights;
 
         // wildcard types are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
-        Factory(Multimap<Zone, ResourceRecordSet> records, Provider provider,
+        Factory(Map<Zone, SortedSet<ResourceRecordSet>> records, Provider provider,
                 @Named("weighted") SortedSet<Integer> supportedWeights) {
-            this.records = Multimap.class.cast(filterValues(Multimap.class.cast(records), IS_WEIGHTED));
+            this.records = Map.class.cast(records);
             this.provider = provider;
             this.supportedWeights = supportedWeights;
         }
 
         @Override
-        public Optional<WeightedResourceRecordSetApi> create(String idOrName) {
+        public WeightedResourceRecordSetApi create(String idOrName) {
             Zone zone = Zone.create(idOrName);
             checkArgument(records.keySet().contains(zone), "zone %s not found", idOrName);
-            return Optional.<WeightedResourceRecordSetApi> of(new MockWeightedResourceRecordSetApi(provider, records,
-                    zone, supportedWeights));
+            return new MockWeightedResourceRecordSetApi(provider, records.get(zone), supportedWeights);
         }
     }
 }

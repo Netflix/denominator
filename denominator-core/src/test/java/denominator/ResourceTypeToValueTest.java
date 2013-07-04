@@ -8,16 +8,16 @@ public class ResourceTypeToValueTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ResourceTypes do not include RRRR; types: \\[A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, SSHFP, SPF, SRV\\]")
     public void testNiceExceptionOnNotFound() {
-        new ResourceTypeToValue().apply("RRRR");
+        ResourceTypeToValue.lookup("RRRR");
     }
 
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "resource type was null")
     public void testNiceExceptionOnNull() {
-        new ResourceTypeToValue().apply(null);
+        ResourceTypeToValue.lookup((String)null);
     }
 
     @Test
     public void testBasicCase() {
-        assertEquals(new ResourceTypeToValue().apply("AAAA"), "28");
+        assertEquals(ResourceTypeToValue.lookup("AAAA"), Integer.valueOf(28));
     }
 }

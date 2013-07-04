@@ -1,15 +1,9 @@
 package denominator.clouddns;
 
-import static com.google.common.base.Objects.toStringHelper;
-
 import java.net.URI;
-import java.util.List;
+import java.util.ArrayList;
 
 import javax.inject.Named;
-
-import com.google.common.base.Function;
-import com.google.common.collect.ForwardingList;
-import com.google.common.collect.ImmutableList;
 
 import denominator.model.Zone;
 import feign.Body;
@@ -64,22 +58,16 @@ class RackspaceApis {
         // toString ordering
         @Override
         public String toString() {
-            return toStringHelper("").omitNullValues().add("name", name).add("type", type).add("ttl", ttl)
-                    .add("data", data).add("priority", priority).toString();
+            return new StringBuilder(name).append(type).append(ttl).append(data).append(priority).toString();
         }
     }
 
-    static class ListWithNext<X> extends ForwardingList<X> {
-        List<X> records = ImmutableList.of();
+    static class ListWithNext<X> extends ArrayList<X> {
         URI next;
-
-        @Override
-        protected List<X> delegate() {
-            return records;
-        }
+        private static final long serialVersionUID = 1L;
     }
 
-    static <X> ListWithNext<X> emptyOn404(Function<URI, ListWithNext<X>> pagingFunction, URI nullOrNext) {
+    static <X> ListWithNext<X> emptyOn404(Pager<X> pagingFunction, URI nullOrNext) {
         try {
             return pagingFunction.apply(nullOrNext);
         } catch (FeignException e) {
@@ -88,5 +76,9 @@ class RackspaceApis {
             }
             throw e;
         }
+    }
+
+    interface Pager<X> {
+        ListWithNext<X> apply(URI nullOrNext);
     }
 }

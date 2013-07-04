@@ -2,9 +2,6 @@ package denominator.route53;
 
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-
 import denominator.model.Zone;
 import denominator.route53.Route53.ZoneList;
 
@@ -17,20 +14,11 @@ public class ListHostedZonesResponseHandler extends DefaultHandler implements
         feign.codec.SAXDecoder.ContentHandlerWithResult {
 
     private StringBuilder currentText = new StringBuilder();
-    private Builder<Zone> builder = ImmutableList.<Zone> builder();
-    private String next;
+    private ZoneList zones = new ZoneList();
 
     @Override
     public ZoneList getResult() {
-        try {
-            ZoneList list = new ZoneList();
-            list.zones = builder.build();
-            list.next = next;
-            return list;
-        } finally {
-            builder = ImmutableList.<Zone> builder();
-            next = null;
-        }
+        return zones;
     }
 
     private String name;
@@ -43,10 +31,10 @@ public class ListHostedZonesResponseHandler extends DefaultHandler implements
         } else if (qName.equals("Id")) {
             id = currentText.toString().trim().replace("/hostedzone/", "");
         } else if (qName.equals("HostedZone")) {
-            builder.add(Zone.create(this.name, id));
+            zones.add(Zone.create(this.name, id));
             this.name = this.id = null;
         } else if (qName.equals("NextMarker")) {
-            next = currentText.toString().trim();
+            zones.next = currentText.toString().trim();
         }
         currentText = new StringBuilder();
     }

@@ -2,12 +2,8 @@ package denominator;
 
 import java.util.Iterator;
 
-import com.google.common.annotations.Beta;
-import com.google.common.base.Optional;
-
 import denominator.model.ResourceRecordSet;
 
-@Beta
 public interface ReadOnlyResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
 
     /**
@@ -60,10 +56,10 @@ public interface ReadOnlyResourceRecordSetApi extends Iterable<ResourceRecordSet
      * @param qualifier
      *            {@link ResourceRecordSet#qualifier() qualifier} of the rrset
      * 
-     * @return present if a resource record exists with the same {@code name},
+     * @return null unless a resource record exists with the same {@code name},
      *         {@code type}, and {@code qualifier}
      * @throws IllegalArgumentException
      *             if the zone {@code idOrName} is not found.
      */
-    Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier);
+    ResourceRecordSet<?> getByNameTypeAndQualifier(String name, String type, String qualifier);
 }

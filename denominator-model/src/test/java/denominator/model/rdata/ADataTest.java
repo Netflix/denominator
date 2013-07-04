@@ -12,7 +12,7 @@ public class ADataTest {
         a("www.denominator.io.", "2001:db8:1cfe:face:b00c::3");
     }    
     
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*not an IP.*")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*should be a ipv4 address.*")
     public void testNoIP() {
         a("www.denominator.io.", "");
     }

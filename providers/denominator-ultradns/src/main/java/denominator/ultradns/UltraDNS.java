@@ -1,16 +1,13 @@
 package denominator.ultradns;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
+import java.util.TreeMap;
 
 import javax.inject.Named;
-
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Table;
 
 import denominator.model.Zone;
 import feign.Body;
@@ -50,12 +47,37 @@ interface UltraDNS {
         String name;
         int typeCode;
         int ttl;
-        List<String> rdata = Lists.newArrayList();
+        List<String> rdata = new ArrayList<String>();
     }
 
     @RequestLine("POST")
     @Body("<v01:getLoadBalancingPoolsByZone><zoneName>{zoneName}</zoneName><lbPoolType>RR</lbPoolType></v01:getLoadBalancingPoolsByZone>")
-    Table<String, String, String> rrPoolNameTypeToIdInZone(@Named("zoneName") String zoneName);
+    Map<NameAndType, String> rrPoolNameTypeToIdInZone(@Named("zoneName") String zoneName);
+
+    static class NameAndType {
+        String name;
+        String type;
+
+        @Override
+        public int hashCode() {
+            return 37 * name.hashCode() + type.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null || !(obj instanceof NameAndType))
+                return false;
+            NameAndType that = NameAndType.class.cast(obj);
+            return this.name.equals(that.name) && this.type.equals(that.type);
+        }
+
+        @Override
+        public String toString() {
+            return "NameAndType(" + name + "," + type + ")";
+        }
+    }
 
     @RequestLine("POST")
     @Body("<v01:getRRPoolRecords><lbPoolId>{poolId}</lbPoolId></v01:getRRPoolRecords>")
@@ -77,7 +99,7 @@ interface UltraDNS {
 
     @RequestLine("POST")
     @Body("<v01:getAvailableRegions />")
-    Table<String, Integer, SortedSet<String>> getRegionsByIdAndName();
+    Map<String, Collection<String>> availableRegions();
 
     @RequestLine("POST")
     @Body("<v01:getDirectionalDNSGroupDetails><GroupId>{GroupId}</GroupId></v01:getDirectionalDNSGroupDetails>")
@@ -120,7 +142,7 @@ interface UltraDNS {
 
     static class DirectionalGroup {
         String name;
-        Multimap<String, String> regionToTerritories = LinkedListMultimap.create();
+        Map<String, Collection<String>> regionToTerritories = new TreeMap<String, Collection<String>>();
     }
 
     static class DirectionalRecord extends Record {

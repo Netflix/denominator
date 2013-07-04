@@ -7,6 +7,7 @@ import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfZoneResponse
 import static denominator.ultradns.UltraDNSTest.getZonesOfAccount;
 import static denominator.ultradns.UltraDNSTest.getZonesOfAccountResponsePresent;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
@@ -15,11 +16,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 
+import dagger.Module;
+import dagger.Provides;
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.DNSApi;
@@ -77,18 +78,20 @@ public class UltraDNSProviderDynamicUpdateMockTest {
             final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(
                     ListCredentials.from("joe", "letmein"));
 
+            @Module(complete = false, library = true, overrides = true)
+            class OverrideCredentials {
+                @Provides
+                public Credentials get() {
+                    return dynamicCredentials.get();
+                }
+            }
+
             DNSApi api = Denominator.create(new UltraDNSProvider() {
                 @Override
                 public String url() {
                     return server.getUrl("/").toString();
                 }
-            }, credentials(new Supplier<Credentials>() {
-                @Override
-                public Credentials get() {
-                    return dynamicCredentials.get();
-                }
-            })).api();
-
+            }, new OverrideCredentials()).api();
 
             api.zones().iterator().next();
             dynamicCredentials.set(ListCredentials.from("bob", "comeon"));
@@ -124,11 +127,9 @@ public class UltraDNSProviderDynamicUpdateMockTest {
                 }
             }, credentials("joe", "letmein")).api();
 
-            assertEquals(api.basicRecordSetsInZone("denominator.io.").getByNameAndType("www.denominator.io.", "A"),
-                    Optional.absent());
+            assertNull(api.basicRecordSetsInZone("denominator.io.").getByNameAndType("www.denominator.io.", "A"));
             dynamicUrl.set(new URL(mockUrl, updatedPath));
-            assertEquals(api.basicRecordSetsInZone("denominator.io.").getByNameAndType("www.denominator.io.", "A"),
-                    Optional.absent());
+            assertNull(api.basicRecordSetsInZone("denominator.io.").getByNameAndType("www.denominator.io.", "A"));
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST " + initialPath + " HTTP/1.1");
@@ -149,23 +150,24 @@ public class UltraDNSProviderDynamicUpdateMockTest {
             final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(
                     ListCredentials.from("joe", "letmein"));
 
+            @Module(complete = false, library = true, overrides = true)
+            class OverrideCredentials {
+                @Provides
+                public Credentials get() {
+                    return dynamicCredentials.get();
+                }
+            }
+
             DNSApi api = Denominator.create(new UltraDNSProvider() {
                 @Override
                 public String url() {
                     return server.getUrl("/").toString();
                 }
-            }, credentials(new Supplier<Credentials>() {
-                @Override
-                public Credentials get() {
-                    return dynamicCredentials.get();
-                }
-            })).api();
+            }, new OverrideCredentials()).api();
 
-            assertEquals(api.basicRecordSetsInZone("denominator.io.").getByNameAndType("www.denominator.io.", "A"),
-                    Optional.absent());
+            assertNull(api.basicRecordSetsInZone("denominator.io.").getByNameAndType("www.denominator.io.", "A"));
             dynamicCredentials.set(ListCredentials.from("bob", "comeon"));
-            assertEquals(api.basicRecordSetsInZone("denominator.io.").getByNameAndType("www.denominator.io.", "A"),
-                    Optional.absent());
+            assertNull(api.basicRecordSetsInZone("denominator.io.").getByNameAndType("www.denominator.io.", "A"));
 
             assertEquals(server.getRequestCount(), 2);
             assertTrue(new String(server.takeRequest().getBody()).indexOf("letmein") != -1);

@@ -1,6 +1,5 @@
 package denominator.cli;
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Iterables.tryFind;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.provider;
 import static java.lang.String.format;
@@ -13,6 +12,7 @@ import io.airlift.command.OptionType;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -24,7 +24,6 @@ import org.yaml.snakeyaml.Yaml;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
@@ -55,7 +54,6 @@ import denominator.clouddns.CloudDNSProvider;
 import denominator.dynect.DynECTProvider;
 import denominator.mock.MockProvider;
 import denominator.model.Zone;
-import denominator.model.Zones;
 import denominator.route53.Route53Provider;
 import denominator.ultradns.UltraDNSProvider;
 
@@ -127,8 +125,7 @@ public class Denominator {
                 if (provider.credentialTypeToParameterNames().isEmpty())
                     builder.append(format("%-10s %-51s %-14s %n", provider.name(), provider.url(),
                             provider.supportsDuplicateZoneNames()));
-                for (Entry<String, Collection<String>> entry : provider.credentialTypeToParameterNames().asMap()
-                        .entrySet()) {
+                for (Entry<String, Collection<String>> entry : provider.credentialTypeToParameterNames().entrySet()) {
                     String parameters = Joiner.on(' ').join(entry.getValue());
                     builder.append(format(table, provider.name(), provider.url(),
                             provider.supportsDuplicateZoneNames(), entry.getKey(), parameters));
@@ -291,8 +288,8 @@ public class Denominator {
 
                 @Override
                 public String apply(Zone input) {
-                    if (input.id().isPresent())
-                        return input.name() + " " + input.id().get();
+                    if (input.id() != null)
+                        return input.name() + " " + input.id();
                     return input.name();
                 }
 
@@ -304,10 +301,13 @@ public class Denominator {
         if (!InternetDomainName.isValid(zoneIdOrName) || !InternetDomainName.from(zoneIdOrName).hasParent()) {
             return zoneIdOrName;
         } else if (InternetDomainName.isValid(zoneIdOrName) && mgr.provider().supportsDuplicateZoneNames()) {
-            List<Zone> currentZones = ImmutableList.copyOf(mgr.api().zones());
-            Optional<Zone> zone = tryFind(currentZones, Zones.nameEqualTo(zoneIdOrName));
-            checkArgument(zone.isPresent(), "zone %s not found in %s", zoneIdOrName, currentZones);
-            return zone.get().id().get();
+            List<Zone> currentZones = new ArrayList<Zone>();
+            for (Zone zone : mgr.api().zones()) {
+                if (zoneIdOrName.equals(zone.name()))
+                    return zone.id();
+                currentZones.add(zone);
+            }
+            checkArgument(false, "zone %s not found in %s", zoneIdOrName, currentZones);
         }
         return zoneIdOrName;
     }

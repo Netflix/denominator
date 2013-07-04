@@ -1,17 +1,18 @@
 package denominator.model.rdata;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.Map;
-
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableMap;
+import java.util.LinkedHashMap;
 
 /**
- * Corresponds to the binary representation of the {@code SPF} (Sender Policy Framework) RData
+ * Corresponds to the binary representation of the {@code SPF} (Sender Policy
+ * Framework) RData
  * 
- * <br><br><b>Example</b><br>
+ * <br>
+ * <br>
+ * <b>Example</b><br>
  * 
  * <pre>
  * import static denominator.model.rdata.SPFData.spf;
@@ -21,18 +22,16 @@ import com.google.common.collect.ImmutableMap;
  * 
  * See <a href="http://tools.ietf.org/html/rfc4408#section-3.1.1">RFC 4408</a>
  */
-public class SPFData extends ForwardingMap<String, Object> {
+public class SPFData extends LinkedHashMap<String, Object> {
 
     public static SPFData create(String txtdata) {
         return new SPFData(txtdata);
     }
 
-    private final String txtdata;
-
     @ConstructorProperties("txtdata")
-    private SPFData(String txtdata) {
-        this.txtdata = checkNotNull(txtdata, "txtdata");
-        this.delegate = ImmutableMap.<String, Object> of("txtdata", txtdata);
+    SPFData(String txtdata) {
+        checkArgument(checkNotNull(txtdata, "txtdata").length() <= 65535, "txt data is limited to 65535");
+        put("txtdata", txtdata);
     }
 
     /**
@@ -41,14 +40,8 @@ public class SPFData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public String txtdata() {
-        return txtdata;
+        return get("txtdata").toString();
     }
 
-    // transient to avoid serializing by default, for example in json
-    private final transient ImmutableMap<String, Object> delegate;
-    
-    @Override
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
+    private static final long serialVersionUID = 1L;
 }

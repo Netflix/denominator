@@ -6,6 +6,7 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
+import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
 import static denominator.cli.Denominator.idOrName;
 import static java.lang.String.format;
@@ -22,13 +23,13 @@ import java.util.Map;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 
 import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.cli.Denominator.DenominatorCommand;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetToString;
 import denominator.hook.InstanceMetadataHook;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
@@ -82,14 +83,15 @@ class ResourceRecordSetCommands {
         public String qualifier;
 
         public Iterator<String> doRun(DNSApiManager mgr) {
-            Optional<ResourceRecordSet<?>> result;
+            ResourceRecordSet<?> rrs;
             if (qualifier != null) {
-                result = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName))
+                rrs = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName))
                         .getByNameTypeAndQualifier(name, type, qualifier);
             } else {
-                result = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).getByNameAndType(name, type);
+                rrs = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).getByNameAndType(name, type);
             }
-            return forArray(result.transform(ResourceRecordSetToString.INSTANCE).or(""));
+            return rrs != null ? singletonIterator(GeoResourceRecordSetToString.INSTANCE.apply(rrs))
+                    : singletonIterator("");
         }
     }
 
@@ -117,13 +119,13 @@ class ResourceRecordSetCommands {
                 @Override
                 public String next() {
                     ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
-                    Optional<ResourceRecordSet<?>> rrset = api.getByNameAndType(name, type);
-                    if (rrset.isPresent() && rrset.get().ttl().or(Integer.MAX_VALUE).intValue() != ttl) {
+                    ResourceRecordSet<?> rrs = api.getByNameAndType(name, type);
+                    if (rrs != null && rrs.ttl() != null && rrs.ttl().intValue() != ttl) {
                         api.put(ResourceRecordSet.builder()
-                                                 .name(rrset.get().name())
-                                                 .type(rrset.get().type())
+                                                 .name(rrs.name())
+                                                 .type(rrs.type())
                                                  .ttl(ttl)
-                                                 .addAll(rrset.get().rdata()).build());
+                                                 .addAll(rrs.rdata()).build());
                     }
                     done = true;
                     return ";; ok";
@@ -195,9 +197,9 @@ class ResourceRecordSetCommands {
          */
         private void addIfPresentInMetadataService(ImmutableList.Builder<String> valuesBuilder, String key,
                 URI metadataService) throws IllegalArgumentException {
-            Optional<String> value = InstanceMetadataHook.get(metadataService, key);
-            checkArgument(value.isPresent(), "could not retrieve %s from %s", key, metadataService);
-            valuesBuilder.add(value.get());
+            String value = InstanceMetadataHook.get(metadataService, key);
+            checkArgument(value != null, "could not retrieve %s from %s", key, metadataService);
+            valuesBuilder.add(value);
         }
     }
 
@@ -226,17 +228,17 @@ class ResourceRecordSetCommands {
                 @Override
                 public String next() {
                     ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
-                    Optional<ResourceRecordSet<?>> rrset = api.getByNameAndType(name, type);
-                    if (rrset.isPresent()) {
+                    ResourceRecordSet<?> rrset = api.getByNameAndType(name, type);
+                    if (rrset != null) {
                         ImmutableList<Map<String, Object>> oldRDataAsList =
-                                ImmutableList.copyOf(rrset.get().rdata());
+                                ImmutableList.copyOf(rrset.rdata());
                         ImmutableList<Map<String, Object>> newRData =
-                                ImmutableList.copyOf(filter(rrset.get().rdata(), not(in(toAdd.rdata()))));
+                                ImmutableList.copyOf(filter(rrset.rdata(), not(in(toAdd.rdata()))));
                         if (!newRData.isEmpty()) {
                             api.put(ResourceRecordSet.builder()
-                                                     .name(rrset.get().name())
-                                                     .type(rrset.get().type())
-                                                     .ttl(rrset.get().ttl().orNull())
+                                                     .name(rrset.name())
+                                                     .type(rrset.type())
+                                                     .ttl(rrset.ttl())
                                                      .addAll(oldRDataAsList)
                                                      .addAll(newRData).build());
                         }
@@ -310,19 +312,19 @@ class ResourceRecordSetCommands {
                 @Override
                 public String next() {
                     ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
-                    Optional<ResourceRecordSet<?>> rrset = api.getByNameAndType(name, type);
-                    if (rrset.isPresent()) {
+                    ResourceRecordSet<?> rrset = api.getByNameAndType(name, type);
+                    if (rrset != null) {
                         ImmutableList<Map<String, Object>> oldRDataAsList =
-                                ImmutableList.copyOf(rrset.get().rdata());
+                                ImmutableList.copyOf(rrset.rdata());
                         ImmutableList<Map<String, Object>> retainedRData =
-                                ImmutableList.copyOf(filter(rrset.get().rdata(), not(in(toRemove.rdata()))));
+                                ImmutableList.copyOf(filter(rrset.rdata(), not(in(toRemove.rdata()))));
                         if (retainedRData.isEmpty()) {
                             api.deleteByNameAndType(name, type);
                         } else if (!oldRDataAsList.equals(retainedRData)) {
                             api.put(ResourceRecordSet.builder()
-                                                     .name(rrset.get().name())
-                                                     .type(rrset.get().type())
-                                                     .ttl(rrset.get().ttl().orNull())
+                                                     .name(rrset.name())
+                                                     .type(rrset.type())
+                                                     .ttl(rrset.ttl())
                                                      .addAll(retainedRData).build());
                         }
                     }
@@ -378,8 +380,8 @@ class ResourceRecordSetCommands {
         public String apply(ResourceRecordSet<?> input) {
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
             for (Map<String, Object> rdata : input.rdata()) {
-                lines.add(format("%-50s%-7s%-20s%-6s%s", input.name(), input.type(), input.qualifier().or(""),
-                        input.ttl().orNull(), flatten(rdata)));
+                lines.add(format("%-50s%-7s%-20s%-6s%s", input.name(), input.type(),
+                        input.qualifier() != null ? input.qualifier() : "", input.ttl(), flatten(rdata)));
             }
             return Joiner.on('\n').join(lines.build());
         }

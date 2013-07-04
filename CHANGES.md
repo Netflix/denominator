@@ -1,3 +1,6 @@
+### Version 3.0
+* removes guava dependency
+
 ### Version 2.1.1
 * backfills dynect session invalidation logic from issue #106
 

@@ -1,10 +1,7 @@
 package denominator.ultradns;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.in;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.base.Strings.emptyToNull;
-import static com.google.common.collect.Iterables.filter;
+import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.slurp;
 import static feign.codec.Decoders.firstGroup;
 import static feign.codec.Decoders.transformEachFirstGroup;
 import static java.lang.String.format;
@@ -13,6 +10,10 @@ import static java.util.regex.Pattern.compile;
 
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -20,15 +21,6 @@ import java.util.regex.Pattern;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.SetMultimap;
-import com.google.common.io.CharStreams;
 
 import dagger.Provides;
 import denominator.BasicProvider;
@@ -63,8 +55,7 @@ public class UltraDNSProvider extends BasicProvider {
      *            if empty or null use default
      */
     public UltraDNSProvider(String url) {
-        url = emptyToNull(url);
-        this.url = url != null ? url : "https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01";
+        this.url = url == null || url.isEmpty() ? "https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01" : url;
     }
 
     @Override
@@ -78,8 +69,10 @@ public class UltraDNSProvider extends BasicProvider {
      */
     @Override
     public Set<String> basicRecordTypes() {
-        return ImmutableSet.of("A", "AAAA", "CNAME", "HINFO", "MX", "NAPTR", "NS", "PTR", "RP", "SOA", "SPF", "SRV",
-                "TXT");
+        Set<String> types = new LinkedHashSet<String>();
+        types.addAll(Arrays.asList("A", "AAAA", "CNAME", "HINFO", "MX", "NAPTR", "NS", "PTR", "RP", "SOA", "SPF",
+                "SRV", "TXT"));
+        return types;
     }
 
     /**
@@ -87,15 +80,20 @@ public class UltraDNSProvider extends BasicProvider {
      * accept both CNAME and address types.
      */
     @Override
-    public SetMultimap<String, String> profileToRecordTypes() {
-        return ImmutableSetMultimap.<String, String> builder()
-                .putAll("geo", "A", "AAAA", "CNAME", "HINFO", "MX", "NAPTR", "PTR", "RP", "SRV", "TXT")
-                .putAll("roundRobin", filter(basicRecordTypes(), not(in(ImmutableSet.of("SOA", "CNAME"))))).build();
+    public Map<String, Collection<String>> profileToRecordTypes() {
+        Map<String, Collection<String>> profileToRecordTypes = new LinkedHashMap<String, Collection<String>>();
+        profileToRecordTypes.put("geo",
+                Arrays.asList("A", "AAAA", "CNAME", "HINFO", "MX", "NAPTR", "PTR", "RP", "SRV", "TXT"));
+        profileToRecordTypes.put("roundRobin",
+                Arrays.asList("A", "AAAA", "HINFO", "MX", "NAPTR", "NS", "PTR", "RP", "SPF", "SRV", "TXT"));
+        return profileToRecordTypes;
     }
 
     @Override
-    public Multimap<String, String> credentialTypeToParameterNames() {
-        return ImmutableMultimap.<String, String> builder().putAll("password", "username", "password").build();
+    public Map<String, Collection<String>> credentialTypeToParameterNames() {
+        Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
+        options.put("password", Arrays.asList("username", "password"));
+        return options;
     }
 
     @dagger.Module(injects = DNSApiManager.class, complete = false, includes = { NothingToClose.class,
@@ -129,8 +127,10 @@ public class UltraDNSProvider extends BasicProvider {
 
         @Provides
         @Singleton
-        SetMultimap<Factory, String> factoryToProfiles(GeoResourceRecordSetApi.Factory in) {
-            return ImmutableSetMultimap.<Factory, String> of(in, "geo");
+        Map<Factory, Collection<String>> factoryToProfiles(GeoResourceRecordSetApi.Factory in) {
+            Map<Factory, Collection<String>> factories = new LinkedHashMap<Factory, Collection<String>>();
+            factories.put(in, Arrays.asList("geo"));
+            return factories;
         }
     }
 
@@ -141,7 +141,7 @@ public class UltraDNSProvider extends BasicProvider {
         @Provides
         @Singleton
         Map<String, Decoder> decoders() {
-            Builder<String, Decoder> decoders = ImmutableMap.<String, Decoder> builder();
+            Map<String, Decoder> decoders = new LinkedHashMap<String, Decoder>();
             Decoder saxDecoder = new UltraDNSSAXDecoder();
             decoders.put("UltraDNS", saxDecoder);
             decoders.put("UltraDNS#createRRPoolInZoneForNameAndType(String,String,int)",
@@ -157,19 +157,21 @@ public class UltraDNSProvider extends BasicProvider {
                     firstGroup("<DirPoolID[^>]*>([^<]+)</DirPoolID>"));
             decoders.put("UltraDNS#createRecordAndDirectionalGroupInPool(DirectionalRecord,DirectionalGroup,String)",
                     firstGroup("<DirectionalPoolRecordID[^>]*>([^<]+)</DirectionalPoolRecordID>"));
-            return decoders.build();
+            return decoders;
         }
 
         @Provides
         @Singleton
         Map<String, ErrorDecoder> errorDecoders() {
-            return ImmutableMap.<String, ErrorDecoder> of("UltraDNS", new UltraDNSErrorDecoder());
+            Map<String, ErrorDecoder> errorDecoders = new LinkedHashMap<String, ErrorDecoder>();
+            errorDecoders.put("UltraDNS", new UltraDNSErrorDecoder());
+            return errorDecoders;
         }
 
         @Provides
         @Singleton
         Map<String, FormEncoder> formEncoders() {
-            Builder<String, FormEncoder> formEncoders = ImmutableMap.<String, FormEncoder> builder();
+            Map<String, FormEncoder> formEncoders = new LinkedHashMap<String, FormEncoder>();
             FormEncoder recordEncoder = new ZoneAndResourceRecord();
             formEncoders.put("UltraDNS#createRecordInZone(Record,String)", recordEncoder);
             formEncoders.put("UltraDNS#updateRecordInZone(Record,String)", recordEncoder);
@@ -179,7 +181,7 @@ public class UltraDNSProvider extends BasicProvider {
                     recordAndDirectionalGroupEncoder);
             formEncoders.put("UltraDNS#updateRecordAndDirectionalGroup(DirectionalRecord,DirectionalGroup)",
                     recordAndDirectionalGroupEncoder);
-            return formEncoders.build();
+            return formEncoders;
         }
 
         @Provides
@@ -199,12 +201,12 @@ public class UltraDNSProvider extends BasicProvider {
         return new Decoder() {
             @Override
             public Object decode(String methodKey, Reader reader, Type type) throws Throwable {
-                Matcher matcher = patternForMatcher.matcher(CharStreams.toString(reader));
-                ImmutableMap.Builder<String, String> builder = ImmutableMap.<String, String> builder();
+                Matcher matcher = patternForMatcher.matcher(slurp(reader));
+                Map<String, String> map = new LinkedHashMap<String, String>();
                 while (matcher.find()) {
-                    builder.put(matcher.group(keyGroup), matcher.group(valueGroup));
+                    map.put(matcher.group(keyGroup), matcher.group(valueGroup));
                 }
-                return builder.build();
+                return map;
             }
 
             @Override

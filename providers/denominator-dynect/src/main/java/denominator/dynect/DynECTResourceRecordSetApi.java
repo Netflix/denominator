@@ -1,20 +1,17 @@
 package denominator.dynect;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Iterators.emptyIterator;
-import static com.google.common.collect.Iterators.getNext;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.nextOrNull;
 import static java.lang.String.format;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
-
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
-import com.google.common.collect.Lists;
 
 import denominator.ResourceRecordSetApi;
 import denominator.dynect.DynECT.Record;
@@ -46,38 +43,35 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByName(final String name) {
         checkNotNull(name, "name");
-        return emptyIteratorOn404(new Supplier<Iterator<ResourceRecordSet<?>>>() {
-            @Override
-            public Iterator<ResourceRecordSet<?>> get() {
+        return emptyIteratorOn404(new Iterable<ResourceRecordSet<?>>() {
+            public Iterator<ResourceRecordSet<?>> iterator() {
                 return api.rrsetsInZoneByName(zone, name);
             }
         });
     }
 
     @Override
-    public Optional<ResourceRecordSet<?>> getByNameAndType(final String name, final String type) {
+    public ResourceRecordSet<?> getByNameAndType(final String name, final String type) {
         checkNotNull(name, "name");
         checkNotNull(type, "type");
-        Iterator<ResourceRecordSet<?>> iterator = emptyIteratorOn404(new Supplier<Iterator<ResourceRecordSet<?>>>() {
-            @Override
-            public Iterator<ResourceRecordSet<?>> get() {
+        Iterator<ResourceRecordSet<?>> rrset = emptyIteratorOn404(new Iterable<ResourceRecordSet<?>>() {
+            public Iterator<ResourceRecordSet<?>> iterator() {
                 return api.rrsetsInZoneByNameAndType(zone, name, type);
             }
         });
-        return Optional.<ResourceRecordSet<?>> fromNullable(getNext(iterator, null));
+        return nextOrNull(rrset);
     }
 
     @Override
     public void put(final ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
-        int ttlToApply = rrset.ttl().or(0);
+        int ttlToApply = rrset.ttl() != null ? rrset.ttl() : 0;
 
-        List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset.rdata());
+        List<Map<String, Object>> recordsLeftToCreate = new ArrayList<Map<String, Object>>(rrset.rdata());
 
-        Iterator<Record> existingRecords = emptyIteratorOn404(new Supplier<Iterator<Record>>() {
-            @Override
-            public Iterator<Record> get() {
+        Iterator<Record> existingRecords = emptyIteratorOn404(new Iterable<Record>() {
+            public Iterator<Record> iterator() {
                 return api.recordsInZoneByNameAndType(zone, rrset.name(), rrset.type());
             }
         });
@@ -105,9 +99,8 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
     @Override
     public void deleteByNameAndType(final String name, final String type) {
-        Iterator<String> existingRecords = emptyIteratorOn404(new Supplier<Iterator<String>>() {
-            @Override
-            public Iterator<String> get() {
+        Iterator<String> existingRecords = emptyIteratorOn404(new Iterable<String>() {
+            public Iterator<String> iterator() {
                 return api.recordIdsInZoneByNameAndType(zone, name, type).iterator();
             }
         });
@@ -123,12 +116,12 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
             api.publish(zone);
     }
 
-    static <X> Iterator<X> emptyIteratorOn404(Supplier<Iterator<X>> supplier) {
+    static <X> Iterator<X> emptyIteratorOn404(Iterable<X> supplier) {
         try {
-            return supplier.get();
+            return supplier.iterator();
         } catch (FeignException e) {
             if (e.getMessage().indexOf("status 404") != -1) {
-                return emptyIterator();
+                return Collections.<X> emptyList().iterator();
             }
             throw e;
         }

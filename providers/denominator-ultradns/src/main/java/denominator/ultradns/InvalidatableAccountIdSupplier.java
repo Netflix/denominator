@@ -4,8 +4,6 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import com.google.common.base.Supplier;
-
 import denominator.Credentials;
 
 /**
@@ -13,7 +11,7 @@ import denominator.Credentials;
  */
 // similar to guava MemoizingSupplier
 @Singleton
-class InvalidatableAccountIdSupplier implements Supplier<String> {
+class InvalidatableAccountIdSupplier {
 
     private final denominator.Provider provider;
     private final UltraDNS api;
@@ -39,7 +37,6 @@ class InvalidatableAccountIdSupplier implements Supplier<String> {
         initialized = false;
     }
 
-    @Override
     public String get() {
         String currentUrl = provider.url();
         Credentials currentCreds = credentials.get();

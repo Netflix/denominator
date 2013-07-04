@@ -1,15 +1,13 @@
 package denominator.route53;
 
-import static com.google.common.collect.Iterators.filter;
+import static denominator.common.Util.filter;
 import static denominator.model.ResourceRecordSets.withoutProfile;
 import static denominator.route53.Route53.ActionOnResourceRecordSet.delete;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 import javax.inject.Inject;
-
-import com.google.common.base.Optional;
-import com.google.common.collect.ImmutableList;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -38,7 +36,7 @@ public final class Route53ResourceRecordSetApi implements ResourceRecordSetApi {
     }
 
     @Override
-    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
+    public ResourceRecordSet<?> getByNameAndType(String name, String type) {
         return allApi.getByNameAndType(name, type);
     }
 
@@ -49,10 +47,10 @@ public final class Route53ResourceRecordSetApi implements ResourceRecordSetApi {
 
     @Override
     public void deleteByNameAndType(String name, String type) {
-        Optional<ResourceRecordSet<?>> oldRRS = getByNameAndType(name, type);
-        if (!oldRRS.isPresent())
+        ResourceRecordSet<?> oldRRS = getByNameAndType(name, type);
+        if (oldRRS == null)
             return;
-        api.changeBatch(zoneId, ImmutableList.of(delete(oldRRS.get())));
+        api.changeBatch(zoneId, Arrays.asList(delete(oldRRS)));
     }
 
     static final class Factory implements denominator.ResourceRecordSetApi.Factory {

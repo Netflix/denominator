@@ -1,11 +1,9 @@
 package denominator.route53;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Named;
-
-import com.google.common.collect.ForwardingList;
-import com.google.common.collect.ImmutableList;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
@@ -19,15 +17,9 @@ interface Route53 {
     @RequestLine("GET /2012-12-12/hostedzone?marker={marker}")
     ZoneList zones(@Named("marker") String marker);
 
-    static class ZoneList extends ForwardingList<Zone> {
-
-        List<Zone> zones = ImmutableList.of();
+    static class ZoneList extends ArrayList<Zone> {
         String next;
-
-        @Override
-        protected List<Zone> delegate() {
-            return zones;
-        }
+        private static final long serialVersionUID = 1L;
     }
 
     @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset")
@@ -44,9 +36,7 @@ interface Route53 {
     ResourceRecordSetList rrsetsStartingAtNameTypeAndIdentifier(@Named("zoneId") String zoneId,
             @Named("name") String name, @Named("type") String type, @Named("identifier") String identifier);
 
-    static class ResourceRecordSetList extends ForwardingList<ResourceRecordSet<?>> {
-
-        List<ResourceRecordSet<?>> rrsets = ImmutableList.of();
+    static class ResourceRecordSetList extends ArrayList<ResourceRecordSet<?>> {
         NextRecord next;
 
         static class NextRecord {
@@ -60,10 +50,7 @@ interface Route53 {
             String identifier;
         }
 
-        @Override
-        protected List<ResourceRecordSet<?>> delegate() {
-            return rrsets;
-        }
+        private static final long serialVersionUID = 1L;
     }
 
     @RequestLine("POST /2012-12-12/hostedzone/{zoneId}/rrset")

@@ -21,18 +21,18 @@ public class UltraDNSPredicatesTest {
     }
 
     public void resourceTypeEqualToFalseOnDifferentType() {
-        assertFalse(UltraDNSPredicates.resourceTypeEqualTo(28).apply(a));
+        assertFalse(UltraDNSFilters.resourceTypeEqualTo(28).apply(a));
     }
 
     public void resourceTypeEqualToTrueOnSameType() {
-        assertTrue(UltraDNSPredicates.resourceTypeEqualTo(a.typeCode).apply(a));
+        assertTrue(UltraDNSFilters.resourceTypeEqualTo(a.typeCode).apply(a));
     }
 
     public void recordIdEqualToFalseOnDifferentId() {
-        assertFalse(UltraDNSPredicates.recordIdEqualTo("BBBBBBBBBBBB").apply(a));
+        assertFalse(UltraDNSFilters.recordIdEqualTo("BBBBBBBBBBBB").apply(a));
     }
 
     public void recordIdEqualToTrueOnSameId() {
-        assertTrue(UltraDNSPredicates.recordIdEqualTo(a.id).apply(a));
+        assertTrue(UltraDNSFilters.recordIdEqualTo(a.id).apply(a));
     }
 }

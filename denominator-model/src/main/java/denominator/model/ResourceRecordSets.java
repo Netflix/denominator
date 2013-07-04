@@ -1,15 +1,13 @@
 package denominator.model;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkNotNull;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
-
+import denominator.common.Filter;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
@@ -27,6 +25,15 @@ public class ResourceRecordSets {
     private ResourceRecordSets() {
     }
 
+    public static Filter<ResourceRecordSet<?>> notNull() {
+        return new Filter<ResourceRecordSet<?>>() {
+            @Override
+            public boolean apply(ResourceRecordSet<?> in) {
+                return in != null;
+            }
+        };
+    }
+
     /**
      * evaluates to true if the input {@link ResourceRecordSet} exists with
      * {@link ResourceRecordSet#name() name} corresponding to the {@code name}
@@ -36,152 +43,110 @@ public class ResourceRecordSets {
      *            the {@link ResourceRecordSet#name() name} of the desired
      *            record set
      */
-    public static Predicate<ResourceRecordSet<?>> nameEqualTo(String name) {
-        return new NameEqualToPredicate(name);
-    }
+    public static Filter<ResourceRecordSet<?>> nameEqualTo(final String name) {
+        checkNotNull(name, "name");
+        return new Filter<ResourceRecordSet<?>>() {
 
-    private static final class NameEqualToPredicate implements Predicate<ResourceRecordSet<?>> {
-        private final String name;
+            @Override
+            public boolean apply(ResourceRecordSet<?> in) {
+                return in != null && name.equals(in.name());
+            }
 
-        public NameEqualToPredicate(String name) {
-            this.name = checkNotNull(name, "name");
-        }
-
-        @Override
-        public boolean apply(ResourceRecordSet<?> input) {
-            if (input == null)
-                return false;
-            return name.equals(input.name());
-        }
-
-        @Override
-        public String toString() {
-            return "NameEqualTo(" + name + ")";
-        }
+            @Override
+            public String toString() {
+                return "nameEqualTo(" + name + ")";
+            }
+        };
     }
 
     /**
      * evaluates to true if the input {@link ResourceRecordSet} exists with
-     * {@link ResourceRecordSet#type() type} corresponding to the
+     * {@link ResourceRecordSet#name() name} corresponding to the {@code name}
+     * parameter and {@link ResourceRecordSet#type() type} corresponding to the
      * {@code type} parameter.
      * 
+     * @param name
+     *            the {@link ResourceRecordSet#name() name} of the desired
+     *            record set
      * @param type
      *            the {@link ResourceRecordSet#type() type} of the desired
      *            record set
      */
-    public static Predicate<ResourceRecordSet<?>> typeEqualTo(String type) {
-        return new TypeEqualToPredicate(type);
-    }
+    public static Filter<ResourceRecordSet<?>> nameAndTypeEqualTo(final String name, final String type) {
+        checkNotNull(name, "name");
+        checkNotNull(type, "type");
+        return new Filter<ResourceRecordSet<?>>() {
 
-    private static final class TypeEqualToPredicate implements Predicate<ResourceRecordSet<?>> {
-        private final String type;
+            @Override
+            public boolean apply(ResourceRecordSet<?> in) {
+                return in != null && name.equals(in.name()) && type.equals(in.type());
+            }
 
-        public TypeEqualToPredicate(String type) {
-            this.type = checkNotNull(type, "type");
-        }
-
-        @Override
-        public boolean apply(ResourceRecordSet<?> input) {
-            if (input == null)
-                return false;
-            return type.equals(input.type());
-        }
-
-        @Override
-        public String toString() {
-            return "TypeEqualTo(" + type + ")";
-        }
+            @Override
+            public String toString() {
+                return "nameAndTypeEqualTo(" + name + "," + type + ")";
+            }
+        };
     }
 
     /**
-     * evaluates to true if the input {@link ResourceRecordSet} exists with a
-     * {@link ResourceRecordSet#qualifier() qualifier} present and
-     * corresponding to the {@code qualifier} parameter.
+     * evaluates to true if the input {@link ResourceRecordSet} exists with
+     * {@link ResourceRecordSet#name() name} corresponding to the {@code name}
+     * parameter, {@link ResourceRecordSet#type() type} corresponding to the
+     * {@code type} parameter, and {@link ResourceRecordSet#qualifier()
+     * qualifier} corresponding to the {@code qualifier} parameter.
      * 
+     * @param name
+     *            the {@link ResourceRecordSet#name() name} of the desired
+     *            record set
+     * @param type
+     *            the {@link ResourceRecordSet#type() type} of the desired
+     *            record set
      * @param qualifier
      *            the {@link ResourceRecordSet#qualifier() qualifier} of the
      *            desired record set
      */
-    public static Predicate<ResourceRecordSet<?>> qualifierEqualTo(String qualifier) {
-        return new QualifierEqualToPredicate(qualifier);
-    }
+    public static Filter<ResourceRecordSet<?>> nameTypeAndQualifierEqualTo(final String name, final String type,
+            final String qualifier) {
+        checkNotNull(name, "name");
+        checkNotNull(type, "type");
+        checkNotNull(qualifier, "qualifier");
+        return new Filter<ResourceRecordSet<?>>() {
 
-    private static final class QualifierEqualToPredicate implements Predicate<ResourceRecordSet<?>> {
-        private final String qualifier;
+            @Override
+            public boolean apply(ResourceRecordSet<?> in) {
+                return in != null && name.equals(in.name()) && type.equals(in.type())
+                        && qualifier.equals(in.qualifier());
+            }
 
-        public QualifierEqualToPredicate(String qualifier) {
-            this.qualifier = checkNotNull(qualifier, "qualifier");
-        }
-
-        @Override
-        public boolean apply(ResourceRecordSet<?> input) {
-            if (input == null)
-                return false;
-            return qualifier.equals(input.qualifier().orNull());
-        }
-
-        @Override
-        public String toString() {
-            return "QualifierEqualTo(" + qualifier + ")";
-        }
-    }
-
-    /**
-     * evaluates to true if the input {@link ResourceRecordSet} exists and
-     * contains the {@code rdata} specified.
-     * 
-     * @param rdata
-     *            the rdata in the desired record set
-     */
-    public static Predicate<ResourceRecordSet<?>> containsRData(Map<String, ?> rdata) {
-        return new ContainsRData(rdata);
-    }
-
-    private static final class ContainsRData implements Predicate<ResourceRecordSet<?>> {
-        private final Map<String, ?> rdata;
-
-        public ContainsRData(Map<String, ?> rdata) {
-            this.rdata = checkNotNull(rdata, "rdata");
-        }
-
-        @Override
-        public boolean apply(ResourceRecordSet<?> input) {
-            if (input == null)
-                return false;
-            return input.rdata().contains(rdata);
-        }
-
-        @Override
-        public String toString() {
-            return "containsRData(" + rdata + ")";
-        }
+            @Override
+            public String toString() {
+                return "nameTypeAndQualifierEqualTo(" + name + "," + type + "," + qualifier + ")";
+            }
+        };
     }
 
     /**
      * returns true if the input is not null and
      * {@link ResourceRecordSet#profiles() profile} is empty.
      */
-    public static Predicate<ResourceRecordSet<?>> withoutProfile() {
-        return WithoutProfile.INSTANCE;
-    }
+    public static Filter<ResourceRecordSet<?>> withoutProfile() {
+        return new Filter<ResourceRecordSet<?>>() {
 
-    private static enum WithoutProfile implements Predicate<ResourceRecordSet<?>> {
+            @Override
+            public boolean apply(ResourceRecordSet<?> in) {
+                return in != null && toProfileTypes(in).isEmpty();
+            }
 
-        INSTANCE;
-
-        @Override
-        public boolean apply(ResourceRecordSet<?> input) {
-            return input != null && input.profiles().isEmpty();
-        }
-
-        @Override
-        public String toString() {
-            return "WithoutProfile()";
-        }
+            @Override
+            public String toString() {
+                return "withoutProfile()";
+            }
+        };
     }
 
     /**
-     * Returns true if {@link ResourceRecordSet#profiles() profile} contains a
+     * returns true if {@link ResourceRecordSet#profiles() profile} contains a
      * value is where the value of key {@code type} corresponds to the parameter
      * {@code type}.
      * 
@@ -194,73 +159,55 @@ public class ResourceRecordSets {
      * }
      * </pre>
      * 
-     * @param type
+     * @param profileType
      *            expected type of the profile
      * @since 1.3.1
      */
-    public static Predicate<ResourceRecordSet<?>> profileContainsType(String type) {
-        return new ProfileContainsTypeToPredicate(type);
-    }
+    public static Filter<ResourceRecordSet<?>> profileContainsType(final String profileType) {
+        checkNotNull(profileType, "profileType");
+        return new Filter<ResourceRecordSet<?>>() {
 
-    private static final class ProfileContainsTypeToPredicate implements Predicate<ResourceRecordSet<?>> {
-        private final String type;
-
-        private ProfileContainsTypeToPredicate(String type) {
-            this.type = checkNotNull(type, "type");
-        }
-
-        @Override
-        public boolean apply(ResourceRecordSet<?> input) {
-            if (input == null)
-                return false;
-            if (input.profiles().isEmpty())
-                return false;
-            for (Map<String, Object> profile : input.profiles()) {
-                if (type.equals(profile.get("type")))
-                    return true;
+            @Override
+            public boolean apply(ResourceRecordSet<?> in) {
+                return in != null && toProfileTypes(in).contains(profileType);
             }
-            return false;
-        }
 
-        @Override
-        public String toString() {
-            return "ProfileContainsTypeTo(" + type + ")";
-        }
+            @Override
+            public String toString() {
+                return "profileContainsType(" + profileType + ")";
+            }
+        };
     }
 
     /**
-     * Returns an {@link Optional} containing the first profile in {@code rrset}
-     * that has an entry whose type corresponds to {@code profileType}, if such
-     * a profile exists. If no such profile is found, an empty {@link Optional}
-     * will be returned.
+     * Returns the first profile in {@code rrset} that has an entry whose type
+     * corresponds to {@code profileType}, if such a profile exists. If no such
+     * profile is found, null is returned
      * 
      * @since 1.3.1
      */
-    public static Optional<Map<String, Object>> tryFindProfile(ResourceRecordSet<?> rrset, String profileType) {
+    public static Map<String, Object> tryFindProfile(ResourceRecordSet<?> rrset, String profileType) {
         checkNotNull(rrset, "rrset");
         checkNotNull(profileType, "profileType");
         for (Map<String, Object> profile : rrset.profiles()) {
             if (profileType.equals(profile.get("type")))
-                return Optional.of(profile);
+                return profile;
         }
-        return Optional.absent();
+        return null;
     }
 
     /**
      * Returns the set of profile types, if present, in the {@code rrset}.
      */
     public static Set<String> toProfileTypes(ResourceRecordSet<?> rrset) {
-        return FluentIterable.from(rrset.profiles()).transform(ToTypeValue.INSTANCE).toSet();
+        checkNotNull(rrset, "rrset");
+        Set<String> types = new LinkedHashSet<String>();
+        for (Map<String, Object> profile : rrset.profiles()) {
+            types.add(profile.get("type").toString());
+        }
+        return types;
     }
 
-    private static enum ToTypeValue implements Function<Map<String, Object>, String> {
-        INSTANCE;
-        @Override
-        public String apply(Map<String, Object> input) {
-            return input.get("type").toString();
-        }
-    }
-    
     /**
      * creates a set of a single {@link denominator.model.rdata.AData A} record
      * for the specified name.
@@ -298,7 +245,7 @@ public class ResourceRecordSets {
      * @param addresses
      *            address values ex. {@code [192.0.2.1, 192.0.2.2]}
      */
-    public static ResourceRecordSet<AData> a(String name, Iterable<String> addresses) {
+    public static ResourceRecordSet<AData> a(String name, Collection<String> addresses) {
         return new ABuilder().name(name).addAll(addresses).build();
     }
 
@@ -313,7 +260,7 @@ public class ResourceRecordSets {
      * @param addresses
      *            address values ex. {@code [192.0.2.1, 192.0.2.2]}
      */
-    public static ResourceRecordSet<AData> a(String name, int ttl, Iterable<String> addresses) {
+    public static ResourceRecordSet<AData> a(String name, int ttl, Collection<String> addresses) {
         return new ABuilder().name(name).ttl(ttl).addAll(addresses).build();
     }
 
@@ -365,7 +312,7 @@ public class ResourceRecordSets {
      *            address values ex.
      *            {@code [1234:ab00:ff00::6b14:abcd, 5678:ab00:ff00::6b14:abcd]}
      */
-    public static ResourceRecordSet<AAAAData> aaaa(String name, Iterable<String> addresses) {
+    public static ResourceRecordSet<AAAAData> aaaa(String name, Collection<String> addresses) {
         return new AAAABuilder().name(name).addAll(addresses).build();
     }
 
@@ -381,7 +328,7 @@ public class ResourceRecordSets {
      *            address values ex.
      *            {@code [1234:ab00:ff00::6b14:abcd, 5678:ab00:ff00::6b14:abcd]}
      */
-    public static ResourceRecordSet<AAAAData> aaaa(String name, int ttl, Iterable<String> addresses) {
+    public static ResourceRecordSet<AAAAData> aaaa(String name, int ttl, Collection<String> addresses) {
         return new AAAABuilder().name(name).ttl(ttl).addAll(addresses).build();
     }
 
@@ -435,7 +382,7 @@ public class ResourceRecordSets {
      *            cname values ex.
      *            {@code [www1.denominator.io., www2.denominator.io.]}
      */
-    public static ResourceRecordSet<CNAMEData> cname(String name, Iterable<String> cnames) {
+    public static ResourceRecordSet<CNAMEData> cname(String name, Collection<String> cnames) {
         return new CNAMEBuilder().name(name).addAll(cnames).build();
     }
 
@@ -451,7 +398,7 @@ public class ResourceRecordSets {
      *            cname values ex.
      *            {@code [www1.denominator.io., www2.denominator.io.]}
      */
-    public static ResourceRecordSet<CNAMEData> cname(String name, int ttl, Iterable<String> cnames) {
+    public static ResourceRecordSet<CNAMEData> cname(String name, int ttl, Collection<String> cnames) {
         return new CNAMEBuilder().name(name).ttl(ttl).addAll(cnames).build();
     }
 
@@ -503,7 +450,7 @@ public class ResourceRecordSets {
      *            nsdname values ex.
      *            {@code [ns1.denominator.io., ns2.denominator.io.]}
      */
-    public static ResourceRecordSet<NSData> ns(String name, Iterable<String> nsdnames) {
+    public static ResourceRecordSet<NSData> ns(String name, Collection<String> nsdnames) {
         return new NSBuilder().name(name).addAll(nsdnames).build();
     }
 
@@ -519,7 +466,7 @@ public class ResourceRecordSets {
      *            nsdname values ex.
      *            {@code [ns1.denominator.io., ns2.denominator.io.]}
      */
-    public static ResourceRecordSet<NSData> ns(String name, int ttl, Iterable<String> nsdnames) {
+    public static ResourceRecordSet<NSData> ns(String name, int ttl, Collection<String> nsdnames) {
         return new NSBuilder().name(name).ttl(ttl).addAll(nsdnames).build();
     }
 
@@ -562,8 +509,8 @@ public class ResourceRecordSets {
     }
 
     /**
-     * creates ptr set of {@link denominator.model.rdata.PTRData PTR} records for
-     * the specified name.
+     * creates ptr set of {@link denominator.model.rdata.PTRData PTR} records
+     * for the specified name.
      * 
      * @param name
      *            ex. {@code denominator.io.}
@@ -571,13 +518,13 @@ public class ResourceRecordSets {
      *            ptrdname values ex.
      *            {@code [ptr1.denominator.io., ptr2.denominator.io.]}
      */
-    public static ResourceRecordSet<PTRData> ptr(String name, Iterable<String> ptrdnames) {
+    public static ResourceRecordSet<PTRData> ptr(String name, Collection<String> ptrdnames) {
         return new PTRBuilder().name(name).addAll(ptrdnames).build();
     }
 
     /**
-     * creates ptr set of {@link denominator.model.rdata.PTRData PTR} records for
-     * the specified name and ttl.
+     * creates ptr set of {@link denominator.model.rdata.PTRData PTR} records
+     * for the specified name and ttl.
      * 
      * @param name
      *            ex. {@code denominator.io.}
@@ -587,7 +534,7 @@ public class ResourceRecordSets {
      *            ptrdname values ex.
      *            {@code [ptr1.denominator.io., ptr2.denominator.io.]}
      */
-    public static ResourceRecordSet<PTRData> ptr(String name, int ttl, Iterable<String> ptrdnames) {
+    public static ResourceRecordSet<PTRData> ptr(String name, int ttl, Collection<String> ptrdnames) {
         return new PTRBuilder().name(name).ttl(ttl).addAll(ptrdnames).build();
     }
 
@@ -630,8 +577,8 @@ public class ResourceRecordSets {
     }
 
     /**
-     * creates spf set of {@link denominator.model.rdata.SPFData SPF} records for
-     * the specified name.
+     * creates spf set of {@link denominator.model.rdata.SPFData SPF} records
+     * for the specified name.
      * 
      * @param name
      *            ex. {@code denominator.io.}
@@ -639,13 +586,13 @@ public class ResourceRecordSets {
      *            spfdata values ex.
      *            {@code [v=spf1 a mx -all, v=spf1 ipv6 -all]}
      */
-    public static ResourceRecordSet<SPFData> spf(String name, Iterable<String> spfdata) {
+    public static ResourceRecordSet<SPFData> spf(String name, Collection<String> spfdata) {
         return new SPFBuilder().name(name).addAll(spfdata).build();
     }
 
     /**
-     * creates spf set of {@link denominator.model.rdata.SPFData SPF} records for
-     * the specified name and ttl.
+     * creates spf set of {@link denominator.model.rdata.SPFData SPF} records
+     * for the specified name and ttl.
      * 
      * @param name
      *            ex. {@code denominator.io.}
@@ -655,7 +602,7 @@ public class ResourceRecordSets {
      *            spfdata values ex.
      *            {@code [v=spf1 a mx -all, v=spf1 ipv6 -all]}
      */
-    public static ResourceRecordSet<SPFData> spf(String name, int ttl, Iterable<String> spfdata) {
+    public static ResourceRecordSet<SPFData> spf(String name, int ttl, Collection<String> spfdata) {
         return new SPFBuilder().name(name).ttl(ttl).addAll(spfdata).build();
     }
 
@@ -698,8 +645,8 @@ public class ResourceRecordSets {
     }
 
     /**
-     * creates txt set of {@link denominator.model.rdata.TXTData TXT} records for
-     * the specified name.
+     * creates txt set of {@link denominator.model.rdata.TXTData TXT} records
+     * for the specified name.
      * 
      * @param name
      *            ex. {@code denominator.io.}
@@ -707,13 +654,13 @@ public class ResourceRecordSets {
      *            txtdata values ex.
      *            {@code ["made in sweden", "made in norway"]}
      */
-    public static ResourceRecordSet<TXTData> txt(String name, Iterable<String> txtdata) {
+    public static ResourceRecordSet<TXTData> txt(String name, Collection<String> txtdata) {
         return new TXTBuilder().name(name).addAll(txtdata).build();
     }
 
     /**
-     * creates txt set of {@link denominator.model.rdata.TXTData TXT} records for
-     * the specified name and ttl.
+     * creates txt set of {@link denominator.model.rdata.TXTData TXT} records
+     * for the specified name and ttl.
      * 
      * @param name
      *            ex. {@code denominator.io.}
@@ -723,7 +670,7 @@ public class ResourceRecordSets {
      *            txtdata values ex.
      *            {@code ["made in sweden", "made in norway"]}
      */
-    public static ResourceRecordSet<TXTData> txt(String name, int ttl, Iterable<String> txtdata) {
+    public static ResourceRecordSet<TXTData> txt(String name, int ttl, Collection<String> txtdata) {
         return new TXTBuilder().name(name).ttl(ttl).addAll(txtdata).build();
     }
 

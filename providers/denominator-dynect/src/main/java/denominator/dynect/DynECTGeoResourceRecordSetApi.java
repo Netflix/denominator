@@ -1,47 +1,48 @@
 package denominator.dynect;
 
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Predicates.and;
-import static com.google.common.collect.Iterators.filter;
-import static com.google.common.collect.Iterators.tryFind;
+import static denominator.common.Util.and;
+import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.filter;
+import static denominator.common.Util.nextOrNull;
+import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
+import static denominator.model.ResourceRecordSets.nameTypeAndQualifierEqualTo;
 import static denominator.model.ResourceRecordSets.profileContainsType;
-import static denominator.model.ResourceRecordSets.qualifierEqualTo;
-import static denominator.model.ResourceRecordSets.typeEqualTo;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Multimap;
-
+import denominator.common.Filter;
 import denominator.model.ResourceRecordSet;
 import denominator.profile.GeoResourceRecordSetApi;
 
 public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
-    private static final Predicate<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
+    private static final Filter<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
 
-    private final Multimap<String, String> regions;
+    private final Map<String, Collection<String>> regions;
     private final DynECT api;
     private final String zoneFQDN;
 
-    DynECTGeoResourceRecordSetApi(Multimap<String, String> regions, DynECT api, String zoneFQDN) {
+    DynECTGeoResourceRecordSetApi(Map<String, Collection<String>> regions, DynECT api, String zoneFQDN) {
         this.regions = regions;
         this.api = api;
         this.zoneFQDN = zoneFQDN;
     }
 
     @Override
-    public Multimap<String, String> supportedRegions() {
+    public Map<String, Collection<String>> supportedRegions() {
         return regions;
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
-        return api.geoRRSetsByZone().get(zoneFQDN).iterator();
+        Collection<ResourceRecordSet<?>> val = api.geoRRSetsByZone().get(zoneFQDN);
+        return val != null ? val.iterator() : Collections.<ResourceRecordSet<?>> emptyList().iterator();
     }
 
     @Override
@@ -51,12 +52,12 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
 
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
-        return filter(iterator(), and(nameEqualTo(name), typeEqualTo(type), IS_GEO));
+        return filter(iterator(), and(nameAndTypeEqualTo(name, type), IS_GEO));
     }
 
     @Override
-    public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier) {
-        return tryFind(iterator(), and(nameEqualTo(name), typeEqualTo(type), qualifierEqualTo(qualifier), IS_GEO));
+    public ResourceRecordSet<?> getByNameTypeAndQualifier(String name, String type, String qualifier) {
+        return nextOrNull(filter(iterator(), and(nameTypeAndQualifierEqualTo(name, type, qualifier), IS_GEO)));
     }
 
     @Override
@@ -70,19 +71,19 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     }
 
     static final class Factory implements GeoResourceRecordSetApi.Factory {
-        private final Multimap<String, String> regions;
+        private final Map<String, Collection<String>> regions;
         private final DynECT api;
 
         @Inject
-        Factory(@Named("geo") Multimap<String, String> regions, DynECT api) {
+        Factory(@Named("geo") Map<String, Collection<String>> regions, DynECT api) {
             this.regions = regions;
             this.api = api;
         }
 
         @Override
-        public Optional<GeoResourceRecordSetApi> create(String idOrName) {
+        public GeoResourceRecordSetApi create(String idOrName) {
             checkNotNull(idOrName, "idOrName was null");
-            return Optional.<GeoResourceRecordSetApi> of(new DynECTGeoResourceRecordSetApi(regions, api, idOrName));
+            return new DynECTGeoResourceRecordSetApi(regions, api, idOrName);
         }
     }
 }

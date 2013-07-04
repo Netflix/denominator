@@ -1,23 +1,22 @@
 package denominator.ultradns;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.io.Serializable;
 
-import com.google.common.base.Predicate;
-
+import denominator.common.Filter;
 import denominator.ultradns.UltraDNS.Record;
 
-final class UltraDNSPredicates {
-    private UltraDNSPredicates() {
+final class UltraDNSFilters {
+    private UltraDNSFilters() {
     }
 
-    public static Predicate<Record> resourceTypeEqualTo(int typeValue) {
+    public static Filter<Record> resourceTypeEqualTo(int typeValue) {
         return new ResourceTypeEqualToPredicate(typeValue);
     }
 
-    /** @see UltraDNSPredicates#resourceTypeEqualTo(int) */
-    private static class ResourceTypeEqualToPredicate implements Predicate<Record>, Serializable {
+    /** @see UltraDNSFilters#resourceTypeEqualTo(int) */
+    private static class ResourceTypeEqualToPredicate implements Filter<Record>, Serializable {
         private final int typeValue;
 
         private ResourceTypeEqualToPredicate(int typeValue) {
@@ -37,11 +36,11 @@ final class UltraDNSPredicates {
         private static final long serialVersionUID = 0;
     }
 
-    public static Predicate<Record> recordIdEqualTo(String id) {
+    public static Filter<Record> recordIdEqualTo(String id) {
         return new RecordIdEqualToPredicate(id);
     }
 
-    private static class RecordIdEqualToPredicate implements Predicate<Record>, Serializable {
+    private static class RecordIdEqualToPredicate implements Filter<Record>, Serializable {
         private final String id;
 
         private RecordIdEqualToPredicate(String id) {

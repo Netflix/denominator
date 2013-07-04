@@ -1,43 +1,37 @@
 package denominator.model.rdata;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.Map;
-
-import com.google.common.collect.ForwardingMap;
-import com.google.common.collect.ImmutableMap;
+import java.util.LinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code MX} (Mail Exchange)
  * RData
  * 
- * <br><br><b>Example</b><br>
+ * <br>
+ * <br>
+ * <b>Example</b><br>
  * 
  * <pre>
- * MXData rdata = MXData.create(1, "mail.jclouds.org");
+ * MXData rdata = MXData.create(1, &quot;mail.jclouds.org&quot;);
  * </pre>
  * 
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class MXData extends ForwardingMap<String, Object> {
+public class MXData extends LinkedHashMap<String, Object> {
 
     public static MXData create(int preference, String exchange) {
         return new MXData(preference, exchange);
     }
 
-    private final int preference;
-    private final String exchange;
-
     @ConstructorProperties({ "preference", "exchange" })
-    private MXData(int preference, String exchange) {
+    MXData(int preference, String exchange) {
         checkArgument(preference <= 0xFFFF, "preference must be 65535 or less");
-        this.preference = preference;
-        this.exchange = checkNotNull(exchange, "exchange");
-        this.delegate = ImmutableMap.<String, Object> builder()
-                                    .put("preference", preference)
-                                    .put("exchange", exchange).build();
+        checkNotNull(exchange, "exchange");
+        put("preference", preference);
+        put("exchange", exchange);
     }
 
     /**
@@ -47,7 +41,7 @@ public class MXData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public int preference() {
-        return preference;
+        return Integer.class.cast(get("preference"));
     }
 
     /**
@@ -57,14 +51,8 @@ public class MXData extends ForwardingMap<String, Object> {
      * @since 1.3
      */
     public String exchange() {
-        return exchange;
+        return get("exchange").toString();
     }
 
-    // transient to avoid serializing by default, for example in json
-    private final transient ImmutableMap<String, Object> delegate;
-    
-    @Override
-    protected Map<String, Object> delegate() {
-        return delegate;
-    }
+    private static final long serialVersionUID = 1L;
 }

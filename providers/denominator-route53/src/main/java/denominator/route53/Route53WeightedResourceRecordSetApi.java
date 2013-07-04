@@ -1,27 +1,25 @@
 package denominator.route53;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Iterators.filter;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Util.filter;
 import static denominator.model.ResourceRecordSets.profileContainsType;
 
+import java.util.Collection;
 import java.util.Iterator;
-import java.util.Set;
 import java.util.SortedSet;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-
 import denominator.Provider;
+import denominator.common.Filter;
 import denominator.model.ResourceRecordSet;
 import denominator.profile.WeightedResourceRecordSetApi;
 
 final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecordSetApi {
-    private static final Predicate<ResourceRecordSet<?>> IS_WEIGHTED = profileContainsType("weighted");
+    private static final Filter<ResourceRecordSet<?>> IS_WEIGHTED = profileContainsType("weighted");
 
-    private final Set<String> supportedTypes;
+    private final Collection<String> supportedTypes;
     private final SortedSet<Integer> supportedWeights;
 
     private final Route53AllProfileResourceRecordSetApi allApi;
@@ -54,7 +52,7 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
     }
 
     @Override
-    public Optional<ResourceRecordSet<?>> getByNameTypeAndQualifier(String name, String type, String qualifier) {
+    public ResourceRecordSet<?> getByNameTypeAndQualifier(String name, String type, String qualifier) {
         return allApi.getByNameTypeAndQualifier(name, type, qualifier);
     }
 
@@ -84,9 +82,8 @@ final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecor
         }
 
         @Override
-        public Optional<WeightedResourceRecordSetApi> create(String id) {
-            return Optional.<WeightedResourceRecordSetApi> of(new Route53WeightedResourceRecordSetApi(provider,
-                    supportedWeights, allApi.create(id)));
+        public WeightedResourceRecordSetApi create(String id) {
+            return new Route53WeightedResourceRecordSetApi(provider, supportedWeights, allApi.create(id));
         }
     }
 }

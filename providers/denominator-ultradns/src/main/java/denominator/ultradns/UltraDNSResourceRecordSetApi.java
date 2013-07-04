@@ -1,23 +1,17 @@
 package denominator.ultradns;
 
-import static com.google.common.base.Functions.toStringFunction;
-import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Iterables.transform;
-import static com.google.common.collect.Lists.newArrayList;
 import static denominator.ResourceTypeToValue.lookup;
-import static denominator.ultradns.UltraDNSFunctions.toRdataMap;
+import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.nextOrNull;
+import static denominator.ultradns.UltraDNSFunctions.forTypeAndRData;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
-
-import com.google.common.base.Optional;
-import com.google.common.collect.ComparisonChain;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Ordering;
 
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
@@ -38,50 +32,47 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
         // this will list all basic or RR pool records.
-        Iterator<Record> orderedRecords = byNameTypeAndCreateDate.sortedCopy(api.recordsInZone(zoneName)).iterator();
+        Iterator<Record> orderedRecords = api.recordsInZone(zoneName).iterator();
         return new GroupByRecordNameAndTypeIterator(orderedRecords);
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
-        checkNotNull(name, "description");
-        Iterator<Record> orderedRecords = byNameTypeAndCreateDate.sortedCopy(
-                api.recordsInZoneByNameAndType(zoneName, name, 0)).iterator();
+        checkNotNull(name, "name");
+        Iterator<Record> orderedRecords = 
+                api.recordsInZoneByNameAndType(zoneName, name, 0).iterator();
         return new GroupByRecordNameAndTypeIterator(orderedRecords);
     }
 
     @Override
-    public Optional<ResourceRecordSet<?>> getByNameAndType(String name, String type) {
-        checkNotNull(name, "description");
+    public ResourceRecordSet<?> getByNameAndType(String name, String type) {
+        checkNotNull(name, "name");
         checkNotNull(type, "type");
         Iterator<Record> orderedRecords = recordsByNameAndType(name, type).iterator();
-        Iterator<ResourceRecordSet<?>> rrset = new GroupByRecordNameAndTypeIterator(orderedRecords);
-        if (rrset.hasNext())
-            return Optional.<ResourceRecordSet<?>> of(rrset.next());
-        return Optional.<ResourceRecordSet<?>> absent();
+        return nextOrNull(new GroupByRecordNameAndTypeIterator(orderedRecords));
     }
 
     private List<Record> recordsByNameAndType(String name, String type) {
-        checkNotNull(name, "description");
+        checkNotNull(name, "name");
         checkNotNull(type, "type");
         int typeValue = checkNotNull(lookup(type), "typeValue for %s", type);
-        return byNameTypeAndCreateDate.sortedCopy(api.recordsInZoneByNameAndType(zoneName, name, typeValue));
+        return api.recordsInZoneByNameAndType(zoneName, name, typeValue);
     }
 
-    private static final int defaultTTL = 300;
+    private static final int DEFAULT_TTL = 300;
 
     @Override
     public void put(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
         checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
-        int ttlToApply = rrset.ttl().or(defaultTTL);
+        int ttlToApply = rrset.ttl() != null ? rrset.ttl() : DEFAULT_TTL;
 
         List<Record> records = recordsByNameAndType(rrset.name(), rrset.type());
 
-        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset.rdata());
+        List<Map<String, Object>> recordsLeftToCreate = new ArrayList<Map<String, Object>>(rrset.rdata());
 
         for (Record record : records) {
-            Map<String, Object> rdata = toRdataMap().apply(record);
+            Map<String, Object> rdata = forTypeAndRData(rrset.type(), record.rdata);
             if (recordsLeftToCreate.contains(rdata)) {
                 recordsLeftToCreate.remove(rdata);
                 if (ttlToApply == record.ttl) {
@@ -109,7 +100,9 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
                 record.ttl = ttl;
 
                 for (Map<String, Object> rdata : rdatas) {
-                    record.rdata = ImmutableList.copyOf(transform(rdata.values(), toStringFunction()));
+                    for (Object rdatum : rdata.values()) {
+                        record.rdata.add(rdatum.toString());
+                    }
                     api.createRecordInZone(record, zoneName);
                 }
             }
@@ -135,24 +128,6 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
             roundRobinPoolApi.deletePool(name, type);
         }
     }
-
-    private static final Ordering<Record> byNameTypeAndCreateDate = new Ordering<Record>() {
-
-        @Override
-        public int compare(Record left, Record right) {
-            return ComparisonChain.start().compare(left.name, right.name).compare(left.typeCode, right.typeCode)
-            // insertion order attempt
-                    .compare(left.created, right.created)
-                    // UMP-5803 the order returned in
-                    // getResourceRecordsOfZoneResponse
-                    // is different than
-                    // getResourceRecordsOfDNameByTypeResponse.
-                    // We fallback to ordering by rdata to ensure consistent
-                    // ordering.
-                    .compare(left.rdata.toString(), right.rdata.toString()).result();
-        }
-
-    };
 
     static final class Factory implements denominator.ResourceRecordSetApi.Factory {
 

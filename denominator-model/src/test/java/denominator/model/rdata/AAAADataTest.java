@@ -12,7 +12,7 @@ public class AAAADataTest {
         aaaa("www.denominator.io.", "192.0.2.1");
     }
     
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*not an IP.*")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*should be a ipv6 address.*")
     public void testNoIP() {
         aaaa("www.denominator.io.", "");
     }

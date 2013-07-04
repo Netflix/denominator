@@ -1,27 +1,29 @@
 package denominator.ultradns;
 
+import static denominator.common.Preconditions.checkState;
+import static denominator.common.Util.split;
 import static java.util.Locale.US;
 
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.SortedSet;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.ImmutableTable;
-import com.google.common.collect.Table;
-import com.google.common.reflect.TypeToken;
-
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
+import denominator.ultradns.UltraDNS.NameAndType;
 import denominator.ultradns.UltraDNS.Record;
 import feign.codec.SAXDecoder;
 
@@ -32,29 +34,35 @@ import feign.codec.SAXDecoder;
 class UltraDNSSAXDecoder extends SAXDecoder {
 
     @Override
-    protected ContentHandlerWithResult typeToNewHandler(Type t) {
-        TypeToken<?> type = TypeToken.of(t);
-        if (RR_LIST.equals(type))
-            return new RecordListHandler();
-        else if (RRPOOL_LIST.equals(type))
-            return new RRPoolListHandler();
-        else if (DR_LIST.equals(type))
-            return new DirectionalRecordListHandler();
-        else if (DGROUP.equals(type))
+    protected ContentHandlerWithResult typeToNewHandler(Type type) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType parameterized = ParameterizedType.class.cast(type);
+            if (parameterized.getRawType() == List.class){
+                if (parameterized.getActualTypeArguments()[0] == Record.class)
+                    return new RecordListHandler();
+                else if (parameterized.getActualTypeArguments()[0] == DirectionalRecord.class)
+                    return new DirectionalRecordListHandler();
+            } else if (parameterized.getRawType() == Map.class){
+                if (parameterized.getActualTypeArguments()[0] == NameAndType.class)
+                    return new RRPoolListHandler();
+                else if (parameterized.getActualTypeArguments()[0] == String.class)
+                    return new RegionTableHandler();
+            }
+        } else if (DirectionalGroup.class == type) {
             return new DirectionalGroupHandler();
-        else if (REGION_TABLE.equals(type))
-            return new RegionTableHandler();
+        }
         throw new UnsupportedOperationException(type + "");
     }
 
     static class RecordListHandler extends DefaultHandler implements feign.codec.SAXDecoder.ContentHandlerWithResult {
 
         private Record rr = new Record();
-        private final Builder<Record> rrs = ImmutableList.<Record> builder();
+        private final List<Record> rrs = new ArrayList<Record>();
 
         @Override
         public List<Record> getResult() {
-            return rrs.build();
+            Collections.sort(rrs, byNameTypeAndCreateDate);
+            return rrs;
         }
 
         @Override
@@ -79,24 +87,45 @@ class UltraDNSSAXDecoder extends SAXDecoder {
                 rr = new Record();
             }
         }
-
     }
+
+    private static final Comparator<Record> byNameTypeAndCreateDate = new Comparator<Record>() {
+
+        @Override
+        public int compare(Record left, Record right) {
+            int nameCompare = left.name.compareTo(right.name);
+            if (nameCompare != 0)
+               return nameCompare;
+            int typeCompare = new Integer(left.typeCode).compareTo(right.typeCode);
+            if (typeCompare != 0)
+                return typeCompare;
+            // insertion order attempt
+            int createdCompare = left.created.compareTo(right.created);
+            if (createdCompare != 0)
+               return createdCompare;
+            // UMP-5803 the order returned in getResourceRecordsOfZoneResponse
+            // is different than getResourceRecordsOfDNameByTypeResponse.
+            // We fallback to ordering by rdata to ensure consistent ordering.
+            return left.rdata.toString().compareTo(right.rdata.toString());
+        }
+    };
 
     static class RRPoolListHandler extends DefaultHandler implements feign.codec.SAXDecoder.ContentHandlerWithResult {
 
-        private final ImmutableTable.Builder<String, String, String> pools = ImmutableTable.builder();
-        private String name, type, id;
+        private final Map<NameAndType, String> pools = new LinkedHashMap<NameAndType, String>();
+        private NameAndType nameAndType = new NameAndType();
+        private String id;
 
         @Override
-        public Table<String, String, String> getResult() {
-            return pools.build();
+        public Map<NameAndType, String> getResult() {
+            return pools;
         }
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes attrs) {
             if (qName.endsWith("PoolData")) {
-                name = attrs.getValue("PoolDName");
-                type = attrs.getValue("PoolRecordType");
+                nameAndType.name = attrs.getValue("PoolDName");
+                nameAndType.type = attrs.getValue("PoolRecordType");
                 id = attrs.getValue("PoolId");
             }
         }
@@ -104,27 +133,28 @@ class UltraDNSSAXDecoder extends SAXDecoder {
         @Override
         public void endElement(String uri, String name, String qName) {
             if (qName.endsWith("LBPoolData")) {
-                pools.put(this.name, type, id);
-                name = type = id = null;
+                pools.put(nameAndType, id);
+                nameAndType = new NameAndType();
+                id = null;
             }
         }
     }
 
     static class RegionTableHandler extends DefaultHandler implements feign.codec.SAXDecoder.ContentHandlerWithResult {
 
-        private final ImmutableTable.Builder<String, Integer, SortedSet<String>> regions = ImmutableTable.builder();
+        private final Map<String, Collection<String>> regions = new TreeMap<String, Collection<String>>();
 
         @Override
-        public Table<String, Integer, SortedSet<String>> getResult() {
-            return regions.build();
+        public Map<String, Collection<String>> getResult() {
+            return regions;
         }
 
         @Override
         public void startElement(String url, String name, String qName, Attributes attrs) {
             if (qName.endsWith("Region")) {
-                Iterable<String> territories = Splitter.on(';').split(attrs.getValue("TerritoryName"));
-                regions.put(attrs.getValue("RegionName"), Integer.parseInt(attrs.getValue("RegionID")),
-                        ImmutableSortedSet.copyOf(territories));
+                List<String> territories = split(';', attrs.getValue("TerritoryName"));
+                Collections.sort(territories);
+                regions.put(attrs.getValue("RegionName"), territories);
             }
         }
     }
@@ -145,9 +175,9 @@ class UltraDNSSAXDecoder extends SAXDecoder {
                 group.name = attrs.getValue("GroupName");
             } else if (qName.endsWith("RegionForNewGroups")) {
                 String regionName = attrs.getValue("RegionName");
-                Iterable<String> territories = Splitter.on(';').split(attrs.getValue("TerritoryName"));
-                // until api has consistent order
-                group.regionToTerritories.putAll(regionName, ImmutableSortedSet.copyOf(territories));
+                List<String> territories = split(';', attrs.getValue("TerritoryName"));
+                Collections.sort(territories);
+                group.regionToTerritories.put(regionName, territories);
             }
         }
     }
@@ -156,11 +186,12 @@ class UltraDNSSAXDecoder extends SAXDecoder {
             feign.codec.SAXDecoder.ContentHandlerWithResult {
 
         private DirectionalRecord rr = new DirectionalRecord();
-        private final Builder<DirectionalRecord> rrs = ImmutableList.<DirectionalRecord> builder();
+        private final List<DirectionalRecord> rrs = new ArrayList<DirectionalRecord>();
 
         @Override
         public List<DirectionalRecord> getResult() {
-            return rrs.build();
+            Collections.sort(rrs, byTypeAndGeoGroup);
+            return rrs;
         }
 
         private String currentName;
@@ -194,6 +225,19 @@ class UltraDNSSAXDecoder extends SAXDecoder {
         }
     }
 
+    private static final Comparator<DirectionalRecord> byTypeAndGeoGroup = new Comparator<DirectionalRecord>() {
+
+        @Override
+        public int compare(DirectionalRecord left, DirectionalRecord right) {
+            checkState(left.geoGroupName != null, "expected record to be in a geolocation qualifier: %s", left);
+            checkState(right.geoGroupName != null, "expected record to be in a geolocation qualifier: %s", right);
+            int typeCompare = left.type.compareTo(right.type);
+            if (typeCompare != 0)
+               return typeCompare;
+            return left.geoGroupName.compareTo(right.geoGroupName);
+        }
+    };
+
     static Date tryParseDate(String dateString) {
         synchronized (iso8601SimpleDateFormat) {
             try {
@@ -206,17 +250,4 @@ class UltraDNSSAXDecoder extends SAXDecoder {
     }
 
     static final SimpleDateFormat iso8601SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", US);
-    @SuppressWarnings("serial")
-    static final TypeToken<List<Record>> RR_LIST = new TypeToken<List<Record>>() {
-    };
-    @SuppressWarnings("serial")
-    static final TypeToken<Table<String, String, String>> RRPOOL_LIST = new TypeToken<Table<String, String, String>>() {
-    };
-    @SuppressWarnings("serial")
-    static final TypeToken<List<DirectionalRecord>> DR_LIST = new TypeToken<List<DirectionalRecord>>() {
-    };
-    static final TypeToken<DirectionalGroup> DGROUP = TypeToken.of(DirectionalGroup.class);
-    @SuppressWarnings("serial")
-    static final TypeToken<Table<String, Integer, SortedSet<String>>> REGION_TABLE = new TypeToken<Table<String, Integer, SortedSet<String>>>() {
-    };
 }

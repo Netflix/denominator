@@ -1,12 +1,10 @@
 package denominator;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Singleton;
-
-import com.google.common.annotations.Beta;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.SetMultimap;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
@@ -14,12 +12,13 @@ import denominator.model.Zone;
 /**
  * Metadata about a provider of DNS services.
  * 
- * <br><br><b>Writing a Provider</b><br>
+ * <br>
+ * <br>
+ * <b>Writing a Provider</b><br>
  * 
  * The current implementation of {@link Denominator#create(Provider, Object...)}
  * expects all {@code Provider} implementations to expose a static inner class
- * named {@code Module}.
- * <br>
+ * named {@code Module}. <br>
  * The inner class is expected to have a {@link dagger.Module} annotation such
  * as below:
  * 
@@ -33,13 +32,14 @@ import denominator.model.Zone;
  * Look at {@link denominator.mock.MockProvider.Module} for an example of a
  * valid provider module.
  * 
- * <br><br><b>Expected Use</b><br>
+ * <br>
+ * <br>
+ * <b>Expected Use</b><br>
  * Provider instances are bound in {@link javax.inject.Singleton} scope.
  * However, results of all methods are permitted to change at runtime. For
- * example, a change to the value returned by {@link #url()} should affect
- * the remote connection to the DNS provider.
+ * example, a change to the value returned by {@link #url()} should affect the
+ * remote connection to the DNS provider.
  */
-@Beta
 @Singleton
 public interface Provider {
 
@@ -58,9 +58,8 @@ public interface Provider {
     String url();
 
     /**
-     * The set of basic {@link ResourceRecordSet#type() record types} that
-     * are supported by {@link ResourceRecordSetApi} commands.
-     * <br>
+     * The set of basic {@link ResourceRecordSet#type() record types} that are
+     * supported by {@link ResourceRecordSetApi} commands. <br>
      * For example:
      * 
      * <pre>
@@ -72,8 +71,7 @@ public interface Provider {
     /**
      * Maps a {@link ResourceRecordSet#profiles() profile} {@code type} value to
      * a collection of supported record types. If empty, the provider does not
-     * support advanced records.
-     * <br>
+     * support advanced records. <br>
      * For example:
      * 
      * <pre>
@@ -81,7 +79,7 @@ public interface Provider {
      *   "weighted" : ["A", "AAAA", "CNAME"] }
      * </pre>
      */
-    SetMultimap<String, String> profileToRecordTypes();
+    Map<String, Collection<String>> profileToRecordTypes();
 
     /**
      * Certain providers support multiple zones with the same {@link Zone#name
@@ -104,7 +102,9 @@ public interface Provider {
      * ordered list of labels that describe the credential parts required to
      * authenticate, for example {@code ["username", "password"]}.
      * 
-     * <br><br><b>Credential Type</b><br>
+     * <br>
+     * <br>
+     * <b>Credential Type</b><br>
      * 
      * The credential type keys intend to easily disambiguate cases where
      * multiple means of authentication exist, or where authentication means
@@ -116,17 +116,21 @@ public interface Provider {
      * both {@code password} and {@code apiAccessKey} authentication require the
      * same number of parts.
      * 
-     * <br><br><b>Credential Labels</b><br>
+     * <br>
+     * <br>
+     * <b>Credential Labels</b><br>
      * 
      * Values are an ordered list of labels that describe the credential parts
      * required to authenticate, for example {@code ["username", "password"]}.
      * This information is targeted at users who may otherwise be confused what
      * secrets are necessary for this provider.
      * 
-     * <br><br><b>Example</b><br>
+     * <br>
+     * <br>
+     * <b>Example</b><br>
      * 
      * Given an entry with values: {@code ["accessKey", "secretKey"]}, we know
-     * the order of the parameters in a {@code Iterable}-based Credentials
+     * the order of the parameters in a {@code Collection}-based Credentials
      * object, or the keys needed for a {@code Map}-based one.
      * 
      * <pre>
@@ -135,13 +139,16 @@ public interface Provider {
      * return new BasicAWSCredentials(creds.get(&quot;accessKey&quot;).toString(), creds.get(&quot;secretKey&quot;).toString());
      * </pre>
      * 
-     * <br><br><b>Formatting</b><br>
+     * <br>
+     * <br>
+     * <b>Formatting</b><br>
      * 
-     * Both the keys and the values of this {@link Multimap Multimap} are in
-     * {@link com.google.common.base.CaseFormat#LOWER_CAMEL lowerCamel} case.
+     * Both the keys and the values of this map are in {@code lowerCamel} case.
      * 
      * 
-     * <br><br><b>Implementation Expectations</b><br>
+     * <br>
+     * <br>
+     * <b>Implementation Expectations</b><br>
      * 
      * The implementing provider should throw an
      * {@link IllegalArgumentException} if it is ever supplied with an incorrect
@@ -152,5 +159,5 @@ public interface Provider {
      * @return credential types to the labels of each part required. An empty
      *         multimap suggests the provider doesn't authenticate.
      */
-    Multimap<String, String> credentialTypeToParameterNames();
+    Map<String, Collection<String>> credentialTypeToParameterNames();
 }

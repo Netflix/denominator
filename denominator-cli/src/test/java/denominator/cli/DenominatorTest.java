@@ -479,7 +479,7 @@ public class DenominatorTest {
                 ";; in zone denominator.io. applying ttl 300 to rrset www2.geo.denominator.io. A alazona",
                 ";; ok"));
         assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                        .getByNameTypeAndQualifier(command.name, command.type, command.group).get()
-                        .ttl().get(), Integer.valueOf(command.ttl));
+                        .getByNameTypeAndQualifier(command.name, command.type, command.group)
+                        .ttl(), Integer.valueOf(command.ttl));
     }
 }

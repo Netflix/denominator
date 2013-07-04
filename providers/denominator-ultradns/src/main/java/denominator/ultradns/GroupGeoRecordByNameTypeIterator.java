@@ -1,21 +1,15 @@
 package denominator.ultradns;
 
-import static com.google.common.collect.Iterators.peekingIterator;
+import static denominator.common.Util.peekingIterator;
 import static denominator.ultradns.UltraDNSFunctions.forTypeAndRData;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
-import com.google.common.base.Function;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.PeekingIterator;
-
+import denominator.common.PeekingIterator;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 import denominator.model.profile.Geo;
@@ -31,11 +25,11 @@ import denominator.ultradns.UltraDNS.DirectionalRecord;
 class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>> {
 
     static final class Factory {
-        private final CacheLoader<String, Multimap<String, String>> getDirectionalGroup;
+        private final UltraDNS api;
 
         @Inject
-        Factory(@Named("geo") CacheLoader<String, Multimap<String, String>> getDirectionalGroup) {
-            this.getDirectionalGroup = getDirectionalGroup;
+        Factory(UltraDNS api) {
+            this.api = api;
         }
 
         /**
@@ -47,18 +41,16 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
          *            {@link DirectionalRecord#group()}
          */
         Iterator<ResourceRecordSet<?>> create(Iterator<DirectionalRecord> sortedIterator) {
-            LoadingCache<String, Multimap<String, String>> requestScopedGeoCache = CacheBuilder.newBuilder().build(
-                    getDirectionalGroup);
-            return new GroupGeoRecordByNameTypeIterator(requestScopedGeoCache, sortedIterator);
+            return new GroupGeoRecordByNameTypeIterator(api, sortedIterator);
         }
     }
+    private final Map<String, Geo> cache = new LinkedHashMap<String, Geo>();
 
-    private final Function<String, Multimap<String, String>> getDirectionalGroup;
+    private final UltraDNS api;
     private final PeekingIterator<DirectionalRecord> peekingIterator;
 
-    private GroupGeoRecordByNameTypeIterator(Function<String, Multimap<String, String>> getDirectionalGroup,
-            Iterator<DirectionalRecord> sortedIterator) {
-        this.getDirectionalGroup = getDirectionalGroup;
+    private GroupGeoRecordByNameTypeIterator(UltraDNS api, Iterator<DirectionalRecord> sortedIterator) {
+        this.api = api;
         this.peekingIterator = peekingIterator(sortedIterator);
     }
 
@@ -74,7 +66,7 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
             // TODO: log as this is unsupported
             peekingIterator.next();
         }
-        return peekingIterator.hasNext();
+        return true;
     }
 
     @Override
@@ -85,9 +77,13 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
                 .qualifier(record.geoGroupName).ttl(record.ttl);
 
         builder.add(forTypeAndRData(record.type, record.rdata));
+        
+        if (!cache.containsKey(record.geoGroupId)) {
+            Geo profile = Geo.create(api.getDirectionalGroup(record.geoGroupId).regionToTerritories);
+            cache.put(record.geoGroupId,profile);
+        }
 
-        Geo profile = Geo.create(getDirectionalGroup.apply(record.geoGroupId));
-        builder.addProfile(profile);
+        builder.addProfile(cache.get(record.geoGroupId));
         while (hasNext()) {
             DirectionalRecord next = peekingIterator.peek();
             if (typeTTLAndGeoGroupEquals(next, record)) {
