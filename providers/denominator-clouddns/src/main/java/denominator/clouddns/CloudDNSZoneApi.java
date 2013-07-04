@@ -1,6 +1,5 @@
 package denominator.clouddns;
 
-
 import static denominator.clouddns.RackspaceApis.emptyOn404;
 
 import java.net.URI;
@@ -8,10 +7,9 @@ import java.util.Iterator;
 
 import javax.inject.Inject;
 
-import com.google.common.base.Function;
-
 import denominator.clouddns.RackspaceApis.CloudDNS;
 import denominator.clouddns.RackspaceApis.ListWithNext;
+import denominator.clouddns.RackspaceApis.Pager;
 import denominator.model.Zone;
 
 class CloudDNSZoneApi implements denominator.ZoneApi {
@@ -53,7 +51,7 @@ class CloudDNSZoneApi implements denominator.ZoneApi {
         };
     }
 
-    private final Function<URI, ListWithNext<Zone>> zonePager = new Function<URI, ListWithNext<Zone>>() {
+    private final Pager<Zone> zonePager = new Pager<Zone>() {
 
         @Override
         public ListWithNext<Zone> apply(URI nullOrNext) {

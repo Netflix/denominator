@@ -1,16 +1,15 @@
 package denominator.clouddns;
 
-import static com.google.common.collect.Iterators.peekingIterator;
+import static denominator.common.Util.peekingIterator;
+import static denominator.common.Util.split;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.PeekingIterator;
-
 import denominator.clouddns.RackspaceApis.Record;
+import denominator.common.PeekingIterator;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 import denominator.model.rdata.AAAAData;
@@ -79,8 +78,8 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
         } else if ("PTR".equals(record.type)) {
             return PTRData.create(record.data);
         } else if ("SRV".equals(record.type)) {
-            ImmutableList<String> parts = split(record.data);
-            
+            List<String> parts = split(' ', record.data);
+
             return SRVData.builder()
                           .priority(record.priority)
                           .weight(Integer.valueOf(parts.get(0)))
@@ -89,11 +88,9 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
         } else if ("TXT".equals(record.type)) {
             return TXTData.create(record.data);
         } else {
-            return ImmutableMap.<String, Object> of("rdata", record.data);
+            Map<String, Object> map = new LinkedHashMap<String, Object>();
+            map.put("rdata", record.data);
+            return map;
         }
-    }
-
-    private static ImmutableList<String> split(String rdata) {
-        return ImmutableList.copyOf(Splitter.on(' ').split(rdata));
     }
 }

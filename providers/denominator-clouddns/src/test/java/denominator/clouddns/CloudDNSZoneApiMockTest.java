@@ -45,7 +45,7 @@ public class CloudDNSZoneApiMockTest {
             while (domains.hasNext()) {
                 Zone zone = domains.next();
                 assertEquals(zone.name(), "denominator.io");
-                assertEquals(zone.id().get(), "1234");
+                assertEquals(zone.id(), "1234");
             }
 
             assertEquals(server.getRequestCount(), 2);

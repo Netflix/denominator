@@ -8,8 +8,6 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
-import com.google.common.base.Supplier;
-
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import denominator.clouddns.RackspaceApis.CloudIdentity;
@@ -21,7 +19,7 @@ import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
  */
 // similar to guava MemoizingSupplier
 @Singleton
-class InvalidatableAuthSupplier implements Supplier<TokenIdAndPublicURL> {
+class InvalidatableAuthProvider implements Provider<TokenIdAndPublicURL> {
     private final denominator.Provider provider;
     private final CloudIdentity identityService;
     private final Provider<Credentials> credentials;
@@ -33,8 +31,8 @@ class InvalidatableAuthSupplier implements Supplier<TokenIdAndPublicURL> {
     transient TokenIdAndPublicURL value;
 
     @Inject
-    InvalidatableAuthSupplier(denominator.Provider provider, CloudIdentity identityService,
-            javax.inject.Provider<Credentials> credentials) {
+    InvalidatableAuthProvider(denominator.Provider provider, CloudIdentity identityService,
+            Provider<Credentials> credentials) {
         this.provider = provider;
         this.identityService = identityService;
         this.credentials = credentials;
