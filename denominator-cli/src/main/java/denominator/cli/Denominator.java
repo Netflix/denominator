@@ -1,322 +1,227 @@
 package denominator.cli;
-import static com.google.common.base.Preconditions.checkArgument;
+
 import static denominator.CredentialsConfiguration.credentials;
-import static denominator.Denominator.provider;
 import static java.lang.String.format;
-import io.airlift.command.Cli;
-import io.airlift.command.Cli.CliBuilder;
-import io.airlift.command.Command;
-import io.airlift.command.Help;
-import io.airlift.command.Option;
-import io.airlift.command.OptionType;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+import org.kohsuke.args4j.Argument;
+import org.kohsuke.args4j.CmdLineException;
+import org.kohsuke.args4j.CmdLineParser;
+import org.kohsuke.args4j.Option;
 import org.yaml.snakeyaml.Yaml;
 
-import com.google.common.base.Charsets;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-import com.google.common.collect.Iterators;
-import com.google.common.io.Files;
-import com.google.common.net.InternetDomainName;
-
+import dagger.Module;
 import dagger.ObjectGraph;
+import dagger.Provides;
 import denominator.Credentials;
 import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
-import denominator.Denominator.Version;
 import denominator.Provider;
-import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
-import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL;
-import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet;
-import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList;
-import denominator.cli.GeoResourceRecordSetCommands.GeoTypeList;
-import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
-import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetApplyTTL;
-import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetDelete;
-import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
-import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
-import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
-import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
-import denominator.clouddns.CloudDNSProvider;
-import denominator.designate.DesignateProvider;
-import denominator.dynect.DynECTProvider;
-import denominator.mock.MockProvider;
+import denominator.cli.codec.YamlCodec;
 import denominator.model.Zone;
-import denominator.route53.Route53Provider;
-import denominator.ultradns.UltraDNSProvider;
 
+// library is true as DNSApiManager is exposed in case certain commands need it.
+@dagger.Module(library = true, includes = { YamlCodec.class, SupportedProviders.class })
 public class Denominator {
-    public static void main(String[] args) {
-        CliBuilder<Runnable> builder = Cli.<Runnable> builder("denominator")
-                                          .withDescription("Denominator: Portable control of DNS clouds")
-                                          .withDefaultCommand(Help.class)
-                                          .withCommand(Help.class)
-                                          .withCommand(PrintVersion.class)
-                                          .withCommand(ListProviders.class);
 
-        builder.withGroup("zone")
-               .withDescription("manage zones")
-               .withDefaultCommand(ZoneList.class)
-               .withCommand(ZoneList.class);
+    @Option(name = "-p", aliases = "--provider", usage = "provider to affect")
+    private String providerName;
 
-        builder.withGroup("record")
-               .withDescription("manage resource record sets in a zone")
-               .withDefaultCommand(ResourceRecordSetList.class)
-               .withCommand(ResourceRecordSetList.class)
-               .withCommand(ResourceRecordSetGet.class)
-               .withCommand(ResourceRecordSetAdd.class)
-               .withCommand(ResourceRecordSetApplyTTL.class)
-               .withCommand(ResourceRecordSetReplace.class)
-               .withCommand(ResourceRecordSetRemove.class)
-               .withCommand(ResourceRecordSetDelete.class);
+    @Option(name = "-u", aliases = "--url", usage = "alternative api url to connect to")
+    private String url;
 
-        builder.withGroup("geo")
-               .withDescription("manage geo resource record sets in a zone")
-               .withDefaultCommand(GeoResourceRecordSetList.class)
-               .withCommand(GeoTypeList.class)
-               .withCommand(GeoRegionList.class)
-               .withCommand(GeoResourceRecordSetList.class)
-               .withCommand(GeoResourceRecordSetGet.class)
-               .withCommand(GeoResourceRecordSetApplyTTL.class);
+    @Option(name = "-c", aliases = "--credential", usage = "adds a credential argument (execute denominator providers for what these are)")
+    private List<String> credentialArgs;
 
-        Cli<Runnable> denominatorParser = builder.build();
+    @Option(name = "-C", aliases = "--config", usage = "path to configuration file (used to store credentials)")
+    private String configPath;
+
+    @Option(name = "-n", aliases = "--name", usage = "unique name of provider configuration")
+    private String name;
+
+    @Argument(handler = GroupHandler.class)
+    Group group;
+
+    public static void main(String[] args) throws IOException, CmdLineException {
         try {
-            denominatorParser.parse(args).run();
+            execute(new PrintWriter(System.out), args);
         } catch (RuntimeException e) {
-            System.err.println(";; error: "+ e.getMessage());
+            System.err.println(";; error: " + e.getMessage());
             System.exit(1);
-        } 
+        }
         System.exit(0);
     }
 
-    @Command(name = "version", description = "output the version of denominator and java runtime in use")
-    public static class PrintVersion implements Runnable {
-        public void run() {
-            System.out.println("Denominator " + Version.INSTANCE);
-            System.out.println("Java version: " + System.getProperty("java.version"));
-        }
+    public static void execute(Writer writer, String... args) throws IOException, CmdLineException {
+        execute(writer, args, (Object[]) null);
     }
 
-    @Command(name = "providers", description = "List the providers and their metadata ")
-    public static class ListProviders implements Runnable {
-        final static String table = "%-10s %-51s %-14s %-14s %s%n";
-
-        public void run() {
-            System.out.println(providerAndCredentialsTable());
-        }
-
-        public static String providerAndCredentialsTable() {
-            StringBuilder builder = new StringBuilder();
-            
-            builder.append(format(table, "provider", "url", "duplicateZones", "credentialType", "credentialArgs"));
-            for (Provider provider : listProviders()) {
-                if (provider.credentialTypeToParameterNames().isEmpty())
-                    builder.append(format("%-10s %-51s %-14s %n", provider.name(), provider.url(),
-                            provider.supportsDuplicateZoneNames()));
-                for (Entry<String, Collection<String>> entry : provider.credentialTypeToParameterNames().entrySet()) {
-                    String parameters = Joiner.on(' ').join(entry.getValue());
-                    builder.append(format(table, provider.name(), provider.url(),
-                            provider.supportsDuplicateZoneNames(), entry.getKey(), parameters));
-                }
-            }
-            return builder.toString();
-        }
-    }
-
-    public static abstract class DenominatorCommand implements Runnable {
-        @Option(type = OptionType.GLOBAL, name = { "-p", "--provider" }, description = "provider to affect")
-        public String providerName;
-
-        @Option(type = OptionType.GLOBAL, name = { "-u", "--url" }, description = "alternative api url to connect to")
-        public String url;
-
-        @Option(type = OptionType.GLOBAL, name = { "-c", "--credential" }, description = "adds a credential argument (execute denominator providers for what these are)")
-        public List<String> credentialArgs;
-
-        @Option(type = OptionType.GLOBAL, name = { "-C", "--config" }, description = "path to configuration file (used to store credentials)")
-        public String configPath;
-
-        @Option(type = OptionType.GLOBAL, name = { "-n", "--name" }, description = "unique name of provider configuration")
-        public String name;
-
-        protected Credentials credentials;
-
-        @SuppressWarnings("unchecked")
-        public void run() {
-            if (providerName != null && credentialArgs != null) {
-                credentials = Credentials.ListCredentials.from(credentialArgs);
-            } else if (configPath != null) {
-                Map<?, ?> configFromFile = getConfigFromFile();
-                if (configFromFile != null) {
-                    credentials = MapCredentials.from(Map.class.cast(configFromFile.get("credentials")));
-                    providerName = configFromFile.get("provider").toString();
-                    if (configFromFile.containsKey("url"))
-                        url = configFromFile.get("url").toString();
-                }
-            }
-            Builder<Object> modulesForGraph = ImmutableList.builder().add(provider(newProvider())).add(newModule());
-            if (credentials != null)
-                modulesForGraph.add(credentials(credentials));
-            DNSApiManager mgr = null;
-            try {
-                mgr = ObjectGraph.create(modulesForGraph.build().toArray()).get(DNSApiManager.class);
-                for (Iterator<String> i = doRun(mgr); i.hasNext();)
-                    System.out.println(i.next());
-            } finally {
-                if (mgr != null) {
-                    try {
-                        mgr.close();
-                    } catch (IOException ignored) {
-
+    public static void execute(Writer writer, String[] args, Object... modules) throws IOException, CmdLineException {
+        Denominator denominator = new Denominator();
+        new CmdLineParser(denominator).parseArgument(args);
+        int groupIndex = -1;
+        Action action = Action.GET;
+        List<String> scopedArgs = new ArrayList<String>();
+        OUTER: for (int i = 0; i < args.length; i++) {
+            if (args[i].equals(denominator.group.name())) {
+                groupIndex = i;
+                continue OUTER;
+            } else {
+                for (Action a : Action.values()) {
+                    if (args[i].equalsIgnoreCase(a.name())) {
+                        action = a;
+                        continue OUTER;
                     }
                 }
-            }
-        }
-
-        /**
-         * Load configuration for given name from a YAML configuration file.
-         */
-        Map<?, ?> getConfigFromFile() {
-            if (configPath == null)
-                return null;
-            String configFileContent = null;
-            try {
-                configFileContent = getFileContentsFromPath(configPath);
-            } catch (IOException e) {
-                System.err.println("configuration file not found: " + e.getMessage());
-                System.exit(1);
-            }
-            return getConfigFromYaml(configFileContent);
-        }
-
-        Map<?, ?> getConfigFromYaml(String yamlAsString) {
-            Yaml yaml = new Yaml();
-            Iterable<Object> configs = yaml.loadAll(yamlAsString);
-            Object providerConf = FluentIterable.from(configs).firstMatch(new Predicate<Object>() {
-                @Override
-                public boolean apply(Object input) {
-                    return name.equals(Map.class.cast(input).get("name"));
+                if (args[i].equalsIgnoreCase("list")) {
+                    // support old name
+                    continue OUTER;
                 }
-            }).get();
-            return Map.class.cast(providerConf);
-        }
-
-        String getFileContentsFromPath(String path) throws IOException {
-            if (path.startsWith("~"))
-                path = System.getProperty("user.home") + path.substring(1);
-            return Files.toString(new File(path), Charsets.UTF_8);
-        }
-
-        /**
-         * return a lazy iterator where possible to improve the perceived responsiveness of the cli
-         */
-        protected abstract Iterator<String> doRun(DNSApiManager mgr);
-
-        /**
-         * This avoids service loader lookup which adds runtime and build
-         * complexity.
-         * 
-         * <br><br><b>Note</b><br>
-         * 
-         * update this code block when adding new providers to the CLI.
-         */
-        // TODO: consider generating this method at compile time
-        protected Provider newProvider() {
-            if ("mock".equals(providerName)) {
-                return new MockProvider(url);
-            } else if ("clouddns".equals(providerName)) {
-                return new CloudDNSProvider(url);
-            } else if ("designate".equals(providerName)) {
-                return new DesignateProvider(url);
-            } else if ("dynect".equals(providerName)) {
-                return new DynECTProvider(url);
-            } else if ("route53".equals(providerName)) {
-                return new Route53Provider(url);
-            } else if ("ultradns".equals(providerName)) {
-                return new UltraDNSProvider(url);
+                if (groupIndex != -1)
+                    scopedArgs.add(args[i]);
             }
-            throw new IllegalArgumentException("provider " + providerName
-                    + " unsupported.  Please execute \"denominator providers\" to list configured providers.");
         }
 
-        protected Object newModule() {
-            if ("mock".equals(providerName)) {
-                return new MockProvider.Module();
-            } else if ("clouddns".equals(providerName)) {
-                return new CloudDNSProvider.Module();
-            } else if ("designate".equals(providerName)) {
-                return new DesignateProvider.Module();
-            } else if ("dynect".equals(providerName)) {
-                return new DynECTProvider.Module();
-            } else if ("route53".equals(providerName)) {
-                return new Route53Provider.Module();
-            } else if ("ultradns".equals(providerName)) {
-                return new UltraDNSProvider.Module();
-            }
-            throw new IllegalArgumentException("provider " + providerName
-                    + " unsupported.  Please execute \"denominator providers\" to list configured providers.");
+        @Module(injects = Commands.class, complete = false)
+        class Commands {
+            @Inject
+            Set<Command> get;
         }
+        Commands commands = new Commands();
+        List<Object> modulesForGraph = new ArrayList<Object>(3);
+        modulesForGraph.add(denominator.group.module());
+        modulesForGraph.add(commands);
+        if (denominator.group.needsDNSApi()) {
+            modulesForGraph.add(denominator);
+        }
+        if (modules != null) {
+            for (Object module : modules) {
+                modulesForGraph.add(module);
+            }
+        }
+        ObjectGraph.create(modulesForGraph.toArray()).inject(commands);
+
+        List<Action> actionsOnGroup = new ArrayList<Action>();
+        for (Command command : commands.get) {
+            if (action.equals(command.action())) {
+                new CmdLineParser(command).parseArgument(scopedArgs.toArray(new String[] {}));
+                command.execute(writer);
+                return;
+            } else {
+                actionsOnGroup.add(command.action());
+            }
+        }
+        throw new IllegalArgumentException(format("action %s not available on %s; valid choices: %s", action,
+                denominator.group.name(), actionsOnGroup));
+    }
+
+    @Provides
+    @Named("url")
+    String url(@SuppressWarnings("rawtypes") Map configFromFile) {
+        return configFromFile.containsKey("url") ? url = configFromFile.get("url").toString() : url;
+    }
+
+    // visible for testing
+    static interface ReaderForPath {
+        Reader apply(String path);
+    }
+
+    static class FileReaderForPath implements ReaderForPath {
+        @Override
+        public Reader apply(String path) {
+            try {
+                return new FileReader(new File(path));
+            } catch (FileNotFoundException e) {
+                throw new IllegalArgumentException("config file not found: " + path);
+            }
+        }
+    }
+
+    @Provides
+    ReaderForPath readerForPath() {
+        return new FileReaderForPath();
+    }
+
+    @SuppressWarnings("rawtypes")
+    @Provides
+    @Singleton
+    Map configFromFile(ReaderForPath readerForPath, Yaml yaml) {
+        return configPath != null ? yamlConfig(readerForPath, yaml) : Collections.emptyMap();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Provides
+    @Singleton
+    DNSApiManager dnsApiManager(Set<Provider> providers, @SuppressWarnings("rawtypes") Map configFromFile) {
+        Credentials credentials = null;
+        if (providerName != null && credentialArgs != null) {
+            credentials = Credentials.ListCredentials.from(credentialArgs);
+        } else if (!configFromFile.isEmpty()) {
+            credentials = MapCredentials.from(Map.class.cast(configFromFile.get("credentials")));
+            providerName = configFromFile.get("provider").toString();
+        }
+        List<String> providerNames = new ArrayList<String>(providers.size());
+        for (Provider provider : providers) {
+            if (provider.name().equals(providerName)) {
+                if (credentials != null) {
+                    return denominator.Denominator.create(provider, credentials(credentials));
+                }
+                return denominator.Denominator.create(provider);
+            } else {
+                providerNames.add(provider.name());
+            }
+        }
+        throw new IllegalArgumentException(format("invalid provider name %s! valid choices: %s", providerName,
+                providerNames));
     }
 
     /**
-     * Lazy to avoid loading the classes unless they are requested.
-     * 
-     * <br><br><b>Note</b><br>
-     * 
-     * update this code block when adding new providers to the CLI.
+     * Load configuration for given name from a YAML configuration file.
      */
-    // TODO: consider generating this method at compile time
-    private static Iterable<Provider> listProviders() {
-        return ImmutableList.<Provider> builder()
-                            .add(new MockProvider())
-                            .add(new CloudDNSProvider())
-                            .add(new DesignateProvider())
-                            .add(new DynECTProvider())
-                            .add(new Route53Provider())
-                            .add(new UltraDNSProvider()).build();
-    }
-
-    @Command(name = "list", description = "Lists the zones present in this provider.  If the second column is present, it is the zone id.")
-    public static class ZoneList extends DenominatorCommand {
-        public Iterator<String> doRun(DNSApiManager mgr) {
-            return Iterators.transform(mgr.api().zones().iterator(), new Function<Zone, String>() {
-
-                @Override
-                public String apply(Zone input) {
-                    if (input.id() != null)
-                        return input.name() + " " + input.id();
-                    return input.name();
-                }
-
-            });
-        }
-    }
-
-    static String idOrName(DNSApiManager mgr, String zoneIdOrName) {
-        if (!InternetDomainName.isValid(zoneIdOrName) || !InternetDomainName.from(zoneIdOrName).hasParent()) {
-            return zoneIdOrName;
-        } else if (InternetDomainName.isValid(zoneIdOrName) && mgr.provider().supportsDuplicateZoneNames()) {
-            List<Zone> currentZones = new ArrayList<Zone>();
-            for (Zone zone : mgr.api().zones()) {
-                if (zoneIdOrName.equals(zone.name()))
-                    return zone.id();
-                currentZones.add(zone);
+    Map<?, ?> yamlConfig(ReaderForPath readerForPath, Yaml yaml) {
+        if (configPath == null)
+            return null;
+        if (configPath.startsWith("~"))
+            configPath = System.getProperty("user.home") + configPath.substring(1);
+        Reader reader = readerForPath.apply(configPath);
+        List<Object> names = new ArrayList<Object>();
+        for (Object configObject : yaml.loadAll(reader)) {
+            Map<?, ?> config = Map.class.cast(configObject);
+            Object configName = config.get("name");
+            if (configName.equals(name)) {
+                return config;
             }
-            checkArgument(false, "zone %s not found in %s", zoneIdOrName, currentZones);
+            names.add(configName);
         }
-        return zoneIdOrName;
+        throw new IllegalArgumentException(format("invalid name %s! valid choices: %s", name, names));
+    }
+
+    public static String idOrName(DNSApiManager mgr, String zoneIdOrName) {
+        if (zoneIdOrName.indexOf('.') != -1) {
+            return zoneIdOrName;
+        }
+        List<Zone> currentZones = new ArrayList<Zone>();
+        for (Zone zone : mgr.api().zones()) {
+            if (zoneIdOrName.equals(zone.name()))
+                return zone.id();
+            currentZones.add(zone);
+        }
+        throw new IllegalArgumentException(format("zone %s not found in %s", zoneIdOrName, currentZones));
     }
 }
