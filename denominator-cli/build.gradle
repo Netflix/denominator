@@ -17,6 +17,7 @@ dependencies {
   compile      project(':providers:denominator-ultradns')
   compile      project(':providers:denominator-route53')
   compile      project(':providers:denominator-clouddns')
+  compile      project(':providers:denominator-designate')
   compile     'io.airlift:airline:0.5'
   compile     'org.yaml:snakeyaml:1.12'
   testCompile 'org.testng:testng:6.8.1'

@@ -1,5 +1,6 @@
 ### Version 2.2
 * adds url key to commandline config
+* adds support for OpenStack Designate
 
 ### Version 2.1.1
 * backfills dynect session invalidation logic from issue #106

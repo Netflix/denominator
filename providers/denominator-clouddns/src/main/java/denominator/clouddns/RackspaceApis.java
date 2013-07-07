@@ -55,6 +55,8 @@ class RackspaceApis {
     }
 
     static class Record {
+        // transient to avoid serializing as json
+        transient String id;
         String name;
         String type;
         Integer ttl;
