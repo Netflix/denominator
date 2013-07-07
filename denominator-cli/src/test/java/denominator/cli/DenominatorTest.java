@@ -89,6 +89,7 @@ public class DenominatorTest {
             "---\n" +
             "name: blah2\n" +
             "provider: mock\n" +
+            "url: mem:mock2\n" +
             "credentials:\n" +
             "  accessKey: foo3\n" +
             "  secretKey: foo4\n" +
@@ -116,6 +117,7 @@ public class DenominatorTest {
                 assertEquals(configPath, getTestConfigPath());
                 Map<?, ?> configFromFile = getConfigFromFile();
                 assertEquals(configFromFile.get("provider"), "mock");
+                assertEquals(configFromFile.get("url"), "mem:mock2");
                 Map<?, ?> credentials = Map.class.cast(configFromFile.get("credentials"));
                 assertEquals(credentials.get("accessKey"), "foo3");
                 assertEquals(credentials.get("secretKey"), "foo4");
