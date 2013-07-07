@@ -165,6 +165,8 @@ public class Denominator {
                 if (configFromFile != null) {
                     credentials = MapCredentials.from(Map.class.cast(configFromFile.get("credentials")));
                     providerName = configFromFile.get("provider").toString();
+                    if (configFromFile.containsKey("url"))
+                        url = configFromFile.get("url").toString();
                 }
             }
             Builder<Object> modulesForGraph = ImmutableList.builder().add(provider(newProvider())).add(newModule());
