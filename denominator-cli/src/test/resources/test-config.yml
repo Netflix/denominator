@@ -6,6 +6,7 @@ credentials:
 ---
 name: blah2
 provider: mock
+url: mem:mock2
 credentials:
   accessKey: foo3
   secretKey: foo4

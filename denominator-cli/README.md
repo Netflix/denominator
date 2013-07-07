@@ -27,6 +27,7 @@ credentials:
 ---
 name: ultradns-prod
 provider: ultradns
+url: https://alternative/rest/endpoint
 credentials:
   username: your_username
   password: your_password
