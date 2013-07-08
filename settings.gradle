@@ -5,5 +5,6 @@ include 'denominator-model', \
 'providers:denominator-ultradns', \
 'providers:denominator-dynect', \
 'providers:denominator-clouddns', \
+'providers:denominator-designate', \
 'denominator-cli'
 if (System.getenv("ANDROID_HOME") || System.getProperty("android.home")) include 'examples:denominator-example-android'
