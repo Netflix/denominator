@@ -57,6 +57,7 @@ $ denominator providers
 provider   url                                                 duplicateZones credentialType credentialArgs
 mock       mem:mock                                            false
 clouddns   https://identity.api.rackspacecloud.com/v2.0/       true           apiKey         username apiKey
+designate  http://localhost:5000/v2.0                          true           password       tenantId username password
 dynect     https://api2.dynect.net/REST                        false          password       customer username password
 route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey
 route53    https://route53.amazonaws.com                       true           session        accessKey secretKey sessionToken
