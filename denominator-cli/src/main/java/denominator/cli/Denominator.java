@@ -51,6 +51,7 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.clouddns.CloudDNSProvider;
+import denominator.designate.DesignateProvider;
 import denominator.dynect.DynECTProvider;
 import denominator.mock.MockProvider;
 import denominator.model.Zone;
@@ -238,6 +239,8 @@ public class Denominator {
                 return new MockProvider(url);
             } else if ("clouddns".equals(providerName)) {
                 return new CloudDNSProvider(url);
+            } else if ("designate".equals(providerName)) {
+                return new DesignateProvider(url);
             } else if ("dynect".equals(providerName)) {
                 return new DynECTProvider(url);
             } else if ("route53".equals(providerName)) {
@@ -254,6 +257,8 @@ public class Denominator {
                 return new MockProvider.Module();
             } else if ("clouddns".equals(providerName)) {
                 return new CloudDNSProvider.Module();
+            } else if ("designate".equals(providerName)) {
+                return new DesignateProvider.Module();
             } else if ("dynect".equals(providerName)) {
                 return new DynECTProvider.Module();
             } else if ("route53".equals(providerName)) {
@@ -278,6 +283,7 @@ public class Denominator {
         return ImmutableList.<Provider> builder()
                             .add(new MockProvider())
                             .add(new CloudDNSProvider())
+                            .add(new DesignateProvider())
                             .add(new DynECTProvider())
                             .add(new Route53Provider())
                             .add(new UltraDNSProvider()).build();

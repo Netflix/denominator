@@ -2,7 +2,7 @@
 
 # Portable control of DNS clouds
 
-Denominator is a portable Java library for manipulating DNS clouds.  Denominator has pluggable back-ends, initially including AWS Route53, Neustar Ultra, DynECT, Rackspace Cloud DNS, and a mock for testing.  We also ship a command line version so it's easy for anyone to try it out.  Denominator currently supports basic zone and record features, as well GEO (aka Directional) profiles.  See [Netflix Tech Blog](http://techblog.netflix.com/2013/03/denominator-multi-vendor-interface-for.html) for an introduction.
+Denominator is a portable Java library for manipulating DNS clouds.  Denominator has pluggable back-ends, initially including AWS Route53, Neustar Ultra, DynECT, Rackspace Cloud DNS, OpenStack Designate, and a mock for testing.  We also ship a command line version so it's easy for anyone to try it out.  Denominator currently supports basic zone and record features, as well GEO (aka Directional) profiles.  See [Netflix Tech Blog](http://techblog.netflix.com/2013/03/denominator-multi-vendor-interface-for.html) for an introduction.
 
 [![Build Status](https://netflixoss.ci.cloudbees.com/job/denominator-master/badge/icon)](https://netflixoss.ci.cloudbees.com/job/denominator-master/)
 
@@ -41,6 +41,7 @@ $ denominator providers
 provider   url                                                 duplicateZones credentialType credentialArgs
 mock       mem:mock                                            false
 clouddns   https://identity.api.rackspacecloud.com/v2.0/       true           apiKey         username apiKey
+designate  http://localhost:5000/v2.0                          true           password       tenantId username password
 dynect     https://api2.dynect.net/REST                        false          password       customer username password
 route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey
 route53    https://route53.amazonaws.com                       true           session        accessKey secretKey sessionToken
