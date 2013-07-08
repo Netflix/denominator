@@ -39,7 +39,7 @@ enum SerializeRRS implements Function<ResourceRecordSet<?>, String> {
             // default ttl from the amazon console is 300
             builder.append("<TTL>").append(rrs.ttl().or(300)).append("</TTL>");
             builder.append("<ResourceRecords>");
-            for (Map<String, Object> data : rrs.rdata()) {
+            for (Map<String, Object> data : rrs.records()) {
                 String textFormat = Joiner.on(' ').join(data.values());
                 if (ImmutableSet.of("SPF", "TXT").contains(rrs.type())) {
                     textFormat = format("\"%s\"", textFormat);

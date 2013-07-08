@@ -73,12 +73,12 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
     @Override
     public void put(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
+        checkArgument(!rrset.records().isEmpty(), "rrset was empty %s", rrset);
         int ttlToApply = rrset.ttl().or(defaultTTL);
 
         List<Record> records = recordsByNameAndType(rrset.name(), rrset.type());
 
-        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset.rdata());
+        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset.records());
 
         for (Record record : records) {
             Map<String, Object> rdata = toRdataMap().apply(record);

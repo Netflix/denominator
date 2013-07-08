@@ -157,7 +157,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         directionalGroup.name = group;
         directionalGroup.regionToTerritories = regions;
 
-        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset.rdata());
+        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset.records());
         for (DirectionalRecord record : recordsByNameTypeAndQualifier(rrset.name(), rrset.type(), group)) {
             Map<String, Object> rdata = forTypeAndRData(record.type, record.rdata);
             if (recordsLeftToCreate.contains(rdata)) {
