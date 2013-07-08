@@ -17,10 +17,10 @@ import denominator.model.rdata.CNAMEData;
  * @param <D>
  *            portable type of the rdata in the {@link ResourceRecordSet}
  */
-abstract class StringRDataBuilder<D extends Map<String, Object>> extends
-        AbstractRecordSetBuilder<String, D, StringRDataBuilder<D>> {
+abstract class StringRecordBuilder<D extends Map<String, Object>> extends
+        AbstractRecordSetBuilder<String, D, StringRecordBuilder<D>> {
 
-    private List<D> rdata = new ArrayList<D>();
+    private List<D> records = new ArrayList<D>();
 
     /**
      * adds a value to the builder.
@@ -31,8 +31,8 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * builder.add(&quot;192.0.2.1&quot;);
      * </pre>
      */
-    public StringRDataBuilder<D> add(String rdata) {
-        this.rdata.add(apply(checkNotNull(rdata, "rdata")));
+    public StringRecordBuilder<D> add(String record) {
+        this.records.add(apply(checkNotNull(record, "record")));
         return this;
     }
 
@@ -45,8 +45,8 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * builder.addAll(&quot;192.0.2.1&quot;, &quot;192.0.2.2&quot;);
      * </pre>
      */
-    public StringRDataBuilder<D> addAll(String... rdata) {
-        return addAll(Arrays.asList(checkNotNull(rdata, "rdata")));
+    public StringRecordBuilder<D> addAll(String... records) {
+        return addAll(Arrays.asList(checkNotNull(records, "records")));
     }
 
     /**
@@ -58,16 +58,16 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * builder.addAll(&quot;192.0.2.1&quot;, &quot;192.0.2.2&quot;);
      * </pre>
      */
-    public StringRDataBuilder<D> addAll(Collection<String> rdata) {
-        for (String value : checkNotNull(rdata, "rdata")) {
+    public StringRecordBuilder<D> addAll(Collection<String> records) {
+        for (String value : checkNotNull(records, "records")) {
             add(value);
         }
         return this;
     }
 
     @Override
-    protected List<D> rdataValues() {
-        return rdata;
+    protected List<D> records() {
+        return records;
     }
 
     /**

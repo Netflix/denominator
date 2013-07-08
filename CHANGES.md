@@ -1,6 +1,9 @@
 ### Version 3.0
 * removes guava dependency
 
+### Version 2.3
+* deprecate `ResourceRecordSet.rdata()` for `ResourceRecordSet.records()`
+
 ### Version 2.2
 * adds url key to commandline config
 * adds support for OpenStack Designate

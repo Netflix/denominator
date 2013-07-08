@@ -35,7 +35,7 @@ public abstract class BaseReadOnlyLiveTest extends BaseProviderLiveTest {
         skipIfNoCredentials();
         for (Zone zone : zones()) {
             for (ResourceRecordSet<?> rrs : allApi(zone)) {
-                recordTypeCounts.getUnchecked(rrs.type()).addAndGet(rrs.rdata().size());
+                recordTypeCounts.getUnchecked(rrs.type()).addAndGet(rrs.records().size());
                 checkRRS(rrs);
                 checkListByNameAndTypeConsistent(zone, rrs);
                 if (rrs.qualifier() != null) {

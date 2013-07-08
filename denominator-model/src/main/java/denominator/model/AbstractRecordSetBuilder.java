@@ -101,11 +101,11 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     }
 
     public ResourceRecordSet<D> build() {
-        return new ResourceRecordSet<D>(name, type, qualifier, ttl, rdataValues(), profile);
+        return new ResourceRecordSet<D>(name, type, qualifier, ttl, records(), profile);
     }
 
     /**
      * aggregate collected rdata values
      */
-    protected abstract List<D> rdataValues();
+    protected abstract List<D> records();
 }

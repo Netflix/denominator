@@ -127,6 +127,37 @@ public class ResourceRecordSets {
     }
 
     /**
+     * evaluates to true if the input {@link ResourceRecordSet} exists and
+     * contains the {@code record} specified.
+     * 
+     * @param record
+     *            the record in the desired record set
+     */
+    public static Filter<ResourceRecordSet<?>> containsRecord(Map<String, ?> record) {
+        return new ContainsRecord(record);
+    }
+
+    private static final class ContainsRecord implements Filter<ResourceRecordSet<?>> {
+        private final Map<String, ?> record;
+
+        public ContainsRecord(Map<String, ?> record) {
+            this.record = checkNotNull(record, "record");
+        }
+
+        @Override
+        public boolean apply(ResourceRecordSet<?> input) {
+            if (input == null)
+                return false;
+            return input.records().contains(record);
+        }
+
+        @Override
+        public String toString() {
+            return "containsRecord(" + record + ")";
+        }
+    }
+
+    /**
      * returns true if the input is not null and
      * {@link ResourceRecordSet#profiles() profile} is empty.
      */
@@ -264,7 +295,7 @@ public class ResourceRecordSets {
         return new ABuilder().name(name).ttl(ttl).addAll(addresses).build();
     }
 
-    private static class ABuilder extends StringRDataBuilder<AData> {
+    private static class ABuilder extends StringRecordBuilder<AData> {
         private ABuilder() {
             type("A");
         }
@@ -332,7 +363,7 @@ public class ResourceRecordSets {
         return new AAAABuilder().name(name).ttl(ttl).addAll(addresses).build();
     }
 
-    private static class AAAABuilder extends StringRDataBuilder<AAAAData> {
+    private static class AAAABuilder extends StringRecordBuilder<AAAAData> {
         private AAAABuilder() {
             type("AAAA");
         }
@@ -402,7 +433,7 @@ public class ResourceRecordSets {
         return new CNAMEBuilder().name(name).ttl(ttl).addAll(cnames).build();
     }
 
-    private static class CNAMEBuilder extends StringRDataBuilder<CNAMEData> {
+    private static class CNAMEBuilder extends StringRecordBuilder<CNAMEData> {
         private CNAMEBuilder() {
             type("CNAME");
         }
@@ -470,7 +501,7 @@ public class ResourceRecordSets {
         return new NSBuilder().name(name).ttl(ttl).addAll(nsdnames).build();
     }
 
-    private static class NSBuilder extends StringRDataBuilder<NSData> {
+    private static class NSBuilder extends StringRecordBuilder<NSData> {
         private NSBuilder() {
             type("NS");
         }
@@ -538,7 +569,7 @@ public class ResourceRecordSets {
         return new PTRBuilder().name(name).ttl(ttl).addAll(ptrdnames).build();
     }
 
-    private static class PTRBuilder extends StringRDataBuilder<PTRData> {
+    private static class PTRBuilder extends StringRecordBuilder<PTRData> {
         private PTRBuilder() {
             type("PTR");
         }
@@ -606,7 +637,7 @@ public class ResourceRecordSets {
         return new SPFBuilder().name(name).ttl(ttl).addAll(spfdata).build();
     }
 
-    private static class SPFBuilder extends StringRDataBuilder<SPFData> {
+    private static class SPFBuilder extends StringRecordBuilder<SPFData> {
         private SPFBuilder() {
             type("SPF");
         }
@@ -674,7 +705,7 @@ public class ResourceRecordSets {
         return new TXTBuilder().name(name).ttl(ttl).addAll(txtdata).build();
     }
 
-    private static class TXTBuilder extends StringRDataBuilder<TXTData> {
+    private static class TXTBuilder extends StringRecordBuilder<TXTData> {
         private TXTBuilder() {
             type("TXT");
         }

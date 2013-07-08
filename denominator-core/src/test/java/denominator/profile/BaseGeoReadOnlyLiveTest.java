@@ -52,8 +52,8 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
                 assertTrue(manager.provider().profileToRecordTypes().get("geo").contains(geoRRS.type()));
 
                 getAnonymousLogger().info(format("%s ::: geoRRS: %s", manager, geoRRS));
-                recordTypeCounts.getUnchecked(geoRRS.type()).addAndGet(geoRRS.rdata().size());
-                geoRecordCounts.getUnchecked(asGeo(geoRRS)).addAndGet(geoRRS.rdata().size());
+                recordTypeCounts.getUnchecked(geoRRS.type()).addAndGet(geoRRS.records().size());
+                geoRecordCounts.getUnchecked(asGeo(geoRRS)).addAndGet(geoRRS.records().size());
                 
                 Iterator<ResourceRecordSet<?>> byNameAndType = geoApi(zone).iterateByNameAndType(geoRRS.name(), geoRRS.type());
                 assertTrue(byNameAndType.hasNext(), "could not list by name and type: " + geoRRS);
@@ -77,7 +77,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
         checkNotNull(geoRRS.name(), "Name: ResourceRecordSet %s", geoRRS);
         checkNotNull(geoRRS.type(), "Type: ResourceRecordSet %s", geoRRS);
         checkNotNull(geoRRS.ttl(), "TTL: ResourceRecordSet %s", geoRRS);
-        assertFalse(geoRRS.rdata().isEmpty(), "Values absent on ResourceRecordSet: " + geoRRS);
+        assertFalse(geoRRS.records().isEmpty(), "Values absent on ResourceRecordSet: " + geoRRS);
     }
 
     @Test

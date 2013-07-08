@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
 
@@ -68,6 +69,22 @@ public class ResourceRecordSetsTest {
 
     public void typeEqualToReturnsTrueOnSameType() {
         assertTrue(nameAndTypeEqualTo(aRRS.name(), aRRS.type()).apply(aRRS));
+    }
+
+    public void containsRecordReturnsFalseOnNull() {
+        assertFalse(ResourceRecordSets.containsRecord(aRRS.records().get(0)).apply(null));
+    }
+
+    public void containsRecordReturnsFalseWhenRDataDifferent() {
+        assertFalse(ResourceRecordSets.containsRecord(AData.create("198.51.100.1")).apply(aRRS));
+    }
+
+    public void containsRecordReturnsTrueWhenRDataEqual() {
+        assertTrue(ResourceRecordSets.containsRecord(AData.create("192.0.2.1")).apply(aRRS));
+    }
+
+    public void containsRecordReturnsTrueWhenRDataEqualButDifferentType() {
+        assertTrue(ResourceRecordSets.containsRecord(ImmutableMap.of("address", "192.0.2.1")).apply(aRRS));
     }
 
     Geo geo = Geo.create(ImmutableMultimap.of("US", "US-VA").asMap());
@@ -279,6 +296,6 @@ public class ResourceRecordSetsTest {
         assertEquals(shortForm.name(), longForm.name());
         assertEquals(shortForm.type(), longForm.type());
         assertEquals(shortForm.ttl(), longForm.ttl());
-        assertEquals(ImmutableList.copyOf(shortForm.rdata()), ImmutableList.copyOf(longForm.rdata()));
+        assertEquals(ImmutableList.copyOf(shortForm.records()), ImmutableList.copyOf(longForm.records()));
     }
 }

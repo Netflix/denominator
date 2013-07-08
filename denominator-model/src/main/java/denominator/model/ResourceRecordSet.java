@@ -29,11 +29,11 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
     private final String type;
     private final String qualifier;
     private final Integer ttl;
-    private final List<D> rdata;
+    private final List<D> records;
     private final List<Map<String, Object>> profiles;
 
-    @ConstructorProperties({ "name", "type", "qualifier", "ttl", "rdata", "profiles" })
-    ResourceRecordSet(String name, String type, String qualifier, Integer ttl, List<D> rdata,
+    @ConstructorProperties({ "name", "type", "qualifier", "ttl", "records", "profiles" })
+    ResourceRecordSet(String name, String type, String qualifier, Integer ttl, List<D> records,
             List<Map<String, Object>> profiles) {
         this.name = checkNotNull(name, "name");
         checkArgument(name.length() <= 255, "Name must be limited to 255 characters");
@@ -44,7 +44,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
             boolean rfc2181 = ttl >= 0 && ttl.longValue() <= 0x7FFFFFFFL;
             checkArgument(rfc2181, "Invalid ttl value: %s, must be 0-2147483647", this.ttl);
         }
-        this.rdata = checkNotNull(rdata, "rdata  of %s %s", name, type);
+        this.records = checkNotNull(records, "records  of %s %s", name, type);
         this.profiles = checkNotNull(profiles, "profiles of %s %s", name, type);
     }
 
@@ -112,15 +112,15 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      * RData type shared across elements. This may be empty in the case of
      * special profile such as `alias`.
      * 
-     * @since 1.3
+     * @since 2.3
      */
-    public List<D> rdata() {
-        return rdata;
+    public List<D> records() {
+        return records;
     }
 
     @Override
     public int hashCode() {
-        return 37 * Arrays.hashCode(new Object[] { name, type, qualifier, rdata, profiles });
+        return 37 * Arrays.hashCode(new Object[] { name, type, qualifier, records, profiles });
     }
 
     @Override
@@ -135,7 +135,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
                 return false;
         } else if (!qualifier.equals(that.qualifier))
             return false;
-        return this.name.equals(that.name) && this.type.equals(that.type) && this.rdata.equals(that.rdata)
+        return this.name.equals(that.name) && this.type.equals(that.type) && this.records.equals(that.records)
                 && this.profiles.equals(that.profiles);
     }
 
@@ -148,8 +148,8 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
             builder.append(',').append("qualifier=").append(qualifier);
         if (ttl != null)
             builder.append(',').append("ttl=").append(ttl);
-        if (!rdata.isEmpty())
-            builder.append(',').append("rdata=").append(rdata);
+        if (!records.isEmpty())
+            builder.append(',').append("records=").append(records);
         if (!profiles.isEmpty())
             builder.append(',').append("profiles=").append(profiles);
         return builder.append('}').toString();
@@ -170,7 +170,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      */
     public static class Builder<D extends Map<String, Object>> extends AbstractRecordSetBuilder<D, D, Builder<D>> {
 
-        private List<D> rdata = new ArrayList<D>();
+        private List<D> records = new ArrayList<D>();
 
         /**
          * adds a value to the builder.
@@ -181,13 +181,13 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
          * builder.add(srvData);
          * </pre>
          */
-        public Builder<D> add(D rdata) {
-            this.rdata.add(checkNotNull(rdata, "rdata"));
+        public Builder<D> add(D record) {
+            this.records.add(checkNotNull(record, "record"));
             return this;
         }
 
         /**
-         * replaces all rdata values in the builder
+         * replaces all records values in the builder
          * 
          * ex.
          * 
@@ -195,13 +195,13 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
          * builder.addAll(srvData1, srvData2);
          * </pre>
          */
-        public Builder<D> addAll(D... rdata) {
-            this.rdata.addAll(Arrays.asList(checkNotNull(rdata, "rdata")));
+        public Builder<D> addAll(D... records) {
+            this.records.addAll(Arrays.asList(checkNotNull(records, "records")));
             return this;
         }
 
         /**
-         * replaces all rdata values in the builder
+         * replaces all records values in the builder
          * 
          * ex.
          * 
@@ -210,14 +210,14 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
          * builder.addAll(otherRecordSet);
          * </pre>
          */
-        public <R extends D> Builder<D> addAll(Collection<R> rdata) {
-            this.rdata.addAll(checkNotNull(rdata, "rdata"));
+        public <R extends D> Builder<D> addAll(Collection<R> records) {
+            this.records.addAll(checkNotNull(records, "records"));
             return this;
         }
 
         @Override
-        protected List<D> rdataValues() {
-            return rdata;
+        protected List<D> records() {
+            return records;
         }
     }
 }

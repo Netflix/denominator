@@ -111,7 +111,7 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
                                           .name(recordSet.name())
                                           .type(recordSet.type())
                                           .ttl(1800)
-                                          .add(recordSet.rdata().get(0)).build());
+                                          .add(recordSet.records().get(0)).build());
 
         ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
@@ -121,8 +121,8 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
         assertEquals(rrs.name(), recordSet.name());
         assertEquals(rrs.ttl(), Integer.valueOf(1800));
         assertEquals(rrs.type(), recordSet.type());
-        assertEquals(rrs.rdata().size(), 1);
-        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
+        assertEquals(rrs.records().size(), 1);
+        assertEquals(rrs.records().get(0), recordSet.records().get(0));
     }
 
     @Test(dependsOnMethods = "putNewRRS", dataProvider = "simpleRecords")
@@ -134,7 +134,7 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
                     .name(recordSet.name())
                     .type(recordSet.type())
                     .ttl(200000)
-                    .add(recordSet.rdata().get(0)).build());;
+                    .add(recordSet.records().get(0)).build());;
 
         ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
@@ -144,8 +144,8 @@ public abstract class BaseRecordSetLiveTest extends BaseProviderLiveTest {
         assertEquals(rrs.name(), recordSet.name());
         assertEquals(rrs.type(), recordSet.type());
         assertEquals(rrs.ttl(), Integer.valueOf(200000));
-        assertEquals(rrs.rdata().size(), 1);
-        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
+        assertEquals(rrs.records().size(), 1);
+        assertEquals(rrs.records().get(0), recordSet.records().get(0));
     }
 
     @Test(dependsOnMethods = "putChangingTTL", dataProvider = "simpleRecords")

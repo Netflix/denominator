@@ -133,7 +133,7 @@ class GeoResourceRecordSetCommands {
                                                  .qualifier(group)
                                                  .ttl(ttl)
                                                  .addAllProfile(rrs.profiles())
-                                                 .addAll(rrs.rdata()).build());
+                                                 .addAll(rrs.records()).build());
                     }
                     done = true;
                     return ";; ok";

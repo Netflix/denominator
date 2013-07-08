@@ -20,10 +20,10 @@ public class ResourceRecordSetTest {
         assertEquals(record.name(), "www.denominator.io.");
         assertEquals(record.type(), "A");
         assertEquals(record.ttl(), Integer.valueOf(3600));
-        assertEquals(record.rdata().get(0), AData.create("192.0.2.1"));
+        assertEquals(record.records().get(0), AData.create("192.0.2.1"));
     }
 
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "rdata")
+    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "record")
     public void testNullRdataNPE() {
         ResourceRecordSet.<AData> builder().add(null);
     }

@@ -36,7 +36,7 @@ enum SerializeRRS {
             // default ttl from the amazon console is 300
             builder.append("<TTL>").append(rrs.ttl() == null ? 300 : rrs.ttl()).append("</TTL>");
             builder.append("<ResourceRecords>");
-            for (Map<String, Object> data : rrs.rdata()) {
+            for (Map<String, Object> data : rrs.records()) {
                 String textFormat = join(' ', data.values().toArray());
                 if ("SPF".equals(rrs.type()) || "TXT".equals(rrs.type())) {
                     textFormat = format("\"%s\"", textFormat);

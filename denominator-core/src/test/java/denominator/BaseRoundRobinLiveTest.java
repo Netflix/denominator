@@ -49,7 +49,7 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
                                           .name(recordSet.name())
                                           .type(recordSet.type())
                                           .ttl(1800)
-                                          .add(recordSet.rdata().get(0)).build());
+                                          .add(recordSet.records().get(0)).build());
 
         ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
@@ -59,8 +59,8 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
         assertEquals(rrs.name(), recordSet.name());
         assertEquals(rrs.ttl(), Integer.valueOf(1800));
         assertEquals(rrs.type(), recordSet.type());
-        assertEquals(rrs.rdata().size(), 1);
-        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
+        assertEquals(rrs.records().size(), 1);
+        assertEquals(rrs.records().get(0), recordSet.records().get(0));
     }
 
     @Test(dependsOnMethods = "putNewRRS", dataProvider = "roundRobinRecords")
@@ -72,8 +72,8 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
                     .name(recordSet.name())
                     .type(recordSet.type())
                     .ttl(1800)
-                    .add(recordSet.rdata().get(0))
-                    .add(recordSet.rdata().get(1)).build());
+                    .add(recordSet.records().get(0))
+                    .add(recordSet.records().get(1)).build());
 
         ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
@@ -82,9 +82,9 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
         checkRRS(rrs);
         assertEquals(rrs.name(), recordSet.name());
         assertEquals(rrs.type(), recordSet.type());
-        assertEquals(rrs.rdata().size(), 2);
-        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
-        assertEquals(rrs.rdata().get(1), recordSet.rdata().get(1));
+        assertEquals(rrs.records().size(), 2);
+        assertEquals(rrs.records().get(0), recordSet.records().get(0));
+        assertEquals(rrs.records().get(1), recordSet.records().get(1));
     }
 
     @Test(dependsOnMethods = "putAddingRData", dataProvider = "roundRobinRecords")
@@ -96,8 +96,8 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
                     .name(recordSet.name())
                     .type(recordSet.type())
                     .ttl(200000)
-                    .add(recordSet.rdata().get(0))
-                    .add(recordSet.rdata().get(1)).build());
+                    .add(recordSet.records().get(0))
+                    .add(recordSet.records().get(1)).build());
 
         ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
@@ -107,9 +107,9 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
         assertEquals(rrs.name(), recordSet.name());
         assertEquals(rrs.type(), recordSet.type());
         assertEquals(rrs.ttl(), Integer.valueOf(200000));
-        assertEquals(rrs.rdata().size(), 2);
-        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
-        assertEquals(rrs.rdata().get(1), recordSet.rdata().get(1));
+        assertEquals(rrs.records().size(), 2);
+        assertEquals(rrs.records().get(0), recordSet.records().get(0));
+        assertEquals(rrs.records().get(1), recordSet.records().get(1));
     }
 
     @Test(dependsOnMethods = "putChangingTTL", dataProvider = "roundRobinRecords")
@@ -121,7 +121,7 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
                     .name(recordSet.name())
                     .type(recordSet.type())
                     .ttl(200000)
-                    .add(recordSet.rdata().get(0)).build());
+                    .add(recordSet.records().get(0)).build());
 
         ResourceRecordSet<?> rrs = rrsApi(zone).getByNameAndType(recordSet.name(), recordSet.type());
 
@@ -130,8 +130,8 @@ public abstract class BaseRoundRobinLiveTest extends BaseProviderLiveTest {
         checkRRS(rrs);
         assertEquals(rrs.name(), recordSet.name());
         assertEquals(rrs.type(), recordSet.type());
-        assertEquals(rrs.rdata().size(), 1);
-        assertEquals(rrs.rdata().get(0), recordSet.rdata().get(0));
+        assertEquals(rrs.records().size(), 1);
+        assertEquals(rrs.records().get(0), recordSet.records().get(0));
     }
 
     @Test(dependsOnMethods = "putRemovingRData", dataProvider = "roundRobinRecords")

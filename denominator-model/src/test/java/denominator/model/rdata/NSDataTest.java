@@ -7,7 +7,7 @@ import org.testng.annotations.Test;
 @Test
 public class NSDataTest {
 
-    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "rdata")
+    @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "record")
     public void testNullTargetNS() {
         ns("www.denominator.io.", (String) null);
     }

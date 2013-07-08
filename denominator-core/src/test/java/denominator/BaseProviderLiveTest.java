@@ -119,8 +119,7 @@ public abstract class BaseProviderLiveTest {
     protected void checkRRS(ResourceRecordSet<?> rrs) {
         checkNotNull(rrs.name(), "Name: ResourceRecordSet %s", rrs);
         checkNotNull(rrs.type(), "Type: ResourceRecordSet %s", rrs);
-        checkNotNull(rrs.ttl(), "TTL: ResourceRecordSet %s", rrs);
-        assertTrue(!rrs.rdata().isEmpty(), "Values absent on ResourceRecordSet: " + rrs);
+        assertTrue(!rrs.records().isEmpty(), "Values absent on ResourceRecordSet: " + rrs);
     }
 
     protected void skipIfRRSetExists(Zone zone, String name, String type) {

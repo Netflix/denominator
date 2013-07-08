@@ -125,7 +125,7 @@ class ResourceRecordSetCommands {
                                                  .name(rrs.name())
                                                  .type(rrs.type())
                                                  .ttl(ttl)
-                                                 .addAll(rrs.rdata()).build());
+                                                 .addAll(rrs.records()).build());
                     }
                     done = true;
                     return ";; ok";
@@ -214,7 +214,7 @@ class ResourceRecordSetCommands {
                 builder.ttl(ttl);
             final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
             String cmd = format(";; in zone %s adding to rrset %s %s values: [%s]", zoneIdOrName, name, type, Joiner
-                    .on(',').join(toAdd.rdata()));
+                    .on(',').join(toAdd.records()));
             if (ttl != -1)
                 cmd = format("%s applying ttl %d", cmd, ttl);
             return concat(forArray(cmd), new Iterator<String>() {
@@ -231,9 +231,9 @@ class ResourceRecordSetCommands {
                     ResourceRecordSet<?> rrset = api.getByNameAndType(name, type);
                     if (rrset != null) {
                         ImmutableList<Map<String, Object>> oldRDataAsList =
-                                ImmutableList.copyOf(rrset.rdata());
+                                ImmutableList.copyOf(rrset.records());
                         ImmutableList<Map<String, Object>> newRData =
-                                ImmutableList.copyOf(filter(rrset.rdata(), not(in(toAdd.rdata()))));
+                                ImmutableList.copyOf(filter(rrset.records(), not(in(toAdd.records()))));
                         if (!newRData.isEmpty()) {
                             api.put(ResourceRecordSet.builder()
                                                      .name(rrset.name())
@@ -268,7 +268,7 @@ class ResourceRecordSetCommands {
                 builder.ttl(ttl);
             final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
             String cmd = format(";; in zone %s replacing rrset %s %s with values: [%s]", zoneIdOrName, name, type, Joiner
-                    .on(',').join(toAdd.rdata()));
+                    .on(',').join(toAdd.records()));
             if (ttl != -1)
                 cmd = format("%s and ttl %d", cmd, ttl);
             return concat(forArray(cmd), new Iterator<String>() {
@@ -300,7 +300,7 @@ class ResourceRecordSetCommands {
         public Iterator<String> doRun(final DNSApiManager mgr) {
             final ResourceRecordSet<Map<String, Object>> toRemove = rrsetBuilder().build();
             String cmd = format(";; in zone %s removing from rrset %s %s values: [%s]", zoneIdOrName, name, type, Joiner
-                    .on(',').join(toRemove.rdata()));
+                    .on(',').join(toRemove.records()));
             return concat(forArray(cmd), new Iterator<String>() {
                 boolean done = false;
 
@@ -315,9 +315,9 @@ class ResourceRecordSetCommands {
                     ResourceRecordSet<?> rrset = api.getByNameAndType(name, type);
                     if (rrset != null) {
                         ImmutableList<Map<String, Object>> oldRDataAsList =
-                                ImmutableList.copyOf(rrset.rdata());
+                                ImmutableList.copyOf(rrset.records());
                         ImmutableList<Map<String, Object>> retainedRData =
-                                ImmutableList.copyOf(filter(rrset.rdata(), not(in(toRemove.rdata()))));
+                                ImmutableList.copyOf(filter(rrset.records(), not(in(toRemove.records()))));
                         if (retainedRData.isEmpty()) {
                             api.deleteByNameAndType(name, type);
                         } else if (!oldRDataAsList.equals(retainedRData)) {
@@ -379,7 +379,7 @@ class ResourceRecordSetCommands {
         @Override
         public String apply(ResourceRecordSet<?> input) {
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
-            for (Map<String, Object> rdata : input.rdata()) {
+            for (Map<String, Object> rdata : input.records()) {
                 lines.add(format("%-50s%-7s%-20s%-6s%s", input.name(), input.type(),
                         input.qualifier() != null ? input.qualifier() : "", input.ttl(), flatten(rdata)));
             }

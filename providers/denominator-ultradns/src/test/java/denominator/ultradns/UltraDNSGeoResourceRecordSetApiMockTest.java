@@ -377,7 +377,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                                                                          .type(europe.type())
                                                                          .qualifier(europe.qualifier())
                                                                          .ttl(europe.ttl())
-                                                                         .addAll(europe.rdata())
+                                                                         .addAll(europe.records())
                                                                          .addProfile(Geo.create(ImmutableMultimap.of("Europe", "Aland Islands").asMap()))                             
                                                                          .build();
             api.put(lessOfEurope);
@@ -429,7 +429,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                                                                          .type(europe.type())
                                                                          .qualifier(europe.qualifier())
                                                                          .ttl(600)
-                                                                         .addAll(europe.rdata())
+                                                                         .addAll(europe.records())
                                                                          .addAllProfile(europe.profiles())                             
                                                                          .build();
             api.put(lessTTL);
