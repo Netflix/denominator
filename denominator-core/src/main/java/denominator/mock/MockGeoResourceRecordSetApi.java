@@ -64,7 +64,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
                         .qualifier(toTest.qualifier().get())//
                         .ttl(toTest.ttl().orNull())//
                         .addProfile(Geo.create(without))//
-                        .addAll(toTest.rdata()).build());
+                        .addAll(toTest.records()).build());
             }
         }
     }

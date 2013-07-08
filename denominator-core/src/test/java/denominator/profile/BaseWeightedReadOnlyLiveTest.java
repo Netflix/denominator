@@ -47,8 +47,8 @@ public abstract class BaseWeightedReadOnlyLiveTest extends BaseProviderLiveTest 
                 assertTrue(manager.provider().profileToRecordTypes().get("weighted").contains(weightedRRS.type()));
 
                 getAnonymousLogger().info(format("%s ::: weightedRRS: %s", manager, weightedRRS));
-                recordTypeCounts.getUnchecked(weightedRRS.type()).addAndGet(weightedRRS.rdata().size());
-                weightedRecordCounts.getUnchecked(asWeighted(weightedRRS)).addAndGet(weightedRRS.rdata().size());
+                recordTypeCounts.getUnchecked(weightedRRS.type()).addAndGet(weightedRRS.records().size());
+                weightedRecordCounts.getUnchecked(asWeighted(weightedRRS)).addAndGet(weightedRRS.records().size());
                 
                 Iterator<ResourceRecordSet<?>> byNameAndType = weightedApi(zone).iterateByNameAndType(weightedRRS.name(), weightedRRS.type());
                 assertTrue(byNameAndType.hasNext(), "could not list by name and type: " + weightedRRS);
@@ -73,7 +73,7 @@ public abstract class BaseWeightedReadOnlyLiveTest extends BaseProviderLiveTest 
         checkNotNull(weightedRRS.name(), "Name: ResourceRecordSet %s", weightedRRS);
         checkNotNull(weightedRRS.type(), "Type: ResourceRecordSet %s", weightedRRS);
         checkNotNull(weightedRRS.ttl(), "TTL: ResourceRecordSet %s", weightedRRS);
-        assertFalse(weightedRRS.rdata().isEmpty(), "Values absent on ResourceRecordSet: " + weightedRRS);
+        assertFalse(weightedRRS.records().isEmpty(), "Values absent on ResourceRecordSet: " + weightedRRS);
     }
 
     @Test

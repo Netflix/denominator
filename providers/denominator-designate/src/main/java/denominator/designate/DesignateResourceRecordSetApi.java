@@ -55,9 +55,9 @@ class DesignateResourceRecordSetApi implements denominator.ResourceRecordSetApi 
     @Override
     public void put(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
+        checkArgument(!rrset.records().isEmpty(), "rrset was empty %s", rrset);
 
-        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset.rdata());
+        List<Map<String, Object>> recordsLeftToCreate = newArrayList(rrset.records());
 
         for (Record record : api.records(domainId)) {
             // TODO: name and type filter

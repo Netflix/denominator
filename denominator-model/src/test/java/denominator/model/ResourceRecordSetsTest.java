@@ -68,19 +68,19 @@ public class ResourceRecordSetsTest {
     }
 
     public void containsRDataReturnsFalseOnNull() {
-        assertFalse(ResourceRecordSets.containsRData(aRRS.rdata().get(0)).apply(null));
+        assertFalse(ResourceRecordSets.containsRecord(aRRS.records().get(0)).apply(null));
     }
 
     public void containsRDataReturnsFalseWhenRDataDifferent() {
-        assertFalse(ResourceRecordSets.containsRData(AData.create("198.51.100.1")).apply(aRRS));
+        assertFalse(ResourceRecordSets.containsRecord(AData.create("198.51.100.1")).apply(aRRS));
     }
 
     public void containsRDataReturnsTrueWhenRDataEqual() {
-        assertTrue(ResourceRecordSets.containsRData(AData.create("192.0.2.1")).apply(aRRS));
+        assertTrue(ResourceRecordSets.containsRecord(AData.create("192.0.2.1")).apply(aRRS));
     }
 
     public void containsRDataReturnsTrueWhenRDataEqualButDifferentType() {
-        assertTrue(ResourceRecordSets.containsRData(ImmutableMap.of("address", "192.0.2.1")).apply(aRRS));
+        assertTrue(ResourceRecordSets.containsRecord(ImmutableMap.of("address", "192.0.2.1")).apply(aRRS));
     }
 
     Geo geo = Geo.create(ImmutableMultimap.of("US", "US-VA"));
@@ -292,6 +292,6 @@ public class ResourceRecordSetsTest {
         assertEquals(shortForm.name(), longForm.name());
         assertEquals(shortForm.type(), longForm.type());
         assertEquals(shortForm.ttl(), longForm.ttl());
-        assertEquals(ImmutableList.copyOf(shortForm.rdata()), ImmutableList.copyOf(longForm.rdata()));
+        assertEquals(ImmutableList.copyOf(shortForm.records()), ImmutableList.copyOf(longForm.records()));
     }
 }

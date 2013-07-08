@@ -65,7 +65,7 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
                                               .addProfile(ImmutableMap.<String, Object> builder()//
                                                       .put("type", "weighted")//
                                                       .put("weight", 0).build())
-                                              .add(recordSet.rdata().get(i)).build());
+                                              .add(recordSet.records().get(i)).build());
     
             Optional<ResourceRecordSet<?>> rrs = weightedApi(zone)
                     .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier);
@@ -78,8 +78,8 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
             assertEquals(rrs.get().type(), recordSet.type());
             assertEquals(rrs.get().qualifier().get(), qualifier);
             assertEquals(asWeighted(rrs.get()).weight(), 0);
-            assertEquals(rrs.get().rdata().size(), 1);
-            assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(i++));
+            assertEquals(rrs.get().records().size(), 1);
+            assertEquals(rrs.get().records().get(0), recordSet.records().get(i++));
         }
     }
 
@@ -96,7 +96,7 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
                                                .ttl(1800)
                                                .qualifier(qualifier1)
                                                .addProfile(Weighted.create(heaviest))
-                                               .add(recordSet.rdata().get(0)).build());
+                                               .add(recordSet.records().get(0)).build());
 
         ResourceRecordSet<?> rrs1 = weightedApi(zone).getByNameTypeAndQualifier(
                 recordSet.name(), recordSet.type(), qualifier1).get();

@@ -79,7 +79,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
                                               .ttl(1800)
                                               .qualifier(qualifier)
                                               .addProfile(territories)
-                                              .add(recordSet.rdata().get(i)).build());
+                                              .add(recordSet.records().get(i)).build());
     
             Optional<ResourceRecordSet<?>> rrs = geoApi(zone)
                     .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier);
@@ -92,8 +92,8 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
             assertEquals(rrs.get().type(), recordSet.type());
             assertEquals(rrs.get().qualifier().get(), qualifier);
             assertEquals(asGeo(rrs.get()).regions(), asGeo(territories).regions());
-            assertEquals(rrs.get().rdata().size(), 1);
-            assertEquals(rrs.get().rdata().get(0), recordSet.rdata().get(i++));
+            assertEquals(rrs.get().records().size(), 1);
+            assertEquals(rrs.get().records().get(0), recordSet.records().get(i++));
         }
     }
 
@@ -121,7 +121,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
                                           .qualifier(qualifier2)
                                           .ttl(rrs2.ttl().orNull())
                                           .addProfile(Geo.create(plus1))
-                                          .addAll(rrs2.rdata()).build());
+                                          .addAll(rrs2.records()).build());
 
         rrs1 = geoApi(zone).getByNameTypeAndQualifier(
                 recordSet.name(), recordSet.type(), qualifier1).get();
@@ -156,7 +156,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
                                               .ttl(ttl)
                                               .qualifier(qualifier)
                                               .addProfile(oldGeo)
-                                              .add(recordSet.rdata().get(i)).build());
+                                              .add(recordSet.records().get(i)).build());
 
             rrs = geoApi(zone).getByNameTypeAndQualifier(recordSet.name(), recordSet.type(),
                     qualifier).get();
@@ -167,8 +167,8 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
             assertEquals(rrs.type(), recordSet.type());
             assertEquals(rrs.qualifier().get(), qualifier);
             assertEquals(asGeo(rrs).regions(), oldGeo.regions());
-            assertEquals(rrs.rdata().size(), 1);
-            assertEquals(rrs.rdata().get(0), recordSet.rdata().get(i++));
+            assertEquals(rrs.records().size(), 1);
+            assertEquals(rrs.records().get(0), recordSet.records().get(i++));
         }
     }
 
