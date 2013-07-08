@@ -70,10 +70,10 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     @Override
     public void put(final ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset was null");
-        checkArgument(!rrset.rdata().isEmpty(), "rrset was empty %s", rrset);
+        checkArgument(!rrset.records().isEmpty(), "rrset was empty %s", rrset);
         int ttlToApply = rrset.ttl().or(0);
 
-        List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset.rdata());
+        List<Map<String, Object>> recordsLeftToCreate = Lists.newArrayList(rrset.records());
 
         Iterator<Record> existingRecords = emptyIteratorOn404(new Supplier<Iterator<Record>>() {
             @Override

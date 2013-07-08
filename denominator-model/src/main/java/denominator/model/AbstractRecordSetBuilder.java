@@ -100,11 +100,11 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     }
 
     public ResourceRecordSet<D> build() {
-        return new ResourceRecordSet<D>(name, type, qualifier, ttl, rdataValues(), profile.build());
+        return new ResourceRecordSet<D>(name, type, qualifier, ttl, records(), profile.build());
     }
 
     /**
      * aggregate collected rdata values
      */
-    protected abstract ImmutableList<D> rdataValues();
+    protected abstract ImmutableList<D> records();
 }

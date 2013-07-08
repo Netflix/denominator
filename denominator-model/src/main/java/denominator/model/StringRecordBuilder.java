@@ -17,10 +17,10 @@ import denominator.model.rdata.CNAMEData;
  * @param <D>
  *            portable type of the rdata in the {@link ResourceRecordSet}
  */
-abstract class StringRDataBuilder<D extends Map<String, Object>> extends
-        AbstractRecordSetBuilder<String, D, StringRDataBuilder<D>> implements Function<String, D> {
+abstract class StringRecordBuilder<D extends Map<String, Object>> extends
+        AbstractRecordSetBuilder<String, D, StringRecordBuilder<D>> implements Function<String, D> {
 
-    private ImmutableList.Builder<D> rdata = ImmutableList.builder();
+    private ImmutableList.Builder<D> records = ImmutableList.builder();
 
     /**
      * adds a value to the builder.
@@ -31,8 +31,8 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * builder.add(&quot;192.0.2.1&quot;);
      * </pre>
      */
-    public StringRDataBuilder<D> add(String rdata) {
-        this.rdata.add(apply(checkNotNull(rdata, "rdata")));
+    public StringRecordBuilder<D> add(String record) {
+        this.records.add(apply(checkNotNull(record, "record")));
         return this;
     }
 
@@ -45,8 +45,8 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * builder.addAll(&quot;192.0.2.1&quot;, &quot;192.0.2.2&quot;);
      * </pre>
      */
-    public StringRDataBuilder<D> addAll(String... rdata) {
-        this.rdata.addAll(transform(ImmutableList.<String> copyOf(checkNotNull(rdata, "rdata")), this));
+    public StringRecordBuilder<D> addAll(String... records) {
+        this.records.addAll(transform(ImmutableList.<String> copyOf(checkNotNull(records, "records")), this));
         return this;
     }
 
@@ -59,13 +59,13 @@ abstract class StringRDataBuilder<D extends Map<String, Object>> extends
      * builder.addAll(&quot;192.0.2.1&quot;, &quot;192.0.2.2&quot;);
      * </pre>
      */
-    public StringRDataBuilder<D> addAll(Iterable<String> rdata) {
-        this.rdata.addAll(transform(checkNotNull(rdata, "rdata"), this));
+    public StringRecordBuilder<D> addAll(Iterable<String> records) {
+        this.records.addAll(transform(checkNotNull(records, "records"), this));
         return this;
     }
 
     @Override
-    protected ImmutableList<D> rdataValues() {
-        return rdata.build();
+    protected ImmutableList<D> records() {
+        return records.build();
     }
 }
