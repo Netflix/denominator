@@ -3,6 +3,7 @@ package denominator.model;
 import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
+import java.util.LinkedHashMap;
 
 /**
  * A zone is a delegated portion of DNS. We use the word {@code zone} instead of
@@ -10,7 +11,8 @@ import java.beans.ConstructorProperties;
  * 
  * @since 1.2 See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class Zone {
+public class Zone extends LinkedHashMap<String, Object> {
+
     /**
      * Represent a zone without an {@link #id() id}.
      * 
@@ -33,13 +35,16 @@ public class Zone {
         return new Zone(name, id);
     }
 
-    private final String name;
-    private final String id;
-
     @ConstructorProperties({ "name", "id" })
     Zone(String name, String id) {
-        this.name = checkNotNull(name, "name");
-        this.id = id;
+        put("name", checkNotNull(name, "name"));
+        if (id != null)
+            put("id", id);
+    }
+
+    @SuppressWarnings("unused")
+    private Zone(){
+        // for serializers
     }
 
     /**
@@ -47,7 +52,7 @@ public class Zone {
      * includes a trailing dot, ex. "{@code netflix.com.}"
      */
     public String name() {
-        return name;
+        return get("name").toString();
     }
 
     /**
@@ -59,7 +64,7 @@ public class Zone {
      * @see #idOrName()
      */
     public String id() {
-        return id;
+        return (String) get("id");
     }
 
     /**
@@ -77,37 +82,8 @@ public class Zone {
      * @return {@link #id() id} or {@link #name() name} if absent
      */
     public String idOrName() {
-        return id != null ? id : name;
+        return id() != null ? id() : name();
     }
 
-    @Override
-    public int hashCode() {
-        return 37 * name.hashCode() + (id != null ? id.hashCode() : 0);
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null || !(obj instanceof Zone))
-            return false;
-        Zone that = Zone.class.cast(obj);
-        if (!this.name.equals(that.name))
-            return false;
-        if (id == null) {
-            if (that.id != null)
-                return false;
-        } else if (!id.equals(that.id))
-            return false;
-        return true;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder().append("Zone{");
-        builder.append("name=").append(name);
-        if (id != null)
-            builder.append(", ").append("id=").append(id);
-        return builder.append('}').toString();
-    }
+    private static final long serialVersionUID = 1L;
 }

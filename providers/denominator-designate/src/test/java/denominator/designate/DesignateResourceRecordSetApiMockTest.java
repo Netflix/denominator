@@ -54,7 +54,7 @@ public class DesignateResourceRecordSetApiMockTest {
             assertEquals(records.next(), ResourceRecordSet.<MXData> builder() //
                     .name("denominator.io.") //
                     .type("MX") //
-                    .ttl(3600) //
+                    .ttl(300) //
                     .add(MXData.create(10, "www.denominator.io.")).build());
             assertEquals(records.next(), a("www.denominator.io.", 300, Arrays.asList("192.0.2.1", "192.0.2.2")));
             assertFalse(records.hasNext());
@@ -222,7 +222,7 @@ public class DesignateResourceRecordSetApiMockTest {
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertEquals(api.iterateByName("www.denominator.io.").next(),
-                    a("www.denominator.io.", ImmutableList.of("192.0.2.1", "192.0.2.2")));
+                    a("www.denominator.io.", 300, ImmutableList.of("192.0.2.1", "192.0.2.2")));
 
             assertEquals(server.getRequestCount(), 2);
             takeAuthResponse(server);
@@ -269,7 +269,7 @@ public class DesignateResourceRecordSetApiMockTest {
         try {
             ResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertEquals(api.getByNameAndType("www.denominator.io.", "A"),
-                    a("www.denominator.io.", ImmutableList.of("192.0.2.1", "192.0.2.2")));
+                    a("www.denominator.io.", 300, ImmutableList.of("192.0.2.1", "192.0.2.2")));
 
             assertEquals(server.getRequestCount(), 2);
             takeAuthResponse(server);
