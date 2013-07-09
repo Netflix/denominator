@@ -8,7 +8,6 @@ import java.util.Map;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 
@@ -31,8 +30,7 @@ public class WeightedTest {
     }
 
     public void equalToDeserializedMap() throws IOException {
-        assertEquals(new ObjectMapper().readValue(asJson, new TypeReference<Map<String, Object>>() {
-        }), weighted);
+        assertEquals(new ObjectMapper().readValue(asJson, Map.class), weighted);
     }
 
     Map<String, Object> weightedMap = ImmutableMap.<String, Object> builder()//

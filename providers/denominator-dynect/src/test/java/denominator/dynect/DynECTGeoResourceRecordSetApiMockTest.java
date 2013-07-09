@@ -63,7 +63,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             .name("srv.denominator.io")
             .type("CNAME")
             .qualifier("Fallback")
-            .ttl(60)
+            .ttl(300)
             .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
             .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
                                                     .put("Unknown IP", "@!")
