@@ -7,6 +7,7 @@ import java.beans.ConstructorProperties;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,29 +24,34 @@ import denominator.model.profile.Geo;
  * 
  *            See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class ResourceRecordSet<D extends Map<String, Object>> {
+public class ResourceRecordSet<D extends Map<String, Object>> extends LinkedHashMap<String, Object> {
 
-    private final String name;
-    private final String type;
-    private final String qualifier;
-    private final Integer ttl;
-    private final List<D> records;
-    private final List<Map<String, Object>> profiles;
+    @SuppressWarnings("unused")
+    private ResourceRecordSet() {
+        put("records", new ArrayList<D>());
+        put("profiles", new ArrayList<Map<String, Object>>());
+    }
 
     @ConstructorProperties({ "name", "type", "qualifier", "ttl", "records", "profiles" })
     ResourceRecordSet(String name, String type, String qualifier, Integer ttl, List<D> records,
             List<Map<String, Object>> profiles) {
-        this.name = checkNotNull(name, "name");
-        checkArgument(name.length() <= 255, "Name must be limited to 255 characters");
-        this.type = checkNotNull(type, "type of %s", name);
-        this.qualifier = qualifier;
-        this.ttl = ttl;
+        checkArgument(checkNotNull(name, "name").length() <= 255, "Name must be limited to 255 characters");
+        put("name", name);
+        put("type", checkNotNull(type, "type of %s", name));
+        if (qualifier != null) {
+            put("qualifier", qualifier);
+        }
         if (ttl != null) {
             boolean rfc2181 = ttl >= 0 && ttl.longValue() <= 0x7FFFFFFFL;
-            checkArgument(rfc2181, "Invalid ttl value: %s, must be 0-2147483647", this.ttl);
+            checkArgument(rfc2181, "Invalid ttl value: %s, must be 0-2147483647", ttl);
+            put("ttl", ttl);
         }
-        this.records = checkNotNull(records, "records  of %s %s", name, type);
-        this.profiles = checkNotNull(profiles, "profiles of %s %s", name, type);
+        if (records != null) {
+            put("records", records);
+        }
+        if (profiles != null) {
+            put("profiles", profiles);
+        }
     }
 
     /**
@@ -55,7 +61,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      * @since 1.3
      */
     public String name() {
-        return name;
+        return get("name").toString();
     }
 
     /**
@@ -64,7 +70,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      * @since 1.3
      */
     public String type() {
-        return type;
+        return get("type").toString();
     }
 
     /**
@@ -77,7 +83,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      * @since 1.3
      */
     public String qualifier() {
-        return qualifier;
+        return (String) get("qualifier");
     }
 
     /**
@@ -88,7 +94,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      * @since 1.3
      */
     public Integer ttl() {
-        return ttl;
+        return (Integer) get("ttl");
     }
 
     /**
@@ -104,8 +110,9 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      * 
      * @since 1.3
      */
+    @SuppressWarnings("unchecked")
     public List<Map<String, Object>> profiles() {
-        return profiles;
+        return List.class.cast(get("profiles"));
     }
 
     /**
@@ -114,45 +121,9 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
      * 
      * @since 2.3
      */
+    @SuppressWarnings("unchecked")
     public List<D> records() {
-        return records;
-    }
-
-    @Override
-    public int hashCode() {
-        return 37 * Arrays.hashCode(new Object[] { name, type, qualifier, records, profiles });
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null || !(obj instanceof ResourceRecordSet))
-            return false;
-        ResourceRecordSet<?> that = ResourceRecordSet.class.cast(obj);
-        if (qualifier == null) {
-            if (that.qualifier != null)
-                return false;
-        } else if (!qualifier.equals(that.qualifier))
-            return false;
-        return this.name.equals(that.name) && this.type.equals(that.type) && this.records.equals(that.records)
-                && this.profiles.equals(that.profiles);
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder().append('{');
-        builder.append("name=").append(name).append(',');
-        builder.append("type=").append(type);
-        if (qualifier != null)
-            builder.append(',').append("qualifier=").append(qualifier);
-        if (ttl != null)
-            builder.append(',').append("ttl=").append(ttl);
-        if (!records.isEmpty())
-            builder.append(',').append("records=").append(records);
-        if (!profiles.isEmpty())
-            builder.append(',').append("profiles=").append(profiles);
-        return builder.append('}').toString();
+        return List.class.cast(get("records"));
     }
 
     public static <D extends Map<String, Object>> Builder<D> builder() {
@@ -220,4 +191,6 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
             return records;
         }
     }
+
+    private static final long serialVersionUID = 1L;
 }

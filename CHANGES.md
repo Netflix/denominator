@@ -1,5 +1,6 @@
 ### Version 3.0
 * removes guava dependency
+* retrofits Zone and ResourceRecordSet to extend Map, allowing default json serialization.
 
 ### Version 2.3
 * deprecate `ResourceRecordSet.rdata()` for `ResourceRecordSet.records()`
