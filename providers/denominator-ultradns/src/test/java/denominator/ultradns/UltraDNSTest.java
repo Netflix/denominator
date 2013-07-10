@@ -741,6 +741,50 @@ public class UltraDNSTest {
         }
     }
 
+    private String getDirectionalDNSRecordsForHostResponseFiltersOutSourceIP = ""//
+            + getDirectionalDNSRecordsForHostResponseHeader//
+            + "    <DirectionalDNSRecordDetailList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" ZoneName=\"denominator.io.\" DName=\"www.denominator.io.\">\n"//
+            + "      <ns2:DirectionalDNSRecordDetail SourceIPGroupName=\"172.16.1.0/24\" SourceIPGroupId=\"C000000000000001\" TerritoriesCount=\"54\" DirPoolRecordId=\"A000000000000001\">\n"//
+            + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"//
+            + "          <ns2:InfoValues Info1Value=\"srv-000000001.eu-west-1.elb.amazonaws.com.\" />\n"//
+            + "        </ns2:DirectionalDNSRecord>\n"//
+            + "      </ns2:DirectionalDNSRecordDetail>\n"//
+            + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"US\" GeolocationGroupId=\"C000000000000002\" TerritoriesCount=\"3\" DirPoolRecordId=\"A000000000000002\">\n"//
+            + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"//
+            + "          <ns2:InfoValues Info1Value=\"srv-000000001.us-east-1.elb.amazonaws.com.\" />\n"//
+            + "        </ns2:DirectionalDNSRecord>\n"//
+            + "      </ns2:DirectionalDNSRecordDetail>\n"//
+            + "    </DirectionalDNSRecordDetailList>\n"//
+            + getDirectionalDNSRecordsForHostResponseFooter;
+
+    @Test
+    public void directionalRecordsByNameAndTypeFiltersOutSourceIP() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(
+                getDirectionalDNSRecordsForHostResponseFiltersOutSourceIP));
+        server.play();
+
+        try {
+            List<DirectionalRecord> records = mockApi(server.getUrl("")).directionalRecordsInZoneByNameAndType(
+                    "denominator.io.", "www.denominator.io.", 0);
+
+            assertEquals(records.size(), 1);
+
+            assertEquals(records.get(0).geoGroupId, "C000000000000002");
+            assertEquals(records.get(0).geoGroupName, "US");
+            assertFalse(records.get(0).noResponseRecord);
+            assertEquals(records.get(0).id, "A000000000000002");
+            assertEquals(records.get(0).name, "www.denominator.io.");
+            assertEquals(records.get(0).type, "CNAME");
+            assertEquals(records.get(0).ttl, 300);
+            assertEquals(records.get(0).rdata.get(0), "srv-000000001.us-east-1.elb.amazonaws.com.");
+
+            assertEquals(new String(server.takeRequest().getBody()), format(getDirectionalDNSRecordsForHost));
+        } finally {
+            server.shutdown();
+        }
+    }
+
     static String getDirectionalDNSRecordsForGroup = format(
             SOAP_TEMPLATE,
             "<v01:getDirectionalDNSRecordsForGroup><groupName>Europe</groupName><hostName>www.denominator.io.</hostName><zoneName>denominator.io.</zoneName><poolRecordType>5</poolRecordType></v01:getDirectionalDNSRecordsForGroup>");
