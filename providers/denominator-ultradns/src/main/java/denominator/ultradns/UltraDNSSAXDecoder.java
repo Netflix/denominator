@@ -1,6 +1,5 @@
 package denominator.ultradns;
 
-import static denominator.common.Preconditions.checkState;
 import static denominator.common.Util.split;
 import static java.util.Locale.US;
 
@@ -219,18 +218,17 @@ class UltraDNSSAXDecoder extends SAXDecoder {
         public void endElement(String uri, String name, String qName) {
             if (qName.endsWith("DirectionalDNSRecordDetail")) {
                 rr.name = currentName;
-                rrs.add(rr);
+                // ensure this is a geo record, not a source ip one.
+                if (rr.geoGroupName != null && rr.geoGroupId != null && rr.type != null)
+                    rrs.add(rr);
                 rr = new DirectionalRecord();
             }
         }
     }
 
     private static final Comparator<DirectionalRecord> byTypeAndGeoGroup = new Comparator<DirectionalRecord>() {
-
         @Override
         public int compare(DirectionalRecord left, DirectionalRecord right) {
-            checkState(left.geoGroupName != null, "expected record to be in a geolocation qualifier: %s", left);
-            checkState(right.geoGroupName != null, "expected record to be in a geolocation qualifier: %s", right);
             int typeCompare = left.type.compareTo(right.type);
             if (typeCompare != 0)
                return typeCompare;
