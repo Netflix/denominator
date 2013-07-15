@@ -102,7 +102,7 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
         private final Provider provider;
         private final Map<Zone, SortedSet<ResourceRecordSet<?>>> records;
 
-        // wildcard types are not currently injectable in dagger
+        // unbound wildcards are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
         Factory(Provider provider, Map<Zone, SortedSet<ResourceRecordSet>> records) {

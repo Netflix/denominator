@@ -1,25 +1,29 @@
 package denominator.ultradns;
 
+import static dagger.Provides.Type.SET;
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.slurp;
 import static feign.codec.Decoders.firstGroup;
-import static feign.codec.Decoders.transformEachFirstGroup;
 import static java.lang.String.format;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.compile;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.Provides;
@@ -29,19 +33,27 @@ import denominator.QualifiedResourceRecordSetApi.Factory;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
-import denominator.config.NothingToClose;
 import denominator.config.WeightedUnsupported;
 import denominator.model.Zone;
 import denominator.profile.GeoResourceRecordSetApi;
-import denominator.ultradns.UltraDNSFormEncoders.RecordAndDirectionalGroup;
-import denominator.ultradns.UltraDNSFormEncoders.ZoneAndResourceRecord;
+import denominator.ultradns.UltraDNS.DirectionalGroup;
+import denominator.ultradns.UltraDNS.DirectionalRecord;
+import denominator.ultradns.UltraDNS.NameAndType;
+import denominator.ultradns.UltraDNS.Record;
+import denominator.ultradns.UltraDNSContentHandlers.DirectionalGroupHandler;
+import denominator.ultradns.UltraDNSContentHandlers.DirectionalRecordListHandler;
+import denominator.ultradns.UltraDNSContentHandlers.RRPoolListHandler;
+import denominator.ultradns.UltraDNSContentHandlers.RecordListHandler;
+import denominator.ultradns.UltraDNSContentHandlers.RegionTableHandler;
 import feign.Feign;
 import feign.Feign.Defaults;
 import feign.ReflectiveFeign;
 import feign.codec.Decoder;
 import feign.codec.Decoders.ApplyFirstGroup;
+import feign.codec.Decoders.TransformEachFirstGroup;
+import feign.codec.Encoder;
 import feign.codec.ErrorDecoder;
-import feign.codec.FormEncoder;
+import feign.codec.SAXDecoder;
 
 public class UltraDNSProvider extends BasicProvider {
     private final String url;
@@ -96,10 +108,15 @@ public class UltraDNSProvider extends BasicProvider {
         return options;
     }
 
-    @dagger.Module(injects = DNSApiManager.class, complete = false, includes = { NothingToClose.class,
-            UltraDNSGeoSupport.class, WeightedUnsupported.class, ConcatBasicAndQualifiedResourceRecordSets.class,
-            FeignModule.class })
+    @dagger.Module(injects = DNSApiManager.class, complete = false, includes = { UltraDNSGeoSupport.class,
+            WeightedUnsupported.class, ConcatBasicAndQualifiedResourceRecordSets.class, FeignModule.class })
     public static final class Module {
+
+        @Provides
+        @Singleton
+        Closeable provideCloser(Feign feign) {
+            return feign;
+        }
 
         @Provides
         @Singleton
@@ -134,54 +151,70 @@ public class UltraDNSProvider extends BasicProvider {
         }
     }
 
+    // unbound wildcards are not currently injectable in dagger.
+    @SuppressWarnings("rawtypes")
     @dagger.Module(injects = UltraDNSResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
             Defaults.class, ReflectiveFeign.Module.class })
     public static final class FeignModule {
 
-        @Provides
-        @Singleton
-        Map<String, Decoder> decoders() {
-            Map<String, Decoder> decoders = new LinkedHashMap<String, Decoder>();
-            Decoder saxDecoder = new UltraDNSSAXDecoder();
-            decoders.put("UltraDNS", saxDecoder);
-            decoders.put("UltraDNS#createRRPoolInZoneForNameAndType(String,String,int)",
-                    firstGroup("<RRPoolID[^>]*>([^<]+)</RRPoolID>"));
-            decoders.put("UltraDNS#accountId()", firstGroup("accountID=\"([^\"]+)\""));
-            decoders.put("UltraDNS#zonesOfAccount(String)",
-                    transformEachFirstGroup("zoneName=\"([^\"]+)\"", ZoneFactory.INSTANCE));
-            decoders.put(
-                    "UltraDNS#directionalPoolNameToIdsInZone(String)",
-                    mapEntriesAreGroups(
-                            "dirpoolid=\"([^\"]+)\"[^>]+Pooldname=\"([^\"]+)\"[^>]+DirPoolType=\"GEOLOCATION\"", 2, 1));
-            decoders.put("UltraDNS#createDirectionalPoolInZoneForNameAndType(String,String,String)",
-                    firstGroup("<DirPoolID[^>]*>([^<]+)</DirPoolID>"));
-            decoders.put("UltraDNS#createRecordAndDirectionalGroupInPool(DirectionalRecord,DirectionalGroup,String)",
-                    firstGroup("<DirectionalPoolRecordID[^>]*>([^<]+)</DirectionalPoolRecordID>"));
-            return decoders;
+        @Provides(type = SET)
+        Decoder recordListDecoder(Provider<RecordListHandler> handlers) {
+            return new SAXDecoder<List<Record>>(handlers) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder directionalRecordListDecoder(Provider<DirectionalRecordListHandler> handlers) {
+            return new SAXDecoder<List<DirectionalRecord>>(handlers) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder rrPoolListDecoder(Provider<RRPoolListHandler> handlers) {
+            return new SAXDecoder<Map<NameAndType, String>>(handlers) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder regionTableDecoder(Provider<RegionTableHandler> handlers) {
+            return new SAXDecoder<Map<String, Collection<String>>>(handlers) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder directionalGroupDecoder(Provider<DirectionalGroupHandler> handlers) {
+            return new SAXDecoder<DirectionalGroup>(handlers) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder idDecoder() {
+            // text of <DirPoolID> <RRPoolID> <DirectionalPoolRecordID
+            // xmlns:ns2=...>
+            // or attribute accountID, where ids are uppercase hex
+            return firstGroup("ID.*[\">]([0-9A-F]+)[\"<]");
+        }
+
+        @Provides(type = SET)
+        Decoder zonesDecoder() {
+            return new TransformEachFirstGroup<Zone>("zoneName=\"([^\"]+)\"", ZoneFactory.INSTANCE) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder directionalPoolsDecoder() {
+            return mapEntriesAreGroups(
+                    "dirpoolid=\"([^\"]+)\"[^>]+Pooldname=\"([^\"]+)\"[^>]+DirPoolType=\"GEOLOCATION\"", 2, 1);
+        }
+
+        @Provides(type = SET)
+        Encoder formEncoder() {
+            return new UltraDNSFormEncoder();
         }
 
         @Provides
-        @Singleton
-        Map<String, ErrorDecoder> errorDecoders() {
-            Map<String, ErrorDecoder> errorDecoders = new LinkedHashMap<String, ErrorDecoder>();
-            errorDecoders.put("UltraDNS", new UltraDNSErrorDecoder());
-            return errorDecoders;
-        }
-
-        @Provides
-        @Singleton
-        Map<String, FormEncoder> formEncoders() {
-            Map<String, FormEncoder> formEncoders = new LinkedHashMap<String, FormEncoder>();
-            FormEncoder recordEncoder = new ZoneAndResourceRecord();
-            formEncoders.put("UltraDNS#createRecordInZone(Record,String)", recordEncoder);
-            formEncoders.put("UltraDNS#updateRecordInZone(Record,String)", recordEncoder);
-            FormEncoder recordAndDirectionalGroupEncoder = new RecordAndDirectionalGroup();
-            formEncoders.put(
-                    "UltraDNS#createRecordAndDirectionalGroupInPool(DirectionalRecord,DirectionalGroup,String)",
-                    recordAndDirectionalGroupEncoder);
-            formEncoders.put("UltraDNS#updateRecordAndDirectionalGroup(DirectionalRecord,DirectionalGroup)",
-                    recordAndDirectionalGroupEncoder);
-            return formEncoders;
+        ErrorDecoder errorDecoders(UltraDNSErrorDecoder errorDecoder) {
+            return errorDecoder;
         }
 
         @Provides
@@ -195,12 +228,13 @@ public class UltraDNSProvider extends BasicProvider {
      * On each match, group {@code keyGroup} will be the key and group
      * {@code valueGroup} will be added as an entry in the resulting map.
      */
-    private static Decoder mapEntriesAreGroups(String pattern, final int keyGroup, final int valueGroup) {
+    private static Decoder.TextStream<Map<String, String>> mapEntriesAreGroups(String pattern, final int keyGroup,
+            final int valueGroup) {
         final Pattern patternForMatcher = compile(checkNotNull(pattern, "pattern"), DOTALL);
         checkNotNull(pattern, "pattern");
-        return new Decoder() {
+        return new Decoder.TextStream<Map<String, String>>() {
             @Override
-            public Object decode(String methodKey, Reader reader, Type type) throws Throwable {
+            public Map<String, String> decode(Reader reader, Type type) throws IOException {
                 Matcher matcher = patternForMatcher.matcher(slurp(reader));
                 Map<String, String> map = new LinkedHashMap<String, String>();
                 while (matcher.find()) {

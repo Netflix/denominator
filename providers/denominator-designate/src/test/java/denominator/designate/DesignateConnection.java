@@ -4,15 +4,13 @@ import static com.google.common.base.Strings.emptyToNull;
 import static denominator.CredentialsConfiguration.credentials;
 import static java.lang.System.getProperty;
 
-import java.io.File;
-
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
 import denominator.DNSApiManager;
 import denominator.Denominator;
-import feign.Wire;
+import feign.Logger;
 
 public class DesignateConnection {
 
@@ -29,9 +27,14 @@ public class DesignateConnection {
             class Overrides {
                 @Provides
                 @Singleton
-                Wire provideWire() {
-                    new File("target/test-data").mkdirs();
-                    return new Wire.LoggingWire().appendToFile("target/test-data/http-wire.log");
+                Logger.Level provideLevel() {
+                    return Logger.Level.FULL;
+                }
+
+                @Provides
+                @Singleton
+                Logger provideLogger() {
+                    return new Logger.JavaLogger().appendToFile("build/http-wire.log");
                 }
             }
             manager = Denominator.create(provider, credentials(tenantId, username, password), new Overrides());

@@ -87,7 +87,7 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
         private Provider provider;
         private final Map<String, Collection<String>> supportedRegions;
 
-        // wildcard types are not currently injectable in dagger
+        // unbound wildcards are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
         Factory(Map<Zone, SortedSet<ResourceRecordSet>> records, Provider provider,

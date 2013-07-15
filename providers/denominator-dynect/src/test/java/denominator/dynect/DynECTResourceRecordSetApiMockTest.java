@@ -39,7 +39,13 @@ public class DynECTResourceRecordSetApiMockTest {
     String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.5.0\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
     String success = "{\"status\": \"success\", \"data\": {}, \"job_id\": 262989027, \"msgs\": [{\"INFO\": \"thing done\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
-    String createRecord1 = "{\"ttl\":3600,\"rdata\":{\"address\":\"192.0.2.1\"}}";
+    String createRecord1 = ""//
+            + "{\n"//
+            + "  \"ttl\": 3600,\n"//
+            + "  \"rdata\": {\n"//
+            + "    \"address\": \"192.0.2.1\"\n"//
+            + "  }\n"//
+            + "}";
 
     @Test
     public void putFirstRecordPostsAndPublishes() throws IOException, InterruptedException {
@@ -91,7 +97,13 @@ public class DynECTResourceRecordSetApiMockTest {
         }
     }
 
-    String createRecord2 = "{\"ttl\":3600,\"rdata\":{\"address\":\"198.51.100.1\"}}";
+    String createRecord2 =  ""//
+            + "{\n"//
+            + "  \"ttl\": 3600,\n"//
+            + "  \"rdata\": {\n"//
+            + "    \"address\": \"198.51.100.1\"\n"//
+            + "  }\n"//
+            + "}";
 
     @Test
     public void putSecondRecordPostsRecordPublishes() throws IOException, InterruptedException {
@@ -121,9 +133,22 @@ public class DynECTResourceRecordSetApiMockTest {
             server.shutdown();
         }
     }
-    
-    String createRecord1OverriddenTTL = "{\"ttl\":10000000,\"rdata\":{\"address\":\"192.0.2.1\"}}";
-    String createRecord2OverriddenTTL = "{\"ttl\":10000000,\"rdata\":{\"address\":\"198.51.100.1\"}}";
+
+    String createRecord1OverriddenTTL = ""//
+            + "{\n"//
+            + "  \"ttl\": 10000000,\n"//
+            + "  \"rdata\": {\n"//
+            + "    \"address\": \"192.0.2.1\"\n"//
+            + "  }\n"//
+            + "}";
+
+    String createRecord2OverriddenTTL = ""//
+            + "{\n"//
+            + "  \"ttl\": 10000000,\n"//
+            + "  \"rdata\": {\n"//
+            + "    \"address\": \"198.51.100.1\"\n"//
+            + "  }\n"//
+            + "}";
 
     @Test
     public void putReplacingRecordSet() throws IOException, InterruptedException {
