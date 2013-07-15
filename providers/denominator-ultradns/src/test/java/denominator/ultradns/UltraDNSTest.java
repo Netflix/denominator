@@ -996,6 +996,52 @@ public class UltraDNSTest {
         }
     }
 
+    static String poolRecordAlreadyExists = ""//
+            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
+            + "  <soap:Body>\n"//
+            + "    <soap:Fault>\n"//
+            + "      <faultcode>soap:Server</faultcode>\n"//
+            + "      <faultstring>Fault occurred while processing.</faultstring>\n"//
+            + "      <detail>\n"//
+            + "        <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
+            + "          <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Resource Record already exists.</errorDescription>\n"//
+            + "          <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">4009</errorCode>\n"//
+            + "        </ns1:UltraWSException>\n"//
+            + "      </detail>\n"//
+            + "    </soap:Fault>\n"//
+            + "  </soap:Body>\n"//
+            + "</soap:Envelope>";
+
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#createRecordAndDirectionalGroupInPool\\(DirectionalRecord,DirectionalGroup,String\\) failed with error 4009: Resource Record already exists.")
+    public void createDirectionalRecordAndGroupInPoolWhenExists() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(poolRecordAlreadyExists));
+        server.play();
+
+        try {
+            DirectionalRecord record = new DirectionalRecord();
+            record.name = "mail.denominator.io.";
+            record.type = "MX";
+            record.ttl = 1800;
+            record.rdata.add("10");
+            record.rdata.add("maileast.denominator.io.");
+
+            DirectionalGroup group = new DirectionalGroup();
+            group.name = "Mexas";
+            group.regionToTerritories = ImmutableMultimap.<String, String> builder()//
+                    .putAll("United States (US)", "Maryland", "Texas")//
+                    .build().asMap();
+
+            assertEquals(
+                    mockApi(server.getUrl("")).createRecordAndDirectionalGroupInPool(record, group, "060339AA04175655"),
+                    "06063DC355058294");
+
+            assertEquals(new String(server.takeRequest().getBody()), addDirectionalPoolRecord);
+        } finally {
+            server.shutdown();
+        }
+    }
+
     static String updateDirectionalPoolRecord = format(SOAP_TEMPLATE, ""//
             + "<v01:updateDirectionalPoolRecord><transactionID />"//
             + "<UpdateDirectionalRecordData directionalPoolRecordId=\"ABCDEF\">"//
