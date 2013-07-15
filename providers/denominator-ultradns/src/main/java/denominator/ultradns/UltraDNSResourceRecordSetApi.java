@@ -39,8 +39,7 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
         checkNotNull(name, "name");
-        Iterator<Record> orderedRecords = 
-                api.recordsInZoneByNameAndType(zoneName, name, 0).iterator();
+        Iterator<Record> orderedRecords = api.recordsInZoneByNameAndType(zoneName, name, 0).iterator();
         return new GroupByRecordNameAndTypeIterator(orderedRecords);
     }
 
@@ -120,8 +119,8 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
         try {
             api.deleteRecord(id);
         } catch (UltraDNSException e) {
-            // TODO: implement default fallback
-            if (e.code() == UltraDNSException.RESOURCE_RECORD_NOT_FOUND)
+            // lost race
+            if (e.code() != UltraDNSException.RESOURCE_RECORD_NOT_FOUND)
                 throw e;
         }
         if (roundRobinPoolApi.isPoolType(type)) {

@@ -36,7 +36,6 @@ class UltraDNSRoundRobinPoolApi {
         try {
             return api.createRRPoolInZoneForNameAndType(zoneName, name, lookup(type));
         } catch (UltraDNSException e) {
-            // TODO: implement default fallback
             if (e.code() != UltraDNSException.POOL_ALREADY_EXISTS)
                 throw e;
             NameAndType nameAndType = new NameAndType();
@@ -56,9 +55,13 @@ class UltraDNSRoundRobinPoolApi {
                 try {
                     api.deleteRRPool(poolId);
                 } catch (UltraDNSException e) {
-                    // TODO: implement default fallback
-                    if (e.code() != UltraDNSException.POOL_NOT_FOUND)
-                        throw e;
+                    switch (e.code()) {
+                    // lost race
+                    case UltraDNSException.POOL_NOT_FOUND:
+                    case UltraDNSException.RESOURCE_RECORD_NOT_FOUND:
+                        return;
+                    }
+                    throw e;
                 }
             }
         }
