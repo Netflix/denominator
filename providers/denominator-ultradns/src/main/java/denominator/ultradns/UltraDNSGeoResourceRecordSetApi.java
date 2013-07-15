@@ -39,8 +39,8 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     private final GroupGeoRecordByNameTypeIterator.Factory iteratorFactory;
     private final String zoneName;
 
-    UltraDNSGeoResourceRecordSetApi(Collection<String> supportedTypes, Map<String, Collection<String>> regions, UltraDNS api,
-            GroupGeoRecordByNameTypeIterator.Factory iteratorFactory, String zoneName) {
+    UltraDNSGeoResourceRecordSetApi(Collection<String> supportedTypes, Map<String, Collection<String>> regions,
+            UltraDNS api, GroupGeoRecordByNameTypeIterator.Factory iteratorFactory, String zoneName) {
         this.supportedTypes = supportedTypes;
         this.regions = regions;
         this.api = api;
@@ -108,8 +108,9 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
     private Iterator<DirectionalRecord> recordsByNameTypeAndQualifier(String name, String type, String qualifier) {
         if ("CNAME".equals(type)) {
-            return filter(concat(recordsForNameTypeAndQualifier(name, "A", qualifier),
-                    recordsForNameTypeAndQualifier(name, "AAAA", qualifier)), isCNAME);
+            return filter(
+                    concat(recordsForNameTypeAndQualifier(name, "A", qualifier),
+                            recordsForNameTypeAndQualifier(name, "AAAA", qualifier)), isCNAME);
         } else {
             return recordsForNameTypeAndQualifier(name, type, qualifier);
         }
@@ -120,7 +121,6 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
             return api.directionalRecordsInZoneAndGroupByNameAndType(zoneName, qualifier, name, dirType(type))
                     .iterator();
         } catch (UltraDNSException e) {
-            // TODO: implement default fallback
             switch (e.code()) {
             case UltraDNSException.GROUP_NOT_FOUND:
             case UltraDNSException.DIRECTIONALPOOL_NOT_FOUND:
@@ -152,19 +152,34 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
             Map<String, Object> rdata = forTypeAndRData(record.type, record.rdata);
             if (recordsLeftToCreate.contains(rdata)) {
                 recordsLeftToCreate.remove(rdata);
+                boolean shouldUpdate = false;
                 if (ttlToApply != record.ttl) {
                     record.ttl = ttlToApply;
-                    api.updateRecordAndDirectionalGroup(record, directionalGroup);
-                    continue;
+                    shouldUpdate = true;
+                } else {
+                    directionalGroup = api.getDirectionalGroup(record.geoGroupId);
+                    if (!regions.equals(directionalGroup.regionToTerritories)) {
+                        directionalGroup.regionToTerritories = regions;
+                        shouldUpdate = true;
+                    }
                 }
-                directionalGroup = api.getDirectionalGroup(record.geoGroupId);
-                if (!regions.equals(directionalGroup.regionToTerritories)) {
-                    directionalGroup.regionToTerritories = regions;
-                    api.updateRecordAndDirectionalGroup(record, directionalGroup);
-                    continue;
+                if (shouldUpdate) {
+                    try {
+                        api.updateRecordAndDirectionalGroup(record, directionalGroup);
+                    } catch (UltraDNSException e) {
+                        // lost race
+                        if (e.code() != UltraDNSException.RESOURCE_RECORD_ALREADY_EXISTS)
+                            throw e;
+                    }
                 }
             } else {
-                api.deleteRecord(record.id);
+                try {
+                    api.deleteRecord(record.id);
+                } catch (UltraDNSException e) {
+                    // lost race
+                    if (e.code() != UltraDNSException.RESOURCE_RECORD_NOT_FOUND)
+                        throw e;
+                }
             }
         }
 
@@ -178,6 +193,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
                 }
                 poolId = api.createDirectionalPoolInZoneForNameAndType(zoneName, rrset.name(), type);
             } catch (UltraDNSException e) {
+                // lost race
                 if (e.code() == UltraDNSException.POOL_ALREADY_EXISTS) {
                     poolId = api.directionalPoolNameToIdsInZone(zoneName).get(rrset.name());
                 } else {
@@ -192,7 +208,13 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
                 for (Object rdatum : rdata.values()) {
                     record.rdata.add(rdatum.toString());
                 }
-                api.createRecordAndDirectionalGroupInPool(record, directionalGroup, poolId);
+                try {
+                    api.createRecordAndDirectionalGroupInPool(record, directionalGroup, poolId);
+                } catch (UltraDNSException e) {
+                    // lost race
+                    if (e.code() != UltraDNSException.POOL_RECORD_ALREADY_EXISTS)
+                        throw e;
+                }
             }
         }
     }
@@ -214,7 +236,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
             try {
                 api.deleteDirectionalRecord(record.next().id);
             } catch (UltraDNSException e) {
-                // TODO: implement default fallback
+                // lost race
                 if (e.code() != UltraDNSException.DIRECTIONALPOOL_RECORD_NOT_FOUND)
                     throw e;
             }
@@ -226,7 +248,6 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         try {
             list = api.directionalRecordsInZoneByNameAndType(zoneName, name, dirType);
         } catch (UltraDNSException e) {
-            // TODO: implement default fallback
             if (e.code() == UltraDNSException.DIRECTIONALPOOL_NOT_FOUND) {
                 list = Collections.emptyList();
             } else {

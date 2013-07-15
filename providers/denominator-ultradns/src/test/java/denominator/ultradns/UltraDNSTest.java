@@ -582,6 +582,64 @@ public class UltraDNSTest {
         }
     }
 
+    static String poolNotFound = ""//
+            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
+            + "  <soap:Body>\n"//
+            + "    <soap:Fault>\n"//
+            + "      <faultcode>soap:Server</faultcode>\n"//
+            + "      <faultstring>Fault occurred while processing.</faultstring>\n"//
+            + "      <detail>\n"//
+            + "        <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
+            + "          <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Pool does not exist in the system</errorDescription>\n"//
+            + "          <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">2911</errorCode>\n"//
+            + "        </ns1:UltraWSException>\n"//
+            + "      </detail>\n"//
+            + "    </soap:Fault>\n"//
+            + "  </soap:Body>\n"//
+            + "</soap:Envelope>";
+
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteRRPool\\(String\\) failed with error 2911: Pool does not exist in the system")
+    public void deleteRRPoolWhenPoolNotFound() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(poolNotFound));
+        server.play();
+
+        try {
+            mockApi(server.getUrl("")).deleteRRPool("060339AA04175655");
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    static String recordNotFound = ""//
+            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
+            + "  <soap:Body>\n"//
+            + "    <soap:Fault>\n"//
+            + "      <faultcode>soap:Server</faultcode>\n"//
+            + "      <faultstring>Fault occurred while processing.</faultstring>\n"//
+            + "      <detail>\n"//
+            + "        <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
+            + "          <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">No resource record with GUID found in the system 060339AA04175655</errorDescription>\n"//
+            + "          <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">2103</errorCode>\n"//
+            + "        </ns1:UltraWSException>\n"//
+            + "      </detail>\n"//
+            + "    </soap:Fault>\n"//
+            + "  </soap:Body>\n"//
+            + "</soap:Envelope>";
+
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteRRPool\\(String\\) failed with error 2103: No resource record with GUID found in the system 060339AA04175655")
+    public void deleteRRPoolWhenRecordNotFound() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(recordNotFound));
+        server.play();
+
+        try {
+            mockApi(server.getUrl("")).deleteRRPool("060339AA04175655");
+        } finally {
+            server.shutdown();
+        }
+    }
+
     static String getDirectionalPoolsOfZone = format(SOAP_TEMPLATE,
             "<v01:getDirectionalPoolsOfZone><zoneName>denominator.io.</zoneName></v01:getDirectionalPoolsOfZone>");
 
@@ -1087,6 +1145,49 @@ public class UltraDNSTest {
             mockApi(server.getUrl("")).updateRecordAndDirectionalGroup(record, group);
 
             assertEquals(new String(server.takeRequest().getBody()), updateDirectionalPoolRecord);
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    static String existsWithSameAttributes = ""//
+            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
+            + "  <soap:Body>\n"//
+            + "    <soap:Fault>\n"//
+            + "      <faultcode>soap:Server</faultcode>\n"//
+            + "      <faultstring>Fault occurred while processing.</faultstring>\n"//
+            + "      <detail>\n"//
+            + "        <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
+            + "          <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Resource Record of type CNAME with these attributes already exists in the system.</errorDescription>\n"//
+            + "          <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">2111</errorCode>\n"//
+            + "        </ns1:UltraWSException>\n"//
+            + "      </detail>\n"//
+            + "    </soap:Fault>\n"//
+            + "  </soap:Body>\n"//
+            + "</soap:Envelope>";
+
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#updateRecordAndDirectionalGroup\\(DirectionalRecord,DirectionalGroup\\) failed with error 2111: Resource Record of type CNAME with these attributes already exists in the system.")
+    public void updateDirectionalRecordAndGroupWhenExistsWithSameAttributes() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(existsWithSameAttributes));
+        server.play();
+
+        try {
+            DirectionalRecord record = new DirectionalRecord();
+            record.id = "ABCDEF";
+            record.name = "mail.denominator.io.";
+            record.type = "MX";
+            record.ttl = 1800;
+            record.rdata.add("10");
+            record.rdata.add("maileast.denominator.io.");
+
+            DirectionalGroup group = new DirectionalGroup();
+            group.name = "Mexas";
+            group.regionToTerritories = ImmutableMultimap.<String, String> builder()//
+                    .putAll("United States (US)", "Maryland", "Texas")//
+                    .build().asMap();
+
+            mockApi(server.getUrl("")).updateRecordAndDirectionalGroup(record, group);
         } finally {
             server.shutdown();
         }

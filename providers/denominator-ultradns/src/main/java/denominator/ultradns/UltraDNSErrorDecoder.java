@@ -43,13 +43,11 @@ class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
             case UltraDNSException.DIRECTIONALPOOL_RECORD_NOT_FOUND:
             case UltraDNSException.POOL_RECORD_NOT_FOUND:
             case UltraDNSException.GROUP_NOT_FOUND:
-                // TODO: decide whether to fallback
                 break;
             case UltraDNSException.ZONE_ALREADY_EXISTS:
             case UltraDNSException.RESOURCE_RECORD_ALREADY_EXISTS:
             case UltraDNSException.POOL_ALREADY_EXISTS:
             case UltraDNSException.POOL_RECORD_ALREADY_EXISTS:
-                // TODO: decide whether to fallback
                 break;
             }
             throw new UltraDNSException(message, error.code);

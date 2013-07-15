@@ -37,6 +37,9 @@ interface UltraDNS {
     @RequestLine("POST")
     void updateRecordInZone(@Named("resourceRecord") Record update, @Named("zoneName") String zoneName);
 
+    /**
+     * @throws UltraDNSException with code {@link UltraDNSException#RESOURCE_RECORD_NOT_FOUND}.
+     */
     @RequestLine("POST")
     @Body("<v01:deleteResourceRecord><transactionID /><guid>{guid}</guid></v01:deleteResourceRecord>")
     void deleteRecord(@Named("guid") String guid);
@@ -93,6 +96,9 @@ interface UltraDNS {
     void createRecordInRRPoolInZone(@Named("type") int type, @Named("ttl") int ttl, @Named("address") String rdata,
             @Named("lbPoolID") String lbPoolID, @Named("zoneName") String zoneName);
 
+    /**
+     * @throws UltraDNSException with code {@link UltraDNSException#POOL_NOT_FOUND} and {@link UltraDNSException#RESOURCE_RECORD_NOT_FOUND}.
+     */
     @RequestLine("POST")
     @Body("<v01:deleteLBPool><transactionID /><lbPoolID>{lbPoolID}</lbPoolID><DeleteAll>Yes</DeleteAll><retainRecordId /></v01:deleteLBPool>")
     void deleteRRPool(@Named("lbPoolID") String id);
@@ -117,6 +123,9 @@ interface UltraDNS {
     String createRecordAndDirectionalGroupInPool(@Named("record") DirectionalRecord toCreate,
             @Named("group") DirectionalGroup group, @Named("poolId") String poolId);
 
+    /**
+     * @throws UltraDNSException with code {@link UltraDNSException#RESOURCE_RECORD_ALREADY_EXISTS}.
+     */
     @RequestLine("POST")
     void updateRecordAndDirectionalGroup(@Named("record") DirectionalRecord update,
             @Named("group") DirectionalGroup group);
