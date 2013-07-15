@@ -110,6 +110,9 @@ interface UltraDNS {
     List<DirectionalRecord> directionalRecordsInZoneAndGroupByNameAndType(@Named("zoneName") String zoneName,
             @Named("groupName") String groupName, @Named("hostName") String name, @Named("poolRecordType") int type);
 
+    /**
+     * @throws UltraDNSException with code {@link UltraDNSException#POOL_RECORD_ALREADY_EXISTS}.
+     */
     @RequestLine("POST")
     String createRecordAndDirectionalGroupInPool(@Named("record") DirectionalRecord toCreate,
             @Named("group") DirectionalGroup group, @Named("poolId") String poolId);
