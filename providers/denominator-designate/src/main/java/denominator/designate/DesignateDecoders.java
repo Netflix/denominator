@@ -10,6 +10,8 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import com.google.gson.stream.JsonReader;
 
 import denominator.designate.Designate.Record;
@@ -18,6 +20,10 @@ import feign.codec.Decoder;
 
 class DesignateDecoders {
     static class DomainListDecoder extends ListDecoder<Zone> {
+        @Inject
+        DomainListDecoder() {
+        }
+
         @Override
         protected String jsonKey() {
             return "domains";
@@ -40,9 +46,13 @@ class DesignateDecoders {
         }
     }
 
-    static class RecordDecoder extends Decoder {
+    static class RecordDecoder implements Decoder.TextStream<Record> {
+        @Inject
+        RecordDecoder() {
+        }
+
         @Override
-        public Record decode(String methodKey, Reader ireader, Type type) throws Throwable {
+        public Record decode(Reader ireader, Type type) throws IOException {
             JsonReader reader = new JsonReader(ireader);
             reader.beginObject();
             Record record = buildRecord(reader);
@@ -53,6 +63,10 @@ class DesignateDecoders {
     }
 
     static class RecordListDecoder extends ListDecoder<Record> {
+        @Inject
+        RecordListDecoder() {
+        }
+
         @Override
         protected String jsonKey() {
             return "records";
@@ -86,13 +100,13 @@ class DesignateDecoders {
         return record;
     }
 
-    private static abstract class ListDecoder<X> extends Decoder {
+    static abstract class ListDecoder<X> implements Decoder.TextStream<List<X>> {
         protected abstract String jsonKey();
 
         protected abstract X build(JsonReader reader) throws IOException;
 
         @Override
-        public List<X> decode(String methodKey, Reader ireader, Type type) throws Throwable {
+        public List<X> decode(Reader ireader, Type type) throws IOException {
             List<X> elements = new LinkedList<X>();
             JsonReader reader = new JsonReader(ireader);
             reader.beginObject();

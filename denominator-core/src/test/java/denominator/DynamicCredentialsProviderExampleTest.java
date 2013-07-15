@@ -146,7 +146,7 @@ public class DynamicCredentialsProviderExampleTest {
                 return in;
             }
     
-            // wildcard types are not currently injectable in dagger
+            // unbound wildcards are not currently injectable in dagger
             @SuppressWarnings("rawtypes")
             @Provides
             @Singleton

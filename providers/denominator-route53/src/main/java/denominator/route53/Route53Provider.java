@@ -1,6 +1,8 @@
 package denominator.route53;
 
-import java.lang.reflect.Type;
+import static dagger.Provides.Type.SET;
+
+import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,6 +14,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.Provides;
@@ -21,15 +24,14 @@ import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.GeoUnsupported;
-import denominator.config.NothingToClose;
 import denominator.profile.WeightedResourceRecordSetApi;
 import denominator.route53.Route53.ResourceRecordSetList;
 import denominator.route53.Route53.ZoneList;
 import feign.Feign;
 import feign.Feign.Defaults;
 import feign.ReflectiveFeign;
-import feign.codec.BodyEncoder;
 import feign.codec.Decoder;
+import feign.codec.Encoder;
 import feign.codec.ErrorDecoder;
 import feign.codec.SAXDecoder;
 
@@ -84,8 +86,14 @@ public class Route53Provider extends BasicProvider {
     }
 
     @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
-            GeoUnsupported.class, InstanceProfileCredentialsProvider.class, NothingToClose.class, FeignModule.class })
+            GeoUnsupported.class, InstanceProfileCredentialsProvider.class, FeignModule.class })
     public static final class Module {
+
+        @Provides
+        @Singleton
+        Closeable provideCloser(Feign feign) {
+            return feign;
+        }
 
         @Provides
         @Singleton
@@ -113,9 +121,9 @@ public class Route53Provider extends BasicProvider {
         }
 
         /**
-         * See <a
-         *      href="http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html">valid
-         *      weights</a>
+         * See <a href=
+         * "http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html"
+         * >valid weights</a>
          */
         @Provides
         @Singleton
@@ -128,9 +136,12 @@ public class Route53Provider extends BasicProvider {
         }
     }
 
+    // unbound wildcards are not currently injectable in dagger.
+    @SuppressWarnings("rawtypes")
     @dagger.Module(injects = Route53ResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
             Defaults.class, ReflectiveFeign.Module.class })
     public static final class FeignModule {
+
         @Provides
         @Singleton
         Route53 route53(Feign feign, Route53Target target) {
@@ -142,40 +153,26 @@ public class Route53Provider extends BasicProvider {
             return provider.get();
         }
 
-        @Provides
-        @Singleton
-        Map<String, Decoder> decoders() {
-            Map<String, Decoder> decoders = new LinkedHashMap<String, Decoder>();
-            decoders.put("Route53", new Route53Decoder());
-            return decoders;
+        @Provides(type = SET)
+        Decoder zoneListDecoder(Provider<ListHostedZonesResponseHandler> handlers) {
+            return new SAXDecoder<ZoneList>(handlers) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder resourceRecordSetListDecoder(Provider<ListResourceRecordSetsResponseHandler> handlers) {
+            return new SAXDecoder<ResourceRecordSetList>(handlers) {
+            };
         }
 
         @Provides
-        @Singleton
-        Map<String, ErrorDecoder> errorDecoders() {
-            Map<String, ErrorDecoder> errorDecoders = new LinkedHashMap<String, ErrorDecoder>();
-            errorDecoders.put("Route53", new Route53ErrorDecoder());
-            errorDecoders.put("Route53#changeBatch(String,List)", new InvalidChangeBatchErrorDecoder());
-            return errorDecoders;
+        ErrorDecoder errorDecoders(Route53ErrorDecoder errorDecoder) {
+            return errorDecoder;
         }
 
-        @Provides
-        @Singleton
-        Map<String, BodyEncoder> bodyEncoders() {
-            Map<String, BodyEncoder> bodyEncoders = new LinkedHashMap<String, BodyEncoder>();
-            bodyEncoders.put("Route53#changeBatch(String,List)", new EncodeChanges());
-            return bodyEncoders;
-        }
-    }
-
-    static class Route53Decoder extends SAXDecoder {
-        @Override
-        protected ContentHandlerWithResult typeToNewHandler(Type type) {
-            if (type == ZoneList.class)
-                return new ListHostedZonesResponseHandler();
-            else if (type == ResourceRecordSetList.class)
-                return new ListResourceRecordSetsResponseHandler();
-            throw new UnsupportedOperationException(type + "");
+        @Provides(type = SET)
+        Encoder encodeChanges(EncodeChanges encoder) {
+            return encoder;
         }
     }
 }

@@ -2,6 +2,7 @@ package denominator.designate;
 
 import static denominator.common.Preconditions.checkNotNull;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
 
@@ -9,13 +10,14 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import denominator.designate.KeystoneV2.TokenIdAndPublicURL;
 import feign.codec.Decoder;
 
-class KeystoneV2AccessDecoder extends Decoder {
+class KeystoneV2AccessDecoder implements Decoder.TextStream<TokenIdAndPublicURL> {
     private final String serviceTypeSuffix;
 
     @Inject
@@ -24,8 +26,16 @@ class KeystoneV2AccessDecoder extends Decoder {
     }
 
     @Override
-    public TokenIdAndPublicURL decode(String methodKey, Reader reader, Type ignored) throws Throwable {
-        JsonObject access = new JsonParser().parse(reader).getAsJsonObject().get("access").getAsJsonObject();
+    public TokenIdAndPublicURL decode(Reader reader, Type ignored) throws IOException {
+        JsonObject access = null;
+        try {
+            access = new JsonParser().parse(reader).getAsJsonObject().get("access").getAsJsonObject();
+        } catch (JsonIOException e) {
+            if (e.getCause() != null && e.getCause() instanceof IOException) {
+                throw IOException.class.cast(e.getCause());
+            }
+            throw e;
+        }
         JsonElement tokenField = access.get("token");
         if (isNull(tokenField)) {
             return null;

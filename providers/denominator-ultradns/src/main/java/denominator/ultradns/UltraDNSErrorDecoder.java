@@ -4,7 +4,9 @@ import static denominator.common.Util.slurp;
 import static java.lang.String.format;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
+
+import javax.inject.Inject;
+import javax.inject.Provider;
 
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -14,16 +16,21 @@ import feign.RetryableException;
 import feign.codec.ErrorDecoder;
 import feign.codec.SAXDecoder;
 
-class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
+class UltraDNSErrorDecoder extends SAXDecoder<UltraDNSErrorDecoder.UltraDNSError> implements ErrorDecoder {
+
+    @Inject
+    UltraDNSErrorDecoder(Provider<UltraDNSErrorDecoder.UltraDNSError> handlers) {
+        super(handlers);
+    }
 
     @Override
-    public Object decode(String methodKey, Response response, Type type) throws Throwable {
+    public Exception decode(String methodKey, Response response) {
         try {
             // in case of error parsing, we can access the original contents.
             response = bufferResponse(response);
-            UltraDNSError error = UltraDNSError.class.cast(super.decode(methodKey, response, type));
+            UltraDNSError error = response.body() != null ? super.decode(response.body().asReader(), null) : null;
             if (error == null)
-                throw FeignException.errorStatus(methodKey, response);
+                return FeignException.errorStatus(methodKey, response);
             String message = format("%s failed", methodKey);
             if (error.code != -1)
                 message = format("%s with error %s", message, error.code);
@@ -31,7 +38,7 @@ class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
                 message = format("%s: %s", message, error.description);
             switch (error.code) {
             case UltraDNSException.SYSTEM_ERROR:
-                throw new RetryableException(message, null);
+                return new RetryableException(message, null);
             case UltraDNSException.UNKNOWN:
                 if (message.indexOf("Cannot find") == -1)
                     break;
@@ -50,25 +57,26 @@ class UltraDNSErrorDecoder extends SAXDecoder implements ErrorDecoder {
             case UltraDNSException.POOL_RECORD_ALREADY_EXISTS:
                 break;
             }
-            throw new UltraDNSException(message, error.code);
-        } catch (IOException e) {
-            throw FeignException.errorStatus(methodKey, response);
+            return new UltraDNSException(message, error.code);
+        } catch (IOException ignored) {
+            return FeignException.errorStatus(methodKey, response);
+        } catch (Exception propagate) {
+            return propagate;
         }
     }
 
-    @Override
-    protected ContentHandlerWithResult typeToNewHandler(Type type) {
-        return new UltraDNSError();
-    }
-
-    static class UltraDNSError extends DefaultHandler implements feign.codec.SAXDecoder.ContentHandlerWithResult {
+    static class UltraDNSError extends DefaultHandler implements
+            feign.codec.SAXDecoder.ContentHandlerWithResult<UltraDNSError> {
+        @Inject
+        UltraDNSError(){
+        }
 
         private StringBuilder currentText = new StringBuilder();
         private int code = -1;
         private String description;
 
         @Override
-        public UltraDNSError getResult() {
+        public UltraDNSError result() {
             return (code == -1 && description == null) ? null : this;
         }
 

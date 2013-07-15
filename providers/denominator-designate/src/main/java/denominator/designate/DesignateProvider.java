@@ -1,5 +1,8 @@
 package denominator.designate;
 
+import static dagger.Provides.Type.SET;
+
+import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -16,7 +19,6 @@ import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.GeoUnsupported;
-import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
 import denominator.designate.DesignateDecoders.DomainListDecoder;
@@ -28,8 +30,9 @@ import feign.Feign;
 import feign.Feign.Defaults;
 import feign.ReflectiveFeign;
 import feign.Target.HardCodedTarget;
-import feign.codec.BodyEncoder;
 import feign.codec.Decoder;
+import feign.codec.Encoder;
+import feign.gson.GsonModule;
 
 public class DesignateProvider extends BasicProvider {
     private final String url;
@@ -78,13 +81,15 @@ public class DesignateProvider extends BasicProvider {
         return options;
     }
 
-    @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, //
-    includes = { NothingToClose.class,//
-            GeoUnsupported.class,//
-            WeightedUnsupported.class, //
-            OnlyBasicResourceRecordSets.class,//
-            FeignModule.class })
+    @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
+            GeoUnsupported.class, WeightedUnsupported.class, OnlyBasicResourceRecordSets.class, FeignModule.class })
     public static final class Module {
+
+        @Provides
+        @Singleton
+        Closeable provideCloser(Feign feign) {
+            return feign;
+        }
 
         @Provides
         @Singleton
@@ -99,8 +104,10 @@ public class DesignateProvider extends BasicProvider {
         }
     }
 
+    // unbound wildcards are not currently injectable in dagger.
+    @SuppressWarnings("rawtypes")
     @dagger.Module(injects = DesignateResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
-            Defaults.class, ReflectiveFeign.Module.class })
+            Defaults.class, ReflectiveFeign.Module.class, GsonModule.class })
     public static final class FeignModule {
 
         @Provides
@@ -122,29 +129,29 @@ public class DesignateProvider extends BasicProvider {
             return feign.newInstance(new HardCodedTarget<KeystoneV2>(KeystoneV2.class, "keystone", "http://invalid"));
         }
 
-        @Provides
-        @Singleton
-        Map<String, Decoder> decoders(KeystoneV2AccessDecoder keyStone) {
-            Map<String, Decoder> decoders = new LinkedHashMap<String, Decoder>();
-            decoders.put("KeystoneV2", keyStone);
-            Decoder domainListDecoder = new DomainListDecoder();
-            decoders.put("Designate#domains()", domainListDecoder);
-            Decoder recordListDecoder = new RecordListDecoder();
-            decoders.put("Designate#records(String)", recordListDecoder);
-            Decoder recordDecoder = new RecordDecoder();
-            decoders.put("Designate#createRecord(String,Record)", recordDecoder);
-            decoders.put("Designate#updateRecord(String,Record)", recordDecoder);
-            return decoders;
+        @Provides(type = SET)
+        Decoder tokenIdAndPublicURLDecoder(KeystoneV2AccessDecoder decoder) {
+            return decoder;
         }
 
-        @Provides
-        @Singleton
-        Map<String, BodyEncoder> bodyEncoders() {
-            Map<String, BodyEncoder> bodyEncoders = new LinkedHashMap<String, BodyEncoder>();
-            BodyEncoder recordEncoder = new RecordEncoder();
-            bodyEncoders.put("Designate#createRecord(String,Record)", recordEncoder);
-            bodyEncoders.put("Designate#updateRecord(String,Record)", recordEncoder);
-            return bodyEncoders;
+        @Provides(type = SET)
+        Decoder domainListDecoder(DomainListDecoder decoder) {
+            return decoder;
+        }
+
+        @Provides(type = SET)
+        Decoder recordListDecoder(RecordListDecoder decoder) {
+            return decoder;
+        }
+
+        @Provides(type = SET)
+        Decoder recordDecoder(RecordDecoder decoder) {
+            return decoder;
+        }
+
+        @Provides(type = SET)
+        Encoder recordEncoder(RecordEncoder encoder) {
+            return encoder;
         }
 
         @Provides

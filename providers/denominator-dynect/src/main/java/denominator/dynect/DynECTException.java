@@ -11,8 +11,8 @@ public class DynECTException extends FeignException {
     private final String status;
     private final List<Message> messages;
 
-    DynECTException(String methodKey, String status, List<Message> messages) {
-        super(format("%s status %s: %s", methodKey, status, messages));
+    DynECTException(String status, List<Message> messages) {
+        super(format("status %s: %s", status, messages));
         this.status = status;
         this.messages = messages;
     }

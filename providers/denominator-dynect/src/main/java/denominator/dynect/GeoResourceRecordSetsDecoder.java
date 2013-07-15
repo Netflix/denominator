@@ -1,5 +1,6 @@
 package denominator.dynect;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,6 +15,7 @@ import javax.inject.Named;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 
@@ -36,8 +38,16 @@ class GeoResourceRecordSetsDecoder implements DynECTDecoder.Parser<Map<String, C
     private static final TypeToken<List<GeoService>> GEO_TOKEN = new TypeToken<List<GeoService>>() {
     };
 
-    public Map<String, Collection<ResourceRecordSet<?>>> apply(JsonReader reader) {
-        List<GeoService> geoServices = gson.fromJson(reader, GEO_TOKEN.getType());
+    public Map<String, Collection<ResourceRecordSet<?>>> apply(JsonReader reader) throws IOException {
+        List<GeoService> geoServices;
+        try {
+            geoServices = gson.fromJson(reader, GEO_TOKEN.getType());
+        } catch (JsonIOException e) {
+            if (e.getCause() != null && e.getCause() instanceof IOException) {
+                throw IOException.class.cast(e.getCause());
+            }
+            throw e;
+        }
         Map<String, Collection<ResourceRecordSet<?>>> rrsets = new LinkedHashMap<String, Collection<ResourceRecordSet<?>>>();
         for (GeoService geo : geoServices) {
             for (GeoRegionGroup geoGroup : geo.groups) {

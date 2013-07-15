@@ -1,24 +1,20 @@
 package denominator.dynect;
 
-import static denominator.dynect.DynECTDecoder.login;
-import static denominator.dynect.DynECTDecoder.parseDataWith;
-import static denominator.dynect.DynECTDecoder.recordIds;
-import static denominator.dynect.DynECTDecoder.records;
-import static denominator.dynect.DynECTDecoder.resourceRecordSets;
-import static denominator.dynect.DynECTDecoder.zones;
+import static dagger.Provides.Type.SET;
 
+import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
-
-import com.google.gson.Gson;
 
 import dagger.Provides;
 import denominator.BasicProvider;
@@ -27,16 +23,21 @@ import denominator.QualifiedResourceRecordSetApi.Factory;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
-import denominator.config.NothingToClose;
 import denominator.config.WeightedUnsupported;
+import denominator.dynect.DynECT.Record;
+import denominator.dynect.DynECTDecoder.RecordIdsDecoder;
+import denominator.dynect.DynECTDecoder.RecordsByNameAndTypeDecoder;
+import denominator.dynect.DynECTDecoder.TokenDecoder;
+import denominator.dynect.DynECTDecoder.ZonesDecoder;
 import denominator.dynect.InvalidatableTokenProvider.Session;
+import denominator.model.ResourceRecordSet;
+import denominator.model.Zone;
 import denominator.profile.GeoResourceRecordSetApi;
 import feign.Feign;
 import feign.Feign.Defaults;
 import feign.ReflectiveFeign;
-import feign.RequestTemplate;
 import feign.codec.Decoder;
-import feign.codec.FormEncoder;
+import feign.gson.GsonModule;
 
 public class DynECTProvider extends BasicProvider {
     private final String url;
@@ -62,8 +63,8 @@ public class DynECTProvider extends BasicProvider {
     @Override
     public Set<String> basicRecordTypes() {
         Set<String> types = new LinkedHashSet<String>();
-        types.addAll(Arrays.asList("A", "AAAA", "CERT", "CNAME", "DHCID", "DNAME", "DNSKEY", "DS", "IPSECKEY", "KEY", "KX",
-                "LOC", "MX", "NAPTR", "NS", "NSAP", "PTR", "PX", "RP", "SOA", "SPF", "SRV", "SSHFP", "TXT"));
+        types.addAll(Arrays.asList("A", "AAAA", "CERT", "CNAME", "DHCID", "DNAME", "DNSKEY", "DS", "IPSECKEY", "KEY",
+                "KX", "LOC", "MX", "NAPTR", "NS", "NSAP", "PTR", "PX", "RP", "SOA", "SPF", "SRV", "SSHFP", "TXT"));
         return types;
     }
 
@@ -71,10 +72,11 @@ public class DynECTProvider extends BasicProvider {
     @Override
     public Map<String, Collection<String>> profileToRecordTypes() {
         Map<String, Collection<String>> profileToRecordTypes = new LinkedHashMap<String, Collection<String>>();
-        profileToRecordTypes.put("geo", Arrays.asList("A", "AAAAA", "CNAME", "CERT", "MX", "TXT", "SPF", "PTR", "LOC", "SRV", "RP", "KEY",
-                        "DNSKEY", "SSHFP", "DHCID", "NSAP", "PX"));
-        profileToRecordTypes.put("roundRobin", Arrays.asList("A", "AAAA", "CERT", "DHCID", "DNAME", "DNSKEY", "DS", "IPSECKEY", "KEY", "KX",
-                "LOC", "MX", "NAPTR", "NS", "NSAP", "PTR", "PX", "RP", "SPF", "SRV", "SSHFP", "TXT"));
+        profileToRecordTypes.put("geo", Arrays.asList("A", "AAAAA", "CNAME", "CERT", "MX", "TXT", "SPF", "PTR", "LOC",
+                "SRV", "RP", "KEY", "DNSKEY", "SSHFP", "DHCID", "NSAP", "PX"));
+        profileToRecordTypes.put("roundRobin", Arrays.asList("A", "AAAA", "CERT", "DHCID", "DNAME", "DNSKEY", "DS",
+                "IPSECKEY", "KEY", "KX", "LOC", "MX", "NAPTR", "NS", "NSAP", "PTR", "PX", "RP", "SPF", "SRV", "SSHFP",
+                "TXT"));
         return profileToRecordTypes;
     }
 
@@ -86,14 +88,13 @@ public class DynECTProvider extends BasicProvider {
     }
 
     @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
-            NothingToClose.class, WeightedUnsupported.class, ConcatBasicAndQualifiedResourceRecordSets.class,
-            FeignModule.class })
+            WeightedUnsupported.class, ConcatBasicAndQualifiedResourceRecordSets.class, FeignModule.class })
     public static final class Module {
 
         @Provides
         @Singleton
-        Gson json() {
-            return new Gson();
+        Closeable provideCloser(Feign feign) {
+            return feign;
         }
 
         @Provides
@@ -123,8 +124,10 @@ public class DynECTProvider extends BasicProvider {
         }
     }
 
+    // unbound wildcards are not currently injectable in dagger.
+    @SuppressWarnings("rawtypes")
     @dagger.Module(injects = DynECTResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
-            CountryToRegions.class, Defaults.class, ReflectiveFeign.Module.class })
+            CountryToRegions.class, Defaults.class, ReflectiveFeign.Module.class, GsonModule.class })
     public static final class FeignModule {
 
         @Provides
@@ -147,34 +150,44 @@ public class DynECTProvider extends BasicProvider {
 
         @Provides
         @Singleton
-        AtomicReference<Boolean> sessionValid(){
+        AtomicReference<Boolean> sessionValid() {
             return new AtomicReference<Boolean>(false);
         }
 
-        @Provides
-        @Singleton
-        Map<String, Decoder> decoders(AtomicReference<Boolean> sessionValid, GeoResourceRecordSetsDecoder geoDecoder) {
-            Map<String, Decoder> decoders = new LinkedHashMap<String, Decoder>();
-            decoders.put("Session#login(String,String,String)", login(sessionValid));
-            decoders.put("DynECT", resourceRecordSets(sessionValid));
-            decoders.put("DynECT#zones()", zones(sessionValid));
-            decoders.put("DynECT#geoRRSetsByZone()", parseDataWith(sessionValid, geoDecoder));
-            decoders.put("DynECT#recordIdsInZoneByNameAndType(String,String,String)", recordIds(sessionValid));
-            decoders.put("DynECT#recordsInZoneByNameAndType(String,String,String)", records(sessionValid));
-            return decoders;
+        @Provides(type = SET)
+        Decoder loginDecoder(AtomicReference<Boolean> sessionValid) {
+            return new DynECTDecoder<String>(sessionValid, TokenDecoder.INSTANCE) {
+            };
         }
 
-        @Provides
-        @Singleton
-        Map<String, FormEncoder> formEncoders(final Gson gson) {
-            Map<String, FormEncoder> formEncoders = new LinkedHashMap<String, FormEncoder>();
-            formEncoders.put("DynECT", new FormEncoder() {
-                @Override
-                public void encodeForm(Map<String, ?> formParams, RequestTemplate base) {
-                    base.body(gson.toJson(formParams));
-                }
-            });
-            return formEncoders;
+        @Provides(type = SET)
+        Decoder resourceRecordSetsDecoder(AtomicReference<Boolean> sessionValid, ResourceRecordSetsDecoder decoder) {
+            return new DynECTDecoder<Iterator<ResourceRecordSet<?>>>(sessionValid, decoder) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder zonesDecoder(AtomicReference<Boolean> sessionValid) {
+            return new DynECTDecoder<List<Zone>>(sessionValid, ZonesDecoder.INSTANCE) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder geoRRSetsDecoder(AtomicReference<Boolean> sessionValid, GeoResourceRecordSetsDecoder decoder) {
+            return new DynECTDecoder<Map<String, Collection<ResourceRecordSet<?>>>>(sessionValid, decoder) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder recordIdsDecoder(AtomicReference<Boolean> sessionValid) {
+            return new DynECTDecoder<List<String>>(sessionValid, RecordIdsDecoder.INSTANCE) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder recordsDecoder(AtomicReference<Boolean> sessionValid) {
+            return new DynECTDecoder<Iterator<Record>>(sessionValid, RecordsByNameAndTypeDecoder.INSTANCE) {
+            };
         }
     }
 }

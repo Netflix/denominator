@@ -1,5 +1,7 @@
 package denominator.route53;
 
+import javax.inject.Inject;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -12,7 +14,11 @@ import denominator.route53.Route53.ResourceRecordSetList.NextRecord;
  *      />
  */
 class ListResourceRecordSetsResponseHandler extends DefaultHandler implements
-        feign.codec.SAXDecoder.ContentHandlerWithResult {
+        feign.codec.SAXDecoder.ContentHandlerWithResult<ResourceRecordSetList> {
+
+    @Inject
+    ListResourceRecordSetsResponseHandler() {
+    }
 
     private ResourceRecordSetHandler resourceRecordSetHandler = new ResourceRecordSetHandler();
 
@@ -23,7 +29,7 @@ class ListResourceRecordSetsResponseHandler extends DefaultHandler implements
     private boolean inResourceRecordSets;
 
     @Override
-    public ResourceRecordSetList getResult() {
+    public ResourceRecordSetList result() {
         rrsets.next = next;
         return rrsets;
     }
@@ -44,7 +50,7 @@ class ListResourceRecordSetsResponseHandler extends DefaultHandler implements
             if ("ResourceRecordSets".equals(qName)) {
                 inResourceRecordSets = false;
             } else if (qName.equals("ResourceRecordSet")) {
-                rrsets.add(resourceRecordSetHandler.getResult());
+                rrsets.add(resourceRecordSetHandler.result());
                 resourceRecordSetHandler = new ResourceRecordSetHandler();
             } else {
                 resourceRecordSetHandler.endElement(uri, name, qName);

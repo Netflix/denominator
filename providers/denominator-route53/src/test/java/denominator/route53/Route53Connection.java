@@ -10,7 +10,7 @@ import dagger.Module;
 import dagger.Provides;
 import denominator.DNSApiManager;
 import denominator.Denominator;
-import feign.Wire;
+import feign.Logger;
 
 public class Route53Connection {
 
@@ -26,8 +26,14 @@ public class Route53Connection {
             class Overrides {
                 @Provides
                 @Singleton
-                Wire provideWire() {
-                    return new Wire.LoggingWire().appendToFile("target/test-data/http-wire.log");
+                Logger.Level provideLevel() {
+                    return Logger.Level.FULL;
+                }
+
+                @Provides
+                @Singleton
+                Logger provideLogger() {
+                    return new Logger.JavaLogger().appendToFile("build/http-wire.log");
                 }
             }
             manager = Denominator.create(provider, credentials(accesskey, secretkey), new Overrides());

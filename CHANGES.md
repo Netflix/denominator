@@ -1,3 +1,6 @@
+### Version 3.1
+* updates to feign 3
+
 ### Version 3.0
 * removes guava dependency
 * retrofits Zone and ResourceRecordSet to extend Map, allowing default json serialization.
