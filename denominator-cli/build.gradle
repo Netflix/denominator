@@ -18,8 +18,10 @@ dependencies {
   compile      project(':providers:denominator-route53')
   compile      project(':providers:denominator-clouddns')
   compile      project(':providers:denominator-designate')
-  compile     'io.airlift:airline:0.5'
+  compile     'args4j:args4j:2.0.24'
   compile     'org.yaml:snakeyaml:1.12'
+  provided    'com.squareup.dagger:dagger-compiler:1.0.1'
+  testCompile 'com.google.guava:guava:14.0.1'
   testCompile 'org.testng:testng:6.8.1'
   testCompile 'com.google.mockwebserver:mockwebserver:20130505'
 }
@@ -58,6 +60,7 @@ task fatJar(dependsOn: classes, type: Jar) {
     def shortcutFile = new File("${buildDir}/denominator")
     shortcutFile.delete()
     shortcutFile << "#!/usr/bin/env sh\n"
+    shortcutFile << "export COLUMNS\n"
     shortcutFile << 'exec java -jar $0 "$@"' + "\n"
     shortcutFile << srcFile.bytes
     shortcutFile.setExecutable(true, true)
