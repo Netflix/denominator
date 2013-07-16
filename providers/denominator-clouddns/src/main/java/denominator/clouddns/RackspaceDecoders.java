@@ -7,6 +7,8 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.Comparator;
 
+import javax.inject.Inject;
+
 import com.google.gson.stream.JsonReader;
 
 import denominator.clouddns.RackspaceApis.ListWithNext;
@@ -16,6 +18,10 @@ import feign.codec.Decoder;
 
 class RackspaceDecoders {
     static class DomainListDecoder extends ListWithNextDecoder<Zone> {
+        @Inject
+        DomainListDecoder() {
+        }
+
         @Override
         protected String jsonKey() {
             return "domains";
@@ -39,6 +45,10 @@ class RackspaceDecoders {
     }
 
     static class RecordListDecoder extends ListWithNextDecoder<Record> {
+        @Inject
+        RecordListDecoder() {
+        }
+
         @Override
         protected String jsonKey() {
             return "records";
@@ -66,13 +76,13 @@ class RackspaceDecoders {
         }
     }
 
-    private static abstract class ListWithNextDecoder<X> extends Decoder {
+    static abstract class ListWithNextDecoder<X> implements Decoder.TextStream<ListWithNext<X>> {
         protected abstract String jsonKey();
 
         protected abstract X build(JsonReader reader) throws IOException;
 
         @Override
-        public ListWithNext<X> decode(String methodKey, Reader ireader, Type type) throws Throwable {
+        public ListWithNext<X> decode(Reader ireader, Type type) throws IOException {
             ListWithNext<X> records = new ListWithNext<X>();
             JsonReader reader = new JsonReader(ireader);
             reader.beginObject();

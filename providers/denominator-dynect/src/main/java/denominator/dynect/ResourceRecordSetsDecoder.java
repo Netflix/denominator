@@ -2,14 +2,18 @@ package denominator.dynect;
 
 import static denominator.common.Util.peekingIterator;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.inject.Inject;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
@@ -20,10 +24,21 @@ import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 
 class ResourceRecordSetsDecoder implements DynECTDecoder.Parser<Iterator<ResourceRecordSet<?>>> {
+    @Inject
+    ResourceRecordSetsDecoder(){
+    }
+
     @Override
-    public Iterator<ResourceRecordSet<?>> apply(JsonReader reader) {
-        JsonParser parser = new JsonParser();
-        JsonElement data = parser.parse(reader);
+    public Iterator<ResourceRecordSet<?>> apply(JsonReader reader) throws IOException {
+        JsonElement data;
+        try {
+            data = new JsonParser().parse(reader);
+        } catch (JsonIOException e) {
+            if (e.getCause() != null && e.getCause() instanceof IOException) {
+                throw IOException.class.cast(e.getCause());
+            }
+            throw e;
+        }
 
         // there are 2 forms for record responses: an array of same type, or a
         // map per type.

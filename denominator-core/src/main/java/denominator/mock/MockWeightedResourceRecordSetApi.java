@@ -48,7 +48,7 @@ public final class MockWeightedResourceRecordSetApi extends MockAllProfileResour
         private Provider provider;
         private final SortedSet<Integer> supportedWeights;
 
-        // wildcard types are not currently injectable in dagger
+        // unbound wildcards are not currently injectable in dagger
         @SuppressWarnings({ "rawtypes", "unchecked" })
         @Inject
         Factory(Map<Zone, SortedSet<ResourceRecordSet>> records, Provider provider,

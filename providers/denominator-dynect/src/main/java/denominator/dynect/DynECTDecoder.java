@@ -2,6 +2,7 @@ package denominator.dynect;
 
 import static denominator.common.Preconditions.checkState;
 
+import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.regex.Pattern;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -27,40 +29,43 @@ import feign.codec.Decoder;
  * this will propagate exceptions when they are mistakenly sent with a 200 error
  * code.
  */
-class DynECTDecoder extends feign.codec.Decoder {
-
-    static Decoder login(AtomicReference<Boolean> sessionValid) {
-        return parseDataWith(sessionValid, TokenDecoder.INSTANCE);
-    }
+class DynECTDecoder<T> implements Decoder.TextStream<T> {
 
     interface Parser<T> {
-        T apply(JsonReader reader);
+        T apply(JsonReader reader) throws IOException;
     }
 
-    private static enum TokenDecoder implements Parser<String> {
+    static enum TokenDecoder implements Parser<String> {
         INSTANCE;
 
         @Override
-        public String apply(JsonReader reader) {
-            return new JsonParser().parse(reader).getAsJsonObject().get("token").getAsString();
+        public String apply(JsonReader reader) throws IOException {
+            try {
+                return new JsonParser().parse(reader).getAsJsonObject().get("token").getAsString();
+            } catch (JsonIOException e) {
+                if (e.getCause() != null && e.getCause() instanceof IOException) {
+                    throw IOException.class.cast(e.getCause());
+                }
+                throw e;
+            }
         }
     }
 
-    static Decoder resourceRecordSets(AtomicReference<Boolean> sessionValid) {
-        return parseDataWith(sessionValid, new ResourceRecordSetsDecoder());
-    }
-
-    static Decoder zones(AtomicReference<Boolean> sessionValid) {
-        return parseDataWith(sessionValid, ZonesDecoder.INSTANCE);
-    }
-
-    private static enum ZonesDecoder implements Parser<List<Zone>> {
+    static enum ZonesDecoder implements Parser<List<Zone>> {
         INSTANCE;
 
         @Override
-        public List<Zone> apply(JsonReader reader) {
+        public List<Zone> apply(JsonReader reader) throws IOException {
+            JsonArray data;
+            try {
+                data = new JsonParser().parse(reader).getAsJsonArray();
+            } catch (JsonIOException e) {
+                if (e.getCause() != null && e.getCause() instanceof IOException) {
+                    throw IOException.class.cast(e.getCause());
+                }
+                throw e;
+            }
             List<Zone> zones = new ArrayList<Zone>();
-            JsonArray data = new JsonParser().parse(reader).getAsJsonArray();
             for (String name : toFirstGroup("/REST.*/([^/]+)/?$", data)) {
                 zones.add(Zone.create(name));
             }
@@ -68,51 +73,68 @@ class DynECTDecoder extends feign.codec.Decoder {
         }
     }
 
-    public static Decoder recordIds(AtomicReference<Boolean> sessionValid) {
-        return parseDataWith(sessionValid, RecordIdsDecoder.INSTANCE);
-    }
-
-    private static enum RecordIdsDecoder implements Parser<List<String>> {
+    static enum RecordIdsDecoder implements Parser<List<String>> {
         INSTANCE;
 
         @Override
-        public List<String> apply(JsonReader reader) {
-            JsonArray data = new JsonParser().parse(reader).getAsJsonArray();
+        public List<String> apply(JsonReader reader) throws IOException {
+            JsonArray data;
+            try {
+                data = new JsonParser().parse(reader).getAsJsonArray();
+            } catch (JsonIOException e) {
+                if (e.getCause() != null && e.getCause() instanceof IOException) {
+                    throw IOException.class.cast(e.getCause());
+                }
+                throw e;
+            }
             return toFirstGroup("/REST/([a-zA-Z]+Record/[^\"]+/[^\"]+/[0-9]+)", data);
         }
     }
 
-    static Decoder records(AtomicReference<Boolean> sessionValid) {
-        return parseDataWith(sessionValid, RecordsByNameAndTypeDecoder.INSTANCE);
-    }
-
-    private static enum RecordsByNameAndTypeDecoder implements Parser<Iterator<Record>> {
+    static enum RecordsByNameAndTypeDecoder implements Parser<Iterator<Record>> {
         INSTANCE;
 
         @Override
-        public Iterator<Record> apply(JsonReader reader) {
+        public Iterator<Record> apply(JsonReader reader) throws IOException {
+            JsonArray data;
+            try {
+                data = new JsonParser().parse(reader).getAsJsonArray();
+            } catch (JsonIOException e) {
+                if (e.getCause() != null && e.getCause() instanceof IOException) {
+                    throw IOException.class.cast(e.getCause());
+                }
+                throw e;
+            }
             List<Record> records = new ArrayList<Record>();
-            for (JsonElement data : new JsonParser().parse(reader).getAsJsonArray()) {
-                records.add(ToRecord.INSTANCE.apply(data));
+            for (JsonElement datum : data) {
+                records.add(ToRecord.INSTANCE.apply(datum));
             }
             return records.iterator();
         }
     }
 
-    static Decoder parseDataWith(AtomicReference<Boolean> sessionValid, Parser<?> fn) {
-        return new DynECTDecoder(sessionValid, fn);
-    }
-
     private final AtomicReference<Boolean> sessionValid;
-    private final Parser<?> fn;
+    private final Parser<T> fn;
 
-    DynECTDecoder(AtomicReference<Boolean> sessionValid, Parser<?> fn) {
+    /**
+     * You must subclass this, in order to prevent type erasure on {@code T}
+     * . In addition to making a concrete type, you can also use the
+     * following form.
+     * <p/>
+     * <br>
+     * <p/>
+     * <pre>
+     * new DynECTDecoder&lt;Foo&gt;(sessionValid, fn) {
+     * }; // note the curly braces ensures no type erasure!
+     * </pre>
+     */
+    protected DynECTDecoder(AtomicReference<Boolean> sessionValid, Parser<T> fn) {
         this.sessionValid = sessionValid;
         this.fn = fn;
     }
 
     @Override
-    public Object decode(String methodKey, Reader ireader, Type ignored) throws Throwable {
+    public T decode(Reader ireader, Type ignored) throws IOException {
         JsonReader reader = new JsonReader(ireader);
         try {
             List<Message> messages = new ArrayList<Message>();
@@ -153,7 +175,7 @@ class DynECTDecoder extends feign.codec.Decoder {
             reader.endObject();
             if ("incomplete".equals(status)) {
                 throw new RetryableException(messages.toString(), null);
-            } else if (!messages.isEmpty() ){
+            } else if (!messages.isEmpty()) {
                 for (Message message : messages) {
                     if ("token: This session already has a job running".equals(message.info())) {
                         throw new RetryableException(messages.toString(), null);
@@ -163,7 +185,7 @@ class DynECTDecoder extends feign.codec.Decoder {
                     }
                 }
             }
-            throw new DynECTException(methodKey, status, messages);
+            throw new DynECTException(status, messages);
         } finally {
             reader.close();
         }

@@ -20,9 +20,9 @@ public interface Designate {
     @Headers("Content-Type: application/json")
     Record createRecord(@Named("domainId") String domainId, Record record);
 
-    @RequestLine("PUT /domains/{domainId}/records")
+    @RequestLine("PUT /domains/{domainId}/records/{recordId}")
     @Headers("Content-Type: application/json")
-    Record updateRecord(@Named("domainId") String domainId, Record record);
+    Record updateRecord(@Named("domainId") String domainId, @Named("recordId") String recordId, Record record);
 
     @RequestLine("DELETE /domains/{domainId}/records/{recordId}")
     void deleteRecord(@Named("domainId") String domainId, @Named("recordId") String recordId);

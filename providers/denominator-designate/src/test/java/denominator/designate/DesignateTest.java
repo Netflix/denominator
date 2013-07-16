@@ -311,7 +311,7 @@ public class DesignateTest {
             record.ttl = 300;
             record.type = "MX";
 
-            record = mockApi(server.getUrl("")).updateRecord(domainId, record);
+            record = mockApi(server.getUrl("")).updateRecord(domainId, record.id, record);
 
             assertEquals(record.id, "13d2516b-1f18-455b-aa05-1997b26192ad");
             assertEquals(record.name, "denominator.io.");
@@ -387,7 +387,7 @@ public class DesignateTest {
             record.data = "192.0.2.1";
             record.type = "A";
 
-            record = mockApi(server.getUrl("")).updateRecord(domainId, record);
+            record = mockApi(server.getUrl("")).updateRecord(domainId, record.id, record);
 
             assertEquals(record.id, "13d2516b-1f18-455b-aa05-1997b26192ad");
             assertEquals(record.name, "www.denominator.io.");

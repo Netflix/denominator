@@ -66,7 +66,7 @@ class DesignateResourceRecordSetApi implements denominator.ResourceRecordSetApi 
                             continue;
                         }
                         record.ttl = rrset.ttl();
-                        api.updateRecord(domainId, record);
+                        api.updateRecord(domainId, record.id, record);
                     }
                 } else {
                     api.deleteRecord(domainId, record.id);

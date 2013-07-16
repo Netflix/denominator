@@ -1,5 +1,8 @@
 package denominator.clouddns;
 
+import static dagger.Provides.Type.SET;
+
+import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -20,7 +23,6 @@ import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
 import denominator.clouddns.RackspaceDecoders.DomainListDecoder;
 import denominator.clouddns.RackspaceDecoders.RecordListDecoder;
 import denominator.config.GeoUnsupported;
-import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
 import feign.Feign;
@@ -28,6 +30,7 @@ import feign.Feign.Defaults;
 import feign.ReflectiveFeign;
 import feign.Target.HardCodedTarget;
 import feign.codec.Decoder;
+import feign.gson.GsonModule;
 
 public class CloudDNSProvider extends BasicProvider {
     private final String url;
@@ -79,26 +82,34 @@ public class CloudDNSProvider extends BasicProvider {
         return options;
     }
 
-    @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, //
-    includes = { NothingToClose.class,//
-            GeoUnsupported.class,//
-            WeightedUnsupported.class, //
-            OnlyBasicResourceRecordSets.class,//
-            Defaults.class,//
-            ReflectiveFeign.Module.class })
+    @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
+            GeoUnsupported.class, WeightedUnsupported.class, OnlyBasicResourceRecordSets.class, FeignModule.class })
     public static final class Module {
 
         @Provides
         @Singleton
-        ZoneApi provideZoneApi(CloudDNS api) {
-            return new CloudDNSZoneApi(api);
+        Closeable provideCloser(Feign feign) {
+            return feign;
         }
 
         @Provides
         @Singleton
-        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(CloudDNS api) {
-            return new CloudDNSResourceRecordSetApi.Factory(api);
+        ZoneApi provideZoneApi(CloudDNSZoneApi api) {
+            return api;
         }
+
+        @Provides
+        @Singleton
+        ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(CloudDNSResourceRecordSetApi.Factory api) {
+            return api;
+        }
+    }
+
+    // unbound wildcards are not currently injectable in dagger.
+    @SuppressWarnings("rawtypes")
+    @dagger.Module(injects = CloudDNSResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
+            Defaults.class, ReflectiveFeign.Module.class, GsonModule.class })
+    public static final class FeignModule {
 
         @Provides
         @Singleton
@@ -113,19 +124,19 @@ public class CloudDNSProvider extends BasicProvider {
                     "http://invalid"));
         }
 
-        @Provides
-        @Singleton
-        Map<String, Decoder> decoders() {
-            Map<String, Decoder> decoders = new LinkedHashMap<String, Decoder>();
-            decoders.put("CloudIdentity", new KeystoneAccessDecoder("rax:dns"));
-            Decoder domainListDecoder = new DomainListDecoder();
-            decoders.put("CloudDNS#domains(URI)", domainListDecoder);
-            decoders.put("CloudDNS#domains()", domainListDecoder);
-            Decoder recordListDecoder = new RecordListDecoder();
-            decoders.put("CloudDNS#records(URI)", recordListDecoder);
-            decoders.put("CloudDNS#records(int)", recordListDecoder);
-            decoders.put("CloudDNS#recordsByNameAndType(int,String,String)", recordListDecoder);
-            return decoders;
+        @Provides(type = SET)
+        Decoder tokenIdAndPublicURLDecoder() {
+            return new KeystoneAccessDecoder("rax:dns");
+        }
+
+        @Provides(type = SET)
+        Decoder domainListDecoder(DomainListDecoder decoder) {
+            return decoder;
+        }
+
+        @Provides(type = SET)
+        Decoder recordListDecoder(RecordListDecoder decoder) {
+            return decoder;
         }
 
         @Provides
