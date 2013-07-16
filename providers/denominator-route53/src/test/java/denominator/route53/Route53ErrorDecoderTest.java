@@ -2,11 +2,14 @@ package denominator.route53;
 
 import java.util.Collection;
 
+import javax.inject.Provider;
+
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableMap;
 
-import denominator.route53.Route53.ZoneList;
+import denominator.route53.Route53ErrorDecoder.Route53Error;
+
 import feign.Response;
 import feign.RetryableException;
 import feign.codec.ErrorDecoder;
@@ -14,7 +17,12 @@ import feign.codec.ErrorDecoder;
 @Test(singleThreaded = true)
 public class Route53ErrorDecoderTest {
 
-    ErrorDecoder errorDecoder = new Route53ErrorDecoder();
+    ErrorDecoder errorDecoder = new Route53ErrorDecoder(new Provider<Route53ErrorDecoder.Route53Error>(){
+        @Override
+        public Route53Error get() {
+            return new Route53Error();
+        }
+    });
 
     @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error RequestExpired: Request has expired. Timestamp date is 2013-06-07T12:16:22Z")
     public void requestExpired() throws Throwable {
@@ -29,7 +37,7 @@ public class Route53ErrorDecoderTest {
                 + "  </Errors>\n"//
                 + "  <RequestID>dc94a37b0-e297-4ab7-83c8-791a0fc8f613</RequestID>\n"//
                 + "</Response>");
-        errorDecoder.decode("Route53.zones()", response, ZoneList.class);
+        throw errorDecoder.decode("Route53.zones()", response);
     }
 
     @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error InternalError")
@@ -44,7 +52,7 @@ public class Route53ErrorDecoderTest {
                 + "  </Errors>\n"//
                 + "  <RequestID>dc94a37b0-e297-4ab7-83c8-791a0fc8f613</RequestID>\n"//
                 + "</Response>");
-        errorDecoder.decode("Route53.zones()", response, ZoneList.class);
+        throw errorDecoder.decode("Route53.zones()", response);
     }
 
     @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error InternalFailure")
@@ -60,7 +68,7 @@ public class Route53ErrorDecoderTest {
                 + "  </Errors>\n"//
                 + "  <RequestID>dc94a37b0-e297-4ab7-83c8-791a0fc8f613</RequestID>\n"//
                 + "</Response>");
-        errorDecoder.decode("Route53.zones()", response, ZoneList.class);
+        throw errorDecoder.decode("Route53.zones()", response);
     }
 
     @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error Throttling: Rate exceeded")
@@ -76,7 +84,7 @@ public class Route53ErrorDecoderTest {
                 + "  </Errors>\n"//
                 + "  <RequestID>dc94a37b0-e297-4ab7-83c8-791a0fc8f613</RequestID>\n"//
                 + "</Response>");
-        errorDecoder.decode("Route53.zones()", response, ZoneList.class);
+        throw errorDecoder.decode("Route53.zones()", response);
     }
 
     @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error PriorRequestNotComplete: The request was rejected because Route 53 was still processing a prior request.")
@@ -92,7 +100,7 @@ public class Route53ErrorDecoderTest {
                 + "  </Errors>\n"//
                 + "  <RequestID>dc94a37b0-e297-4ab7-83c8-791a0fc8f613</RequestID>\n"//
                 + "</Response>");
-        errorDecoder.decode("Route53.zones()", response, ZoneList.class);
+        throw errorDecoder.decode("Route53.zones()", response);
     }
 
     static Response responseWithContent(String content) {

@@ -8,6 +8,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.inject.Inject;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -25,7 +27,13 @@ import denominator.model.rdata.SPFData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.TXTData;
 
-class ResourceRecordSetHandler extends DefaultHandler implements feign.codec.SAXDecoder.ContentHandlerWithResult {
+class ResourceRecordSetHandler extends DefaultHandler implements
+        feign.codec.SAXDecoder.ContentHandlerWithResult<ResourceRecordSet<?>> {
+
+    @Inject
+    ResourceRecordSetHandler() {
+    }
+
     private static final List<String> profileFields = Arrays.asList("Failover", "Region", "HealthCheckId");
     private static final List<String> aliasFields = Arrays.asList("HostedZoneId", "DNSName", "EvaluateTargetHealth");
 
@@ -35,7 +43,7 @@ class ResourceRecordSetHandler extends DefaultHandler implements feign.codec.SAX
     private Map<String, Object> alias = new LinkedHashMap<String, Object>();
 
     @Override
-    public ResourceRecordSet<?> getResult() {
+    public ResourceRecordSet<?> result() {
         if (!alias.isEmpty()) {
             alias.put("type", "alias");
             profiles.add(alias);

@@ -1,5 +1,7 @@
 package denominator.route53;
 
+import javax.inject.Inject;
+
 import org.xml.sax.helpers.DefaultHandler;
 
 import denominator.model.Zone;
@@ -7,17 +9,21 @@ import denominator.route53.Route53.ZoneList;
 
 /**
  * See <a href=
- *      "http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListHostedZones.html"
- *      >docs</a>
+ * "http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListHostedZones.html"
+ * >docs</a>
  */
-public class ListHostedZonesResponseHandler extends DefaultHandler implements
-        feign.codec.SAXDecoder.ContentHandlerWithResult {
+class ListHostedZonesResponseHandler extends DefaultHandler implements
+        feign.codec.SAXDecoder.ContentHandlerWithResult<ZoneList> {
+
+    @Inject
+    ListHostedZonesResponseHandler() {
+    }
 
     private StringBuilder currentText = new StringBuilder();
     private ZoneList zones = new ZoneList();
 
     @Override
-    public ZoneList getResult() {
+    public ZoneList result() {
         return zones;
     }
 

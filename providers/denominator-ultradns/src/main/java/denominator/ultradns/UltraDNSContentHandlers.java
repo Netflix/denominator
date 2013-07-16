@@ -3,8 +3,6 @@ package denominator.ultradns;
 import static denominator.common.Util.split;
 import static java.util.Locale.US;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -17,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.inject.Inject;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -24,42 +24,24 @@ import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
 import denominator.ultradns.UltraDNS.NameAndType;
 import denominator.ultradns.UltraDNS.Record;
-import feign.codec.SAXDecoder;
+import feign.codec.SAXDecoder.ContentHandlerWithResult;
 
 /**
  * all decoders use {@code .endsWith} as a cheap way to strip out namespaces,
  * such as {@code ns2:}.
  */
-class UltraDNSSAXDecoder extends SAXDecoder {
+class UltraDNSContentHandlers {
 
-    @Override
-    protected ContentHandlerWithResult typeToNewHandler(Type type) {
-        if (type instanceof ParameterizedType) {
-            ParameterizedType parameterized = ParameterizedType.class.cast(type);
-            if (parameterized.getRawType() == List.class){
-                if (parameterized.getActualTypeArguments()[0] == Record.class)
-                    return new RecordListHandler();
-                else if (parameterized.getActualTypeArguments()[0] == DirectionalRecord.class)
-                    return new DirectionalRecordListHandler();
-            } else if (parameterized.getRawType() == Map.class){
-                if (parameterized.getActualTypeArguments()[0] == NameAndType.class)
-                    return new RRPoolListHandler();
-                else if (parameterized.getActualTypeArguments()[0] == String.class)
-                    return new RegionTableHandler();
-            }
-        } else if (DirectionalGroup.class == type) {
-            return new DirectionalGroupHandler();
+    static class RecordListHandler extends DefaultHandler implements ContentHandlerWithResult<List<Record>> {
+        @Inject
+        RecordListHandler(){
         }
-        throw new UnsupportedOperationException(type + "");
-    }
-
-    static class RecordListHandler extends DefaultHandler implements feign.codec.SAXDecoder.ContentHandlerWithResult {
 
         private Record rr = new Record();
         private final List<Record> rrs = new ArrayList<Record>();
 
         @Override
-        public List<Record> getResult() {
+        public List<Record> result() {
             Collections.sort(rrs, byNameTypeAndCreateDate);
             return rrs;
         }
@@ -94,14 +76,14 @@ class UltraDNSSAXDecoder extends SAXDecoder {
         public int compare(Record left, Record right) {
             int nameCompare = left.name.compareTo(right.name);
             if (nameCompare != 0)
-               return nameCompare;
+                return nameCompare;
             int typeCompare = new Integer(left.typeCode).compareTo(right.typeCode);
             if (typeCompare != 0)
                 return typeCompare;
             // insertion order attempt
             int createdCompare = left.created.compareTo(right.created);
             if (createdCompare != 0)
-               return createdCompare;
+                return createdCompare;
             // UMP-5803 the order returned in getResourceRecordsOfZoneResponse
             // is different than getResourceRecordsOfDNameByTypeResponse.
             // We fallback to ordering by rdata to ensure consistent ordering.
@@ -109,14 +91,17 @@ class UltraDNSSAXDecoder extends SAXDecoder {
         }
     };
 
-    static class RRPoolListHandler extends DefaultHandler implements feign.codec.SAXDecoder.ContentHandlerWithResult {
+    static class RRPoolListHandler extends DefaultHandler implements ContentHandlerWithResult<Map<NameAndType, String>> {
+        @Inject
+        RRPoolListHandler(){
+        }
 
         private final Map<NameAndType, String> pools = new LinkedHashMap<NameAndType, String>();
         private NameAndType nameAndType = new NameAndType();
         private String id;
 
         @Override
-        public Map<NameAndType, String> getResult() {
+        public Map<NameAndType, String> result() {
             return pools;
         }
 
@@ -139,12 +124,16 @@ class UltraDNSSAXDecoder extends SAXDecoder {
         }
     }
 
-    static class RegionTableHandler extends DefaultHandler implements feign.codec.SAXDecoder.ContentHandlerWithResult {
+    static class RegionTableHandler extends DefaultHandler implements
+            ContentHandlerWithResult<Map<String, Collection<String>>> {
+        @Inject
+        RegionTableHandler(){
+        }
 
         private final Map<String, Collection<String>> regions = new TreeMap<String, Collection<String>>();
 
         @Override
-        public Map<String, Collection<String>> getResult() {
+        public Map<String, Collection<String>> result() {
             return regions;
         }
 
@@ -158,13 +147,15 @@ class UltraDNSSAXDecoder extends SAXDecoder {
         }
     }
 
-    static class DirectionalGroupHandler extends DefaultHandler implements
-            feign.codec.SAXDecoder.ContentHandlerWithResult {
+    static class DirectionalGroupHandler extends DefaultHandler implements ContentHandlerWithResult<DirectionalGroup> {
+        @Inject
+        DirectionalGroupHandler(){
+        }
 
         private final DirectionalGroup group = new DirectionalGroup();
 
         @Override
-        public DirectionalGroup getResult() {
+        public DirectionalGroup result() {
             return group;
         }
 
@@ -182,13 +173,16 @@ class UltraDNSSAXDecoder extends SAXDecoder {
     }
 
     static class DirectionalRecordListHandler extends DefaultHandler implements
-            feign.codec.SAXDecoder.ContentHandlerWithResult {
+            ContentHandlerWithResult<List<DirectionalRecord>> {
+        @Inject
+        DirectionalRecordListHandler(){
+        }
 
         private DirectionalRecord rr = new DirectionalRecord();
         private final List<DirectionalRecord> rrs = new ArrayList<DirectionalRecord>();
 
         @Override
-        public List<DirectionalRecord> getResult() {
+        public List<DirectionalRecord> result() {
             Collections.sort(rrs, byTypeAndGeoGroup);
             return rrs;
         }
@@ -231,7 +225,7 @@ class UltraDNSSAXDecoder extends SAXDecoder {
         public int compare(DirectionalRecord left, DirectionalRecord right) {
             int typeCompare = left.type.compareTo(right.type);
             if (typeCompare != 0)
-               return typeCompare;
+                return typeCompare;
             return left.geoGroupName.compareTo(right.geoGroupName);
         }
     };

@@ -4,7 +4,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
 import java.io.InputStreamReader;
-import java.util.Collection;
+
+import javax.inject.Provider;
 
 import org.testng.annotations.Test;
 
@@ -18,17 +19,18 @@ import denominator.model.rdata.NSData;
 import denominator.model.rdata.SOAData;
 import denominator.route53.Route53.ResourceRecordSetList;
 import denominator.route53.Route53.ZoneList;
-import denominator.route53.Route53Provider.Route53Decoder;
-import feign.Response;
+import feign.codec.SAXDecoder;
 
 public class Route53DecoderTest {
-    Route53Decoder decoder = new Route53Decoder();
 
     @Test
     public void decodeZoneListWithNext() throws Throwable {
-        Response response = Response.create(200, "OK", ImmutableMap.<String, Collection<String>> of(),
-                new InputStreamReader(getClass().getResourceAsStream("/hosted_zones.xml")), null);
-        ZoneList result = (ZoneList) decoder.decode(null, response, ZoneList.class);
+        ZoneList result = new SAXDecoder<ZoneList>(new Provider<ListHostedZonesResponseHandler>() {
+            public ListHostedZonesResponseHandler get() {
+                return new ListHostedZonesResponseHandler();
+            }
+        }) {
+        }.decode(new InputStreamReader(getClass().getResourceAsStream("/hosted_zones.xml")), ZoneList.class);
 
         assertEquals(result.size(), 2);
         assertEquals(result.get(0), Zone.create("example.com.", "Z21DW1QVGID6NG"));
@@ -38,9 +40,13 @@ public class Route53DecoderTest {
 
     @Test
     public void decodeBasicResourceRecordSetListWithNext() throws Throwable {
-        Response response = Response.create(200, "OK", ImmutableMap.<String, Collection<String>> of(),
-                new InputStreamReader(getClass().getResourceAsStream("/basic_rrsets.xml")), null);
-        ResourceRecordSetList result = (ResourceRecordSetList) decoder.decode(null, response,
+        ResourceRecordSetList result = new SAXDecoder<ResourceRecordSetList>(
+                new Provider<ListResourceRecordSetsResponseHandler>() {
+                    public ListResourceRecordSetsResponseHandler get() {
+                        return new ListResourceRecordSetsResponseHandler();
+                    }
+                }) {
+        }.decode(new InputStreamReader(getClass().getResourceAsStream("/basic_rrsets.xml")),
                 ResourceRecordSetList.class);
 
         assertEquals(result.size(), 2);
@@ -72,9 +78,13 @@ public class Route53DecoderTest {
 
     @Test
     public void decodeAdvancedResourceRecordSetListWithoutNext() throws Throwable {
-        Response response = Response.create(200, "OK", ImmutableMap.<String, Collection<String>> of(),
-                new InputStreamReader(getClass().getResourceAsStream("/advanced_rrsets.xml")), null);
-        ResourceRecordSetList result = (ResourceRecordSetList) decoder.decode(null, response,
+        ResourceRecordSetList result = new SAXDecoder<ResourceRecordSetList>(
+                new Provider<ListResourceRecordSetsResponseHandler>() {
+                    public ListResourceRecordSetsResponseHandler get() {
+                        return new ListResourceRecordSetsResponseHandler();
+                    }
+                }) {
+        }.decode(new InputStreamReader(getClass().getResourceAsStream("/advanced_rrsets.xml")),
                 ResourceRecordSetList.class);
 
         assertEquals(result.size(), 2);

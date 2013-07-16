@@ -131,7 +131,7 @@ public class DynECTTest {
             fail();
         } catch (DynECTException e) {
             assertEquals(server.getRequestCount(), 1);
-            assertEquals(e.getMessage(), "DynECT#zones() status failure: [ILLEGAL_OPERATION: zone: Operation blocked by current task, task_name: ProvisionZone, task_id: 39120953]");
+            assertEquals(e.getMessage(), "status failure: [ILLEGAL_OPERATION: zone: Operation blocked by current task, task_name: ProvisionZone, task_id: 39120953]");
 
             assertEquals(e.status(), "failure");
             assertEquals(e.messages().size(), 3);
@@ -161,7 +161,7 @@ public class DynECTTest {
             fail();
         } catch (DynECTException e) {
             assertEquals(server.getRequestCount(), 1);
-            assertEquals(e.getMessage(), "DynECT#zones() status failure: [TARGET_EXISTS: name: Name already exists, create: You already have this zone.]");
+            assertEquals(e.getMessage(), "status failure: [TARGET_EXISTS: name: Name already exists, create: You already have this zone.]");
 
             assertEquals(e.status(), "failure");
             assertEquals(e.messages().size(), 2);

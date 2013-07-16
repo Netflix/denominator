@@ -22,7 +22,7 @@ public class KeystoneAccessDecoderTest {
                 + "            }],\n" //
                 + "            \"type\": \"rax:dns\"\n";
 
-        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(null, new StringReader(
+        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(new StringReader(
                 ACCESS_HEADER + nameThenType + SERVICE + ACCESS_FOOTER), null);
 
         assertEquals(tokenIdAndPublicUrl.tokenId, "1bcd122d87494f5ab39a185b9ec5ff73");
@@ -35,7 +35,7 @@ public class KeystoneAccessDecoderTest {
                 + "            \"name\": \"cloudDNS\",\n" //
                 + "            \"type\": \"rax:dns\"\n";
 
-        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(null, new StringReader(
+        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(new StringReader(
                 ACCESS_HEADER + noEndpoints + SERVICE + ACCESS_FOOTER), null);
 
         assertEquals(tokenIdAndPublicUrl.tokenId, "1bcd122d87494f5ab39a185b9ec5ff73");
@@ -44,7 +44,7 @@ public class KeystoneAccessDecoderTest {
 
     @Test
     public void serviceNotFound() throws Throwable {
-        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(null, new StringReader(
+        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(new StringReader(
                 ACCESS_HEADER + SERVICE + ACCESS_FOOTER), null);
 
         assertEquals(tokenIdAndPublicUrl.tokenId, "1bcd122d87494f5ab39a185b9ec5ff73");
@@ -53,7 +53,7 @@ public class KeystoneAccessDecoderTest {
 
     @Test
     public void noServices() throws Throwable {
-        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(null, new StringReader(
+        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(new StringReader(
                 ACCESS_HEADER + ACCESS_FOOTER), null);
 
         assertEquals(tokenIdAndPublicUrl.tokenId, "1bcd122d87494f5ab39a185b9ec5ff73");
@@ -62,7 +62,7 @@ public class KeystoneAccessDecoderTest {
 
     @Test
     public void noToken() throws Throwable {
-        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(null, new StringReader(
+        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(new StringReader(
                 "{\n" //
                         + "    \"access\": {\n" //
                         + "        \"serviceCatalog\": [{\n"//

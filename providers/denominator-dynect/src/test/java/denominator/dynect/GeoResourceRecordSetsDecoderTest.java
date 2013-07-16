@@ -4,6 +4,7 @@ import static com.google.common.util.concurrent.Atomics.newReference;
 import static org.testng.Assert.assertEquals;
 
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -11,16 +12,13 @@ import java.util.Map;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.profile.Geo;
 import denominator.model.rdata.CNAMEData;
-import feign.Response;
 
 public class GeoResourceRecordSetsDecoderTest {
     private static final GeoResourceRecordSetsDecoder decoder = new GeoResourceRecordSetsDecoder(new Gson(),
@@ -28,12 +26,9 @@ public class GeoResourceRecordSetsDecoderTest {
 
     @Test
     public void decodeZoneListWithNext() throws Throwable {
-        Response response = Response.create(200, "OK", ImmutableMap.<String, Collection<String>> of(),
-                new InputStreamReader(getClass().getResourceAsStream("/geoservice.json")), null);
-        @SuppressWarnings({ "unchecked", "serial" })
-        Map<String, Collection<ResourceRecordSet<?>>> result = Map.class.cast(DynECTDecoder.parseDataWith(
-                newReference(true), decoder).decode(null, response, new TypeToken<List<ResourceRecordSet<?>>>() {
-        }.getType()));
+        Reader response = new InputStreamReader(getClass().getResourceAsStream("/geoservice.json"));
+        Map<String, Collection<ResourceRecordSet<?>>> result = new DynECTDecoder<Map<String, Collection<ResourceRecordSet<?>>>>(
+                newReference(true), decoder).decode(response, null);
 
         assertEquals(result.size(), 1);
         assertEquals(result.keySet(), ImmutableSet.of("denominator.io"));

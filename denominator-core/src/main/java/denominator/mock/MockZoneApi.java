@@ -12,7 +12,7 @@ import denominator.model.Zone;
 public final class MockZoneApi implements denominator.ZoneApi {
     private final Map<Zone, SortedSet<ResourceRecordSet<?>>> data;
 
-    // wildcard types are not currently injectable in dagger
+    // unbound wildcards are not currently injectable in dagger
     @SuppressWarnings({ "rawtypes", "unchecked" })
     @Inject
     MockZoneApi(Map<Zone, SortedSet<ResourceRecordSet>> data) {
