@@ -1,3 +1,6 @@
+### Version 3.2
+* add flags to the cli to reduce or increase output: -q/--quiet and -v/--verbose
+
 ### Version 3.1
 * updates to feign 3
 
