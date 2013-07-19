@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.inject.Singleton;
+
 import org.yaml.snakeyaml.Yaml;
 
 import com.google.common.base.Charsets;
@@ -33,6 +35,7 @@ import com.google.common.io.Files;
 import com.google.common.net.InternetDomainName;
 
 import dagger.ObjectGraph;
+import dagger.Provides;
 import denominator.Credentials;
 import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
@@ -57,6 +60,7 @@ import denominator.mock.MockProvider;
 import denominator.model.Zone;
 import denominator.route53.Route53Provider;
 import denominator.ultradns.UltraDNSProvider;
+import feign.Logger;
 
 public class Denominator {
     public static void main(String[] args) {
@@ -137,6 +141,12 @@ public class Denominator {
     }
 
     public static abstract class DenominatorCommand implements Runnable {
+        @Option(type = OptionType.GLOBAL, name = { "-q", "--quiet" }, description = "do not emit informational messages about http commands invoked")
+        public boolean quiet;
+
+        @Option(type = OptionType.GLOBAL, name = { "-v", "--verbose" }, description = "emit details such as http requests sent and responses received")
+        public boolean verbose;
+
         @Option(type = OptionType.GLOBAL, name = { "-p", "--provider" }, description = "provider to affect")
         public String providerName;
 
@@ -167,7 +177,14 @@ public class Denominator {
                         url = configFromFile.get("url").toString();
                 }
             }
-            Builder<Object> modulesForGraph = ImmutableList.builder().add(provider(newProvider())).add(newModule());
+            Builder<Object> modulesForGraph = ImmutableList.builder() //
+                    .add(provider(newProvider())) //
+                    .add(newModule());
+
+            Object logModule = logModule(quiet, verbose);
+            if (logModule != null)
+                modulesForGraph.add(logModule);
+
             if (credentials != null)
                 modulesForGraph.add(credentials(credentials));
             DNSApiManager mgr = null;
@@ -303,6 +320,36 @@ public class Denominator {
 
             });
         }
+    }
+
+    /**
+     * Returns a log configuration module or null if none is needed.
+     */
+    static Object logModule(boolean quiet, boolean verbose) {
+        checkArgument(!(quiet && verbose), "quiet and verbose flags cannot be used at the same time!");
+        final Logger.Level logLevel;
+        if (quiet) {
+            return null;
+        } else if (verbose) {
+            logLevel = Logger.Level.FULL;                
+        } else {
+            logLevel = Logger.Level.BASIC;
+        }
+        @dagger.Module(overrides = true, library = true)
+        class LogModule {
+            @Provides
+            @Singleton
+            Logger logger() {
+                return new Logger.ErrorLogger();
+            }
+
+            @Provides
+            @Singleton
+            Logger.Level level() {
+                return logLevel;
+            }
+        }
+        return new LogModule();
     }
 
     static String idOrName(DNSApiManager mgr, String zoneIdOrName) {

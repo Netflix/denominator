@@ -105,6 +105,58 @@ www.geo.denominator.io.                           CNAME  300   a.denominator.io.
 --snip--
 ```
 
+## Output detail
+By default, denominator emits 2 lines per http request to STDERR.  This is helpful to get high-level feedback on progress.  Ex.
+```bash
+$ denominator -p ultradns -c USERNAME -c PASSWORD zone list
+[UltraDNS#accountId] ---> POST https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 HTTP/1.1
+[UltraDNS#accountId] <--- HTTP/1.1 200 OK (1321ms)
+[UltraDNS#zonesOfAccount] ---> POST https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 HTTP/1.1
+[UltraDNS#zonesOfAccount] <--- HTTP/1.1 200 OK (106ms)
+geo.denominator.io.
+ultradnstest.denominator.io.
+```
+If you wish to omit this, add the `-q` or `--quiet` flag to your options.
+```bash
+$ denominator -q -p ultradns -c USERNAME -c PASSWORD zone list
+geo.denominator.io.
+ultradnstest.denominator.io.
+```
+If you wish more detail, including HTTP messages sent, add the `-v` or `--verbose` flag to your options.
+```bash
+$ denominator -v -p ultradns -c USERNAME -c PASSWORD zone list
+[UltraDNS#accountId] ---> POST https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 HTTP/1.1
+[UltraDNS#accountId] Content-Length: 704
+[UltraDNS#accountId] Host: ultra-api.ultradns.com
+[UltraDNS#accountId] Content-Type: application/xml
+[UltraDNS#accountId]
+[UltraDNS#accountId] <?xml version="1.0"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:v01="http://webservice.api.ultra.neustar.com/v01/">
+  <soapenv:Header>
+    <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" soapenv:mustUnderstand="1">
+      <wsse:UsernameToken>
+        <wsse:Username>USERNAME</wsse:Username>
+        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText">PASSWORD</wsse:Password>
+      </wsse:UsernameToken>
+    </wsse:Security>
+  </soapenv:Header>
+  <soapenv:Body>
+    <v01:getAccountsListOfUser/>
+  </soapenv:Body>
+</soapenv:Envelope>
+[UltraDNS#accountId] ---> END HTTP (704-byte body)
+[UltraDNS#accountId] <--- HTTP/1.1 200 OK (728ms)
+[UltraDNS#accountId] Content-Length: 399
+[UltraDNS#accountId] Content-Type: text/xml;charset=ISO-8859-1
+[UltraDNS#accountId] Server: Jetty(7.6.5.v20120716)
+[UltraDNS#accountId]
+[UltraDNS#accountId] <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><ns1:getAccountsListOfUserResponse xmlns:ns1="http://webservice.api.ultra.neustar.com/v01/"><AccountsList xmlns:ns2="http://schema.ultraservice.neustar.com/v01/"><ns2:AccountDetailsData accountID="12345678910" accountName="USERNAME"/></AccountsList></ns1:getAccountsListOfUserResponse></soap:Body></soap:Envelope>
+[UltraDNS#accountId] <--- END HTTP (399-byte body)
+--snip--
+geo.denominator.io.
+ultradnstest.denominator.io.
+```
+
 ## Hooks
 ### IAM Instance Profile
 If you are using the `route53` provider on an ec2 instance with a profile associated with it, you don't need to pass credentials. 
