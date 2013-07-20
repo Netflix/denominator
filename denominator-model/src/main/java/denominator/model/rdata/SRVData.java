@@ -4,7 +4,8 @@ import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.LinkedHashMap;
+
+import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code SRV} (Service) RData
@@ -23,7 +24,7 @@ import java.util.LinkedHashMap;
  * 
  * See <a href="http://www.ietf.org/rfc/rfc2782.txt">RFC 2782</a>
  */
-public class SRVData extends LinkedHashMap<String, Object> {
+public class SRVData extends NumbersAreUnsignedIntsLinkedHashMap {
 
     @ConstructorProperties({ "priority", "weight", "port", "target" })
     SRVData(int priority, int weight, int port, String target) {
