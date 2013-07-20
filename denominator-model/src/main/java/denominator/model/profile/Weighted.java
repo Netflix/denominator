@@ -4,9 +4,9 @@ import static denominator.common.Preconditions.checkArgument;
 import static denominator.model.ResourceRecordSets.tryFindProfile;
 
 import java.beans.ConstructorProperties;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
+import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 import denominator.model.ResourceRecordSet;
 
 /**
@@ -23,7 +23,7 @@ import denominator.model.ResourceRecordSet;
  * 
  * @since 1.3
  */
-public class Weighted extends LinkedHashMap<String, Object> {
+public class Weighted extends NumbersAreUnsignedIntsLinkedHashMap {
 
     /**
      * returns a Weighted view of the {@code profile} or null if no weighted
