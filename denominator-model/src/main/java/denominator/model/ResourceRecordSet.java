@@ -7,7 +7,6 @@ import java.beans.ConstructorProperties;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,12 +23,10 @@ import denominator.model.profile.Geo;
  * 
  *            See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class ResourceRecordSet<D extends Map<String, Object>> extends LinkedHashMap<String, Object> {
+public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAreUnsignedIntsLinkedHashMap {
 
     @SuppressWarnings("unused")
     private ResourceRecordSet() {
-        put("records", new ArrayList<D>());
-        put("profiles", new ArrayList<Map<String, Object>>());
     }
 
     @ConstructorProperties({ "name", "type", "qualifier", "ttl", "records", "profiles" })

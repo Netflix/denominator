@@ -4,7 +4,8 @@ import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.LinkedHashMap;
+
+import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code SOA} (Start of
@@ -27,7 +28,7 @@ import java.util.LinkedHashMap;
  * 
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class SOAData extends LinkedHashMap<String, Object> {
+public class SOAData extends NumbersAreUnsignedIntsLinkedHashMap {
 
     @ConstructorProperties({ "mname", "rname", "serial", "refresh", "retry", "expire", "minimum" })
     SOAData(String mname, String rname, int serial, int refresh, int retry, int expire, int minimum) {
