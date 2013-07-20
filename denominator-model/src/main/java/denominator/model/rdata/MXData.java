@@ -4,7 +4,8 @@ import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.LinkedHashMap;
+
+import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code MX} (Mail Exchange)
@@ -20,7 +21,7 @@ import java.util.LinkedHashMap;
  * 
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class MXData extends LinkedHashMap<String, Object> {
+public class MXData extends NumbersAreUnsignedIntsLinkedHashMap {
 
     public static MXData create(int preference, String exchange) {
         return new MXData(preference, exchange);

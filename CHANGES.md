@@ -1,3 +1,6 @@
+### Version 3.2.1
+* correct serialization of rrset into json when using gson
+
 ### Version 3.2
 * add flags to the cli to reduce or increase output: -q/--quiet and -v/--verbose
 

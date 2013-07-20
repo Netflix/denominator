@@ -20,17 +20,30 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.InstanceCreator;
+import com.google.gson.TypeAdapter;
+import com.google.gson.internal.ConstructorConstructor;
+import com.google.gson.internal.bind.MapTypeAdapterFactory;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 import denominator.model.profile.Geo;
 import denominator.model.profile.Weighted;
@@ -332,5 +345,45 @@ public class ResourceRecordSetsTest {
         assertEquals(ImmutableList.copyOf(shortForm.records()), ImmutableList.copyOf(longForm.records()));
         assertEquals(new ObjectMapper().writeValueAsString(shortForm), json);
         assertEquals(new ObjectMapper().readValue(json, Map.class), shortForm);
+        assertEquals(new ObjectMapper().readValue(json, TypeFactory.defaultInstance().constructType(MAP_STRING_OBJECT.getType())),
+                shortForm);
+        assertEquals(new ObjectMapper().readValue(json, TypeFactory.defaultInstance().constructType(RRSET_STRING_OBJECT.getType())),
+                shortForm);assertEquals(gson.toJson(shortForm), json);
+        assertEquals(gson.fromJson(json, Map.class), shortForm);
+        assertEquals(gson.fromJson(json, MAP_STRING_OBJECT.getType()), shortForm);
+        assertEquals(gson.fromJson(json, RRSET_STRING_OBJECT.getType()), shortForm);
     }
+
+    private static final TypeToken<Map<String, Object>> MAP_STRING_OBJECT = new TypeToken<Map<String, Object>>() {
+    };
+
+    private static final TypeToken<ResourceRecordSet<Map<String, Object>>> RRSET_STRING_OBJECT = new TypeToken<ResourceRecordSet<Map<String, Object>>>() {
+    };
+
+    private final TypeAdapter<Map<String, Object>> doubleToInt = new TypeAdapter<Map<String, Object>>() {
+        TypeAdapter<Map<String, Object>> delegate = new MapTypeAdapterFactory(new ConstructorConstructor(
+                Collections.<Type, InstanceCreator<?>> emptyMap()), false).create(new Gson(), MAP_STRING_OBJECT);
+
+        @Override
+        public void write(JsonWriter out, Map<String, Object> value) throws IOException {
+            delegate.write(out, value);
+        }
+
+        @Override
+        public Map<String, Object> read(JsonReader in) throws IOException {
+            Map<String, Object> map = delegate.read(in);
+            for (Entry<String, Object> entry : map.entrySet()) {
+                if (entry.getValue() instanceof Double) {
+                    entry.setValue(Double.class.cast(entry.getValue()).intValue());
+                }
+            }
+            return map;
+        }
+    }.nullSafe();
+
+    // deals with scenario where gson Object type treats all numbers as doubles.
+    protected final Gson gson = new GsonBuilder()//
+            .disableHtmlEscaping()//
+            .registerTypeAdapter(Map.class, doubleToInt)//
+            .registerTypeAdapter(MAP_STRING_OBJECT.getType(), doubleToInt).create();
 }

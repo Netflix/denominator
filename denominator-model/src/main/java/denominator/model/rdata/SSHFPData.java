@@ -4,7 +4,8 @@ import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
-import java.util.LinkedHashMap;
+
+import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 /**
  * Corresponds to the binary representation of the {@code SSHFP} (SSH
@@ -23,7 +24,7 @@ import java.util.LinkedHashMap;
  * 
  * See <a href="http://www.rfc-editor.org/rfc/rfc4255.txt">RFC 4255</a>
  */
-public class SSHFPData extends LinkedHashMap<String, Object> {
+public class SSHFPData extends NumbersAreUnsignedIntsLinkedHashMap {
 
     /**
      * @param fingerprint
