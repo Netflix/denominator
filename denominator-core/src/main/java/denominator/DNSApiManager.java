@@ -12,12 +12,14 @@ import javax.inject.Inject;
 public class DNSApiManager implements Closeable {
     private final Provider provider;
     private final DNSApi api;
+    private final CheckConnection checkConnection;
     private final Closeable closer;
 
     @Inject
-    DNSApiManager(Provider provider, DNSApi api, Closeable closer) {
+    DNSApiManager(Provider provider, DNSApi api, CheckConnection checkConnection, Closeable closer) {
         this.provider = provider;
         this.api = api;
+        this.checkConnection = checkConnection;
         this.closer = closer;
     }
 
@@ -33,6 +35,15 @@ public class DNSApiManager implements Closeable {
      */
     public Provider provider() {
         return provider;
+    }
+
+    /**
+     * Returns true, if api commands are likely to succeed.
+     * 
+     * @see CheckConnection
+     */
+    public boolean checkConnection() {
+        return checkConnection.ok();
     }
 
     /**

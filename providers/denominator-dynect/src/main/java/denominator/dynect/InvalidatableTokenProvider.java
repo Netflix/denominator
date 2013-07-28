@@ -8,9 +8,11 @@ import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import denominator.CheckConnection;
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
 import feign.Body;
+import feign.Headers;
 import feign.RequestLine;
 
 /**
@@ -18,12 +20,16 @@ import feign.RequestLine;
  */
 // similar to guava MemoizingSupplier
 @Singleton
-class InvalidatableTokenProvider implements Provider<String> {
+class InvalidatableTokenProvider implements Provider<String>, CheckConnection {
     interface Session {
         @RequestLine("POST /Session")
         @Body("%7B\"customer_name\":\"{customer_name}\",\"user_name\":\"{user_name}\",\"password\":\"{password}\"%7D")
         String login(@Named("customer_name") String customer, @Named("user_name") String user,
                 @Named("password") String password);
+
+        @RequestLine("GET /Session")
+        @Headers("Auth-Token: {Auth-Token}")
+        void check(@Named("Auth-Token") String token);
     }
 
     private final denominator.Provider provider;
@@ -47,8 +53,14 @@ class InvalidatableTokenProvider implements Provider<String> {
         this.lastUrl = provider.url();
     }
 
-    public void invalidate() {
-        sessionValid.set(false);
+    @Override
+    public boolean ok() {
+        try {
+            session.check(get());
+            return true;
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     @Override

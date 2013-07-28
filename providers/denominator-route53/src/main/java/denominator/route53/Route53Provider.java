@@ -20,6 +20,7 @@ import javax.inject.Singleton;
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.BasicProvider;
+import denominator.CheckConnection;
 import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
@@ -88,6 +89,11 @@ public class Route53Provider extends BasicProvider {
     @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
             GeoUnsupported.class, InstanceProfileCredentialsProvider.class, FeignModule.class })
     public static final class Module {
+
+        @Provides
+        CheckConnection checkConnection(HostedZonesReadable checkConnection) {
+            return checkConnection;
+        }
 
         @Provides
         @Singleton

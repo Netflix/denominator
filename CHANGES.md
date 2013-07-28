@@ -1,3 +1,6 @@
+### Version 3.3
+* add `DNSApiManager.checkConnection()`
+
 ### Version 3.2.1
 * correct serialization of rrset into json when using gson
 

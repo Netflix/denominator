@@ -31,12 +31,78 @@ import denominator.model.Zone;
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
 import denominator.ultradns.UltraDNS.NameAndType;
+import denominator.ultradns.UltraDNS.NetworkStatus;
 import denominator.ultradns.UltraDNS.Record;
 import feign.Feign;
+import feign.codec.DecodeException;
 
 @Test(singleThreaded = true)
 public class UltraDNSTest {
     static String SOAP_TEMPLATE = format(denominator.ultradns.UltraDNSTarget.SOAP_TEMPLATE, "joe", "letmein", "%s");
+
+    static String getNeustarNetworkStatus = format(SOAP_TEMPLATE, "<v01:getNeustarNetworkStatus/>");
+
+    static String getNeustarNetworkStatusResponse = ""//
+            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
+            + "  <soap:Body>\n"//
+            + "    <ns1:getNeustarNetworkStatusResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
+            + "      <NeustarNetworkStatus xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Good</NeustarNetworkStatus>\n"//
+            + "    </ns1:getNeustarNetworkStatusResponse>\n"//
+            + "  </soap:Body>\n"//
+            + "</soap:Envelope>";
+
+    @Test
+    public void networkGood() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getNeustarNetworkStatusResponse));
+        server.play();
+
+        try {
+            assertEquals(mockApi(server.getUrl("")).networkStatus(), NetworkStatus.GOOD);
+
+            assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    static String getNeustarNetworkStatusFailedResponse = ""//
+            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
+            + "  <soap:Body>\n"//
+            + "    <ns1:getNeustarNetworkStatusResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
+            + "      <NeustarNetworkStatus xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Failed</NeustarNetworkStatus>\n"//
+            + "    </ns1:getNeustarNetworkStatusResponse>\n"//
+            + "  </soap:Body>\n"//
+            + "</soap:Envelope>";
+
+    @Test
+    public void networkFailed() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(getNeustarNetworkStatusFailedResponse));
+        server.play();
+
+        try {
+            assertEquals(mockApi(server.getUrl("")).networkStatus(), NetworkStatus.FAILED);
+
+            assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    @Test(expectedExceptions = DecodeException.class, expectedExceptionsMessageRegExp = "couldn't parse networkstatus from: \\{\"foo\": \"bar\"\\}")
+    public void networkStatusCantParse() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"foo\": \"bar\"}"));
+        server.play();
+
+        try {
+            mockApi(server.getUrl("")).networkStatus();
+        } finally {
+            assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
+            server.shutdown();
+        }
+    }
 
     static String getAccountsListOfUser = format(SOAP_TEMPLATE, "<v01:getAccountsListOfUser/>");
 

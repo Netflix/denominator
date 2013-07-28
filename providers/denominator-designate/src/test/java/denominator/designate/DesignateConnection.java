@@ -22,26 +22,29 @@ public class DesignateConnection {
         String username = emptyToNull(getProperty("designate.username"));
         String password = emptyToNull(getProperty("designate.password"));
         if (username != null && password != null) {
-            DesignateProvider provider = new DesignateProvider(emptyToNull(getProperty("designate.url")));
-            @Module(overrides = true)
-            class Overrides {
-                @Provides
-                @Singleton
-                Logger.Level provideLevel() {
-                    return Logger.Level.FULL;
-                }
-
-                @Provides
-                @Singleton
-                Logger provideLogger() {
-                    return new Logger.JavaLogger().appendToFile("build/http-wire.log");
-                }
-            }
-            manager = Denominator.create(provider, credentials(tenantId, username, password), new Overrides());
+            manager = create(tenantId, username, password);
         } else {
             manager = null;
         }
         mutableZone = emptyToNull(getProperty("designate.zone"));
     }
 
+    static DNSApiManager create(String tenantId, String username, String password) {
+        DesignateProvider provider = new DesignateProvider(emptyToNull(getProperty("designate.url")));
+        @Module(overrides = true)
+        class Overrides {
+            @Provides
+            @Singleton
+            Logger.Level provideLevel() {
+                return Logger.Level.FULL;
+            }
+
+            @Provides
+            @Singleton
+            Logger provideLogger() {
+                return new Logger.JavaLogger().appendToFile("build/http-wire.log");
+            }
+        }
+        return Denominator.create(provider, credentials(tenantId, username, password), new Overrides());
+    }
 }

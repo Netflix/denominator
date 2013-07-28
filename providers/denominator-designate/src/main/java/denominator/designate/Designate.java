@@ -10,6 +10,10 @@ import feign.RequestLine;
 
 // http://docs.hpcloud.com/api/dns/#4.RESTAPISpecifications
 public interface Designate {
+    // String result as we really don't care at the moment
+    @RequestLine("GET /limits")
+    String limits();
+
     @RequestLine("GET /domains")
     List<Zone> domains();
 
