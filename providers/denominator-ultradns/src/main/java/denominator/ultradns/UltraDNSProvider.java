@@ -28,6 +28,7 @@ import javax.inject.Singleton;
 
 import dagger.Provides;
 import denominator.BasicProvider;
+import denominator.CheckConnection;
 import denominator.DNSApiManager;
 import denominator.QualifiedResourceRecordSetApi.Factory;
 import denominator.ResourceRecordSetApi;
@@ -39,6 +40,7 @@ import denominator.profile.GeoResourceRecordSetApi;
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
 import denominator.ultradns.UltraDNS.NameAndType;
+import denominator.ultradns.UltraDNS.NetworkStatus;
 import denominator.ultradns.UltraDNS.Record;
 import denominator.ultradns.UltraDNSContentHandlers.DirectionalGroupHandler;
 import denominator.ultradns.UltraDNSContentHandlers.DirectionalRecordListHandler;
@@ -47,13 +49,16 @@ import denominator.ultradns.UltraDNSContentHandlers.RecordListHandler;
 import denominator.ultradns.UltraDNSContentHandlers.RegionTableHandler;
 import feign.Feign;
 import feign.Feign.Defaults;
+import feign.FeignException;
 import feign.ReflectiveFeign;
+import feign.codec.DecodeException;
 import feign.codec.Decoder;
 import feign.codec.Decoders.ApplyFirstGroup;
 import feign.codec.Decoders.TransformEachFirstGroup;
 import feign.codec.Encoder;
 import feign.codec.ErrorDecoder;
 import feign.codec.SAXDecoder;
+import feign.codec.StringDecoder;
 
 public class UltraDNSProvider extends BasicProvider {
     private final String url;
@@ -113,6 +118,11 @@ public class UltraDNSProvider extends BasicProvider {
     public static final class Module {
 
         @Provides
+        CheckConnection checkConnection(NetworkStatusReadable checkConnection) {
+            return checkConnection;
+        }
+
+        @Provides
         @Singleton
         Closeable provideCloser(Feign feign) {
             return feign;
@@ -156,6 +166,27 @@ public class UltraDNSProvider extends BasicProvider {
     @dagger.Module(injects = UltraDNSResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
             Defaults.class, ReflectiveFeign.Module.class })
     public static final class FeignModule {
+
+        @Provides(type = SET)
+        Decoder networkStatusDecoder() {
+            return new Decoder.TextStream<NetworkStatus>() {
+                private StringDecoder decoder = new StringDecoder();
+
+                @Override
+                public NetworkStatus decode(Reader input, Type type) throws IOException, DecodeException,
+                        FeignException {
+                    String body = decoder.decode(input, String.class);
+                    if (body == null)
+                        throw new DecodeException("no response body parsing network status");
+                    if (body.contains("Good")) {
+                        return NetworkStatus.GOOD;
+                    } else if (body.contains("Failed")) {
+                        return NetworkStatus.FAILED;
+                    }
+                    throw new DecodeException(format("couldn't parse networkstatus from: %s", body));
+                }
+            };
+        }
 
         @Provides(type = SET)
         Decoder recordListDecoder(Provider<RecordListHandler> handlers) {

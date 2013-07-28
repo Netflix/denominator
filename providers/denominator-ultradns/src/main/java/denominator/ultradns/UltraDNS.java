@@ -14,6 +14,16 @@ import feign.Body;
 import feign.RequestLine;
 
 interface UltraDNS {
+
+    @RequestLine("POST")
+    @Body("<v01:getNeustarNetworkStatus/>")
+    NetworkStatus networkStatus();
+
+    static enum NetworkStatus {
+        GOOD,
+        FAILED;
+    }
+
     @RequestLine("POST")
     @Body("<v01:getAccountsListOfUser/>")
     String accountId();

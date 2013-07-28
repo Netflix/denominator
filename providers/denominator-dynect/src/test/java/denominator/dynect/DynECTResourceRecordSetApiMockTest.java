@@ -3,6 +3,7 @@ package denominator.dynect;
 import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.io.Resources.getResource;
 import static denominator.CredentialsConfiguration.credentials;
+import static denominator.dynect.DynECTProviderDynamicUpdateMockTest.session;
 import static denominator.model.ResourceRecordSets.a;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -36,7 +37,6 @@ public class DynECTResourceRecordSetApiMockTest {
         recordsByName = Resources.toString(getResource("recordsByName.json"), UTF_8);
     }
 
-    String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.5.0\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
     String success = "{\"status\": \"success\", \"data\": {}, \"job_id\": 262989027, \"msgs\": [{\"INFO\": \"thing done\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
     String createRecord1 = ""//

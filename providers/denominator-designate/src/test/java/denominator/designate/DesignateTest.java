@@ -107,6 +107,31 @@ public class DesignateTest {
         }
     }
 
+    static String limitsResponse = ""//
+            + "{\n" //
+            + "  \"limits\": {\n" //
+            + "    \"absolute\": {\n" //
+            + "      \"maxDomains\": 20,\n" //
+            + "      \"maxDomainRecords\": 5000\n" //
+            + "    }\n" //
+            + "  }\n" //
+            + "}";
+
+    @Test
+    public void limitsSuccess() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(limitsResponse));
+        server.play();
+
+        try {
+            assertEquals(mockApi(server.getUrl("")).limits(), limitsResponse);
+
+            assertEquals(server.takeRequest().getRequestLine(), "GET /v1/limits HTTP/1.1");
+        } finally {
+            server.shutdown();
+        }
+    }
+
     static String domainId = "62ac4caf-6108-4b74-b6fe-460967db32a7";
 
     static String domainsResponse = ""//

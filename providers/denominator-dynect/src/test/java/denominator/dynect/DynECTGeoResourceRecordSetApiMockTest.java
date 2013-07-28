@@ -1,6 +1,7 @@
 package denominator.dynect;
 
 import static denominator.CredentialsConfiguration.credentials;
+import static denominator.dynect.DynECTProviderDynamicUpdateMockTest.session;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
@@ -25,8 +26,6 @@ import denominator.profile.GeoResourceRecordSetApi;
 
 @Test(singleThreaded = true)
 public class DynECTGeoResourceRecordSetApiMockTest {
-
-    String session = "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.5.0\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
     String noGeoServices = "{\"status\": \"success\", \"data\": [] }";
     String geoService;
