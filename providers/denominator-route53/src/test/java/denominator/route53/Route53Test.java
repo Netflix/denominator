@@ -21,6 +21,25 @@ import feign.Feign;
 @Test(singleThreaded = true)
 public class Route53Test {
 
+    static String hostedZones = ""//
+            + "<ListHostedZonesResponse><HostedZones>"//
+            + "<HostedZone><Id>/hostedzone/Z1PA6795UKMFR9</Id><Name>denominator.io.</Name><CallerReference>denomination</CallerReference><Config><Comment>no comment</Comment></Config><ResourceRecordSetCount>17</ResourceRecordSetCount></HostedZone>"//
+            + "</HostedZones></ListHostedZonesResponse>";
+
+    static String noHostedZones = ""//
+            + "<ListHostedZonesResponse><HostedZones /></ListHostedZonesResponse>";
+
+    static String invalidClientTokenId = ""//
+            + "<?xml version=\"1.0\"?>\n"//
+            + "<ErrorResponse xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">"//
+            + "<Error>"//
+            + "<Type>Sender</Type>"//
+            + "<Code>InvalidClientTokenId</Code>"//
+            + "<Message>The security token included in the request is invalid</Message>"//
+            + "</Error>"//
+            + "<RequestId>d3801bc8-f70d-11e2-8a6e-435ba83aa63f</RequestId>"//
+            + "</ErrorResponse>";
+
     static String changeResourceRecordSetsRequestCreateA = ""//
             + "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">"//
             + "<ChangeBatch><Changes><Change><Action>CREATE</Action>"//

@@ -20,6 +20,7 @@ import javax.inject.Singleton;
 import dagger.Provides;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.BasicProvider;
+import denominator.CheckConnection;
 import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
@@ -70,6 +71,15 @@ public class MockProvider extends BasicProvider {
     @dagger.Module(injects = DNSApiManager.class, complete = false, // denominator.Provider
     includes = NothingToClose.class)
     public static final class Module {
+
+        @Provides
+        CheckConnection alwaysOK() {
+            return new CheckConnection() {
+                public boolean ok() {
+                    return true;
+                }
+            };
+        }
 
         @Provides
         ZoneApi provideZoneApi(MockZoneApi in) {

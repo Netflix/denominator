@@ -21,26 +21,30 @@ public class CloudDNSConnection {
         String username = emptyToNull(getProperty("clouddns.username"));
         String apiKey = emptyToNull(getProperty("clouddns.apiKey"));
         if (username != null && apiKey != null) {
-            CloudDNSProvider provider = new CloudDNSProvider(emptyToNull(getProperty("clouddns.url")));
-            @Module(overrides = true)
-            class Overrides {
-                @Provides
-                @Singleton
-                Logger.Level provideLevel() {
-                    return Logger.Level.FULL;
-                }
-
-                @Provides
-                @Singleton
-                Logger provideLogger() {
-                    return new Logger.JavaLogger().appendToFile("build/http-wire.log");
-                }
-            }
-            manager = Denominator.create(provider, credentials(username, apiKey), new Overrides());
+            manager = create(username, apiKey);
         } else {
             manager = null;
         }
         mutableZone = emptyToNull(getProperty("clouddns.zone"));
+    }
+
+    static DNSApiManager create(String username, String apiKey) {
+        CloudDNSProvider provider = new CloudDNSProvider(emptyToNull(getProperty("clouddns.url")));
+        @Module(overrides = true)
+        class Overrides {
+            @Provides
+            @Singleton
+            Logger.Level provideLevel() {
+                return Logger.Level.FULL;
+            }
+
+            @Provides
+            @Singleton
+            Logger provideLogger() {
+                return new Logger.JavaLogger().appendToFile("build/http-wire.log");
+            }
+        }
+        return Denominator.create(provider, credentials(username, apiKey), new Overrides());
     }
 
 }

@@ -22,25 +22,29 @@ public class DynECTConnection {
         String username = emptyToNull(getProperty("dynect.username"));
         String password = emptyToNull(getProperty("dynect.password"));
         if (customer != null && username != null && password != null) {
-            DynECTProvider provider = new DynECTProvider(emptyToNull(getProperty("dynect.url")));
-            @Module(overrides = true)
-            class Overrides {
-                @Provides
-                @Singleton
-                Logger.Level provideLevel() {
-                    return Logger.Level.FULL;
-                }
-
-                @Provides
-                @Singleton
-                Logger provideLogger() {
-                    return new Logger.JavaLogger().appendToFile("build/http-wire.log");
-                }
-            }
-            manager = Denominator.create(provider, credentials(customer, username, password), new Overrides());
+            manager = create(customer, username, password);
         } else {
             manager = null;
         }
         mutableZone = emptyToNull(getProperty("dynect.zone"));
+    }
+
+    static DNSApiManager create(String customer, String username, String password) {
+        DynECTProvider provider = new DynECTProvider(emptyToNull(getProperty("dynect.url")));
+        @Module(overrides = true)
+        class Overrides {
+            @Provides
+            @Singleton
+            Logger.Level provideLevel() {
+                return Logger.Level.FULL;
+            }
+
+            @Provides
+            @Singleton
+            Logger provideLogger() {
+                return new Logger.JavaLogger().appendToFile("build/http-wire.log");
+            }
+        }
+        return Denominator.create(provider, credentials(customer, username, password), new Overrides());
     }
 }

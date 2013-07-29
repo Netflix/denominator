@@ -166,6 +166,15 @@ public class DynamicCredentialsProviderExampleTest {
                 List<String> strings = Lists.transform(ListCredentials.class.cast(creds), toStringFunction());
                 return new CustomerUsernamePassword(strings.get(0), strings.get(1), strings.get(2));
             }
+
+            @Provides
+            CheckConnection alwaysOK() {
+                return new CheckConnection() {
+                    public boolean ok() {
+                        return true;
+                    }
+                };
+            }
         }
     }
 

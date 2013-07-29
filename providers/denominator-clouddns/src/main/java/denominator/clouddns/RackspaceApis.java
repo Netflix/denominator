@@ -31,6 +31,11 @@ class RackspaceApis {
     }
 
     static interface CloudDNS {
+
+        // String result as we really don't care at the moment
+        @RequestLine("GET /limits")
+        String limits();
+
         @RequestLine("GET")
         ListWithNext<Zone> domains(URI href);
 
