@@ -18,6 +18,7 @@ import javax.inject.Singleton;
 
 import dagger.Provides;
 import denominator.BasicProvider;
+import denominator.CheckConnection;
 import denominator.DNSApiManager;
 import denominator.QualifiedResourceRecordSetApi.Factory;
 import denominator.ResourceRecordSetApi;
@@ -90,6 +91,11 @@ public class DynECTProvider extends BasicProvider {
     @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
             WeightedUnsupported.class, ConcatBasicAndQualifiedResourceRecordSets.class, FeignModule.class })
     public static final class Module {
+
+        @Provides
+        CheckConnection checkConnection(InvalidatableTokenProvider checkConnection) {
+            return checkConnection;
+        }
 
         @Provides
         @Singleton
