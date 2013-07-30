@@ -24,6 +24,10 @@ public interface DynECT {
     @RequestLine("GET /AllRecord/{zone}?detail=Y")
     Iterator<ResourceRecordSet<?>> rrsets(@Named("zone") String zone);
 
+    @RequestLine("POST /CheckPermissionReport")
+    @Body("{\"permission\":[\"GeoUpdate\",\"GeoDelete\",\"GeoGet\",\"GeoActivate\",\"GeoDeactivate\"]}")
+    Boolean hasAllGeoPermissions();
+
     @RequestLine("GET /Geo?detail=Y")
     Map<String, Collection<ResourceRecordSet<?>>> geoRRSetsByZone();
 

@@ -90,6 +90,6 @@ public abstract class BasicProvider implements Provider {
     @Override
     public String toString() {
         return new StringBuilder().append(getClass().getSimpleName()).append('{').append("name=").append(name())
-                .append(',').append("url").append(url()).append('}').toString();
+                .append(',').append("url=").append(url()).append('}').toString();
     }
 }

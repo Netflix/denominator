@@ -2,6 +2,7 @@ package denominator.dynect;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.io.IOException;
@@ -15,6 +16,7 @@ import org.testng.annotations.Test;
 import com.google.gson.Gson;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
+import com.google.mockwebserver.RecordedRequest;
 
 import dagger.Module;
 import dagger.Provides;
@@ -26,6 +28,109 @@ import feign.Feign;
  * @author Adrian Cole
  */
 public class DynECTTest {
+
+    static String allGeoPermissions = ""//
+            + "{\n"//
+            + "    \"status\": \"success\",\n"//
+            + "    \"data\": {\n"//
+            + "        \"forbidden\": [],\n"//
+            + "        \"admin_override\": \"1\",\n"//
+            + "        \"allowed\": [{\n"//
+            + "            \"reason\": [\"\"],\n"//
+            + "            \"name\": \"GeoUpdate\",\n"//
+            + "            \"zone\": []\n"//
+            + "        }, {\n"//
+            + "            \"reason\": [\"\"],\n"//
+            + "            \"name\": \"GeoGet\",\n"//
+            + "            \"zone\": []\n"//
+            + "        }, {\n"//
+            + "            \"reason\": [\"\"],\n"//
+            + "            \"name\": \"GeoDelete\",\n"//
+            + "            \"zone\": []\n"//
+            + "        }, {\n"//
+            + "            \"reason\": [\"\"],\n"//
+            + "            \"name\": \"GeoActivate\",\n"//
+            + "            \"zone\": []\n"//
+            + "        }, {\n"//
+            + "            \"reason\": [\"\"],\n"//
+            + "            \"name\": \"GeoDeactivate\",\n"//
+            + "            \"zone\": []\n"//
+            + "        }]\n"//
+            + "    },\n"//
+            + "    \"job_id\": 428974777\n"//
+            + "}";
+
+    @Test
+    public void hasAllGeoPermissions() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
+        server.play();
+
+        try {
+            DynECT api = mockApi(server.getUrl(""));
+            assertTrue(api.hasAllGeoPermissions());
+
+            assertEquals(server.getRequestCount(), 1);
+            RecordedRequest checkGeoPermissions = server.takeRequest();
+            assertEquals(checkGeoPermissions.getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
+            assertEquals(new String(checkGeoPermissions.getBody()),
+                    "{\"permission\":[\"GeoUpdate\",\"GeoDelete\",\"GeoGet\",\"GeoActivate\",\"GeoDeactivate\"]}");
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    static String noGeoPermissions = ""//
+            + "{\n"//
+            + "    \"status\": \"success\",\n"//
+            + "    \"data\": {\n"//
+            + "        \"allowed\": [],\n"//
+            + "        \"admin_override\": \"1\",\n"//
+            + "        \"forbidden\": [{\n"//
+            + "            \"reason\": [\"permission not found\"],\n"//
+            + "            \"name\": \"GeoUpdate\",\n"//
+            + "            \"zone\": []\n"//
+            + "        }, {\n"//
+            + "            \"reason\": [\"permission not found\"],\n"//
+            + "            \"name\": \"GeoGet\",\n"//
+            + "            \"zone\": []\n"//
+            + "        }, {\n"//
+            + "            \"reason\": [\"permission not found\"],\n"//
+            + "            \"name\": \"GeoDelete\",\n"//
+            + "            \"zone\": []\n"//
+            + "        }, {\n"//
+            + "            \"reason\": [\"permission not found\"],\n"//
+            + "            \"name\": \"GeoActivate\",\n"//
+            + "            \"zone\": []\n"//
+            + "        }, {\n"//
+            + "            \"reason\": [\"permission not found\"],\n"//
+            + "            \"name\": \"GeoDeactivate\",\n"//
+            + "            \"zone\": []\n"//
+            + "        }]\n"//
+            + "    },\n"//
+            + "    \"job_id\": 428974777\n"//
+            + "}";
+
+    @Test
+    public void doesntHaveGeoPermissions() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoPermissions));
+        server.play();
+
+        try {
+            DynECT api = mockApi(server.getUrl(""));
+            assertFalse(api.hasAllGeoPermissions());
+
+            assertEquals(server.getRequestCount(), 1);
+            RecordedRequest checkGeoPermissions = server.takeRequest();
+            assertEquals(checkGeoPermissions.getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
+            assertEquals(new String(checkGeoPermissions.getBody()),
+                    "{\"permission\":[\"GeoUpdate\",\"GeoDelete\",\"GeoGet\",\"GeoActivate\",\"GeoDeactivate\"]}");
+        } finally {
+            server.shutdown();
+        }
+    }
+
     static String zones ="{\"status\": \"success\", \"data\": [\"/REST/Zone/0.0.0.0.d.6.e.0.0.a.2.ip6.arpa/\", \"/REST/Zone/126.12.44.in-addr.arpa/\", \"/REST/Zone/denominator.io/\"], \"job_id\": 260657587, \"msgs\": [{\"INFO\": \"get: Your 3 zones\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
     @Test
