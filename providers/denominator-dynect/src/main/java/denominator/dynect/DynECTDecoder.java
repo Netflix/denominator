@@ -35,6 +35,22 @@ class DynECTDecoder<T> implements Decoder.TextStream<T> {
         T apply(JsonReader reader) throws IOException;
     }
 
+    static enum NothingForbiddenDecoder implements Parser<Boolean> {
+        INSTANCE;
+
+        @Override
+        public Boolean apply(JsonReader reader) throws IOException {
+            try {
+                return new JsonParser().parse(reader).getAsJsonObject().get("forbidden").getAsJsonArray().size() == 0;
+            } catch (JsonIOException e) {
+                if (e.getCause() != null && e.getCause() instanceof IOException) {
+                    throw IOException.class.cast(e.getCause());
+                }
+                throw e;
+            }
+        }
+    }
+
     static enum TokenDecoder implements Parser<String> {
         INSTANCE;
 

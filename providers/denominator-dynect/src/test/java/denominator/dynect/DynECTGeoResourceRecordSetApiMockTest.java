@@ -2,6 +2,8 @@ package denominator.dynect;
 
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.dynect.DynECTProviderDynamicUpdateMockTest.session;
+import static denominator.dynect.DynECTTest.allGeoPermissions;
+import static denominator.dynect.DynECTTest.noGeoPermissions;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
@@ -73,6 +75,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void listWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
         server.play();
 
@@ -84,8 +87,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             assertEquals(iterator.next(), fallback);
             assertFalse(iterator.hasNext());
 
-            assertEquals(server.getRequestCount(), 2);
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
@@ -96,6 +100,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void iterateByNameWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
         server.play();
 
@@ -107,9 +112,28 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             assertEquals(iterator.next(), fallback);
             assertFalse(iterator.hasNext());
 
+            assertEquals(server.getRequestCount(), 3);
+            assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void iterateByNameWhenNoPermissions() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoPermissions));
+        server.play();
+
+        try {
+            assertNull(mockApi(server.getUrl("")));
+
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -119,6 +143,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void iterateByNameWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoServices));
         server.play();
 
@@ -126,8 +151,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
-            assertEquals(server.getRequestCount(), 2);
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
@@ -138,6 +164,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void iterateByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
         server.play();
 
@@ -149,8 +176,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             assertEquals(iterator.next(), fallback);
             assertFalse(iterator.hasNext());
 
-            assertEquals(server.getRequestCount(), 2);
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
@@ -161,6 +189,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void iterateByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoServices));
         server.play();
 
@@ -168,8 +197,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertFalse(api.iterateByNameAndType("www.denominator.io", "A").hasNext());
 
-            assertEquals(server.getRequestCount(), 2);
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
@@ -180,6 +210,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void getByNameTypeAndQualifierWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
         server.play();
 
@@ -187,8 +218,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertEquals(api.getByNameTypeAndQualifier("srv.denominator.io", "CNAME", "Fallback"), fallback);
 
-            assertEquals(server.getRequestCount(), 2);
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
@@ -199,6 +231,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
     public void getByNameTypeAndQualifierWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoServices));
         server.play();
 
@@ -206,8 +239,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
             assertNull(api.getByNameTypeAndQualifier("www.denominator.io", "A", "Fallback"));
 
-            assertEquals(server.getRequestCount(), 2);
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
