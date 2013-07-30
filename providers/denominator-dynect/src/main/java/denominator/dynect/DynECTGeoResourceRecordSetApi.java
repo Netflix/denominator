@@ -1,7 +1,7 @@
 package denominator.dynect;
 
-import static denominator.common.Util.and;
 import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.and;
 import static denominator.common.Util.filter;
 import static denominator.common.Util.nextOrNull;
 import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
@@ -17,6 +17,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import dagger.Lazy;
 import denominator.common.Filter;
 import denominator.model.ResourceRecordSet;
 import denominator.profile.GeoResourceRecordSetApi;
@@ -72,17 +73,22 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
 
     static final class Factory implements GeoResourceRecordSetApi.Factory {
         private final Map<String, Collection<String>> regions;
+        private final Lazy<Boolean> hasAllGeoPermissions;
         private final DynECT api;
 
         @Inject
-        Factory(@Named("geo") Map<String, Collection<String>> regions, DynECT api) {
+        Factory(@Named("geo") Map<String, Collection<String>> regions,
+                @Named("hasAllGeoPermissions") Lazy<Boolean> hasAllGeoPermissions, DynECT api) {
             this.regions = regions;
+            this.hasAllGeoPermissions = hasAllGeoPermissions;
             this.api = api;
         }
 
         @Override
         public GeoResourceRecordSetApi create(String idOrName) {
             checkNotNull(idOrName, "idOrName was null");
+            if (!hasAllGeoPermissions.get())
+                return null;
             return new DynECTGeoResourceRecordSetApi(regions, api, idOrName);
         }
     }

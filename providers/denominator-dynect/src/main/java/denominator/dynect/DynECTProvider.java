@@ -26,6 +26,7 @@ import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
 import denominator.config.WeightedUnsupported;
 import denominator.dynect.DynECT.Record;
+import denominator.dynect.DynECTDecoder.NothingForbiddenDecoder;
 import denominator.dynect.DynECTDecoder.RecordIdsDecoder;
 import denominator.dynect.DynECTDecoder.RecordsByNameAndTypeDecoder;
 import denominator.dynect.DynECTDecoder.TokenDecoder;
@@ -111,6 +112,13 @@ public class DynECTProvider extends BasicProvider {
 
         @Provides
         @Singleton
+        @Named("hasAllGeoPermissions")
+        Boolean hasAllGeoPermissions(DynECT api) {
+            return api.hasAllGeoPermissions();
+        }
+
+        @Provides
+        @Singleton
         GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(DynECTGeoResourceRecordSetApi.Factory in) {
             return in;
         }
@@ -163,6 +171,12 @@ public class DynECTProvider extends BasicProvider {
         @Provides(type = SET)
         Decoder loginDecoder(AtomicReference<Boolean> sessionValid) {
             return new DynECTDecoder<String>(sessionValid, TokenDecoder.INSTANCE) {
+            };
+        }
+
+        @Provides(type = SET)
+        Decoder hasAllGeoPermissionsDecoder(AtomicReference<Boolean> sessionValid) {
+            return new DynECTDecoder<Boolean>(sessionValid, NothingForbiddenDecoder.INSTANCE) {
             };
         }
 
