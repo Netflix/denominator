@@ -1,5 +1,6 @@
 ### Version 3.3
 * add `DNSApiManager.checkConnection()`
+* validates geo permissions before attempting commands on dynect.
 
 ### Version 3.2.1
 * correct serialization of rrset into json when using gson
