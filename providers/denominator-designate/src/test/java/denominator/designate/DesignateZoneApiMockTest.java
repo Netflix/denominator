@@ -13,7 +13,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Iterator;
 
 import org.testng.annotations.Test;
@@ -33,14 +32,14 @@ public class DesignateZoneApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
         server.enqueue(new MockResponse().setBody(domainsResponse));
 
         try {
-            ZoneApi api = mockApi(url);
+            ZoneApi api = mockApi(server.getPort());
             Iterator<Zone> domains = api.iterator();
 
             while (domains.hasNext()) {
@@ -62,14 +61,14 @@ public class DesignateZoneApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
         server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
 
         try {
-            ZoneApi api = mockApi(url);
+            ZoneApi api = mockApi(server.getPort());
 
             assertFalse(api.iterator().hasNext());
             assertEquals(server.getRequestCount(), 2);
@@ -80,11 +79,11 @@ public class DesignateZoneApiMockTest {
         }
     }
 
-    private static ZoneApi mockApi(final URL url) {
+    private static ZoneApi mockApi(final int port) {
         return Denominator.create(new DesignateProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials(tenantId, username, password)).api().zones();
     }

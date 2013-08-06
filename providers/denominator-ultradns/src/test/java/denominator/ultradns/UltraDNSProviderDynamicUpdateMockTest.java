@@ -75,23 +75,15 @@ public class UltraDNSProviderDynamicUpdateMockTest {
         server.play();
         
         try {
-            final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(
+            AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(
                     ListCredentials.from("joe", "letmein"));
-
-            @Module(complete = false, library = true, overrides = true)
-            class OverrideCredentials {
-                @Provides
-                public Credentials get() {
-                    return dynamicCredentials.get();
-                }
-            }
 
             DNSApi api = Denominator.create(new UltraDNSProvider() {
                 @Override
                 public String url() {
                     return server.getUrl("/").toString();
                 }
-            }, new OverrideCredentials()).api();
+            }, new OverrideCredentials(dynamicCredentials)).api();
 
             api.zones().iterator().next();
             dynamicCredentials.set(ListCredentials.from("bob", "comeon"));
@@ -147,23 +139,15 @@ public class UltraDNSProviderDynamicUpdateMockTest {
         server.play();
 
         try {
-            final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(
+            AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(
                     ListCredentials.from("joe", "letmein"));
-
-            @Module(complete = false, library = true, overrides = true)
-            class OverrideCredentials {
-                @Provides
-                public Credentials get() {
-                    return dynamicCredentials.get();
-                }
-            }
 
             DNSApi api = Denominator.create(new UltraDNSProvider() {
                 @Override
                 public String url() {
                     return server.getUrl("/").toString();
                 }
-            }, new OverrideCredentials()).api();
+            }, new OverrideCredentials(dynamicCredentials)).api();
 
             assertNull(api.basicRecordSetsInZone("denominator.io.").getByNameAndType("www.denominator.io.", "A"));
             dynamicCredentials.set(ListCredentials.from("bob", "comeon"));
@@ -174,6 +158,20 @@ public class UltraDNSProviderDynamicUpdateMockTest {
             assertTrue(new String(server.takeRequest().getBody()).indexOf("comeon") != -1);
         } finally {
             server.shutdown();
+        }
+    }
+
+    @Module(complete = false, library = true, overrides = true)
+    static class OverrideCredentials {
+        final AtomicReference<Credentials> dynamicCredentials;
+
+        OverrideCredentials(AtomicReference<Credentials> dynamicCredentials) {
+            this.dynamicCredentials = dynamicCredentials;
+        }
+
+        @Provides
+        public Credentials get() {
+            return dynamicCredentials.get();
         }
     }
 }

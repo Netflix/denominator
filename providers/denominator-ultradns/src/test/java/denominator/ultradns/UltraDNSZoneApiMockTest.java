@@ -11,7 +11,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
-import java.net.URL;
 
 import org.testng.annotations.Test;
 
@@ -33,7 +32,7 @@ public class UltraDNSZoneApiMockTest {
         server.play();
 
         try {
-            ZoneApi api = mockApi(server.getUrl("/"));
+            ZoneApi api = mockApi(server.getPort());
             Zone zone = api.iterator().next();
             assertEquals(zone.name(), "denominator.io.");
             assertNull(zone.id());
@@ -54,7 +53,7 @@ public class UltraDNSZoneApiMockTest {
         server.play();
 
         try {
-            ZoneApi api = mockApi(server.getUrl("/"));
+            ZoneApi api = mockApi(server.getPort());
             assertFalse(api.iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 2);
@@ -65,11 +64,11 @@ public class UltraDNSZoneApiMockTest {
         }
     }
 
-    private static ZoneApi mockApi(final URL url) {
+    private static ZoneApi mockApi(final int port) {
         return Denominator.create(new UltraDNSProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port + "/";
             }
         }, credentials("joe", "letmein")).api().zones();
     }

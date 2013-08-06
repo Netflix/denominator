@@ -8,7 +8,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URL;
 
 import org.testng.annotations.Test;
 
@@ -29,7 +28,7 @@ public class NetworkStatusReadableMockTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).checkConnection());
+            assertTrue(mockApi(server.getPort()).checkConnection());
 
             assertEquals(server.getRequestCount(), 1);
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
@@ -46,7 +45,7 @@ public class NetworkStatusReadableMockTest {
         server.play();
 
         try {
-            assertFalse(mockApi(server.getUrl("")).checkConnection());
+            assertFalse(mockApi(server.getPort()).checkConnection());
 
             assertEquals(server.getRequestCount(), 1);
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
@@ -55,11 +54,11 @@ public class NetworkStatusReadableMockTest {
         }
     }
 
-    static DNSApiManager mockApi(final URL url) {
+    static DNSApiManager mockApi(final int port) {
         return Denominator.create(new UltraDNSProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("joe", "letmein"));
     }

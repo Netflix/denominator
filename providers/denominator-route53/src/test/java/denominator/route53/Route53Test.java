@@ -4,7 +4,6 @@ import static denominator.model.ResourceRecordSets.a;
 import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Map;
 
 import org.testng.annotations.Test;
@@ -63,7 +62,7 @@ public class Route53Test {
         server.play();
 
         try {
-            Route53 api = mockApi(server.getUrl(""));
+            Route53 api = mockApi(server.getPort());
 
             ImmutableList<ActionOnResourceRecordSet> batch = ImmutableList.of(ActionOnResourceRecordSet.create(a(
                     "www.denominator.io.", 3600, "192.0.2.1")));
@@ -92,7 +91,7 @@ public class Route53Test {
         server.play();
 
         try {
-            Route53 api = mockApi(server.getUrl(""));
+            Route53 api = mockApi(server.getPort());
 
             ImmutableList<ActionOnResourceRecordSet> batch = ImmutableList.of(ActionOnResourceRecordSet.create(a(
                     "www.denominator.io.", 3600, "192.0.2.1")));
@@ -114,11 +113,11 @@ public class Route53Test {
 
     };
 
-    static Route53 mockApi(final URL url) {
+    static Route53 mockApi(final int port) {
         return Feign.create(new Route53Target(new Route53Provider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, lazyAuthHeaders), new Route53Provider.FeignModule());
     }

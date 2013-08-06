@@ -6,8 +6,11 @@ import static java.lang.System.getProperty;
 
 import javax.inject.Singleton;
 
+import com.google.common.collect.ImmutableMap;
+
 import dagger.Module;
 import dagger.Provides;
+import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.Denominator;
 import feign.Logger;
@@ -19,32 +22,35 @@ public class CloudDNSConnection {
 
     CloudDNSConnection() {
         String username = emptyToNull(getProperty("clouddns.username"));
-        String apiKey = emptyToNull(getProperty("clouddns.apiKey"));
-        if (username != null && apiKey != null) {
-            manager = create(username, apiKey);
+        String password = emptyToNull(getProperty("clouddns.password"));
+        if (username != null && password != null) {
+            manager = create(username, password);
         } else {
             manager = null;
         }
         mutableZone = emptyToNull(getProperty("clouddns.zone"));
     }
 
-    static DNSApiManager create(String username, String apiKey) {
-        CloudDNSProvider provider = new CloudDNSProvider(emptyToNull(getProperty("clouddns.url")));
-        @Module(overrides = true)
-        class Overrides {
-            @Provides
-            @Singleton
-            Logger.Level provideLevel() {
-                return Logger.Level.FULL;
-            }
-
-            @Provides
-            @Singleton
-            Logger provideLogger() {
-                return new Logger.JavaLogger().appendToFile("build/http-wire.log");
-            }
+    @Module(overrides = true, library = true)
+    static class Overrides {
+        @Provides
+        @Singleton
+        Logger.Level provideLevel() {
+            return Logger.Level.FULL;
         }
-        return Denominator.create(provider, credentials(username, apiKey), new Overrides());
+
+        @Provides
+        @Singleton
+        Logger provideLogger() {
+            return new Logger.JavaLogger().appendToFile("build/http-wire.log");
+        }
+    }
+
+    static DNSApiManager create(String username, String password) {
+        CloudDNSProvider provider = new CloudDNSProvider(emptyToNull(getProperty("clouddns.url")));
+        return Denominator.create(provider,
+                credentials(MapCredentials.from(ImmutableMap.of("username", username, "password", password))),
+                new Overrides());
     }
 
 }
