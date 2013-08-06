@@ -7,7 +7,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Collection;
@@ -58,7 +57,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getUrl("")).networkStatus(), NetworkStatus.GOOD);
+            assertEquals(mockApi(server.getPort()).networkStatus(), NetworkStatus.GOOD);
 
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
         } finally {
@@ -82,7 +81,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getUrl("")).networkStatus(), NetworkStatus.FAILED);
+            assertEquals(mockApi(server.getPort()).networkStatus(), NetworkStatus.FAILED);
 
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
         } finally {
@@ -97,7 +96,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getUrl("")).networkStatus();
+            mockApi(server.getPort()).networkStatus();
         } finally {
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
             server.shutdown();
@@ -124,7 +123,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getUrl("")).accountId(), "AAAAAAAAAAAAAAAA");
+            assertEquals(mockApi(server.getPort()).accountId(), "AAAAAAAAAAAAAAAA");
 
             assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);
         } finally {
@@ -160,7 +159,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getUrl("")).zonesOfAccount("AAAAAAAAAAAAAAAA"),
+            assertEquals(mockApi(server.getPort()).zonesOfAccount("AAAAAAAAAAAAAAAA"),
                     ImmutableList.of(Zone.create("denominator.io."), Zone.create("0.1.2.3.4.5.6.7.ip6.arpa.")));
 
             assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
@@ -178,7 +177,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).zonesOfAccount("AAAAAAAAAAAAAAAA").isEmpty());
+            assertTrue(mockApi(server.getPort()).zonesOfAccount("AAAAAAAAAAAAAAAA").isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
         } finally {
@@ -218,7 +217,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<Record> records = mockApi(server.getUrl("")).recordsInZone("denominator.io.");
+            List<Record> records = mockApi(server.getPort()).recordsInZone("denominator.io.");
 
             assertEquals(records.size(), 2);
 
@@ -253,7 +252,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).recordsInZone("denominator.io.").isEmpty());
+            assertTrue(mockApi(server.getPort()).recordsInZone("denominator.io.").isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfZone);
         } finally {
@@ -294,7 +293,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<Record> records = mockApi(server.getUrl("")).recordsInZoneByNameAndType("denominator.io.",
+            List<Record> records = mockApi(server.getPort()).recordsInZoneByNameAndType("denominator.io.",
                     "denominator.io.", 6);
             assertEquals(records.size(), 1);
             checkSOARecord(records.get(0));
@@ -313,7 +312,7 @@ public class UltraDNSTest {
 
         try {
             assertEquals(
-                    mockApi(server.getUrl("")).recordsInZoneByNameAndType("denominator.io.", "denominator.io.", 6),
+                    mockApi(server.getPort()).recordsInZoneByNameAndType("denominator.io.", "denominator.io.", 6),
                     ImmutableList.of());
 
             assertEquals(new String(server.takeRequest().getBody()), format(getResourceRecordsOfDNameByType));
@@ -348,7 +347,7 @@ public class UltraDNSTest {
             record.ttl = 1800;
             record.rdata.add("10");
             record.rdata.add("maileast.denominator.io.");
-            mockApi(server.getUrl("")).createRecordInZone(record, "denominator.io.");
+            mockApi(server.getPort()).createRecordInZone(record, "denominator.io.");
 
             assertEquals(new String(server.takeRequest().getBody()), createResourceRecord);
         } finally {
@@ -382,7 +381,7 @@ public class UltraDNSTest {
             record.typeCode = 1;
             record.ttl = 3600;
             record.rdata.add("1.1.1.1");
-            mockApi(server.getUrl("")).updateRecordInZone(record, "denominator.io.");
+            mockApi(server.getPort()).updateRecordInZone(record, "denominator.io.");
 
             assertEquals(new String(server.takeRequest().getBody()), updateResourceRecord);
         } finally {
@@ -409,7 +408,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getUrl("")).deleteRecord("ABCDEF");
+            mockApi(server.getPort()).deleteRecord("ABCDEF");
 
             assertEquals(new String(server.takeRequest().getBody()), deleteResourceRecord);
         } finally {
@@ -450,7 +449,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            Map<NameAndType, String> pools = mockApi(server.getUrl("")).rrPoolNameTypeToIdInZone("denominator.io.");
+            Map<NameAndType, String> pools = mockApi(server.getPort()).rrPoolNameTypeToIdInZone("denominator.io.");
             assertEquals(pools.size(), 2);
 
             NameAndType one = new NameAndType();
@@ -479,7 +478,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).rrPoolNameTypeToIdInZone("denominator.io.").isEmpty());
+            assertTrue(mockApi(server.getPort()).rrPoolNameTypeToIdInZone("denominator.io.").isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), getLoadBalancingPoolsByZone);
         } finally {
@@ -519,7 +518,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<Record> records = mockApi(server.getUrl("")).recordsInRRPool("000000000000002");
+            List<Record> records = mockApi(server.getPort()).recordsInRRPool("000000000000002");
 
             assertEquals(records.size(), 2);
 
@@ -553,7 +552,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).recordsInRRPool("000000000000002").isEmpty());
+            assertTrue(mockApi(server.getPort()).recordsInRRPool("000000000000002").isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), getRRPoolRecords);
         } finally {
@@ -582,7 +581,7 @@ public class UltraDNSTest {
 
         try {
             assertEquals(
-                    mockApi(server.getUrl("")).createRRPoolInZoneForNameAndType("denominator.io.",
+                    mockApi(server.getPort()).createRRPoolInZoneForNameAndType("denominator.io.",
                             "www.denominator.io.", 1), "060339AA04175655");
 
             assertEquals(new String(server.takeRequest().getBody()), addRRLBPool);
@@ -611,7 +610,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getUrl("")).createRecordInRRPoolInZone(1, 300, "www1.denominator.io.", "060339AA04175655",
+            mockApi(server.getPort()).createRecordInRRPoolInZone(1, 300, "www1.denominator.io.", "060339AA04175655",
                     "denominator.io.");
 
             assertEquals(new String(server.takeRequest().getBody()), addRecordToRRPool);
@@ -640,7 +639,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getUrl("")).deleteRRPool("060339AA04175655");
+            mockApi(server.getPort()).deleteRRPool("060339AA04175655");
 
             assertEquals(new String(server.takeRequest().getBody()), deleteLBPool);
         } finally {
@@ -671,7 +670,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getUrl("")).deleteRRPool("060339AA04175655");
+            mockApi(server.getPort()).deleteRRPool("060339AA04175655");
         } finally {
             server.shutdown();
         }
@@ -700,7 +699,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getUrl("")).deleteRRPool("060339AA04175655");
+            mockApi(server.getPort()).deleteRRPool("060339AA04175655");
         } finally {
             server.shutdown();
         }
@@ -734,7 +733,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            Map<String, String> pools = mockApi(server.getUrl("")).directionalPoolNameToIdsInZone("denominator.io.");
+            Map<String, String> pools = mockApi(server.getPort()).directionalPoolNameToIdsInZone("denominator.io.");
             assertEquals(pools.size(), 1);
 
             assertEquals(pools.get("srv.denominator.io."), "D000000000000001");
@@ -757,7 +756,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).directionalPoolNameToIdsInZone("denominator.io.").isEmpty());
+            assertTrue(mockApi(server.getPort()).directionalPoolNameToIdsInZone("denominator.io.").isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalPoolsOfZone);
         } finally {
@@ -810,7 +809,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<DirectionalRecord> records = mockApi(server.getUrl("")).directionalRecordsInZoneByNameAndType(
+            List<DirectionalRecord> records = mockApi(server.getPort()).directionalRecordsInZoneByNameAndType(
                     "denominator.io.", "www.denominator.io.", 0);
 
             assertEquals(records.size(), 3);
@@ -856,7 +855,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).directionalRecordsInZoneByNameAndType("denominator.io.",
+            assertTrue(mockApi(server.getPort()).directionalRecordsInZoneByNameAndType("denominator.io.",
                     "www.denominator.io.", 0).isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), format(getDirectionalDNSRecordsForHost));
@@ -889,7 +888,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<DirectionalRecord> records = mockApi(server.getUrl("")).directionalRecordsInZoneByNameAndType(
+            List<DirectionalRecord> records = mockApi(server.getPort()).directionalRecordsInZoneByNameAndType(
                     "denominator.io.", "www.denominator.io.", 0);
 
             assertEquals(records.size(), 1);
@@ -946,7 +945,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<DirectionalRecord> records = mockApi(server.getUrl("")).directionalRecordsInZoneAndGroupByNameAndType(
+            List<DirectionalRecord> records = mockApi(server.getPort()).directionalRecordsInZoneAndGroupByNameAndType(
                     "denominator.io.", "Europe", "www.denominator.io.", 5);
 
             assertEquals(records.size(), 1);
@@ -973,7 +972,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).directionalRecordsInZoneAndGroupByNameAndType("denominator.io.",
+            assertTrue(mockApi(server.getPort()).directionalRecordsInZoneAndGroupByNameAndType("denominator.io.",
                     "Europe", "www.denominator.io.", 5).isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), format(getDirectionalDNSRecordsForGroup));
@@ -1003,7 +1002,7 @@ public class UltraDNSTest {
 
         try {
             assertEquals(
-                    mockApi(server.getUrl("")).createDirectionalPoolInZoneForNameAndType("denominator.io.",
+                    mockApi(server.getPort()).createDirectionalPoolInZoneForNameAndType("denominator.io.",
                             "www.denominator.io.", "A"), "060339AA04175655");
 
             assertEquals(new String(server.takeRequest().getBody()), addDirectionalPool);
@@ -1032,7 +1031,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getUrl("")).deleteDirectionalPool("060339AA04175655");
+            mockApi(server.getPort()).deleteDirectionalPool("060339AA04175655");
 
             assertEquals(new String(server.takeRequest().getBody()), deleteDirectionalPool);
         } finally {
@@ -1060,7 +1059,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getUrl("")).deleteDirectionalRecord("00000000000");
+            mockApi(server.getPort()).deleteDirectionalRecord("00000000000");
 
             assertEquals(new String(server.takeRequest().getBody()), deleteDirectionalPoolRecord);
         } finally {
@@ -1111,7 +1110,7 @@ public class UltraDNSTest {
                     .build().asMap();
 
             assertEquals(
-                    mockApi(server.getUrl("")).createRecordAndDirectionalGroupInPool(record, group, "060339AA04175655"),
+                    mockApi(server.getPort()).createRecordAndDirectionalGroupInPool(record, group, "060339AA04175655"),
                     "06063DC355058294");
 
             assertEquals(new String(server.takeRequest().getBody()), addDirectionalPoolRecord);
@@ -1157,7 +1156,7 @@ public class UltraDNSTest {
                     .build().asMap();
 
             assertEquals(
-                    mockApi(server.getUrl("")).createRecordAndDirectionalGroupInPool(record, group, "060339AA04175655"),
+                    mockApi(server.getPort()).createRecordAndDirectionalGroupInPool(record, group, "060339AA04175655"),
                     "06063DC355058294");
 
             assertEquals(new String(server.takeRequest().getBody()), addDirectionalPoolRecord);
@@ -1208,7 +1207,7 @@ public class UltraDNSTest {
                     .putAll("United States (US)", "Maryland", "Texas")//
                     .build().asMap();
 
-            mockApi(server.getUrl("")).updateRecordAndDirectionalGroup(record, group);
+            mockApi(server.getPort()).updateRecordAndDirectionalGroup(record, group);
 
             assertEquals(new String(server.takeRequest().getBody()), updateDirectionalPoolRecord);
         } finally {
@@ -1253,7 +1252,7 @@ public class UltraDNSTest {
                     .putAll("United States (US)", "Maryland", "Texas")//
                     .build().asMap();
 
-            mockApi(server.getUrl("")).updateRecordAndDirectionalGroup(record, group);
+            mockApi(server.getPort()).updateRecordAndDirectionalGroup(record, group);
         } finally {
             server.shutdown();
         }
@@ -1284,7 +1283,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            DirectionalGroup group = mockApi(server.getUrl("")).getDirectionalGroup("060339AA04175655");
+            DirectionalGroup group = mockApi(server.getPort()).getDirectionalGroup("060339AA04175655");
             assertEquals(group.name, "NON-EU");
             assertEquals(group.regionToTerritories.get("Anonymous Proxy (A1)"), ImmutableSet.of("Anonymous Proxy"));
             assertEquals(group.regionToTerritories.get("Mexico"), ImmutableSet.of("Mexico"));
@@ -1318,7 +1317,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            Map<String, Collection<String>> group = mockApi(server.getUrl("")).availableRegions();
+            Map<String, Collection<String>> group = mockApi(server.getPort()).availableRegions();
             assertEquals(group.get("Anonymous Proxy (A1)"), ImmutableSortedSet.of("Anonymous Proxy"));
             assertEquals(
                     group.get("Antarctica"),
@@ -1331,11 +1330,11 @@ public class UltraDNSTest {
         }
     }
 
-    static UltraDNS mockApi(final URL url) {
+    static UltraDNS mockApi(final int port) {
         return Feign.create(new UltraDNSTarget(new UltraDNSProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, new Provider<Credentials>() {
 

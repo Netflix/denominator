@@ -28,22 +28,23 @@ public class UltraDNSConnection {
         mutableZone = emptyToNull(getProperty("ultradns.zone"));
     }
 
+    @Module(overrides = true, library = true)
+    static class Overrides {
+        @Provides
+        @Singleton
+        Logger.Level provideLevel() {
+            return Logger.Level.FULL;
+        }
+
+        @Provides
+        @Singleton
+        Logger provideLogger() {
+            return new Logger.JavaLogger().appendToFile("build/http-wire.log");
+        }
+    }
+
     static DNSApiManager create(String username, String password) {
         UltraDNSProvider provider = new UltraDNSProvider(emptyToNull(getProperty("ultradns.url")));
-        @Module(overrides = true)
-        class Overrides {
-            @Provides
-            @Singleton
-            Logger.Level provideLevel() {
-                return Logger.Level.FULL;
-            }
-
-            @Provides
-            @Singleton
-            Logger provideLogger() {
-                return new Logger.JavaLogger().appendToFile("build/http-wire.log");
-            }
-        }
         return Denominator.create(provider, credentials(username, password), new Overrides());
     }
 }

@@ -7,7 +7,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -35,14 +34,14 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(records));
 
         try {
-            ResourceRecordSetApi api = mockApi(url);
+            ResourceRecordSetApi api = mockApi(server.getPort());
             Iterator<ResourceRecordSet<?>> records = api.iterator();
             
             while (records.hasNext()) {
@@ -65,14 +64,14 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         try {
-            ResourceRecordSetApi api = mockApi(url);
+            ResourceRecordSetApi api = mockApi(server.getPort());
             
             assertFalse(api.iterator().hasNext());
             assertEquals(server.getRequestCount(), 2);
@@ -91,7 +90,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
@@ -99,7 +98,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(recordsPage2));
 
         try {
-            ResourceRecordSetApi api = mockApi(url);
+            ResourceRecordSetApi api = mockApi(server.getPort());
             Iterator<ResourceRecordSet<?>> records = api.iterator();
             
             while (records.hasNext()) {
@@ -125,14 +124,14 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(recordsByName));
 
         try {
-            ResourceRecordSetApi api = mockApi(url);
+            ResourceRecordSetApi api = mockApi(server.getPort());
             Iterator<ResourceRecordSet<?>> records = api.iterateByName("www.denominator.io");
             
             while (records.hasNext()) {
@@ -155,14 +154,14 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
         try {
-            ResourceRecordSetApi api = mockApi(url);
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
             assertEquals(server.getRequestCount(), 2);
@@ -180,14 +179,14 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(200).setBody(recordsByNameAndType));
 
         try {
-            ResourceRecordSetApi api = mockApi(url);
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.getByNameAndType("www.denominator.io", "A"),
                     a("www.denominator.io", 600000, ImmutableList.of("1.2.3.4", "5.6.7.8")));
 
@@ -204,14 +203,14 @@ public class CloudDNSResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        final URL url = server.getUrl("");
+        final String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
         server.enqueue(new MockResponse().setResponseCode(404).setBody(
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));        
         try {
-            ResourceRecordSetApi api = mockApi(url);
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertNull(api.getByNameAndType("www.denominator.io", "A"));
 
             assertEquals(server.getRequestCount(), 2);
@@ -226,7 +225,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
      * there's no built-in way to defer evaluation of a response header, hence this
      * method, which allows us to send back links to the mock server.
      */
-    private QueueDispatcher getURLReplacingQueueDispatcher(final URL url) {
+    private QueueDispatcher getURLReplacingQueueDispatcher(final String url) {
        final QueueDispatcher dispatcher = new QueueDispatcher() {
           protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<MockResponse>();
 
@@ -234,7 +233,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
           public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
              MockResponse response = responseQueue.take();
              if (response.getBody() != null) {
-                String newBody = new String(response.getBody()).replace(":\"URL", ":\"" + url.toString());
+                String newBody = new String(response.getBody()).replace(":\"URL", ":\"" + url);
                 response = response.setBody(newBody);
              }
              return response;
@@ -249,11 +248,11 @@ public class CloudDNSResourceRecordSetApiMockTest {
        return dispatcher;
     }
     
-    private static ResourceRecordSetApi mockApi(final URL url) {
+    private static ResourceRecordSetApi mockApi(final int port) {
         return Denominator.create(new CloudDNSProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("jclouds-joe", "letmein")).api().basicRecordSetsInZone("1234");
     }

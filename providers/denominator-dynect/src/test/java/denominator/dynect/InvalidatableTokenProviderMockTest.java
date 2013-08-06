@@ -9,7 +9,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URL;
 
 import org.testng.annotations.Test;
 
@@ -33,7 +32,7 @@ public class InvalidatableTokenProviderMockTest {
         server.enqueue(new MockResponse().setResponseCode(400).setBody(badSession));
 
         try {
-            DNSApiManager api = mockApi(server.getUrl(""));
+            DNSApiManager api = mockApi(server.getPort());
 
             assertTrue(api.checkConnection());
             assertTrue(api.checkConnection());
@@ -57,7 +56,7 @@ public class InvalidatableTokenProviderMockTest {
         server.enqueue(new MockResponse().setResponseCode(401));
 
         try {
-            assertFalse(mockApi(server.getUrl("")).checkConnection());
+            assertFalse(mockApi(server.getPort()).checkConnection());
 
             assertEquals(server.getRequestCount(), 1);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
@@ -66,11 +65,11 @@ public class InvalidatableTokenProviderMockTest {
         }
     }
 
-    private static DNSApiManager mockApi(final URL url) {
+    private static DNSApiManager mockApi(final int port) {
         return Denominator.create(new DynECTProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("jclouds", "joe", "letmein"));
     }

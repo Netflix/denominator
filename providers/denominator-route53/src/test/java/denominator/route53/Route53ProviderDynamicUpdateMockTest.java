@@ -66,20 +66,14 @@ public class Route53ProviderDynamicUpdateMockTest {
 
         try {
 
-            final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(ListCredentials.from("accessKey", "secretKey"));
-            @Module(complete = false, library = true, overrides = true)
-            class OverrideCredentials {
-                @Provides
-                public Credentials get() {
-                    return dynamicCredentials.get();
-                }
-            }
+            AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(ListCredentials.from("accessKey", "secretKey"));
+
             DNSApi api = Denominator.create(new Route53Provider() {
                 @Override
                 public String url() {
                     return server.getUrl("/").toString();
                 }
-            }, new OverrideCredentials()).api();
+            }, new OverrideCredentials(dynamicCredentials)).api();
 
             assertFalse(api.zones().iterator().hasNext());
             dynamicCredentials.set(ListCredentials.from("accessKey2", "secretKey2"));
@@ -90,6 +84,20 @@ public class Route53ProviderDynamicUpdateMockTest {
             assertTrue(server.takeRequest().getHeader("X-Amzn-Authorization").startsWith("AWS3-HTTPS AWSAccessKeyId=accessKey2,Algorithm=HmacSHA256,Signature="));
         } finally {
             server.shutdown();
+        }
+    }
+
+    @Module(complete = false, library = true, overrides = true)
+    static class OverrideCredentials {
+        final AtomicReference<Credentials> dynamicCredentials;
+
+        OverrideCredentials(AtomicReference<Credentials> dynamicCredentials) {
+            this.dynamicCredentials = dynamicCredentials;
+        }
+
+        @Provides
+        public Credentials get() {
+            return dynamicCredentials.get();
         }
     }
 }

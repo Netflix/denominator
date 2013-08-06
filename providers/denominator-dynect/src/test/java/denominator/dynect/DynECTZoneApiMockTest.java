@@ -6,7 +6,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
-import java.net.URL;
 
 import org.testng.annotations.Test;
 
@@ -30,7 +29,7 @@ public class DynECTZoneApiMockTest {
         server.play();
 
         try {
-            ZoneApi api = mockApi(server.getUrl(""));
+            ZoneApi api = mockApi(server.getPort());
             Zone zone = api.iterator().next();
             assertEquals(zone.name(), "0.0.0.0.d.6.e.0.0.a.2.ip6.arpa");
             assertFalse(zone.id() != null);
@@ -53,7 +52,7 @@ public class DynECTZoneApiMockTest {
         server.play();
 
         try {
-            ZoneApi api = mockApi(server.getUrl(""));
+            ZoneApi api = mockApi(server.getPort());
             assertFalse(api.iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 2);
@@ -64,11 +63,11 @@ public class DynECTZoneApiMockTest {
         }
     }
 
-    private static ZoneApi mockApi(final URL url) {
+    private static ZoneApi mockApi(final int port) {
         return Denominator.create(new DynECTProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("jclouds", "joe", "letmein")).api().zones();
     }

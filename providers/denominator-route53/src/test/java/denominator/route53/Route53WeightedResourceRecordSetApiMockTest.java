@@ -6,7 +6,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Iterator;
 
 import org.testng.annotations.Test;
@@ -59,7 +58,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
+            WeightedResourceRecordSetApi api = mockApi(server.getPort());
             Iterator<ResourceRecordSet<?>> iterator = api.iterateByName("www.denominator.io.");
             assertEquals(iterator.next(), rrset1);
             assertEquals(iterator.next(), rrset2);
@@ -84,7 +83,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
+            WeightedResourceRecordSetApi api = mockApi(server.getPort());
             assertFalse(api.iterateByName("www.denominator.io.").hasNext());
 
             assertEquals(server.getRequestCount(), 1);
@@ -104,7 +103,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
+            WeightedResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.iterateByNameAndType("www.denominator.io.", "CNAME").next(), rrset1);
 
             assertEquals(server.getRequestCount(), 1);
@@ -124,7 +123,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
+            WeightedResourceRecordSetApi api = mockApi(server.getPort());
             assertFalse(api.iterateByNameAndType("www.denominator.io.", "CNAME").hasNext());
 
             assertEquals(server.getRequestCount(), 1);
@@ -144,7 +143,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
+            WeightedResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier1), rrset1);
 
             assertEquals(server.getRequestCount(), 1);
@@ -167,7 +166,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
+            WeightedResourceRecordSetApi api = mockApi(server.getPort());
             assertNull(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier1));
 
             assertEquals(server.getRequestCount(), 1);
@@ -192,7 +191,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
+            WeightedResourceRecordSetApi api = mockApi(server.getPort());
             api.put(rrset1);
 
             assertEquals(server.getRequestCount(), 2);
@@ -217,7 +216,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
+            WeightedResourceRecordSetApi api = mockApi(server.getPort());
             api.put(rrset1);
 
             assertEquals(server.getRequestCount(), 1);
@@ -241,7 +240,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
+            WeightedResourceRecordSetApi api = mockApi(server.getPort());
             api.deleteByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier1);
 
             assertEquals(server.getRequestCount(), 2);
@@ -265,7 +264,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            WeightedResourceRecordSetApi api = mockApi(server.getUrl(""));
+            WeightedResourceRecordSetApi api = mockApi(server.getPort());
             api.deleteByNameTypeAndQualifier("www.denominator.io.", "CNAME", identifier2);
 
             assertEquals(server.getRequestCount(), 1);
@@ -278,11 +277,11 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         }
     }
 
-    private static WeightedResourceRecordSetApi mockApi(final URL url) {
+    private static WeightedResourceRecordSetApi mockApi(final int port) {
         return Denominator.create(new Route53Provider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("accessKey", "secretKey")).api().weightedRecordSetsInZone("Z1PA6795UKMFR9");
     }

@@ -1,3 +1,6 @@
+### Version 3.4
+* update to dagger 1.1
+
 ### Version 3.3
 * add `DNSApiManager.checkConnection()`
 * validates geo permissions before attempting commands on dynect.

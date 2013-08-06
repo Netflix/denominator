@@ -17,7 +17,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -42,14 +41,14 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
         server.enqueue(new MockResponse().setBody(recordsResponse));
 
         try {
-            ResourceRecordSetApi api = mockApi(url);
+            ResourceRecordSetApi api = mockApi(server.getPort());
             Iterator<ResourceRecordSet<?>> records = api.iterator();
             assertEquals(records.next(), ResourceRecordSet.<MXData> builder() //
                     .name("denominator.io.") //
@@ -72,14 +71,14 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
         server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
 
         try {
-            ResourceRecordSetApi api = mockApi(url);
+            ResourceRecordSetApi api = mockApi(server.getPort());
 
             assertFalse(api.iterator().hasNext());
             assertEquals(server.getRequestCount(), 2);
@@ -96,7 +95,7 @@ public class DesignateResourceRecordSetApiMockTest {
 
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
@@ -104,7 +103,7 @@ public class DesignateResourceRecordSetApiMockTest {
         server.enqueue(new MockResponse().setBody(aRecordResponse));
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 3);
@@ -125,14 +124,14 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
         server.enqueue(new MockResponse().setBody(recordsResponse));
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", ImmutableSet.of("192.0.2.1", "192.0.2.2")));
 
             assertEquals(server.getRequestCount(), 2);
@@ -148,7 +147,7 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
@@ -157,7 +156,7 @@ public class DesignateResourceRecordSetApiMockTest {
         server.enqueue(new MockResponse().setBody(aRecordResponse));
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", 10000000, ImmutableSet.of("192.0.2.1", "192.0.2.2")));
 
             assertEquals(server.getRequestCount(), 4);
@@ -185,7 +184,7 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
@@ -193,7 +192,7 @@ public class DesignateResourceRecordSetApiMockTest {
         server.enqueue(new MockResponse());
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", "192.0.2.2"));
 
             assertEquals(server.getRequestCount(), 3);
@@ -213,14 +212,14 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
         server.enqueue(new MockResponse().setBody(recordsResponse));
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.iterateByName("www.denominator.io.").next(),
                     a("www.denominator.io.", 300, ImmutableList.of("192.0.2.1", "192.0.2.2")));
 
@@ -237,14 +236,14 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
         server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertFalse(api.iterateByName("www.denominator.io.").hasNext());
 
             assertEquals(server.getRequestCount(), 2);
@@ -260,14 +259,14 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
         server.enqueue(new MockResponse().setBody(recordsResponse));
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.getByNameAndType("www.denominator.io.", "A"),
                     a("www.denominator.io.", 300, ImmutableList.of("192.0.2.1", "192.0.2.2")));
 
@@ -284,14 +283,14 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
         server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertNull(api.getByNameAndType("www.denominator.io.", "A"));
 
             assertEquals(server.getRequestCount(), 2);
@@ -307,7 +306,7 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
@@ -315,7 +314,7 @@ public class DesignateResourceRecordSetApiMockTest {
         server.enqueue(new MockResponse());
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.deleteByNameAndType("denominator.io.", "MX");
 
             assertEquals(server.getRequestCount(), 3);
@@ -335,7 +334,7 @@ public class DesignateResourceRecordSetApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
@@ -343,7 +342,7 @@ public class DesignateResourceRecordSetApiMockTest {
         server.enqueue(new MockResponse());
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.deleteByNameAndType("www1.denominator.io.", "A");
 
             assertEquals(server.getRequestCount(), 2);
@@ -354,11 +353,11 @@ public class DesignateResourceRecordSetApiMockTest {
         }
     }
 
-    private static ResourceRecordSetApi mockApi(final URL url) {
+    private static ResourceRecordSetApi mockApi(final int port) {
         return Denominator.create(new DesignateProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials(tenantId, username, password)).api().basicRecordSetsInZone(domainId);
     }
