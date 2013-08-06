@@ -10,7 +10,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Iterator;
 
 import org.testng.annotations.Test;
@@ -57,7 +56,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 4);
@@ -86,7 +85,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 2);
@@ -115,7 +114,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io", 3600, ImmutableSet.of("192.0.2.1", "198.51.100.1")));
 
             assertEquals(server.getRequestCount(), 4);
@@ -162,7 +161,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io", 10000000, ImmutableSet.of("192.0.2.1", "198.51.100.1")));
 
             assertEquals(server.getRequestCount(), 6);
@@ -194,7 +193,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 2);
@@ -219,7 +218,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io", 3600, "198.51.100.1"));
 
             assertEquals(server.getRequestCount(), 4);
@@ -243,7 +242,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             Iterator<ResourceRecordSet<?>> iterator = api.iterator();
             iterator.next();
             iterator.next();
@@ -266,7 +265,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.iterator().hasNext();
         } finally {
             assertEquals(server.getRequestCount(), 2);
@@ -284,7 +283,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.iterateByName("www.denominator.io").next(),
                     a("www.denominator.io", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
 
@@ -304,7 +303,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
             assertEquals(server.getRequestCount(), 2);
@@ -323,7 +322,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.getByNameAndType("www.denominator.io", "A"),
                     a("www.denominator.io", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
 
@@ -343,7 +342,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertNull(api.getByNameAndType("www.denominator.io", "A"));
 
             assertEquals(server.getRequestCount(), 2);
@@ -365,7 +364,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.deleteByNameAndType("www.denominator.io", "A");
 
             assertEquals(server.getRequestCount(), 5);
@@ -390,7 +389,7 @@ public class DynECTResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.deleteByNameAndType("www.denominator.io", "A");
 
             assertEquals(server.getRequestCount(), 2);
@@ -401,11 +400,11 @@ public class DynECTResourceRecordSetApiMockTest {
         }
     }
 
-    private static ResourceRecordSetApi mockApi(final URL url) {
+    private static ResourceRecordSetApi mockApi(final int port) {
         return Denominator.create(new DynECTProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("jclouds", "joe", "letmein")).api().basicRecordSetsInZone("denominator.io");
     }

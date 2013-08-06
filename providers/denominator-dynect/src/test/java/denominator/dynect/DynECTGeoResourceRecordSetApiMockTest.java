@@ -9,7 +9,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Iterator;
 
 import org.testng.annotations.Test;
@@ -80,7 +79,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
             Iterator<ResourceRecordSet<?>> iterator = api.iterator();
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
@@ -105,7 +104,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
             Iterator<ResourceRecordSet<?>> iterator = api.iterateByName("srv.denominator.io");
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
@@ -129,7 +128,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            assertNull(mockApi(server.getUrl("")));
+            assertNull(mockApi(server.getPort()));
 
             assertEquals(server.getRequestCount(), 2);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
@@ -148,7 +147,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
             assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
             assertEquals(server.getRequestCount(), 3);
@@ -169,7 +168,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
             Iterator<ResourceRecordSet<?>> iterator = api.iterateByNameAndType("srv.denominator.io", "CNAME");
             assertEquals(iterator.next(), everywhereElse);
             assertEquals(iterator.next(), europe);
@@ -194,7 +193,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
             assertFalse(api.iterateByNameAndType("www.denominator.io", "A").hasNext());
 
             assertEquals(server.getRequestCount(), 3);
@@ -215,7 +214,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.getByNameTypeAndQualifier("srv.denominator.io", "CNAME", "Fallback"), fallback);
 
             assertEquals(server.getRequestCount(), 3);
@@ -236,7 +235,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
             assertNull(api.getByNameTypeAndQualifier("www.denominator.io", "A", "Fallback"));
 
             assertEquals(server.getRequestCount(), 3);
@@ -248,11 +247,11 @@ public class DynECTGeoResourceRecordSetApiMockTest {
         }
     }
 
-    private static GeoResourceRecordSetApi mockApi(final URL url) {
+    private static GeoResourceRecordSetApi mockApi(final int port) {
         return Denominator.create(new DynECTProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("jclouds", "joe", "letmein")).api().geoRecordSetsInZone("denominator.io");
     }

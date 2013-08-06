@@ -6,7 +6,6 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Iterator;
 
 import javax.inject.Singleton;
@@ -67,7 +66,7 @@ public class DynECTTest {
         server.play();
 
         try {
-            DynECT api = mockApi(server.getUrl(""));
+            DynECT api = mockApi(server.getPort());
             assertTrue(api.hasAllGeoPermissions());
 
             assertEquals(server.getRequestCount(), 1);
@@ -118,7 +117,7 @@ public class DynECTTest {
         server.play();
 
         try {
-            DynECT api = mockApi(server.getUrl(""));
+            DynECT api = mockApi(server.getPort());
             assertFalse(api.hasAllGeoPermissions());
 
             assertEquals(server.getRequestCount(), 1);
@@ -140,7 +139,7 @@ public class DynECTTest {
         server.play();
 
         try {
-            DynECT api = mockApi(server.getUrl(""));
+            DynECT api = mockApi(server.getPort());
             Iterator<Zone> iterator = api.zones().iterator();
             iterator.next();
             iterator.next();
@@ -162,7 +161,7 @@ public class DynECTTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(zones));
         server.play();
 
-        DynECT api = mockApi(server.getUrl(""));
+        DynECT api = mockApi(server.getPort());
 
         try {
             api.zones();
@@ -185,7 +184,7 @@ public class DynECTTest {
 
         server.play();
 
-        DynECT api = mockApi(server.getUrl(""));
+        DynECT api = mockApi(server.getPort());
 
         try {
             api.zones();
@@ -208,7 +207,7 @@ public class DynECTTest {
 
         server.play();
 
-        DynECT api = mockApi(server.getUrl(""));
+        DynECT api = mockApi(server.getPort());
 
         try {
             api.zones();
@@ -229,7 +228,7 @@ public class DynECTTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(taskBlocking));
         server.play();
 
-        DynECT api = mockApi(server.getUrl(""));
+        DynECT api = mockApi(server.getPort());
 
         try {
             api.zones();
@@ -259,7 +258,7 @@ public class DynECTTest {
         server.enqueue(new MockResponse().setResponseCode(200).setBody(targetExists));
         server.play();
 
-        DynECT api = mockApi(server.getUrl(""));
+        DynECT api = mockApi(server.getPort());
 
         try {
             api.zones();
@@ -288,20 +287,21 @@ public class DynECTTest {
 
     };
 
-    static DynECT mockApi(final URL url) {
-        @Module(library = true)
-        class GsonModule{
-            @Provides
-            @Singleton
-            Gson provideGson(){
-                return new Gson();
-            }
-        }
+    static DynECT mockApi(final int port) {
         return Feign.create(new DynECTTarget(new DynECTProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, lazyToken), new DynECTProvider.FeignModule(), new GsonModule());
+    }
+
+    @Module(library = true)
+    static class GsonModule {
+        @Provides
+        @Singleton
+        Gson provideGson() {
+            return new Gson();
+        }
     }
 }

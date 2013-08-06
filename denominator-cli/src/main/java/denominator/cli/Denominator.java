@@ -61,6 +61,7 @@ import denominator.model.Zone;
 import denominator.route53.Route53Provider;
 import denominator.ultradns.UltraDNSProvider;
 import feign.Logger;
+import feign.Logger.Level;
 
 public class Denominator {
     public static void main(String[] args) {
@@ -327,7 +328,7 @@ public class Denominator {
      */
     static Object logModule(boolean quiet, boolean verbose) {
         checkArgument(!(quiet && verbose), "quiet and verbose flags cannot be used at the same time!");
-        final Logger.Level logLevel;
+        Logger.Level logLevel;
         if (quiet) {
             return null;
         } else if (verbose) {
@@ -335,21 +336,28 @@ public class Denominator {
         } else {
             logLevel = Logger.Level.BASIC;
         }
-        @dagger.Module(overrides = true, library = true)
-        class LogModule {
-            @Provides
-            @Singleton
-            Logger logger() {
-                return new Logger.ErrorLogger();
-            }
+        return new LogModule(logLevel);
+    }
 
-            @Provides
-            @Singleton
-            Logger.Level level() {
-                return logLevel;
-            }
+    @dagger.Module(overrides = true, library = true)
+    static class LogModule {
+        final Logger.Level logLevel;
+
+        LogModule(Level logLevel) {
+            this.logLevel = logLevel;
         }
-        return new LogModule();
+
+        @Provides
+        @Singleton
+        Logger logger() {
+            return new Logger.ErrorLogger();
+        }
+
+        @Provides
+        @Singleton
+        Logger.Level level() {
+            return logLevel;
+        }
     }
 
     static String idOrName(DNSApiManager mgr, String zoneIdOrName) {

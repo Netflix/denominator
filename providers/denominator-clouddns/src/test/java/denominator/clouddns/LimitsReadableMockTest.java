@@ -8,7 +8,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URL;
 
 import org.testng.annotations.Test;
 
@@ -28,7 +27,7 @@ public class LimitsReadableMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(session));
@@ -54,7 +53,7 @@ public class LimitsReadableMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(401));

@@ -6,8 +6,8 @@ import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -95,8 +95,8 @@ public class DesignateTest {
         try {
             KeystoneV2 api = Feign.create(new HardCodedTarget<KeystoneV2>(KeystoneV2.class, "not used!!"),
                     new DesignateProvider.FeignModule());
-            TokenIdAndPublicURL tokenIdAndPublicURL = api.passwordAuth(server.getUrl("").toURI(), tenantId, username,
-                    password);
+            TokenIdAndPublicURL tokenIdAndPublicURL = api.passwordAuth(
+                    URI.create("http://localhost:" + server.getPort()), tenantId, username, password);
 
             assertEquals(tokenIdAndPublicURL.tokenId, tokenId);
             assertEquals(tokenIdAndPublicURL.publicURL, "URL/v1");
@@ -124,7 +124,7 @@ public class DesignateTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getUrl("")).limits(), limitsResponse);
+            assertEquals(mockApi(server.getPort()).limits(), limitsResponse);
 
             assertEquals(server.takeRequest().getRequestLine(), "GET /v1/limits HTTP/1.1");
         } finally {
@@ -156,7 +156,7 @@ public class DesignateTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getUrl("")).domains(),
+            assertEquals(mockApi(server.getPort()).domains(),
                     ImmutableList.of(Zone.create("denominator.io.", domainId)));
 
             assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
@@ -172,7 +172,7 @@ public class DesignateTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).domains().isEmpty());
+            assertTrue(mockApi(server.getPort()).domains().isEmpty());
 
             assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
         } finally {
@@ -227,7 +227,7 @@ public class DesignateTest {
         server.play();
 
         try {
-            List<Record> records = mockApi(server.getUrl("")).records(domainId);
+            List<Record> records = mockApi(server.getPort()).records(domainId);
             assertEquals(records.size(), 3);
 
             // note that the response parser orders these by name, type, data!
@@ -266,7 +266,7 @@ public class DesignateTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).records(domainId).isEmpty());
+            assertTrue(mockApi(server.getPort()).records(domainId).isEmpty());
 
             assertEquals(server.takeRequest().getRequestLine(), format("GET /v1/domains/%s/records HTTP/1.1", domainId));
 
@@ -302,7 +302,7 @@ public class DesignateTest {
             record.ttl = 300;
             record.type = "MX";
 
-            record = mockApi(server.getUrl("")).createRecord(domainId, record);
+            record = mockApi(server.getPort()).createRecord(domainId, record);
 
             assertEquals(record.id, "13d2516b-1f18-455b-aa05-1997b26192ad");
             assertEquals(record.name, "denominator.io.");
@@ -336,7 +336,7 @@ public class DesignateTest {
             record.ttl = 300;
             record.type = "MX";
 
-            record = mockApi(server.getUrl("")).updateRecord(domainId, record.id, record);
+            record = mockApi(server.getPort()).updateRecord(domainId, record.id, record);
 
             assertEquals(record.id, "13d2516b-1f18-455b-aa05-1997b26192ad");
             assertEquals(record.name, "denominator.io.");
@@ -380,7 +380,7 @@ public class DesignateTest {
             record.data = "192.0.2.1";
             record.type = "A";
 
-            record = mockApi(server.getUrl("")).createRecord(domainId, record);
+            record = mockApi(server.getPort()).createRecord(domainId, record);
 
             assertEquals(record.id, "13d2516b-1f18-455b-aa05-1997b26192ad");
             assertEquals(record.name, "www.denominator.io.");
@@ -412,7 +412,7 @@ public class DesignateTest {
             record.data = "192.0.2.1";
             record.type = "A";
 
-            record = mockApi(server.getUrl("")).updateRecord(domainId, record.id, record);
+            record = mockApi(server.getPort()).updateRecord(domainId, record.id, record);
 
             assertEquals(record.id, "13d2516b-1f18-455b-aa05-1997b26192ad");
             assertEquals(record.name, "www.denominator.io.");
@@ -441,7 +441,7 @@ public class DesignateTest {
         try {
             String recordId = "13d2516b-1f18-455b-aa05-1997b26192ad";
 
-            mockApi(server.getUrl("")).deleteRecord(domainId, recordId);
+            mockApi(server.getPort()).deleteRecord(domainId, recordId);
 
             assertEquals(server.takeRequest().getRequestLine(),
                     format("DELETE /v1/domains/%s/records/%s HTTP/1.1", domainId, recordId));
@@ -450,10 +450,10 @@ public class DesignateTest {
         }
     }
 
-    static Designate mockApi(final URL url) {
+    static Designate mockApi(final int port) {
         final TokenIdAndPublicURL tokenIdAndPublicURL = new TokenIdAndPublicURL();
         tokenIdAndPublicURL.tokenId = tokenId;
-        tokenIdAndPublicURL.publicURL = url.toString() + "/v1";
+        tokenIdAndPublicURL.publicURL = "http://localhost:" + port + "/v1";
         return Feign.create(new DesignateTarget(new DesignateProvider() {
             @Override
             public String url() {
@@ -479,11 +479,11 @@ public class DesignateTest {
      * there's no built-in way to defer evaluation of a response header, hence
      * this method, which allows us to send back links to the mock server.
      */
-    static QueueDispatcher getURLReplacingQueueDispatcher(final URL url) {
-        return getURLReplacingQueueDispatcher(new AtomicReference<URL>(url));
+    static QueueDispatcher getURLReplacingQueueDispatcher(final String url) {
+        return getURLReplacingQueueDispatcher(new AtomicReference<String>(url));
     }
 
-    static QueueDispatcher getURLReplacingQueueDispatcher(final AtomicReference<URL> url) {
+    static QueueDispatcher getURLReplacingQueueDispatcher(final AtomicReference<String> url) {
         final QueueDispatcher dispatcher = new QueueDispatcher() {
             protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<MockResponse>();
 
@@ -491,7 +491,7 @@ public class DesignateTest {
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 MockResponse response = responseQueue.take();
                 if (response.getBody() != null) {
-                    String newBody = new String(response.getBody()).replace(": \"URL", ": \"" + url.toString());
+                    String newBody = new String(response.getBody()).replace(": \"URL", ": \"" + url);
                     response = response.setBody(newBody);
                 }
                 return response;

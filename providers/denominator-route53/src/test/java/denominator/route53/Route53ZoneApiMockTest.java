@@ -7,7 +7,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
-import java.net.URL;
 
 import org.testng.annotations.Test;
 
@@ -28,7 +27,7 @@ public class Route53ZoneApiMockTest {
         server.play();
 
         try {
-            ZoneApi api = mockApi(server.getUrl(""));
+            ZoneApi api = mockApi(server.getPort());
             Zone zone = api.iterator().next();
             assertEquals(zone.name(), "denominator.io.");
             assertEquals(zone.id(), "Z1PA6795UKMFR9");
@@ -47,7 +46,7 @@ public class Route53ZoneApiMockTest {
         server.play();
 
         try {
-            ZoneApi api = mockApi(server.getUrl(""));
+            ZoneApi api = mockApi(server.getPort());
             assertFalse(api.iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 1);
@@ -57,11 +56,11 @@ public class Route53ZoneApiMockTest {
         }
     }
 
-    static ZoneApi mockApi(final URL url) {
+    static ZoneApi mockApi(final int port) {
         return Denominator.create(new Route53Provider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("accessKey", "secretKey")).api().zones();
     }
