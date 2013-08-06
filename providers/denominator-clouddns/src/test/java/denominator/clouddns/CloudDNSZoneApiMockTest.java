@@ -5,7 +5,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Iterator;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -32,14 +31,14 @@ public class CloudDNSZoneApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(session));
         server.enqueue(new MockResponse().setBody(domains));
 
         try {
-            ZoneApi api = mockApi(url);
+            ZoneApi api = mockApi(server.getPort());
             Iterator<Zone> domains = api.iterator();
 
             while (domains.hasNext()) {
@@ -61,7 +60,7 @@ public class CloudDNSZoneApiMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(session));
@@ -69,7 +68,7 @@ public class CloudDNSZoneApiMockTest {
                 "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
 
         try {
-            ZoneApi api = mockApi(url);
+            ZoneApi api = mockApi(server.getPort());
 
             assertFalse(api.iterator().hasNext());
             assertEquals(server.getRequestCount(), 2);
@@ -84,7 +83,7 @@ public class CloudDNSZoneApiMockTest {
      * there's no built-in way to defer evaluation of a response header, hence
      * this method, which allows us to send back links to the mock server.
      */
-    static QueueDispatcher getURLReplacingQueueDispatcher(final URL url) {
+    static QueueDispatcher getURLReplacingQueueDispatcher(final String url) {
         final QueueDispatcher dispatcher = new QueueDispatcher() {
             protected final BlockingQueue<MockResponse> responseQueue = new LinkedBlockingQueue<MockResponse>();
 
@@ -92,7 +91,7 @@ public class CloudDNSZoneApiMockTest {
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 MockResponse response = responseQueue.take();
                 if (response.getBody() != null) {
-                    String newBody = new String(response.getBody()).replace(":\"URL", ":\"" + url.toString());
+                    String newBody = new String(response.getBody()).replace(":\"URL", ":\"" + url);
                     response = response.setBody(newBody);
                 }
                 return response;
@@ -107,11 +106,11 @@ public class CloudDNSZoneApiMockTest {
         return dispatcher;
     }
 
-    private static ZoneApi mockApi(final URL url) {
+    private static ZoneApi mockApi(final int port) {
         return Denominator.create(new CloudDNSProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("jclouds-joe", "letmein")).api().zones();
     }

@@ -8,7 +8,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
-import java.net.URL;
 
 import org.testng.annotations.Test;
 
@@ -39,7 +38,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertFalse(api.iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 1);
@@ -65,7 +64,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertFalse(api.iterateByName("www.denominator.io.").hasNext());
 
             assertEquals(server.getRequestCount(), 1);
@@ -92,7 +91,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.iterateByName("www.denominator.io.").next(),
                     a("www.denominator.io.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
 
@@ -113,7 +112,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.getByNameAndType("www.denominator.io.", "A"), Optional.absent());
             assertEquals(server.getRequestCount(), 1);
 
@@ -132,7 +131,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.getByNameAndType("www.denominator.io.", "A"),
                     a("www.denominator.io.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
             assertEquals(server.getRequestCount(), 1);
@@ -169,7 +168,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 4);
@@ -214,7 +213,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 3);
@@ -266,7 +265,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.deleteByNameAndType("www.denominator.io.", "A");
 
             assertEquals(server.getRequestCount(), 6);
@@ -309,7 +308,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", 3600, ImmutableSet.of("192.0.2.1", "198.51.100.1")));
 
             assertEquals(server.getRequestCount(), 3);
@@ -346,7 +345,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(aaaa("www.denominator.io.", 3600, "2001:0DB8:85A3:0000:0000:8A2E:0370:7334"));
 
             assertEquals(server.getRequestCount(), 4);
@@ -383,7 +382,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl("/"));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(aaaa("www.denominator.io.", 3600, "2001:0DB8:85A3:0000:0000:8A2E:0370:7334"));
 
             assertEquals(server.getRequestCount(), 3);
@@ -407,11 +406,11 @@ public class UltraDNSResourceRecordSetApiMockTest {
         }
     }
 
-    private static ResourceRecordSetApi mockApi(final URL url) {
+    private static ResourceRecordSetApi mockApi(final int port) {
         return Denominator.create(new UltraDNSProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port + "/";
             }
         }, credentials("joe", "letmein")).api().basicRecordSetsInZone("denominator.io.");
     }

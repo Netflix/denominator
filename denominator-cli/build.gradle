@@ -20,8 +20,9 @@ dependencies {
   compile      project(':providers:denominator-designate')
   compile     'io.airlift:airline:0.5'
   compile     'org.yaml:snakeyaml:1.12'
-  testCompile 'org.testng:testng:6.8.1'
-  testCompile 'com.google.mockwebserver:mockwebserver:20130505'
+  provided    'com.squareup.dagger:dagger-compiler:1.1.0'
+  testCompile 'org.testng:testng:6.8.5'
+  testCompile 'com.google.mockwebserver:mockwebserver:20130706'
 }
 
 // create a self-contained jar that is executable

@@ -7,7 +7,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
-import java.net.URL;
 
 import org.testng.annotations.Test;
 
@@ -32,7 +31,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertNull(api.getByNameAndType("www.denominator.io.", "CNAME"));
 
             assertEquals(server.getRequestCount(), 1);
@@ -56,7 +55,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 2);
@@ -82,7 +81,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 1);
@@ -104,7 +103,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", 10000000, ImmutableSet.of("192.0.2.1", "198.51.100.1")));
 
             assertEquals(server.getRequestCount(), 2);
@@ -131,7 +130,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 2);
@@ -154,7 +153,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.iterateByName("www.denominator.io.").next(),
                     a("www.denominator.io.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
 
@@ -174,7 +173,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertFalse(api.iterateByName("www.denominator.io.").hasNext());
 
             assertEquals(server.getRequestCount(), 1);
@@ -193,7 +192,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.getByNameAndType("www.denominator.io.", "A"),
                     a("www.denominator.io.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
 
@@ -213,7 +212,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             assertNull(api.getByNameAndType("www.denominator.io.", "A"));
 
             assertEquals(server.getRequestCount(), 1);
@@ -235,7 +234,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.deleteByNameAndType("www.denominator.io.", "A");
 
             assertEquals(server.getRequestCount(), 2);
@@ -258,7 +257,7 @@ public class Route53ResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            ResourceRecordSetApi api = mockApi(server.getUrl(""));
+            ResourceRecordSetApi api = mockApi(server.getPort());
             api.deleteByNameAndType("www1.denominator.io.", "A");
 
             assertEquals(server.getRequestCount(), 1);
@@ -270,11 +269,11 @@ public class Route53ResourceRecordSetApiMockTest {
         }
     }
 
-    private static ResourceRecordSetApi mockApi(final URL url) {
+    private static ResourceRecordSetApi mockApi(final int port) {
         return Denominator.create(new Route53Provider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("accessKey", "secretKey")).api().basicRecordSetsInZone("Z1PA6795UKMFR9");
     }

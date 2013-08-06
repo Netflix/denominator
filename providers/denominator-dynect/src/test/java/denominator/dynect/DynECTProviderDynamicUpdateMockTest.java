@@ -45,7 +45,7 @@ public class DynECTProviderDynamicUpdateMockTest {
             DNSApi api = Denominator.create(new DynECTProvider() {
                 @Override
                 public String url() {
-                    return server.getUrl("").toString();
+                    return "http://localhost:" + server.getPort();
                 }
             }, credentials("customer", "joe", "letmein")).api();
 
@@ -107,22 +107,14 @@ public class DynECTProviderDynamicUpdateMockTest {
         server.play();
 
         try {
-            final AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(ListCredentials.from("customer", "joe", "letmein"));
-
-            @Module(complete = false, library = true, overrides = true)
-            class OverrideCredentials {
-                @Provides
-                public Credentials get() {
-                    return dynamicCredentials.get();
-                }
-            }
+            AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(ListCredentials.from("customer", "joe", "letmein"));
 
             DNSApi api = Denominator.create(new DynECTProvider() {
                 @Override
                 public String url() {
-                    return server.getUrl("").toString();
+                    return "http://localhost:" + server.getPort();
                 }
-            }, new OverrideCredentials()).api();
+            }, new OverrideCredentials(dynamicCredentials)).api();
 
             assertNull(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
             dynamicCredentials.set(ListCredentials.from("customer2", "bob", "comeon"));
@@ -135,6 +127,20 @@ public class DynECTProviderDynamicUpdateMockTest {
             assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
+        }
+    }
+
+    @Module(complete = false, library = true, overrides = true)
+    static class OverrideCredentials {
+        final AtomicReference<Credentials> dynamicCredentials;
+
+        OverrideCredentials(AtomicReference<Credentials> dynamicCredentials) {
+            this.dynamicCredentials = dynamicCredentials;
+        }
+
+        @Provides
+        public Credentials get() {
+            return dynamicCredentials.get();
         }
     }
 }

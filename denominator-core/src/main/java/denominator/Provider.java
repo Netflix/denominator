@@ -4,8 +4,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import javax.inject.Singleton;
-
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 
@@ -40,7 +38,6 @@ import denominator.model.Zone;
  * example, a change to the value returned by {@link #url()} should affect the
  * remote connection to the DNS provider.
  */
-@Singleton
 public interface Provider {
 
     /**

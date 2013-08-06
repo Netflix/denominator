@@ -12,7 +12,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.Iterator;
 
 import org.testng.annotations.Test;
@@ -189,7 +188,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
                          
             Iterator<ResourceRecordSet<?>> iterator = api.iterator();
             assertEquals(iterator.next().toString(), europe.toString());
@@ -231,7 +230,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
                          
             Iterator<ResourceRecordSet<?>> iterator = api.iterateByName("srv.denominator.io.");
             assertEquals(iterator.next().toString(), europe.toString());
@@ -273,7 +272,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
                          
             Iterator<ResourceRecordSet<?>> iterator = api.iterateByNameAndType("srv.denominator.io.", "CNAME");
             assertEquals(iterator.next().toString(), europe.toString());
@@ -325,7 +324,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
 
             api.put(europe);
 
@@ -370,7 +369,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
 
             ResourceRecordSet<CNAMEData> lessOfEurope = ResourceRecordSet.<CNAMEData> builder()
                                                                          .name(europe.name())
@@ -423,7 +422,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         server.play();
 
         try {
-            GeoResourceRecordSetApi api = mockApi(server.getUrl(""));
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
             ResourceRecordSet<CNAMEData> lessTTL = ResourceRecordSet.<CNAMEData> builder()
                                                                          .name(europe.name())
                                                                          .type(europe.type())
@@ -451,11 +450,11 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         }
     }
 
-    private static GeoResourceRecordSetApi mockApi(final URL url) {
+    private static GeoResourceRecordSetApi mockApi(final int port) {
         return Denominator.create(new UltraDNSProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("joe", "letmein")).api().geoRecordSetsInZone("denominator.io.");
     }

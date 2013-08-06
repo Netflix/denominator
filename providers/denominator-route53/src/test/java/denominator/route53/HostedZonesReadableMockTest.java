@@ -7,7 +7,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URL;
 
 import org.testng.annotations.Test;
 
@@ -28,7 +27,7 @@ public class HostedZonesReadableMockTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getUrl("")).checkConnection());
+            assertTrue(mockApi(server.getPort()).checkConnection());
 
             assertEquals(server.getRequestCount(), 1);
             assertEquals(server.takeRequest().getRequestLine(), "GET /2012-12-12/hostedzone HTTP/1.1");
@@ -45,7 +44,7 @@ public class HostedZonesReadableMockTest {
         server.play();
 
         try {
-            assertFalse(mockApi(server.getUrl("")).checkConnection());
+            assertFalse(mockApi(server.getPort()).checkConnection());
             
             assertEquals(server.getRequestCount(), 1);
             assertEquals(server.takeRequest().getRequestLine(), "GET /2012-12-12/hostedzone HTTP/1.1");
@@ -54,11 +53,11 @@ public class HostedZonesReadableMockTest {
         }
     }
 
-    static DNSApiManager mockApi(final URL url) {
+    static DNSApiManager mockApi(final int port) {
         return Denominator.create(new Route53Provider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials("accessKey", "secretKey"));
     }

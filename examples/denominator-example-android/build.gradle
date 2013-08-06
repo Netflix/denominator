@@ -23,7 +23,7 @@ dependencies {
     // swap this out to use a different provider
     compile project(':providers:denominator-ultradns')
     // TODO: find a way to have this in compile classpath, but not in apk
-    compile 'com.squareup.dagger:dagger-compiler:1.0.1'
+    compile 'com.squareup.dagger:dagger-compiler:1.1.0'
     compile 'com.squareup:tape:1.1.0'
     compile 'com.squareup:otto:1.3.3'
 }

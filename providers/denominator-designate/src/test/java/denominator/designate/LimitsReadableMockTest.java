@@ -13,7 +13,6 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
-import java.net.URL;
 
 import org.testng.annotations.Test;
 
@@ -31,7 +30,7 @@ public class LimitsReadableMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setBody(accessResponse));
@@ -39,7 +38,7 @@ public class LimitsReadableMockTest {
         server.enqueue(new MockResponse().setBody(limitsResponse));
 
         try {
-            DNSApiManager api = mockApi(url);
+            DNSApiManager api = mockApi(server.getPort());
 
             assertTrue(api.checkConnection());
             assertTrue(api.checkConnection());
@@ -58,13 +57,13 @@ public class LimitsReadableMockTest {
         MockWebServer server = new MockWebServer();
         server.play();
 
-        URL url = server.getUrl("");
+        String url = "http://localhost:" + server.getPort();
         server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
         server.enqueue(new MockResponse().setResponseCode(401));
 
         try {
-            assertFalse(mockApi(url).checkConnection());
+            assertFalse(mockApi(server.getPort()).checkConnection());
 
             assertEquals(server.getRequestCount(), 1);
             takeAuthResponse(server);
@@ -73,11 +72,11 @@ public class LimitsReadableMockTest {
         }
     }
 
-    private static DNSApiManager mockApi(final URL url) {
+    private static DNSApiManager mockApi(final int port) {
         return Denominator.create(new DesignateProvider() {
             @Override
             public String url() {
-                return url.toString();
+                return "http://localhost:" + port;
             }
         }, credentials(tenantId, username, password));
     }
