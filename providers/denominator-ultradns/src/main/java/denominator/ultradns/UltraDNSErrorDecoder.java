@@ -36,26 +36,8 @@ class UltraDNSErrorDecoder extends SAXDecoder<UltraDNSErrorDecoder.UltraDNSError
                 message = format("%s with error %s", message, error.code);
             if (error.description != null)
                 message = format("%s: %s", message, error.description);
-            switch (error.code) {
-            case UltraDNSException.SYSTEM_ERROR:
+            if (error.code == UltraDNSException.SYSTEM_ERROR) {
                 return new RetryableException(message, null);
-            case UltraDNSException.UNKNOWN:
-                if (message.indexOf("Cannot find") == -1)
-                    break;
-            case UltraDNSException.ZONE_NOT_FOUND:
-            case UltraDNSException.RESOURCE_RECORD_NOT_FOUND:
-            case UltraDNSException.ACCOUNT_NOT_FOUND:
-            case UltraDNSException.POOL_NOT_FOUND:
-            case UltraDNSException.DIRECTIONALPOOL_NOT_FOUND:
-            case UltraDNSException.DIRECTIONALPOOL_RECORD_NOT_FOUND:
-            case UltraDNSException.POOL_RECORD_NOT_FOUND:
-            case UltraDNSException.GROUP_NOT_FOUND:
-                break;
-            case UltraDNSException.ZONE_ALREADY_EXISTS:
-            case UltraDNSException.RESOURCE_RECORD_ALREADY_EXISTS:
-            case UltraDNSException.POOL_ALREADY_EXISTS:
-            case UltraDNSException.POOL_RECORD_ALREADY_EXISTS:
-                break;
             }
             return new UltraDNSException(message, error.code);
         } catch (IOException ignored) {
@@ -68,7 +50,7 @@ class UltraDNSErrorDecoder extends SAXDecoder<UltraDNSErrorDecoder.UltraDNSError
     static class UltraDNSError extends DefaultHandler implements
             feign.codec.SAXDecoder.ContentHandlerWithResult<UltraDNSError> {
         @Inject
-        UltraDNSError(){
+        UltraDNSError() {
         }
 
         private StringBuilder currentText = new StringBuilder();
