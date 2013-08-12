@@ -1,5 +1,14 @@
 package denominator.ultradns;
 
+import static denominator.ultradns.UltraDNSException.DIRECTIONALPOOL_NOT_FOUND;
+import static denominator.ultradns.UltraDNSException.DIRECTIONALPOOL_RECORD_NOT_FOUND;
+import static denominator.ultradns.UltraDNSException.GROUP_NOT_FOUND;
+import static denominator.ultradns.UltraDNSException.POOL_ALREADY_EXISTS;
+import static denominator.ultradns.UltraDNSException.POOL_NOT_FOUND;
+import static denominator.ultradns.UltraDNSException.POOL_RECORD_ALREADY_EXISTS;
+import static denominator.ultradns.UltraDNSException.RESOURCE_RECORD_ALREADY_EXISTS;
+import static denominator.ultradns.UltraDNSException.RESOURCE_RECORD_NOT_FOUND;
+import static denominator.ultradns.UltraDNSException.SYSTEM_ERROR;
 import static java.lang.String.format;
 import static java.util.Locale.US;
 import static org.testng.Assert.assertEquals;
@@ -37,7 +46,29 @@ import feign.codec.DecodeException;
 
 @Test(singleThreaded = true)
 public class UltraDNSTest {
+    /**
+     * param 1, 2: user/pass, 3 is the xml element
+     */
     static String SOAP_TEMPLATE = format(denominator.ultradns.UltraDNSTarget.SOAP_TEMPLATE, "joe", "letmein", "%s");
+
+    /**
+     * param 1 is the code, 2 is the description
+     */
+    static String FAULT_TEMPLATE = ""//
+            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
+            + "    <soap:Body>\n"//
+            + "            <soap:Fault>\n"//
+            + "                    <faultcode>soap:Server</faultcode>\n"//
+            + "                    <faultstring>Fault occurred while processing.</faultstring>\n"//
+            + "                    <detail>\n"//
+            + "                            <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
+            + "                                    <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">%s</errorCode>\n"//
+            + "                                    <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">%s</errorDescription>\n"//
+            + "                            </ns1:UltraWSException>\n"//
+            + "                    </detail>\n"//
+            + "            </soap:Fault>\n"//
+            + "    </soap:Body>\n"//
+            + "</soap:Envelope>";
 
     static String getNeustarNetworkStatus = format(SOAP_TEMPLATE, "<v01:getNeustarNetworkStatus/>");
 
@@ -53,7 +84,7 @@ public class UltraDNSTest {
     @Test
     public void networkGood() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getNeustarNetworkStatusResponse));
+        server.enqueue(new MockResponse().setBody(getNeustarNetworkStatusResponse));
         server.play();
 
         try {
@@ -77,7 +108,7 @@ public class UltraDNSTest {
     @Test
     public void networkFailed() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getNeustarNetworkStatusFailedResponse));
+        server.enqueue(new MockResponse().setBody(getNeustarNetworkStatusFailedResponse));
         server.play();
 
         try {
@@ -89,10 +120,54 @@ public class UltraDNSTest {
         }
     }
 
+    static String systemError = format(FAULT_TEMPLATE, SYSTEM_ERROR, "System Error");
+
+    @Test
+    public void retryOnSystemError() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(systemError));
+        server.enqueue(new MockResponse().setBody(getNeustarNetworkStatusResponse));
+        server.play();
+
+        try {
+            assertEquals(mockApi(server.getPort()).networkStatus(), NetworkStatus.GOOD);
+
+            assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
+            assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    static String invalidUser = ""//
+            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
+            + "    <soap:Body>\n"//
+            + "            <soap:Fault>\n"//
+            + "                    <faultcode>soap:Client</faultcode>\n"//
+            + "                    <faultstring>Invalid User</faultstring>\n"//
+            + "            </soap:Fault>\n"//
+            + "    </soap:Body>\n"//
+            + "</soap:Envelope>";
+
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.networkStatus\\(\\) failed: Invalid User")
+    public void noRetryOnInvalidUser() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(invalidUser));
+        server.play();
+
+        try {
+            mockApi(server.getPort()).networkStatus();
+
+            assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
+        } finally {
+            server.shutdown();
+        }
+    }
+
     @Test(expectedExceptions = DecodeException.class, expectedExceptionsMessageRegExp = "couldn't parse networkstatus from: \\{\"foo\": \"bar\"\\}")
     public void networkStatusCantParse() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody("{\"foo\": \"bar\"}"));
+        server.enqueue(new MockResponse().setBody("{\"foo\": \"bar\"}"));
         server.play();
 
         try {
@@ -119,7 +194,7 @@ public class UltraDNSTest {
     @Test
     public void accountId() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAccountsListOfUserResponse));
+        server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
         server.play();
 
         try {
@@ -155,7 +230,7 @@ public class UltraDNSTest {
     @Test
     public void zonesOfAccountPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getZonesOfAccountResponsePresent));
+        server.enqueue(new MockResponse().setBody(getZonesOfAccountResponsePresent));
         server.play();
 
         try {
@@ -173,7 +248,7 @@ public class UltraDNSTest {
     @Test
     public void zonesOfAccountAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getZonesOfAccountResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getZonesOfAccountResponseAbsent));
         server.play();
 
         try {
@@ -213,7 +288,7 @@ public class UltraDNSTest {
     @Test
     public void recordsInZonePresent() throws IOException, InterruptedException, ParseException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getResourceRecordsOfZoneResponsePresent));
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponsePresent));
         server.play();
 
         try {
@@ -248,7 +323,7 @@ public class UltraDNSTest {
     @Test
     public void recordsInZoneAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getResourceRecordsOfZoneResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponseAbsent));
         server.play();
 
         try {
@@ -276,7 +351,7 @@ public class UltraDNSTest {
             + "  </soap:Body>\n" //
             + "</soap:Envelope>";
 
-    private String getResourceRecordsOfDNameByTypeResponsePresent = ""//
+    static String getResourceRecordsOfDNameByTypeResponsePresent = ""//
             + getResourceRecordsOfDNameByTypeResponseHeader//
             + "        <ns2:ResourceRecord ZoneName=\"denominator.io.\" Type=\"6\" DName=\"denominator.io.\" TTL=\"86400\" Guid=\"04053D8E57C7A22F\" ZoneId=\"03053D8E57C7A22A\" LName=\"denominator.io.\" Created=\"2013-02-22T08:22:48.000Z\" Modified=\"2013-02-22T08:22:49.000Z\">\n"//
             + "          <ns2:InfoValues Info1Value=\"pdns75.ultradns.com.\" Info2Value=\"adrianc.netflix.com.\" Info3Value=\"2013022200\" Info4Value=\"86400\" Info5Value=\"86400\" Info6Value=\"86400\" Info7Value=\"86400\" />\n"//
@@ -289,7 +364,7 @@ public class UltraDNSTest {
     @Test
     public void recordsInZoneByNameAndTypePresent() throws IOException, InterruptedException, ParseException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getResourceRecordsOfDNameByTypeResponsePresent));
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfDNameByTypeResponsePresent));
         server.play();
 
         try {
@@ -307,12 +382,11 @@ public class UltraDNSTest {
     @Test
     public void recordsInZoneByNameAndTypeAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getResourceRecordsOfDNameByTypeResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfDNameByTypeResponseAbsent));
         server.play();
 
         try {
-            assertEquals(
-                    mockApi(server.getPort()).recordsInZoneByNameAndType("denominator.io.", "denominator.io.", 6),
+            assertEquals(mockApi(server.getPort()).recordsInZoneByNameAndType("denominator.io.", "denominator.io.", 6),
                     ImmutableList.of());
 
             assertEquals(new String(server.takeRequest().getBody()), format(getResourceRecordsOfDNameByType));
@@ -337,7 +411,7 @@ public class UltraDNSTest {
     @Test
     public void createRecordInZone() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(createResourceRecordResponse));
+        server.enqueue(new MockResponse().setBody(createResourceRecordResponse));
         server.play();
 
         try {
@@ -371,7 +445,7 @@ public class UltraDNSTest {
     @Test
     public void updateRecordInZone() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(updateResourceRecordResponse));
+        server.enqueue(new MockResponse().setBody(updateResourceRecordResponse));
         server.play();
 
         try {
@@ -384,6 +458,32 @@ public class UltraDNSTest {
             mockApi(server.getPort()).updateRecordInZone(record, "denominator.io.");
 
             assertEquals(new String(server.takeRequest().getBody()), updateResourceRecord);
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    static String rrAlreadyExists = format(FAULT_TEMPLATE, RESOURCE_RECORD_ALREADY_EXISTS,
+            "Resource Record of type 1 with these attributes already exists in the system.");
+
+    /**
+     * Granted, this doesn't make sense, but testing found update to return this
+     * error.
+     */
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.updateRecordInZone\\(Record,String\\) failed with error 2111: Resource Record of type 1 with these attributes already exists in the system.")
+    public void updateRecordInZoneAlreadyExists() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(rrAlreadyExists));
+        server.play();
+
+        try {
+            Record record = new Record();
+            record.id = "ABCDEF";
+            record.name = "www.denominator.io.";
+            record.typeCode = 1;
+            record.ttl = 3600;
+            record.rdata.add("1.1.1.1");
+            mockApi(server.getPort()).updateRecordInZone(record, "denominator.io.");
         } finally {
             server.shutdown();
         }
@@ -404,7 +504,7 @@ public class UltraDNSTest {
     @Test
     public void deleteRecord() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(deleteResourceRecordResponse));
+        server.enqueue(new MockResponse().setBody(deleteResourceRecordResponse));
         server.play();
 
         try {
@@ -445,7 +545,7 @@ public class UltraDNSTest {
     @Test
     public void rrPoolNameTypeToIdInZonePresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getLoadBalancingPoolsByZoneResponsePresent));
+        server.enqueue(new MockResponse().setBody(getLoadBalancingPoolsByZoneResponsePresent));
         server.play();
 
         try {
@@ -474,7 +574,7 @@ public class UltraDNSTest {
     @Test
     public void rrPoolNameTypeToIdInZoneAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getLoadBalancingPoolsByZoneResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getLoadBalancingPoolsByZoneResponseAbsent));
         server.play();
 
         try {
@@ -514,7 +614,7 @@ public class UltraDNSTest {
     @Test
     public void recordsInRRPoolPresent() throws IOException, InterruptedException, ParseException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getRRPoolRecordsResponsePresent));
+        server.enqueue(new MockResponse().setBody(getRRPoolRecordsResponsePresent));
         server.play();
 
         try {
@@ -548,7 +648,7 @@ public class UltraDNSTest {
     @Test
     public void recordsInRRPoolAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getRRPoolRecordsResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getRRPoolRecordsResponseAbsent));
         server.play();
 
         try {
@@ -568,7 +668,7 @@ public class UltraDNSTest {
             + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
             + "  <soap:Body>\n"//
             + "    <ns1:addRRLBPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
-            + "      <RRPoolID>060339AA04175655</RRPoolID>\n"//
+            + "      <RRPoolID>AAAAAAAAAAAAAAAA</RRPoolID>\n"//
             + "    </ns1:addRRLBPoolResponse>\n"//
             + "  </soap:Body>\n"//
             + "</soap:Envelope>";
@@ -576,13 +676,13 @@ public class UltraDNSTest {
     @Test
     public void createRRPoolInZoneForNameAndType() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(addRRLBPoolResponse));
+        server.enqueue(new MockResponse().setBody(addRRLBPoolResponse));
         server.play();
 
         try {
             assertEquals(
                     mockApi(server.getPort()).createRRPoolInZoneForNameAndType("denominator.io.",
-                            "www.denominator.io.", 1), "060339AA04175655");
+                            "www.denominator.io.", 1), "AAAAAAAAAAAAAAAA");
 
             assertEquals(new String(server.takeRequest().getBody()), addRRLBPool);
         } finally {
@@ -590,9 +690,25 @@ public class UltraDNSTest {
         }
     }
 
+    static String poolAlreadyExists = format(FAULT_TEMPLATE, POOL_ALREADY_EXISTS,
+            "Pool already created for this host name : www.denominator.io.");
+
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#createRRPoolInZoneForNameAndType\\(String,String,int\\) failed with error 2912: Pool already created for this host name : www.denominator.io.")
+    public void createRRPoolInZoneForNameAndTypeWhenAlreadyExists() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(poolAlreadyExists));
+        server.play();
+
+        try {
+            mockApi(server.getPort()).createRRPoolInZoneForNameAndType("denominator.io.", "www.denominator.io.", 1);
+        } finally {
+            server.shutdown();
+        }
+    }
+
     static String addRecordToRRPool = format(
             SOAP_TEMPLATE,
-            "<v01:addRecordToRRPool><transactionID /><roundRobinRecord lbPoolID=\"060339AA04175655\" info1Value=\"www1.denominator.io.\" ZoneName=\"denominator.io.\" Type=\"1\" TTL=\"300\"/></v01:addRecordToRRPool>");
+            "<v01:addRecordToRRPool><transactionID /><roundRobinRecord lbPoolID=\"AAAAAAAAAAAAAAAA\" info1Value=\"www1.denominator.io.\" ZoneName=\"denominator.io.\" Type=\"1\" TTL=\"300\"/></v01:addRecordToRRPool>");
 
     static String addRecordToRRPoolResponse = ""//
             + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
@@ -606,11 +722,11 @@ public class UltraDNSTest {
     @Test
     public void addRecordIntoRRPoolInZone() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(addRecordToRRPoolResponse));
+        server.enqueue(new MockResponse().setBody(addRecordToRRPoolResponse));
         server.play();
 
         try {
-            mockApi(server.getPort()).createRecordInRRPoolInZone(1, 300, "www1.denominator.io.", "060339AA04175655",
+            mockApi(server.getPort()).createRecordInRRPoolInZone(1, 300, "www1.denominator.io.", "AAAAAAAAAAAAAAAA",
                     "denominator.io.");
 
             assertEquals(new String(server.takeRequest().getBody()), addRecordToRRPool);
@@ -621,7 +737,7 @@ public class UltraDNSTest {
 
     static String deleteLBPool = format(
             SOAP_TEMPLATE,
-            "<v01:deleteLBPool><transactionID /><lbPoolID>060339AA04175655</lbPoolID><DeleteAll>Yes</DeleteAll><retainRecordId /></v01:deleteLBPool>");
+            "<v01:deleteLBPool><transactionID /><lbPoolID>AAAAAAAAAAAAAAAA</lbPoolID><DeleteAll>Yes</DeleteAll><retainRecordId /></v01:deleteLBPool>");
 
     static String deleteLBPoolResponse = ""//
             + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
@@ -635,11 +751,11 @@ public class UltraDNSTest {
     @Test
     public void deleteRRPool() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(deleteLBPoolResponse));
+        server.enqueue(new MockResponse().setBody(deleteLBPoolResponse));
         server.play();
 
         try {
-            mockApi(server.getPort()).deleteRRPool("060339AA04175655");
+            mockApi(server.getPort()).deleteRRPool("AAAAAAAAAAAAAAAA");
 
             assertEquals(new String(server.takeRequest().getBody()), deleteLBPool);
         } finally {
@@ -647,21 +763,7 @@ public class UltraDNSTest {
         }
     }
 
-    static String poolNotFound = ""//
-            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-            + "  <soap:Body>\n"//
-            + "    <soap:Fault>\n"//
-            + "      <faultcode>soap:Server</faultcode>\n"//
-            + "      <faultstring>Fault occurred while processing.</faultstring>\n"//
-            + "      <detail>\n"//
-            + "        <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
-            + "          <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Pool does not exist in the system</errorDescription>\n"//
-            + "          <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">2911</errorCode>\n"//
-            + "        </ns1:UltraWSException>\n"//
-            + "      </detail>\n"//
-            + "    </soap:Fault>\n"//
-            + "  </soap:Body>\n"//
-            + "</soap:Envelope>";
+    static String poolNotFound = format(FAULT_TEMPLATE, POOL_NOT_FOUND, "Pool does not exist in the system");
 
     @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteRRPool\\(String\\) failed with error 2911: Pool does not exist in the system")
     public void deleteRRPoolWhenPoolNotFound() throws IOException, InterruptedException {
@@ -670,36 +772,23 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getPort()).deleteRRPool("060339AA04175655");
+            mockApi(server.getPort()).deleteRRPool("AAAAAAAAAAAAAAAA");
         } finally {
             server.shutdown();
         }
     }
 
-    static String recordNotFound = ""//
-            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-            + "  <soap:Body>\n"//
-            + "    <soap:Fault>\n"//
-            + "      <faultcode>soap:Server</faultcode>\n"//
-            + "      <faultstring>Fault occurred while processing.</faultstring>\n"//
-            + "      <detail>\n"//
-            + "        <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
-            + "          <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">No resource record with GUID found in the system 060339AA04175655</errorDescription>\n"//
-            + "          <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">2103</errorCode>\n"//
-            + "        </ns1:UltraWSException>\n"//
-            + "      </detail>\n"//
-            + "    </soap:Fault>\n"//
-            + "  </soap:Body>\n"//
-            + "</soap:Envelope>";
+    static String recordNotFound = format(FAULT_TEMPLATE, RESOURCE_RECORD_NOT_FOUND,
+            "No resource record with GUID found in the system AAAAAAAAAAAAAAAA");
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteRRPool\\(String\\) failed with error 2103: No resource record with GUID found in the system 060339AA04175655")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteRRPool\\(String\\) failed with error 2103: No resource record with GUID found in the system AAAAAAAAAAAAAAAA")
     public void deleteRRPoolWhenRecordNotFound() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(recordNotFound));
         server.play();
 
         try {
-            mockApi(server.getPort()).deleteRRPool("060339AA04175655");
+            mockApi(server.getPort()).deleteRRPool("AAAAAAAAAAAAAAAA");
         } finally {
             server.shutdown();
         }
@@ -720,24 +809,24 @@ public class UltraDNSTest {
             + "  </soap:Body>\n" //
             + "</soap:Envelope>";
 
-    private String getDirectionalPoolsOfZoneResponsePresent = ""//
+    static String getDirectionalPoolsOfZoneResponsePresent = ""//
             + getDirectionalPoolsOfZoneResponseHeader //
-            + "      <ns2:DirectionalPoolData dirpoolid=\"D000000000000001\" Zoneid=\"Z000000000000001\" Pooldname=\"srv.denominator.io.\" DirPoolType=\"GEOLOCATION\" Description=\"test with ips and cnames\" />\n"//
-            + "      <ns2:DirectionalPoolData dirpoolid=\"D000000000000002\" Zoneid=\"Z000000000000001\" Pooldname=\"srv2.denominator.io.\" DirPoolType=\"SOURCEIP\" Description=\"should filter out as not geo\" />\n"//
+            + "      <ns2:DirectionalPoolData dirpoolid=\"D000000000000001\" Zoneid=\"Z000000000000001\" Pooldname=\"www.denominator.io.\" DirPoolType=\"GEOLOCATION\" Description=\"test with ips and cnames\" />\n"//
+            + "      <ns2:DirectionalPoolData dirpoolid=\"D000000000000002\" Zoneid=\"Z000000000000001\" Pooldname=\"www2.denominator.io.\" DirPoolType=\"SOURCEIP\" Description=\"should filter out as not geo\" />\n"//
             + getDirectionalPoolsOfZoneResponseFooter;
 
     @Test
     public void dirPoolNameToIdsInZonePresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalPoolsOfZoneResponsePresent));
+        server.enqueue(new MockResponse().setBody(getDirectionalPoolsOfZoneResponsePresent));
         server.play();
 
         try {
             Map<String, String> pools = mockApi(server.getPort()).directionalPoolNameToIdsInZone("denominator.io.");
             assertEquals(pools.size(), 1);
 
-            assertEquals(pools.get("srv.denominator.io."), "D000000000000001");
-            assertFalse(pools.containsKey("srv2.denominator.io."));
+            assertEquals(pools.get("www.denominator.io."), "D000000000000001");
+            assertFalse(pools.containsKey("www2.denominator.io."));
 
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalPoolsOfZone);
         } finally {
@@ -752,7 +841,7 @@ public class UltraDNSTest {
     @Test
     public void dirPoolNameToIdsInZoneAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalPoolsOfZoneResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getDirectionalPoolsOfZoneResponseAbsent));
         server.play();
 
         try {
@@ -764,9 +853,18 @@ public class UltraDNSTest {
         }
     }
 
-    static String getDirectionalDNSRecordsForHost = format(
+    static String getDirectionalDNSRecordsForHostTemplate = format(
             SOAP_TEMPLATE,
-            "<v01:getDirectionalDNSRecordsForHost><zoneName>denominator.io.</zoneName><hostName>www.denominator.io.</hostName><poolRecordType>0</poolRecordType></v01:getDirectionalDNSRecordsForHost>");
+            "<v01:getDirectionalDNSRecordsForHost><zoneName>%s</zoneName><hostName>%s</hostName><poolRecordType>%s</poolRecordType></v01:getDirectionalDNSRecordsForHost>");
+
+    static String getDirectionalDNSRecordsForHost = format(getDirectionalDNSRecordsForHostTemplate, "denominator.io.",
+            "www.denominator.io.", 0);
+
+    static String getDirectionalDNSRecordsForHostIPV4 = format(getDirectionalDNSRecordsForHostTemplate,
+            "denominator.io.", "www.denominator.io.", 1);
+
+    static String getDirectionalDNSRecordsForHostIPV6 = format(getDirectionalDNSRecordsForHostTemplate,
+            "denominator.io.", "www.denominator.io.", 28);
 
     static String getDirectionalDNSRecordsForHostResponseHeader = ""//
             + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
@@ -778,22 +876,22 @@ public class UltraDNSTest {
             + "  </soap:Body>\n" //
             + "</soap:Envelope>";
 
-    private String getDirectionalDNSRecordsForHostResponsePresent = ""//
+    static String getDirectionalDNSRecordsForHostResponsePresent = ""//
             + getDirectionalDNSRecordsForHostResponseHeader//
             + "    <DirectionalDNSRecordDetailList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" ZoneName=\"denominator.io.\" DName=\"www.denominator.io.\">\n"//
             + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"Europe\" GeolocationGroupId=\"C000000000000001\" TerritoriesCount=\"54\" DirPoolRecordId=\"A000000000000001\">\n"//
             + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"//
-            + "          <ns2:InfoValues Info1Value=\"srv-000000001.eu-west-1.elb.amazonaws.com.\" />\n"//
+            + "          <ns2:InfoValues Info1Value=\"www-000000001.eu-west-1.elb.amazonaws.com.\" />\n"//
             + "        </ns2:DirectionalDNSRecord>\n"//
             + "      </ns2:DirectionalDNSRecordDetail>\n"//
             + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"US\" GeolocationGroupId=\"C000000000000002\" TerritoriesCount=\"3\" DirPoolRecordId=\"A000000000000002\">\n"//
             + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"//
-            + "          <ns2:InfoValues Info1Value=\"srv-000000001.us-east-1.elb.amazonaws.com.\" />\n"//
+            + "          <ns2:InfoValues Info1Value=\"www-000000001.us-east-1.elb.amazonaws.com.\" />\n"//
             + "        </ns2:DirectionalDNSRecord>\n"//
             + "      </ns2:DirectionalDNSRecordDetail>\n"//
             + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"Everywhere Else\" GeolocationGroupId=\"C000000000000003\" TerritoriesCount=\"323\" DirPoolRecordId=\"A000000000000003\">\n"//
             + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"60\" noResponseRecord=\"false\">\n"//
-            + "          <ns2:InfoValues Info1Value=\"srv-000000002.us-east-1.elb.amazonaws.com.\" />\n"//
+            + "          <ns2:InfoValues Info1Value=\"www-000000002.us-east-1.elb.amazonaws.com.\" />\n"//
             + "        </ns2:DirectionalDNSRecord>\n"//
             + "      </ns2:DirectionalDNSRecordDetail>\n"//
             + "    </DirectionalDNSRecordDetailList>\n"//
@@ -805,7 +903,7 @@ public class UltraDNSTest {
     @Test
     public void directionalRecordsByNameAndTypePresent() throws IOException, InterruptedException, ParseException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForHostResponsePresent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForHostResponsePresent));
         server.play();
 
         try {
@@ -821,7 +919,7 @@ public class UltraDNSTest {
             assertEquals(records.get(0).name, "www.denominator.io.");
             assertEquals(records.get(0).type, "CNAME");
             assertEquals(records.get(0).ttl, 300);
-            assertEquals(records.get(0).rdata.get(0), "srv-000000001.eu-west-1.elb.amazonaws.com.");
+            assertEquals(records.get(0).rdata.get(0), "www-000000001.eu-west-1.elb.amazonaws.com.");
 
             // sorted
             assertEquals(records.get(2).geoGroupId, "C000000000000002");
@@ -831,7 +929,7 @@ public class UltraDNSTest {
             assertEquals(records.get(2).name, "www.denominator.io.");
             assertEquals(records.get(2).type, "CNAME");
             assertEquals(records.get(2).ttl, 300);
-            assertEquals(records.get(2).rdata.get(0), "srv-000000001.us-east-1.elb.amazonaws.com.");
+            assertEquals(records.get(2).rdata.get(0), "www-000000001.us-east-1.elb.amazonaws.com.");
 
             assertEquals(records.get(1).geoGroupId, "C000000000000003");
             assertEquals(records.get(1).geoGroupName, "Everywhere Else");
@@ -840,7 +938,7 @@ public class UltraDNSTest {
             assertEquals(records.get(1).name, "www.denominator.io.");
             assertEquals(records.get(1).type, "CNAME");
             assertEquals(records.get(1).ttl, 60);
-            assertEquals(records.get(1).rdata.get(0), "srv-000000002.us-east-1.elb.amazonaws.com.");
+            assertEquals(records.get(1).rdata.get(0), "www-000000002.us-east-1.elb.amazonaws.com.");
 
             assertEquals(new String(server.takeRequest().getBody()), format(getDirectionalDNSRecordsForHost));
         } finally {
@@ -851,7 +949,7 @@ public class UltraDNSTest {
     @Test
     public void directionalRecordsByNameAndTypeAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForHostResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForHostResponseAbsent));
         server.play();
 
         try {
@@ -864,17 +962,34 @@ public class UltraDNSTest {
         }
     }
 
+    static String dirPoolNotFound = format(FAULT_TEMPLATE, DIRECTIONALPOOL_NOT_FOUND,
+            "No Pool or Multiple pools of same type exists for the PoolName : www.denominator.io.");
+
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.directionalRecordsInZoneByNameAndType\\(String,String,int\\) failed with error 2142: No Pool or Multiple pools of same type exists for the PoolName : www.denominator.io.")
+    public void directionalRecordsByNameAndTypeWhenPoolNotFound() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(dirPoolNotFound));
+        server.play();
+
+        try {
+            mockApi(server.getPort())
+                    .directionalRecordsInZoneByNameAndType("denominator.io.", "www.denominator.io.", 0);
+        } finally {
+            server.shutdown();
+        }
+    }
+
     private String getDirectionalDNSRecordsForHostResponseFiltersOutSourceIP = ""//
             + getDirectionalDNSRecordsForHostResponseHeader//
             + "    <DirectionalDNSRecordDetailList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" ZoneName=\"denominator.io.\" DName=\"www.denominator.io.\">\n"//
             + "      <ns2:DirectionalDNSRecordDetail SourceIPGroupName=\"172.16.1.0/24\" SourceIPGroupId=\"C000000000000001\" TerritoriesCount=\"54\" DirPoolRecordId=\"A000000000000001\">\n"//
             + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"//
-            + "          <ns2:InfoValues Info1Value=\"srv-000000001.eu-west-1.elb.amazonaws.com.\" />\n"//
+            + "          <ns2:InfoValues Info1Value=\"www-000000001.eu-west-1.elb.amazonaws.com.\" />\n"//
             + "        </ns2:DirectionalDNSRecord>\n"//
             + "      </ns2:DirectionalDNSRecordDetail>\n"//
             + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"US\" GeolocationGroupId=\"C000000000000002\" TerritoriesCount=\"3\" DirPoolRecordId=\"A000000000000002\">\n"//
             + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"//
-            + "          <ns2:InfoValues Info1Value=\"srv-000000001.us-east-1.elb.amazonaws.com.\" />\n"//
+            + "          <ns2:InfoValues Info1Value=\"www-000000001.us-east-1.elb.amazonaws.com.\" />\n"//
             + "        </ns2:DirectionalDNSRecord>\n"//
             + "      </ns2:DirectionalDNSRecordDetail>\n"//
             + "    </DirectionalDNSRecordDetailList>\n"//
@@ -883,8 +998,7 @@ public class UltraDNSTest {
     @Test
     public void directionalRecordsByNameAndTypeFiltersOutSourceIP() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(
-                getDirectionalDNSRecordsForHostResponseFiltersOutSourceIP));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForHostResponseFiltersOutSourceIP));
         server.play();
 
         try {
@@ -900,7 +1014,7 @@ public class UltraDNSTest {
             assertEquals(records.get(0).name, "www.denominator.io.");
             assertEquals(records.get(0).type, "CNAME");
             assertEquals(records.get(0).ttl, 300);
-            assertEquals(records.get(0).rdata.get(0), "srv-000000001.us-east-1.elb.amazonaws.com.");
+            assertEquals(records.get(0).rdata.get(0), "www-000000001.us-east-1.elb.amazonaws.com.");
 
             assertEquals(new String(server.takeRequest().getBody()), format(getDirectionalDNSRecordsForHost));
         } finally {
@@ -908,9 +1022,15 @@ public class UltraDNSTest {
         }
     }
 
-    static String getDirectionalDNSRecordsForGroup = format(
+    static String getDirectionalDNSRecordsForGroupTemplate = format(
             SOAP_TEMPLATE,
-            "<v01:getDirectionalDNSRecordsForGroup><groupName>Europe</groupName><hostName>www.denominator.io.</hostName><zoneName>denominator.io.</zoneName><poolRecordType>5</poolRecordType></v01:getDirectionalDNSRecordsForGroup>");
+            "<v01:getDirectionalDNSRecordsForGroup><groupName>%s</groupName><hostName>%s</hostName><zoneName>%s</zoneName><poolRecordType>%s</poolRecordType></v01:getDirectionalDNSRecordsForGroup>");
+
+    static String getDirectionalDNSRecordsForGroup = format(getDirectionalDNSRecordsForGroupTemplate, "Europe",
+            "www.denominator.io.", "denominator.io.", 1);
+
+    static String getDirectionalDNSRecordsForGroupEuropeIPV6 = format(getDirectionalDNSRecordsForGroupTemplate,
+            "Europe", "www.denominator.io.", "denominator.io.", 28);
 
     static String getDirectionalDNSRecordsForGroupResponseHeader = ""//
             + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
@@ -922,13 +1042,12 @@ public class UltraDNSTest {
             + "  </soap:Body>\n" //
             + "</soap:Envelope>";
 
-    // TODO: real response
-    private String getDirectionalDNSRecordsForGroupResponsePresent = ""//
+    static String getDirectionalDNSRecordsForGroupResponsePresent = ""//
             + getDirectionalDNSRecordsForGroupResponseHeader//
             + "    <DirectionalDNSRecordDetailList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" ZoneName=\"denominator.io.\" DName=\"www.denominator.io.\">\n"//
             + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"Europe\" GeolocationGroupId=\"C000000000000001\" TerritoriesCount=\"54\" DirPoolRecordId=\"A000000000000001\">\n"//
             + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"//
-            + "          <ns2:InfoValues Info1Value=\"srv-000000001.eu-west-1.elb.amazonaws.com.\" />\n"//
+            + "          <ns2:InfoValues Info1Value=\"www-000000001.eu-west-1.elb.amazonaws.com.\" />\n"//
             + "        </ns2:DirectionalDNSRecord>\n"//
             + "      </ns2:DirectionalDNSRecordDetail>\n"//
             + "    </DirectionalDNSRecordDetailList>\n"//
@@ -941,12 +1060,12 @@ public class UltraDNSTest {
     public void directionalRecordsInZoneAndGroupByNameAndTypePresent() throws IOException, InterruptedException,
             ParseException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponsePresent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForGroupResponsePresent));
         server.play();
 
         try {
             List<DirectionalRecord> records = mockApi(server.getPort()).directionalRecordsInZoneAndGroupByNameAndType(
-                    "denominator.io.", "Europe", "www.denominator.io.", 5);
+                    "denominator.io.", "Europe", "www.denominator.io.", 1);
 
             assertEquals(records.size(), 1);
 
@@ -957,7 +1076,7 @@ public class UltraDNSTest {
             assertEquals(records.get(0).name, "www.denominator.io.");
             assertEquals(records.get(0).type, "CNAME");
             assertEquals(records.get(0).ttl, 300);
-            assertEquals(records.get(0).rdata.get(0), "srv-000000001.eu-west-1.elb.amazonaws.com.");
+            assertEquals(records.get(0).rdata.get(0), "www-000000001.eu-west-1.elb.amazonaws.com.");
 
             assertEquals(new String(server.takeRequest().getBody()), format(getDirectionalDNSRecordsForGroup));
         } finally {
@@ -968,14 +1087,31 @@ public class UltraDNSTest {
     @Test
     public void directionalRecordsInZoneAndGroupByNameAndTypeAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForGroupResponseAbsent));
         server.play();
 
         try {
             assertTrue(mockApi(server.getPort()).directionalRecordsInZoneAndGroupByNameAndType("denominator.io.",
-                    "Europe", "www.denominator.io.", 5).isEmpty());
+                    "Europe", "www.denominator.io.", 1).isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), format(getDirectionalDNSRecordsForGroup));
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    static String groupNotFound = format(FAULT_TEMPLATE, GROUP_NOT_FOUND, "Group does not exist.");
+
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#directionalRecordsInZoneAndGroupByNameAndType\\(String,String,String,int\\) failed with error 4003: Group does not exist.")
+    public void directionalRecordsInZoneAndGroupByNameAndTypeWhenGroupNotFound() throws IOException,
+            InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(groupNotFound));
+        server.play();
+
+        try {
+            mockApi(server.getPort()).directionalRecordsInZoneAndGroupByNameAndType("denominator.io.", "Europe",
+                    "www.denominator.io.", 1);
         } finally {
             server.shutdown();
         }
@@ -989,7 +1125,7 @@ public class UltraDNSTest {
             + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
             + "  <soap:Body>\n"//
             + "    <ns1:addDirectionalPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
-            + "      <DirPoolID>060339AA04175655</DirPoolID>\n"//
+            + "      <DirPoolID>AAAAAAAAAAAAAAAA</DirPoolID>\n"//
             + "    </ns1:addDirectionalPoolResponse>\n"//
             + "  </soap:Body>\n"//
             + "</soap:Envelope>";
@@ -997,13 +1133,13 @@ public class UltraDNSTest {
     @Test
     public void createDirectionalPoolInZoneForNameAndType() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(addDirectionalPoolResponse));
+        server.enqueue(new MockResponse().setBody(addDirectionalPoolResponse));
         server.play();
 
         try {
             assertEquals(
                     mockApi(server.getPort()).createDirectionalPoolInZoneForNameAndType("denominator.io.",
-                            "www.denominator.io.", "A"), "060339AA04175655");
+                            "www.denominator.io.", "A"), "AAAAAAAAAAAAAAAA");
 
             assertEquals(new String(server.takeRequest().getBody()), addDirectionalPool);
         } finally {
@@ -1011,9 +1147,23 @@ public class UltraDNSTest {
         }
     }
 
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#createDirectionalPoolInZoneForNameAndType\\(String,String,String\\) failed with error 2912: Pool already created for this host name : www.denominator.io.")
+    public void createDirectionalPoolInZoneForNameAndTypeWhenAlreadyExists() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(poolAlreadyExists));
+        server.play();
+
+        try {
+            mockApi(server.getPort()).createDirectionalPoolInZoneForNameAndType("denominator.io.",
+                    "www.denominator.io.", "A");
+        } finally {
+            server.shutdown();
+        }
+    }
+
     static String deleteDirectionalPool = format(
             SOAP_TEMPLATE,
-            "<v01:deleteDirectionalPool><transactionID /><dirPoolID>060339AA04175655</dirPoolID><retainRecordID /></v01:deleteDirectionalPool>");
+            "<v01:deleteDirectionalPool><transactionID /><dirPoolID>AAAAAAAAAAAAAAAA</dirPoolID><retainRecordID /></v01:deleteDirectionalPool>");
 
     static String deleteDirectionalPoolResponse = ""//
             + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
@@ -1027,11 +1177,11 @@ public class UltraDNSTest {
     @Test
     public void deleteDirectionalPool() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(deleteDirectionalPoolResponse));
+        server.enqueue(new MockResponse().setBody(deleteDirectionalPoolResponse));
         server.play();
 
         try {
-            mockApi(server.getPort()).deleteDirectionalPool("060339AA04175655");
+            mockApi(server.getPort()).deleteDirectionalPool("AAAAAAAAAAAAAAAA");
 
             assertEquals(new String(server.takeRequest().getBody()), deleteDirectionalPool);
         } finally {
@@ -1055,7 +1205,7 @@ public class UltraDNSTest {
     @Test
     public void deleteDirectionalRecord() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(deleteDirectionalPoolRecordResponse));
+        server.enqueue(new MockResponse().setBody(deleteDirectionalPoolRecordResponse));
         server.play();
 
         try {
@@ -1067,10 +1217,27 @@ public class UltraDNSTest {
         }
     }
 
+    static String dirRecordNotFound = format(FAULT_TEMPLATE, DIRECTIONALPOOL_RECORD_NOT_FOUND,
+            "Directional Pool Record does not exist in the system");
+
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteDirectionalRecord\\(String\\) failed with error 2705: Directional Pool Record does not exist in the system")
+    public void deleteDirectionalRecordNotFound() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(dirRecordNotFound));
+        server.play();
+
+        try {
+            mockApi(server.getPort()).deleteDirectionalRecord("00000000000");
+        } finally {
+            server.shutdown();
+        }
+    }
+
     static String addDirectionalPoolRecord = format(
-            SOAP_TEMPLATE, ""//
+            SOAP_TEMPLATE,
+            ""//
                     + "<v01:addDirectionalPoolRecord><transactionID />"//
-                    + "<AddDirectionalRecordData directionalPoolId=\"060339AA04175655\">"//
+                    + "<AddDirectionalRecordData directionalPoolId=\"AAAAAAAAAAAAAAAA\">"//
                     + "<DirectionalRecordConfiguration recordType=\"MX\" TTL=\"1800\" >"//
                     + "<InfoValues Info1Value=\"10\" Info2Value=\"maileast.denominator.io.\" />" //
                     + "</DirectionalRecordConfiguration>"//
@@ -1092,7 +1259,7 @@ public class UltraDNSTest {
     @Test
     public void createDirectionalRecordAndGroupInPool() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(addDirectionalPoolRecordResponse));
+        server.enqueue(new MockResponse().setBody(addDirectionalPoolRecordResponse));
         server.play();
 
         try {
@@ -1110,7 +1277,7 @@ public class UltraDNSTest {
                     .build().asMap();
 
             assertEquals(
-                    mockApi(server.getPort()).createRecordAndDirectionalGroupInPool(record, group, "060339AA04175655"),
+                    mockApi(server.getPort()).createRecordAndDirectionalGroupInPool(record, group, "AAAAAAAAAAAAAAAA"),
                     "06063DC355058294");
 
             assertEquals(new String(server.takeRequest().getBody()), addDirectionalPoolRecord);
@@ -1119,21 +1286,8 @@ public class UltraDNSTest {
         }
     }
 
-    static String poolRecordAlreadyExists = ""//
-            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-            + "  <soap:Body>\n"//
-            + "    <soap:Fault>\n"//
-            + "      <faultcode>soap:Server</faultcode>\n"//
-            + "      <faultstring>Fault occurred while processing.</faultstring>\n"//
-            + "      <detail>\n"//
-            + "        <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
-            + "          <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Resource Record already exists.</errorDescription>\n"//
-            + "          <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">4009</errorCode>\n"//
-            + "        </ns1:UltraWSException>\n"//
-            + "      </detail>\n"//
-            + "    </soap:Fault>\n"//
-            + "  </soap:Body>\n"//
-            + "</soap:Envelope>";
+    static String poolRecordAlreadyExists = format(FAULT_TEMPLATE, POOL_RECORD_ALREADY_EXISTS,
+            "Resource Record already exists.");
 
     @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#createRecordAndDirectionalGroupInPool\\(DirectionalRecord,DirectionalGroup,String\\) failed with error 4009: Resource Record already exists.")
     public void createDirectionalRecordAndGroupInPoolWhenExists() throws IOException, InterruptedException {
@@ -1156,7 +1310,7 @@ public class UltraDNSTest {
                     .build().asMap();
 
             assertEquals(
-                    mockApi(server.getPort()).createRecordAndDirectionalGroupInPool(record, group, "060339AA04175655"),
+                    mockApi(server.getPort()).createRecordAndDirectionalGroupInPool(record, group, "AAAAAAAAAAAAAAAA"),
                     "06063DC355058294");
 
             assertEquals(new String(server.takeRequest().getBody()), addDirectionalPoolRecord);
@@ -1165,17 +1319,16 @@ public class UltraDNSTest {
         }
     }
 
-    static String updateDirectionalPoolRecord = format(SOAP_TEMPLATE, ""//
-            + "<v01:updateDirectionalPoolRecord><transactionID />"//
-            + "<UpdateDirectionalRecordData directionalPoolRecordId=\"ABCDEF\">"//
-            + "<DirectionalRecordConfiguration TTL=\"1800\" >"//
-            + "<InfoValues Info1Value=\"10\" Info2Value=\"maileast.denominator.io.\" />" //
-            + "</DirectionalRecordConfiguration>" //
-            + "<GeolocationGroupDetails groupName=\"Mexas\">" //
-            + "<GeolocationGroupDefinitionData regionName=\"United States (US)\" territoryNames=\"Maryland;Texas\" />" //
-            + "</GeolocationGroupDetails>" //
-            + "<forceOverlapTransfer>true</forceOverlapTransfer>" //
-            + "</UpdateDirectionalRecordData></v01:updateDirectionalPoolRecord>");
+    static String updateDirectionalPoolRecordTemplate = format(
+            SOAP_TEMPLATE,
+            "<v01:updateDirectionalPoolRecord><transactionID /><UpdateDirectionalRecordData directionalPoolRecordId=\"%s\"><DirectionalRecordConfiguration TTL=\"%s\" ><InfoValues Info1Value=\"%s\" /></DirectionalRecordConfiguration>%s</UpdateDirectionalRecordData></v01:updateDirectionalPoolRecord>");
+
+    static String updateDirectionalPoolRecordRegions = format(
+            updateDirectionalPoolRecordTemplate,
+            "A000000000000001",
+            300,
+            "www-000000001.eu-west-1.elb.amazonaws.com.",
+            "<GeolocationGroupDetails groupName=\"Europe\"><GeolocationGroupDefinitionData regionName=\"Europe\" territoryNames=\"Aland Islands\" /></GeolocationGroupDetails><forceOverlapTransfer>true</forceOverlapTransfer>");
 
     static String updateDirectionalPoolRecordResponse = ""//
             + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
@@ -1189,47 +1342,33 @@ public class UltraDNSTest {
     @Test
     public void updateDirectionalRecordAndGroup() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(updateDirectionalPoolRecordResponse));
+        server.enqueue(new MockResponse().setBody(updateDirectionalPoolRecordResponse));
         server.play();
 
         try {
             DirectionalRecord record = new DirectionalRecord();
-            record.id = "ABCDEF";
-            record.name = "mail.denominator.io.";
-            record.type = "MX";
-            record.ttl = 1800;
-            record.rdata.add("10");
-            record.rdata.add("maileast.denominator.io.");
+            record.id = "A000000000000001";
+            record.name = "www.denominator.io.";
+            record.type = "CNAME";
+            record.ttl = 300;
+            record.rdata.add("www-000000001.eu-west-1.elb.amazonaws.com.");
 
             DirectionalGroup group = new DirectionalGroup();
-            group.name = "Mexas";
+            group.name = "Europe";
             group.regionToTerritories = ImmutableMultimap.<String, String> builder()//
-                    .putAll("United States (US)", "Maryland", "Texas")//
+                    .putAll("Europe", "Aland Islands")//
                     .build().asMap();
 
             mockApi(server.getPort()).updateRecordAndDirectionalGroup(record, group);
 
-            assertEquals(new String(server.takeRequest().getBody()), updateDirectionalPoolRecord);
+            assertEquals(new String(server.takeRequest().getBody()), updateDirectionalPoolRecordRegions);
         } finally {
             server.shutdown();
         }
     }
 
-    static String existsWithSameAttributes = ""//
-            + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-            + "  <soap:Body>\n"//
-            + "    <soap:Fault>\n"//
-            + "      <faultcode>soap:Server</faultcode>\n"//
-            + "      <faultstring>Fault occurred while processing.</faultstring>\n"//
-            + "      <detail>\n"//
-            + "        <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
-            + "          <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Resource Record of type CNAME with these attributes already exists in the system.</errorDescription>\n"//
-            + "          <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">2111</errorCode>\n"//
-            + "        </ns1:UltraWSException>\n"//
-            + "      </detail>\n"//
-            + "    </soap:Fault>\n"//
-            + "  </soap:Body>\n"//
-            + "</soap:Envelope>";
+    static String existsWithSameAttributes = format(FAULT_TEMPLATE, RESOURCE_RECORD_ALREADY_EXISTS,
+            "Resource Record of type CNAME with these attributes already exists in the system.");
 
     @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#updateRecordAndDirectionalGroup\\(DirectionalRecord,DirectionalGroup\\) failed with error 2111: Resource Record of type CNAME with these attributes already exists in the system.")
     public void updateDirectionalRecordAndGroupWhenExistsWithSameAttributes() throws IOException, InterruptedException {
@@ -1259,36 +1398,41 @@ public class UltraDNSTest {
     }
 
     static String getDirectionalDNSGroupDetails = format(SOAP_TEMPLATE,
-            "<v01:getDirectionalDNSGroupDetails><GroupId>060339AA04175655</GroupId></v01:getDirectionalDNSGroupDetails>");
+            "<v01:getDirectionalDNSGroupDetails><GroupId>AAAAAAAAAAAAAAAA</GroupId></v01:getDirectionalDNSGroupDetails>");
 
-    static String getDirectionalDNSGroupDetailsResponse = ""//
+    static String getDirectionalDNSGroupDetailsResponseEurope = "" //
+            + "<?xml version=\"1.0\"?>\n"//
             + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-            + "  <soap:Body>\n"//
-            + "    <ns1:getDirectionalDNSGroupDetailsResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
-            + "      <DirectionalDNSGroupDetail xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" GroupName=\"NON-EU\">\n"//
-            + "         <ns2:DirectionalDNSRegion>\n"//
-            + "           <ns2:RegionForNewGroups RegionName=\"Anonymous Proxy (A1)\" TerritoryName=\"Anonymous Proxy\" />\n"//
-            + "           <ns2:RegionForNewGroups RegionName=\"Mexico\" TerritoryName=\"Mexico\" />\n"//
-            + "           <ns2:RegionForNewGroups RegionName=\"Antarctica\" TerritoryName=\"Bouvet Island;French Southern Territories;Antarctica\" />\n"//
-            + "         </ns2:DirectionalDNSRegion>\n"//
-            + "       </DirectionalDNSGroupDetail>\n"//
-            + "    </ns1:getDirectionalDNSGroupDetailsResponse>\n"//
-            + "  </soap:Body>\n"//
+            + " <soap:Body>\n"//
+            + "         <ns1:getDirectionalDNSGroupDetailsResponseEurope xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"//
+            + "                 <DirectionalDNSGroupDetail xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" GroupName=\"Europe\">\n"//
+            + "                         <ns2:DirectionalDNSRegion>\n"//
+            + "                                 <ns2:RegionForNewGroups RegionName=\"Europe\"\n"//
+            + "                                         TerritoryName=\"Aland Islands;Albania;Andorra;Armenia;Austria;Azerbaijan;Belarus;Belgium;Bosnia-Herzegovina;Bulgaria;Croatia;Czech Republic;Denmark;Estonia;Faroe Islands;Finland;France;Georgia;Germany;Gibraltar;Greece;Guernsey;Hungary;Iceland;Ireland;Isle of Man;Italy;Jersey;Latvia;Liechtenstein;Lithuania;Luxembourg;Macedonia, the former Yugoslav Republic of;Malta;Moldova, Republic of;Monaco;Montenegro;Netherlands;Norway;Poland;Portugal;Romania;San Marino;Serbia;Slovakia;Slovenia;Spain;Svalbard and Jan Mayen;Sweden;Switzerland;Ukraine;Undefined Europe;United Kingdom - England, Northern Ireland, Scotland, Wales;Vatican City\" />\n"//
+            + "                         </ns2:DirectionalDNSRegion>\n"//
+            + "                 </DirectionalDNSGroupDetail>\n"//
+            + "         </ns1:getDirectionalDNSGroupDetailsResponseEurope>\n"//
+            + " </soap:Body>\n"//
             + "</soap:Envelope>";
 
     @Test
     public void getDirectionalGroup() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponse));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseEurope));
         server.play();
 
         try {
-            DirectionalGroup group = mockApi(server.getPort()).getDirectionalGroup("060339AA04175655");
-            assertEquals(group.name, "NON-EU");
-            assertEquals(group.regionToTerritories.get("Anonymous Proxy (A1)"), ImmutableSet.of("Anonymous Proxy"));
-            assertEquals(group.regionToTerritories.get("Mexico"), ImmutableSet.of("Mexico"));
-            assertEquals(group.regionToTerritories.get("Antarctica"), ImmutableSet.<String> builder().add("Antarctica")
-                    .add("Bouvet Island").add("French Southern Territories").build());
+            DirectionalGroup group = mockApi(server.getPort()).getDirectionalGroup("AAAAAAAAAAAAAAAA");
+            assertEquals(group.name, "Europe");
+            assertEquals(group.regionToTerritories.get("Europe"), ImmutableSet.of("Aland Islands", "Albania",
+                    "Andorra", "Armenia", "Austria", "Azerbaijan", "Belarus", "Belgium", "Bosnia-Herzegovina",
+                    "Bulgaria", "Croatia", "Czech Republic", "Denmark", "Estonia", "Faroe Islands", "Finland",
+                    "France", "Georgia", "Germany", "Gibraltar", "Greece", "Guernsey", "Hungary", "Iceland", "Ireland",
+                    "Isle of Man", "Italy", "Jersey", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg",
+                    "Macedonia, the former Yugoslav Republic of", "Malta", "Moldova, Republic of", "Monaco",
+                    "Montenegro", "Netherlands", "Norway", "Poland", "Portugal", "Romania", "San Marino", "Serbia",
+                    "Slovakia", "Slovenia", "Spain", "Svalbard and Jan Mayen", "Sweden", "Switzerland", "Ukraine",
+                    "Undefined Europe", "United Kingdom - England, Northern Ireland, Scotland, Wales", "Vatican City"));
 
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalDNSGroupDetails);
         } finally {
@@ -1313,7 +1457,7 @@ public class UltraDNSTest {
     @Test
     public void getRegionsByIdAndName() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
+        server.enqueue(new MockResponse().setBody(getAvailableRegionsResponse));
         server.play();
 
         try {

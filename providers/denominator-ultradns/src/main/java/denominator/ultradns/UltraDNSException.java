@@ -19,20 +19,10 @@ class UltraDNSException extends FeignException {
     }
 
     // there are 51002 potential codes. These are the ones we are handling.
-
-    static final int UNKNOWN = 0;
     /**
      * System Error
      */
     static final int SYSTEM_ERROR = 9999;
-    /**
-     * Zone does not exist in the system.
-     */
-    static final int ZONE_NOT_FOUND = 1801;
-    /**
-     * Zone already exists in the system.
-     */
-    static final int ZONE_ALREADY_EXISTS = 1802;
     /**
      * No resource record with GUID found in the system.
      */
@@ -46,10 +36,6 @@ class UltraDNSException extends FeignException {
      */
     static final int DIRECTIONALPOOL_NOT_FOUND = 2142;
     /**
-     * Account not found in the system.
-     */
-    static final int ACCOUNT_NOT_FOUND = 2401;
-    /**
      * Directional Pool Record does not exist in the system
      */
     static final int DIRECTIONALPOOL_RECORD_NOT_FOUND = 2705;
@@ -61,10 +47,6 @@ class UltraDNSException extends FeignException {
      * Pool already created for the given rrGUID.
      */
     static final int POOL_ALREADY_EXISTS = 2912;
-    /**
-     * Pool Record does not exist.
-     */
-    static final int POOL_RECORD_NOT_FOUND = 3101;
     /**
      * Group does not exist.
      */

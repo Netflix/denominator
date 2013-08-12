@@ -3,38 +3,50 @@ package denominator.ultradns;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.aaaa;
+import static denominator.ultradns.UltraDNSTest.SOAP_TEMPLATE;
+import static denominator.ultradns.UltraDNSTest.deleteLBPool;
+import static denominator.ultradns.UltraDNSTest.deleteLBPoolResponse;
+import static denominator.ultradns.UltraDNSTest.deleteResourceRecord;
+import static denominator.ultradns.UltraDNSTest.deleteResourceRecordResponse;
+import static denominator.ultradns.UltraDNSTest.getLoadBalancingPoolsByZone;
+import static denominator.ultradns.UltraDNSTest.getLoadBalancingPoolsByZoneResponseFooter;
+import static denominator.ultradns.UltraDNSTest.getLoadBalancingPoolsByZoneResponseHeader;
+import static denominator.ultradns.UltraDNSTest.getRRPoolRecords;
+import static denominator.ultradns.UltraDNSTest.getRRPoolRecordsResponseAbsent;
+import static denominator.ultradns.UltraDNSTest.getRRPoolRecordsResponseFooter;
+import static denominator.ultradns.UltraDNSTest.getRRPoolRecordsResponseHeader;
+import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfDNameByType;
+import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfDNameByTypeResponseFooter;
+import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfDNameByTypeResponseHeader;
+import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfZone;
+import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfZoneResponseAbsent;
+import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfZoneResponseFooter;
+import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfZoneResponseHeader;
+import static denominator.ultradns.UltraDNSTest.poolAlreadyExists;
 import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
 
 import org.testng.annotations.Test;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
-import com.google.mockwebserver.RecordedRequest;
 
 import denominator.Denominator;
 import denominator.ResourceRecordSetApi;
 
 @Test
 public class UltraDNSResourceRecordSetApiMockTest {
-    private String getResourceRecordsOfZone = format(SOAP_TEMPLATE, "<v01:getResourceRecordsOfZone><zoneName>denominator.io.</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone>");
 
-    private String getResourceRecordsOfZoneResponseHeader = "<?xml version=\"1.0\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:getResourceRecordsOfZoneResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><ResourceRecordList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">";
-    private String getResourceRecordsOfZoneResponseFooter = "</ResourceRecordList></ns1:getResourceRecordsOfZoneResponse></soap:Body></soap:Envelope>";
-
-    private String noRecords = new StringBuilder(getResourceRecordsOfZoneResponseHeader)
-                                    .append(getResourceRecordsOfZoneResponseFooter).toString();
-
-    @Test(enabled = false)
+    @Test
     public void listWhenNoneMatch() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponseAbsent));
         server.play();
 
         try {
@@ -42,25 +54,19 @@ public class UltraDNSResourceRecordSetApiMockTest {
             assertFalse(api.iterator().hasNext());
 
             assertEquals(server.getRequestCount(), 1);
-
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfZone);
+            assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfZone);
         } finally {
             server.shutdown();
         }
     }
 
-    private String getResourceRecordsOfDNameByTypeTemplate = format(
-            SOAP_TEMPLATE,
-            "<v01:getResourceRecordsOfDNameByType><zoneName>denominator.io.</zoneName><hostName>%s</hostName><rrType>%s</rrType></v01:getResourceRecordsOfDNameByType>");
-    private String getResourceRecordsOfDNameByTypeAll = format(getResourceRecordsOfDNameByTypeTemplate,
-            "www.denominator.io.", 0);
+    static String getResourceRecordsOfDNameByTypeAll = getResourceRecordsOfDNameByType.replace("<rrType>6</rrType>",
+            "<rrType>0</rrType>").replace("<hostName>denominator.io.", "<hostName>www.denominator.io.");
 
-    @Test(enabled = false)
+    @Test
     public void iterateByNameWhenNoneMatch() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponseAbsent));
         server.play();
 
         try {
@@ -68,26 +74,23 @@ public class UltraDNSResourceRecordSetApiMockTest {
             assertFalse(api.iterateByName("www.denominator.io.").hasNext());
 
             assertEquals(server.getRequestCount(), 1);
-
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeAll);
+            assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfDNameByTypeAll);
         } finally {
             server.shutdown();
         }
     }
 
-    private String aRecordTTLGuidAddressTemplate = "<ns2:Record ZoneName=\"denominator.io.\" Type=\"1\" DName=\"www.denominator.io.\" TTL=\"%d\" Guid=\"%s\" ZoneId=\"0000000000000001\" LName=\"www.denominator.io.\" Created=\"2009-10-12T12:02:23.000Z\" Modified=\"2011-09-27T23:49:22.000Z\"><ns2:InfoValues Info1Value=\"%s\"/></ns2:Record>";
+    static String aRecordTTLGuidAddressTemplate = "<ns2:ResourceRecord ZoneName=\"denominator.io.\" Type=\"1\" DName=\"www.denominator.io.\" TTL=\"%d\" Guid=\"%s\" ZoneId=\"0000000000000001\" LName=\"www.denominator.io.\" Created=\"2009-10-12T12:02:23.000Z\" Modified=\"2011-09-27T23:49:22.000Z\"><ns2:InfoValues Info1Value=\"%s\"/></ns2:ResourceRecord>";
 
-    private String records1And2 = new StringBuilder(getResourceRecordsOfZoneResponseHeader)
+    static String records1And2 = new StringBuilder(getResourceRecordsOfZoneResponseHeader)
             .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "192.0.2.1"))
             .append(format(aRecordTTLGuidAddressTemplate, 3600, "BBBBBBBBBBBB", "198.51.100.1"))
             .append(getResourceRecordsOfZoneResponseFooter).toString();
 
-    @Test(enabled = false)
+    @Test
     public void iterateByNameWhenMatch() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(records1And2));
+        server.enqueue(new MockResponse().setBody(records1And2));
         server.play();
 
         try {
@@ -96,120 +99,66 @@ public class UltraDNSResourceRecordSetApiMockTest {
                     a("www.denominator.io.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
 
             assertEquals(server.getRequestCount(), 1);
-
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeAll);
+            assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfDNameByTypeAll);
         } finally {
             server.shutdown();
         }
     }
 
-    @Test(enabled = false)
+    static String getResourceRecordsOfDNameByTypeA = getResourceRecordsOfDNameByTypeAll.replace("<rrType>0</rrType>",
+            "<rrType>1</rrType>");
+
+    @Test
     public void getByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponseAbsent));
         server.play();
 
         try {
             ResourceRecordSetApi api = mockApi(server.getPort());
-            assertEquals(api.getByNameAndType("www.denominator.io.", "A"), Optional.absent());
-            assertEquals(server.getRequestCount(), 1);
+            assertNull(api.getByNameAndType("www.denominator.io.", "A"));
 
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
+            assertEquals(server.getRequestCount(), 1);
+            assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfDNameByTypeA);
         } finally {
             server.shutdown();
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void getByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(records1And2));
+        server.enqueue(new MockResponse().setBody(records1And2));
         server.play();
 
         try {
             ResourceRecordSetApi api = mockApi(server.getPort());
             assertEquals(api.getByNameAndType("www.denominator.io.", "A"),
                     a("www.denominator.io.", 3600, ImmutableList.of("192.0.2.1", "198.51.100.1")));
-            assertEquals(server.getRequestCount(), 1);
 
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
+            assertEquals(server.getRequestCount(), 1);
+            assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfDNameByTypeA);
         } finally {
             server.shutdown();
         }
     }
 
-    private String getLoadBalancingPoolsByZone = format(SOAP_TEMPLATE, "<v01:getLoadBalancingPoolsByZone><zoneName>denominator.io.</zoneName><lbPoolType>RR</lbPoolType></v01:getLoadBalancingPoolsByZone>");
-    private String getLoadBalancingPoolsByZoneResponseHeader = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:getLoadBalancingPoolsByZoneResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><LBPoolList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">";
-    private String getLoadBalancingPoolsByZoneResponseFooter = "</LBPoolList></ns1:getLoadBalancingPoolsByZoneResponse></soap:Body></soap:Envelope>";
+    static String addRRLBPoolTemplate = format(
+            SOAP_TEMPLATE,
+            "<v01:addRRLBPool><transactionID /><zoneName>denominator.io.</zoneName><hostName>www.denominator.io.</hostName><description>%s</description><poolRecordType>%s</poolRecordType><rrGUID /></v01:addRRLBPool>");
+    static String addRRLBPoolResponseTemplate = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:addRRLBPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><RRPoolID xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">%s</RRPoolID></ns1:addRRLBPoolResponse></soap:Body></soap:Envelope>";
 
-    private String noPools = new StringBuilder(getLoadBalancingPoolsByZoneResponseHeader).append(
-            getLoadBalancingPoolsByZoneResponseFooter).toString();
+    static String addRecordToRRPoolTemplate = format(
+            SOAP_TEMPLATE,
+            "<v01:addRecordToRRPool><transactionID /><roundRobinRecord lbPoolID=\"%s\" info1Value=\"%s\" ZoneName=\"denominator.io.\" Type=\"%s\" TTL=\"%s\"/></v01:addRecordToRRPool>");
+    static String addRecordToRRPoolResponseTemplate = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:addRecordToRRPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><guid xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">%s</guid></ns1:addRecordToRRPoolResponse></soap:Body></soap:Envelope>";
 
-    private String addRRLBPoolTemplate = format(SOAP_TEMPLATE, "<v01:addRRLBPool><transactionID /><zoneName>denominator.io.</zoneName><hostName>www.denominator.io.</hostName><description>%s</description><poolRecordType>%s</poolRecordType><rrGUID /></v01:addRRLBPool>");
-    private String addRRLBPoolResponseTemplate = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:addRRLBPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><RRPoolID xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">%s</RRPoolID></ns1:addRRLBPoolResponse></soap:Body></soap:Envelope>";
-
-    private String addRecordToRRPoolTemplate = format(SOAP_TEMPLATE, "<v01:addRecordToRRPool><transactionID /><roundRobinRecord lbPoolID=\"%s\" info1Value=\"%s\" ZoneName=\"denominator.io.\" Type=\"%s\" TTL=\"%s\"/></v01:addRecordToRRPool>");
-    private String addRecordToRRPoolResponseTemplate = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:addRecordToRRPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><guid xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">%s</guid></ns1:addRecordToRRPoolResponse></soap:Body></soap:Envelope>";
-
-    @Test(enabled = false)
+    @Test
     public void putFirstACreatesRoundRobinPoolThenAddsRecordToIt() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noPools));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(format(addRRLBPoolResponseTemplate, "POOLA")));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(
-                format(addRecordToRRPoolResponseTemplate, "AAAAAAAAAAAA")));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getPort());
-            api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
-
-            assertEquals(server.getRequestCount(), 4);
-
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
-
-            RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
-            assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getLoadBalancingPoolsByZone.getBody()), this.getLoadBalancingPoolsByZone);
-
-            RecordedRequest addLBPoolA = server.takeRequest();
-            assertEquals(addLBPoolA.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(addLBPoolA.getBody()), format(addRRLBPoolTemplate, "A", "1"));
-
-            RecordedRequest addRecord1 = server.takeRequest();
-            assertEquals(addRecord1.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(addRecord1.getBody()),
-                    format(addRecordToRRPoolTemplate, "POOLA", "192.0.2.1", "1", 3600));
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    private String getResourceRecordsOfDNameByTypeA = format(getResourceRecordsOfDNameByTypeTemplate,
-            "www.denominator.io.", 1);
-
-    private String poolNameAndIDTemplate = "<ns2:LBPoolData zoneid=\"0000000000000001\"><ns2:PoolData description=\"%s\" PoolId=\"%s\" PoolType=\"RD\" PoolDName=\"www.denominator.io.\" ResponseMethod=\"RR\"/></ns2:LBPoolData>";
-    private String poolsForAandAAAA = new StringBuilder(getLoadBalancingPoolsByZoneResponseHeader)
-            .append(format(poolNameAndIDTemplate, "A", "POOLA"))
-            .append(format(poolNameAndIDTemplate, "AAAA", "POOLAAAA"))
-            .append(getLoadBalancingPoolsByZoneResponseFooter).toString();
-
-    @Test(enabled = false)
-    public void putFirstAReusesExistingEmptyRoundRobinPool() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(poolsForAandAAAA));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(
-                format(addRecordToRRPoolResponseTemplate, "AAAAAAAAAAAA")));
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponseAbsent));
+        server.enqueue(new MockResponse().setBody(format(addRRLBPoolResponseTemplate, "1111A")));
+        server.enqueue(new MockResponse().setBody(format(addRecordToRRPoolResponseTemplate, "AAAAAAAAAAAA")));
         server.play();
 
         try {
@@ -217,131 +166,141 @@ public class UltraDNSResourceRecordSetApiMockTest {
             api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
             assertEquals(server.getRequestCount(), 3);
-
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
-
-            RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
-            assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getLoadBalancingPoolsByZone.getBody()), this.getLoadBalancingPoolsByZone);
-
-            RecordedRequest addRecord1 = server.takeRequest();
-            assertEquals(addRecord1.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(addRecord1.getBody()),
-                    format(addRecordToRRPoolTemplate, "POOLA", "192.0.2.1", "1", 3600));
+            assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfDNameByTypeA);
+            assertEquals(new String(server.takeRequest().getBody()), format(addRRLBPoolTemplate, "1", "1"));
+            assertEquals(new String(server.takeRequest().getBody()),
+                    format(addRecordToRRPoolTemplate, "1111A", "192.0.2.1", "1", 3600));
         } finally {
             server.shutdown();
         }
     }
 
-    private String record1 = new StringBuilder(getResourceRecordsOfZoneResponseHeader)
-            .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "192.0.2.1"))
-            .append(getResourceRecordsOfZoneResponseFooter).toString();
+    static String poolIDTypeTemplate = ""//
+            + "      <ns2:LBPoolData zoneid=\"0000000000000001\">\n"//
+            + "        <ns2:PoolData description=\"foo\" PoolId=\"%s\" PoolType=\"RD\" PoolRecordType=\"%s\" PoolDName=\"www.denominator.io.\" ResponseMethod=\"RR\" />\n"//
+            + "      </ns2:LBPoolData>\n";
 
-    private String getRRPoolRecordsTemplate = format(SOAP_TEMPLATE, "<v01:getRRPoolRecords><lbPoolId>%s</lbPoolId></v01:getRRPoolRecords>");
-    private String getRRPoolRecordsResponseHeader = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:getRRPoolRecordsResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><ResourceRecordList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">";
-    private String getRRPoolRecordsResponseFooter = "</ResourceRecordList></ns1:getRRPoolRecordsResponse></soap:Body></soap:Envelope>";
+    static String poolsForAandAAAA = new StringBuilder(getLoadBalancingPoolsByZoneResponseHeader)
+            .append(format(poolIDTypeTemplate, "1111A", "A"))//
+            .append(format(poolIDTypeTemplate, "1111AAAA", "AAAA"))//
+            .append(getLoadBalancingPoolsByZoneResponseFooter).toString();
 
-    private String pooledRecord1 = new StringBuilder(getRRPoolRecordsResponseHeader)
+    @Test
+    public void putFirstAReusesExistingEmptyRoundRobinPool() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponseAbsent));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(poolAlreadyExists));
+        server.enqueue(new MockResponse().setBody(poolsForAandAAAA));
+        server.enqueue(new MockResponse().setBody(format(addRecordToRRPoolResponseTemplate, "AAAAAAAAAAAA")));
+        server.play();
+
+        try {
+            ResourceRecordSetApi api = mockApi(server.getPort());
+            api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
+
+            assertEquals(server.getRequestCount(), 4);
+            assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfDNameByTypeA);
+            assertEquals(new String(server.takeRequest().getBody()), format(addRRLBPoolTemplate, "1", "1"));
+            assertEquals(new String(server.takeRequest().getBody()), getLoadBalancingPoolsByZone);
+            assertEquals(new String(server.takeRequest().getBody()),
+                    format(addRecordToRRPoolTemplate, "1111A", "192.0.2.1", "1", 3600));
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    static String record1 = ""//
+            + getResourceRecordsOfDNameByTypeResponseHeader//
+            + "        <ns2:ResourceRecord ZoneName=\"denominator.io.\" Type=\"6\" DName=\"www.denominator.io.\" TTL=\"3600\" Guid=\"ABCDEF\" ZoneId=\"03053D8E57C7A22A\" LName=\"www.denominator.io.\" Created=\"2013-02-22T08:22:48.000Z\" Modified=\"2013-02-22T08:22:49.000Z\">\n"//
+            + "          <ns2:InfoValues Info1Value=\"192.0.2.1\" />\n"//
+            + "        </ns2:ResourceRecord>\n"//
+            + getResourceRecordsOfDNameByTypeResponseFooter;
+
+    static String pooledRecord1 = new StringBuilder(getRRPoolRecordsResponseHeader)
             .append(format(aRecordTTLGuidAddressTemplate, 3600, "AAAAAAAAAAAA", "192.0.2.1"))
             .append(getRRPoolRecordsResponseFooter).toString();
 
-    private String deleteRecordOfRRPoolTemplate = format(SOAP_TEMPLATE, "<v01:deleteRecordOfRRPool><transactionID /><guid>%s</guid></v01:deleteRecordOfRRPool>");
-    private String deleteRecordOfRRPoolResponse = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:deleteRecordOfRRPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result></ns1:deleteRecordOfRRPoolResponse></soap:Body></soap:Envelope>";
-
-    private String deleteLBPoolTemplate = format(SOAP_TEMPLATE, "<v01:deleteLBPool><transactionID /><lbPoolID>%s</lbPoolID><DeleteAll>Yes</DeleteAll><retainRecordId /></v01:deleteLBPool>");
-    private String deleteLBPoolResponse = "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns1:deleteLBPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\"><result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result></ns1:deleteLBPoolResponse></soap:Body></soap:Envelope>";
-
-    @Test(enabled = false)
+    @Test
     public void deleteAlsoRemovesPool() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(record1));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(poolsForAandAAAA));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(pooledRecord1));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(deleteRecordOfRRPoolResponse));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(poolsForAandAAAA));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(deleteLBPoolResponse));
+        server.enqueue(new MockResponse().setBody(record1));
+        server.enqueue(new MockResponse().setBody(deleteResourceRecordResponse));
+        server.enqueue(new MockResponse().setBody(poolsForAandAAAA));
+        server.enqueue(new MockResponse().setBody(getRRPoolRecordsResponseAbsent));
+        server.enqueue(new MockResponse().setBody(deleteLBPoolResponse));
         server.play();
 
         try {
             ResourceRecordSetApi api = mockApi(server.getPort());
             api.deleteByNameAndType("www.denominator.io.", "A");
 
-            assertEquals(server.getRequestCount(), 6);
-
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
-
-            RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
-            assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getLoadBalancingPoolsByZone.getBody()), this.getLoadBalancingPoolsByZone);
-
-            RecordedRequest getRoundRobinRecordsInPoolA = server.takeRequest();
-            assertEquals(getRoundRobinRecordsInPoolA.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getRoundRobinRecordsInPoolA.getBody()), format(getRRPoolRecordsTemplate, "POOLA"));
-
-            RecordedRequest deleteRecord1 = server.takeRequest();
-            assertEquals(deleteRecord1.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(deleteRecord1.getBody()), format(deleteRecordOfRRPoolTemplate, "AAAAAAAAAAAA"));
-
-            RecordedRequest checkIfPoolAIsNowEmpty = server.takeRequest();
-            assertEquals(checkIfPoolAIsNowEmpty.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(checkIfPoolAIsNowEmpty.getBody()), format(getRRPoolRecordsTemplate, "POOLA"));
-
-            RecordedRequest deletePoolA = server.takeRequest();
-            assertEquals(deletePoolA.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(deletePoolA.getBody()), format(deleteLBPoolTemplate, "POOLA"));
+            assertEquals(server.getRequestCount(), 5);
+            assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfDNameByTypeA);
+            assertEquals(new String(server.takeRequest().getBody()), deleteResourceRecord);
+            assertEquals(new String(server.takeRequest().getBody()), getLoadBalancingPoolsByZone);
+            assertEquals(new String(server.takeRequest().getBody()),
+                    getRRPoolRecords.replace("000000000000002", "1111A"));
+            assertEquals(new String(server.takeRequest().getBody()), deleteLBPool.replace("AAAAAAAAAAAAAAAA", "1111A"));
         } finally {
             server.shutdown();
         }
     }
 
-    @Test(enabled = false)
+    @Test
     public void putSecondAAddsRecordToExistingPool() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(record1));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(poolsForAandAAAA));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(
-                format(addRecordToRRPoolResponseTemplate, "BBBBBBBBBBBB")));
+        server.enqueue(new MockResponse().setBody(record1));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(poolAlreadyExists));
+        server.enqueue(new MockResponse().setBody(poolsForAandAAAA));
+        server.enqueue(new MockResponse().setBody(format(addRecordToRRPoolResponseTemplate, "BBBBBBBBBBBB")));
         server.play();
 
         try {
             ResourceRecordSetApi api = mockApi(server.getPort());
             api.put(a("www.denominator.io.", 3600, ImmutableSet.of("192.0.2.1", "198.51.100.1")));
 
-            assertEquals(server.getRequestCount(), 3);
-
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeA);
-
-            RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
-            assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getLoadBalancingPoolsByZone.getBody()), this.getLoadBalancingPoolsByZone);
-
-            RecordedRequest addRecord2 = server.takeRequest();
-            assertEquals(addRecord2.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(addRecord2.getBody()),
-                    format(addRecordToRRPoolTemplate, "POOLA", "198.51.100.1", "1", 3600));
+            assertEquals(server.getRequestCount(), 4);
+            assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfDNameByTypeA);
+            assertEquals(new String(server.takeRequest().getBody()), format(addRRLBPoolTemplate, "1", "1"));
+            assertEquals(new String(server.takeRequest().getBody()), getLoadBalancingPoolsByZone);
+            assertEquals(new String(server.takeRequest().getBody()),
+                    format(addRecordToRRPoolTemplate, "1111A", "198.51.100.1", "1", 3600));
         } finally {
             server.shutdown();
         }
     }
 
-    private String getResourceRecordsOfDNameByTypeAAAA = format(getResourceRecordsOfDNameByTypeTemplate,
-            "www.denominator.io.", 28);
-
-    @Test(enabled = false)
+    @Test
     public void putFirstAAAACreatesRoundRobinPoolThenAddsRecordToIt() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noPools));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(
-                format(addRRLBPoolResponseTemplate, "POOLAAAA")));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(
-                format(addRecordToRRPoolResponseTemplate, "AAAAAAAAAAAA")));
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponseAbsent));
+        server.enqueue(new MockResponse().setBody(format(addRRLBPoolResponseTemplate, "1111AAAA")));
+        server.enqueue(new MockResponse().setBody(format(addRecordToRRPoolResponseTemplate, "AAAAAAAAAAAA")));
+        server.play();
+
+        try {
+            ResourceRecordSetApi api = mockApi(server.getPort());
+            api.put(aaaa("www.denominator.io.", 3600, "2001:0DB8:85A3:0000:0000:8A2E:0370:7334"));
+
+            assertEquals(server.getRequestCount(), 3);
+            assertEquals(new String(server.takeRequest().getBody()),
+                    getResourceRecordsOfDNameByTypeAll.replace("<rrType>0</rrType>", "<rrType>28</rrType>"));
+            assertEquals(new String(server.takeRequest().getBody()), format(addRRLBPoolTemplate, "28", "28"));
+            assertEquals(
+                    new String(server.takeRequest().getBody()),
+                    format(addRecordToRRPoolTemplate, "1111AAAA", "2001:0DB8:85A3:0000:0000:8A2E:0370:7334", "28", 3600));
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    @Test
+    public void putFirstAAAAReusesExistingEmptyRoundRobinPool() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponseAbsent));
+        server.enqueue(new MockResponse().setResponseCode(500).setBody(poolAlreadyExists));
+        server.enqueue(new MockResponse().setBody(poolsForAandAAAA));
+        server.enqueue(new MockResponse().setBody(format(addRecordToRRPoolResponseTemplate, "AAAAAAAAAAAA")));
         server.play();
 
         try {
@@ -349,57 +308,13 @@ public class UltraDNSResourceRecordSetApiMockTest {
             api.put(aaaa("www.denominator.io.", 3600, "2001:0DB8:85A3:0000:0000:8A2E:0370:7334"));
 
             assertEquals(server.getRequestCount(), 4);
-
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeAAAA);
-
-            RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
-            assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getLoadBalancingPoolsByZone.getBody()), this.getLoadBalancingPoolsByZone);
-
-            RecordedRequest addLBPoolA = server.takeRequest();
-            assertEquals(addLBPoolA.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(addLBPoolA.getBody()), format(addRRLBPoolTemplate, "AAAA", "28"));
-
-            RecordedRequest addRecord1 = server.takeRequest();
-            assertEquals(addRecord1.getRequestLine(), "POST / HTTP/1.1");
+            assertEquals(new String(server.takeRequest().getBody()),
+                    getResourceRecordsOfDNameByTypeAll.replace("<rrType>0</rrType>", "<rrType>28</rrType>"));
+            assertEquals(new String(server.takeRequest().getBody()), format(addRRLBPoolTemplate, "28", "28"));
+            assertEquals(new String(server.takeRequest().getBody()), getLoadBalancingPoolsByZone);
             assertEquals(
-                    new String(addRecord1.getBody()),
-                    format(addRecordToRRPoolTemplate, "POOLAAAA", "2001:0DB8:85A3:0000:0000:8A2E:0370:7334", "28", 3600));
-        } finally {
-            server.shutdown();
-        }
-    }
-
-    @Test(enabled = false)
-    public void putFirstAAAAReusesExistingEmptyRoundRobinPool() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noRecords));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(poolsForAandAAAA));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(
-                format(addRecordToRRPoolResponseTemplate, "AAAAAAAAAAAA")));
-        server.play();
-
-        try {
-            ResourceRecordSetApi api = mockApi(server.getPort());
-            api.put(aaaa("www.denominator.io.", 3600, "2001:0DB8:85A3:0000:0000:8A2E:0370:7334"));
-
-            assertEquals(server.getRequestCount(), 3);
-
-            RecordedRequest getResourceRecordsOfZone = server.takeRequest();
-            assertEquals(getResourceRecordsOfZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getResourceRecordsOfZone.getBody()), this.getResourceRecordsOfDNameByTypeAAAA);
-
-            RecordedRequest getLoadBalancingPoolsByZone = server.takeRequest();
-            assertEquals(getLoadBalancingPoolsByZone.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(new String(getLoadBalancingPoolsByZone.getBody()), this.getLoadBalancingPoolsByZone);
-
-            RecordedRequest addRecord1 = server.takeRequest();
-            assertEquals(addRecord1.getRequestLine(), "POST / HTTP/1.1");
-            assertEquals(
-                    new String(addRecord1.getBody()),
-                    format(addRecordToRRPoolTemplate, "POOLAAAA", "2001:0DB8:85A3:0000:0000:8A2E:0370:7334", "28", 3600));
+                    new String(server.takeRequest().getBody()),
+                    format(addRecordToRRPoolTemplate, "1111AAAA", "2001:0DB8:85A3:0000:0000:8A2E:0370:7334", "28", 3600));
         } finally {
 
             server.shutdown();
@@ -414,6 +329,4 @@ public class UltraDNSResourceRecordSetApiMockTest {
             }
         }, credentials("joe", "letmein")).api().basicRecordSetsInZone("denominator.io.");
     }
-
-    private static final String SOAP_TEMPLATE = "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\"><soapenv:Header><wsse:Security soapenv:mustUnderstand=\"1\" xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\"><wsse:UsernameToken><wsse:Username>joe</wsse:Username><wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">letmein</wsse:Password></wsse:UsernameToken></wsse:Security></soapenv:Header><soapenv:Body>%s</soapenv:Body></soapenv:Envelope>";
 }
