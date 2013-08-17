@@ -1,3 +1,6 @@
+### Version 3.5
+* lazy lookup regions in ultradns
+
 ### Version 3.4
 * update to dagger 1.1
 
