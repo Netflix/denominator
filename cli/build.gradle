@@ -1,5 +1,6 @@
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply from: rootProject.file('dagger.gradle')
 
 sourceCompatibility = JavaVersion.VERSION_1_6
 targetCompatibility = JavaVersion.VERSION_1_6
@@ -13,14 +14,13 @@ eclipse {
 
 dependencies {
   compile      project(':denominator-core')
-  compile      project(':providers:denominator-dynect')
-  compile      project(':providers:denominator-ultradns')
-  compile      project(':providers:denominator-route53')
-  compile      project(':providers:denominator-clouddns')
-  compile      project(':providers:denominator-designate')
+  compile      project(':denominator-dynect')
+  compile      project(':denominator-ultradns')
+  compile      project(':denominator-route53')
+  compile      project(':denominator-clouddns')
+  compile      project(':denominator-designate')
   compile     'io.airlift:airline:0.5'
   compile     'org.yaml:snakeyaml:1.12'
-  provided    'com.squareup.dagger:dagger-compiler:1.1.0'
   testCompile 'org.testng:testng:6.8.5'
   testCompile 'com.google.mockwebserver:mockwebserver:20130706'
 }
