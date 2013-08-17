@@ -17,11 +17,15 @@ buildscript {
     }
 }
 
+repositories { mavenLocal()
+               mavenCentral()
+               maven { url 'https://oss.sonatype.org/content/repositories/releases/' }}
+
 dependencies {
     compile files('libs/android-support-v4.jar')
-    compile project(':denominator-core')
+    compile 'com.netflix.denominator:denominator-core:3.5.0'
     // swap this out to use a different provider
-    compile project(':providers:denominator-ultradns')
+    compile 'com.netflix.denominator:denominator-ultradns:3.5.0'
     // TODO: find a way to have this in compile classpath, but not in apk
     compile 'com.squareup.dagger:dagger-compiler:1.1.0'
     compile 'com.squareup:tape:1.1.0'
