@@ -34,12 +34,12 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     private static final int DEFAULT_TTL = 300;
 
     private final Collection<String> supportedTypes;
-    private final Map<String, Collection<String>> regions;
+    private final Lazy<Map<String, Collection<String>>> regions;
     private final UltraDNS api;
     private final GroupGeoRecordByNameTypeIterator.Factory iteratorFactory;
     private final String zoneName;
 
-    UltraDNSGeoResourceRecordSetApi(Collection<String> supportedTypes, Map<String, Collection<String>> regions,
+    UltraDNSGeoResourceRecordSetApi(Collection<String> supportedTypes, Lazy<Map<String, Collection<String>>> regions,
             UltraDNS api, GroupGeoRecordByNameTypeIterator.Factory iteratorFactory, String zoneName) {
         this.supportedTypes = supportedTypes;
         this.regions = regions;
@@ -50,7 +50,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
     @Override
     public Map<String, Collection<String>> supportedRegions() {
-        return regions;
+        return regions.get();
     }
 
     @Override
@@ -275,7 +275,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         @Override
         public GeoResourceRecordSetApi create(String idOrName) {
             checkNotNull(idOrName, "idOrName was null");
-            return new UltraDNSGeoResourceRecordSetApi(supportedTypes, regions.get(), api, iteratorFactory, idOrName);
+            return new UltraDNSGeoResourceRecordSetApi(supportedTypes, regions, api, iteratorFactory, idOrName);
         }
     }
 

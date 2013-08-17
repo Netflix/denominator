@@ -199,13 +199,11 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     @Test
     public void listWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalPoolsOfZoneResponsePresent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForHostResponsePresent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(
-                getDirectionalDNSGroupDetailsResponseEverywhereElse));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseUS));
+        server.enqueue(new MockResponse().setBody(getDirectionalPoolsOfZoneResponsePresent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForHostResponsePresent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseEurope));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseEverywhereElse));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseUS));
         server.play();
 
         try {
@@ -217,8 +215,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             assertEquals(iterator.next().toString(), us.toString());
             assertFalse(iterator.hasNext());
 
-            assertEquals(server.getRequestCount(), 6);
-            assertEquals(new String(server.takeRequest().getBody()), getAvailableRegions);
+            assertEquals(server.getRequestCount(), 5);
 
             assertEquals(new String(server.takeRequest().getBody()), UltraDNSTest.getDirectionalPoolsOfZone);
 
@@ -242,12 +239,10 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     @Test
     public void iterateByNameWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForHostResponsePresent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(
-                getDirectionalDNSGroupDetailsResponseEverywhereElse));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseUS));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForHostResponsePresent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseEurope));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseEverywhereElse));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseUS));
         server.play();
 
         try {
@@ -259,9 +254,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             assertEquals(iterator.next().toString(), us.toString());
             assertFalse(iterator.hasNext());
 
-            assertEquals(server.getRequestCount(), 5);
-
-            assertEquals(new String(server.takeRequest().getBody()), getAvailableRegions);
+            assertEquals(server.getRequestCount(), 4);
 
             RecordedRequest getDirectionalDNSRecordsForHostIPV4 = server.takeRequest();
             assertEquals(getDirectionalDNSRecordsForHostIPV4.getRequestLine(), "POST / HTTP/1.1");
@@ -283,13 +276,11 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     @Test
     public void iterateByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForHostResponsePresent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForHostResponseAbsent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(
-                getDirectionalDNSGroupDetailsResponseEverywhereElse));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseUS));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForHostResponsePresent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForHostResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseEurope));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseEverywhereElse));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseUS));
         server.play();
 
         try {
@@ -301,8 +292,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             assertEquals(iterator.next().toString(), us.toString());
             assertFalse(iterator.hasNext());
 
-            assertEquals(server.getRequestCount(), 6);
-            assertEquals(new String(server.takeRequest().getBody()), getAvailableRegions);
+            assertEquals(server.getRequestCount(), 5);
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalDNSRecordsForHostIPV4);
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalDNSRecordsForHostIPV6);
             for (String groupId : ImmutableList.of("C000000000000001", "C000000000000003", "C000000000000002")) {
@@ -315,12 +305,30 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     }
 
     @Test
+    public void supportedRegionsCache() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(getAvailableRegionsResponse));
+        server.play();
+
+        try {
+            GeoResourceRecordSetApi api = mockApi(server.getPort());
+
+            assertEquals(api.supportedRegions().size(), 2);
+            assertEquals(api.supportedRegions().size(), 2);
+
+            assertEquals(server.getRequestCount(), 1);
+            assertEquals(new String(server.takeRequest().getBody()), getAvailableRegions);
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    @Test
     public void putWhenMatches() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponsePresent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponseAbsent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForGroupResponsePresent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForGroupResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseEurope));
         server.play();
 
         try {
@@ -328,8 +336,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
 
             api.put(europe);
 
-            assertEquals(server.getRequestCount(), 4);
-            assertEquals(new String(server.takeRequest().getBody()), getAvailableRegions);
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalDNSRecordsForGroup);
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalDNSRecordsForGroupEuropeIPV6);
             assertEquals(new String(server.takeRequest().getBody()),
@@ -342,11 +349,10 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     @Test
     public void putWhenRegionsDiffer() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponsePresent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponseAbsent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSGroupDetailsResponseEurope));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(updateDirectionalPoolRecordResponse));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForGroupResponsePresent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForGroupResponseAbsent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSGroupDetailsResponseEurope));
+        server.enqueue(new MockResponse().setBody(updateDirectionalPoolRecordResponse));
         server.play();
 
         try {
@@ -361,8 +367,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                     .addProfile(Geo.create(ImmutableMultimap.of("Europe", "Aland Islands").asMap())).build();
             api.put(lessOfEurope);
 
-            assertEquals(server.getRequestCount(), 5);
-            assertEquals(new String(server.takeRequest().getBody()), getAvailableRegions);
+            assertEquals(server.getRequestCount(), 4);
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalDNSRecordsForGroup);
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalDNSRecordsForGroupEuropeIPV6);
             assertEquals(new String(server.takeRequest().getBody()),
@@ -383,10 +388,9 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     @Test
     public void putWhenTTLDiffers() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getAvailableRegionsResponse));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponsePresent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(getDirectionalDNSRecordsForGroupResponseAbsent));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(updateDirectionalPoolRecordResponse));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForGroupResponsePresent));
+        server.enqueue(new MockResponse().setBody(getDirectionalDNSRecordsForGroupResponseAbsent));
+        server.enqueue(new MockResponse().setBody(updateDirectionalPoolRecordResponse));
         server.play();
 
         try {
@@ -400,8 +404,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                     .addAllProfile(europe.profiles()).build();
             api.put(lessTTL);
 
-            assertEquals(server.getRequestCount(), 4);
-            assertEquals(new String(server.takeRequest().getBody()), getAvailableRegions);
+            assertEquals(server.getRequestCount(), 3);
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalDNSRecordsForGroup);
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalDNSRecordsForGroupEuropeIPV6);
             assertEquals(new String(server.takeRequest().getBody()), updateDirectionalPoolRecordTTL);
