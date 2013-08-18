@@ -101,16 +101,54 @@ email.netflix.com.                                 A     3600   69.53.237.168
 ```
 
 ### Geo
-`-z zone. geo list` returns the records that have directional configuration in that zone.  Ex.
+#### Show Supported Geo Regions
+`denominator geo regions` returns all supported regions for the zone specified.
+
+Ex.
+
 ```bash
-$ denominator -p ultradns -c my_user -c my_password geo --zone netflix.com. list
+$ denominator -p ultradns -c my_user -c my_password geo --zone netflix.com. regions
 --snip--
-www.geo.denominator.io.                           CNAME  300   a.denominator.io. alazona {United States (US)=[Alaska, Arizona]}
+Russian Federation          : Russian Federation
+Satellite Provider (A2)     : Satellite Provider
+South America               : Argentina;Bolivia;Brazil;Chile;Colombia;Ecuador;Falkland Islands;French Guiana;Guyana;Paraguay;Peru;South Georgia and the South Sandwich Islands;Suriname;Undefined South America;Uruguay;Venezuela, Bolivarian Republic of
 --snip--
 ```
 
+#### List Geo Record Sets
+`denominator geo list` returns the records that have directional configuration in that zone, including json form of their region data.
+
+Ex.
+
+```bash
+$ denominator -p ultradns -c my_user -c my_password geo --zone netflix.com. list
+--snip--
+redirects-us.geo.denominator.io.                  CNAME  US-WEST-2           300   elb-1234.us-west-2.elb.amazonaws.com. {"Antarctica":["Bouvet Island"],"Canada (CA)":["Alberta","British Columbia","Greenland","Manitoba","Northwest Territories","Nunavut","Saint Pierre and Miquelon","Saskatchewan","Undefined Canada","Yukon"],"Mexico":["Mexico"],"South America":["Brazil"],"United States (US)":["Alaska","Arizona","Arkansas","California","Colorado","Georgia","Hawaii","Idaho","Iowa","Kansas","Louisiana","Minnesota","Missouri","Montana","Nebraska","Nevada","New Mexico","North Dakota","Oklahoma","Oregon","South Dakota","Texas","Utah","Washington","Wyoming"]}
+--snip--
+```
+
+#### Add Region to Geo Record Set.
+`denominator geo add` adds the territories specified, if they don't already exist, to the geo group of a record set.
+
+  * If you specify the flag `--validate-regions`, the input json will not only be checked for well-formedness, but also that the regions are valid for the provider.  Note that this may imply more remote commands against the DNS provider.
+  * If you specify the flag `--dry-run`, only read-only commands will be executed.
+
+Ex.
+
+```bash
+$ denominator -q -n ultradns-test geo -z geo.denominator.io. add -n redirects-us.geo.denominator.io. -t CNAME -g US-WEST-2 -r '{"United States (US)": ["Maryland"]}' --validate-regions --dry-run
+;; in zone geo.denominator.io. adding regions {"United States (US)": ["Maryland"]} to rrset redirects-us.geo.denominator.io. CNAME US-WEST-2
+;; validated regions: {"United States (US)":["Maryland"]}
+;; current rrset: {"name":"redirects-us.geo.denominator.io.","type":"CNAME","qualifier":"US-WEST-2","ttl":300,"records":[{"cname":"elb-1234.us-west-2.elb.amazonaws.com."}],"profiles":[{"type":"geo","regions":{"Antarctica":["Bouvet Island"],"Canada (CA)":["Alberta","British Columbia","Greenland","Manitoba","Northwest Territories","Nunavut","Saint Pierre and Miquelon","Saskatchewan","Undefined Canada","Yukon"],"Mexico":["Mexico"],"South America":["Brazil"],"United States (US)":["Alaska","Arizona","Arkansas","California","Colorado","Georgia","Hawaii","Idaho","Iowa","Kansas","Louisiana","Minnesota","Missouri","Montana","Nebraska","Nevada","New Mexico","North Dakota","Oklahoma","Oregon","South Dakota","Texas","Utah","Washington","Wyoming"]}}]}
+;; revised rrset: {"name":"redirects-us.geo.denominator.io.","type":"CNAME","qualifier":"US-WEST-2","ttl":300,"records":[{"cname":"elb-1234.us-west-2.elb.amazonaws.com."}],"profiles":[{"type":"geo","regions":{"Antarctica":["Bouvet Island"],"Canada (CA)":["Alberta","British Columbia","Greenland","Manitoba","Northwest Territories","Nunavut","Saint Pierre and Miquelon","Saskatchewan","Undefined Canada","Yukon"],"Mexico":["Mexico"],"South America":["Brazil"],"United States (US)":["Alaska","Arizona","Arkansas","California","Colorado","Georgia","Hawaii","Idaho","Iowa","Kansas","Louisiana","Minnesota","Missouri","Montana","Nebraska","Nevada","New Mexico","North Dakota","Oklahoma","Oregon","South Dakota","Texas","Utah","Washington","Wyoming","Maryland"]}}]}
+;; ok
+```
+
 ## Output detail
-By default, denominator emits 2 lines per http request to STDERR.  This is helpful to get high-level feedback on progress.  Ex.
+By default, denominator emits 2 lines per http request to STDERR.  This is helpful to get high-level feedback on progress.
+
+Ex.
+
 ```bash
 $ denominator -p ultradns -c USERNAME -c PASSWORD zone list
 [UltraDNS#accountId] ---> POST https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 HTTP/1.1
@@ -120,13 +158,17 @@ $ denominator -p ultradns -c USERNAME -c PASSWORD zone list
 geo.denominator.io.
 ultradnstest.denominator.io.
 ```
+
 If you wish to omit this, add the `-q` or `--quiet` flag to your options.
+
 ```bash
 $ denominator -q -p ultradns -c USERNAME -c PASSWORD zone list
 geo.denominator.io.
 ultradnstest.denominator.io.
 ```
+
 If you wish more detail, including HTTP messages sent, add the `-v` or `--verbose` flag to your options.
+
 ```bash
 $ denominator -v -p ultradns -c USERNAME -c PASSWORD zone list
 [UltraDNS#accountId] ---> POST https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 HTTP/1.1

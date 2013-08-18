@@ -1,11 +1,14 @@
 package denominator.cli;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
 import static denominator.cli.Denominator.idOrName;
+import static denominator.cli.Denominator.json;
 import static denominator.model.profile.Geo.asGeo;
+import static denominator.model.profile.Geos.withAdditionalRegions;
 import static java.lang.String.format;
 import io.airlift.command.Arguments;
 import io.airlift.command.Command;
@@ -22,6 +25,12 @@ import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.common.collect.Sets.SetView;
+import com.google.gson.reflect.TypeToken;
 
 import denominator.DNSApiManager;
 import denominator.cli.Denominator.DenominatorCommand;
@@ -148,6 +157,105 @@ class GeoResourceRecordSetCommands {
         }
     }
 
+    @Command(name = "add", description = "adds the regions or territories specified to the geo record set")
+    public static class GeoResourceRecordAddRegions extends GeoResourceRecordSetCommand {
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-n", "--name" }, description = "name of the record set. ex. www.denominator.io.")
+        public String name;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-t", "--type" }, description = "type of the record set. ex. CNAME")
+        public String type;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-g", "--group" }, description = "geo group of the record set. ex. US-WEST-2")
+        public String group;
+
+        @Option(type = OptionType.COMMAND, required = true, name = { "-r", "--regions" }, description = "regions to add in json. ex. {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}")
+        public String regions;
+
+        @Option(type = OptionType.COMMAND, required = false, name = { "--dry-run" }, description = "when true, don't actually perform the update")
+        public Boolean dryRun;
+
+        @Option(type = OptionType.COMMAND, required = false, name = { "--validate-regions" }, description = "when true, check to ensure that the regions specified are indeed supported")
+        public Boolean validateRegions;
+
+        public Iterator<String> doRun(final DNSApiManager mgr) {
+            checkArgument(!regions.isEmpty(), "specify regions to apply");
+            // resolve into a concrete zone id or name.
+            zoneIdOrName = idOrName(mgr, zoneIdOrName);
+            final GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(zoneIdOrName);
+            checkArgument(api != null, "geo api not available on provider %s, zone %s", mgr.provider(), zoneIdOrName);
+            String cmd = format(";; in zone %s adding regions %s to rrset %s %s %s", zoneIdOrName, regions, name, type,
+                    group);
+            final Map<String, Collection<String>> regionsToAdd  = parseRegions();
+
+            return concat(forArray(cmd), new Iterator<String>() {
+                boolean validatedRegions;
+                ResourceRecordSet<?> existing = null;
+                ResourceRecordSet<?> update = null;
+                boolean done = false;
+
+                @Override
+                public boolean hasNext() {
+                    return !done;
+                }
+
+                @Override
+                public String next() {
+                    if (Boolean.TRUE.equals(validateRegions) && !validatedRegions) {
+                        validateRegions(regionsToAdd, api.supportedRegions());
+                        validatedRegions = true;
+                        return ";; validated regions: " + json.toJson(regionsToAdd);
+                    } else if (existing == null) {
+                        existing = api.getByNameTypeAndQualifier(name, type, group);
+                        return ";; current rrset: " + json.toJson(existing);
+                    } else if (update == null) {
+                        update = withAdditionalRegions(existing, regionsToAdd);
+                        if (update == existing) {
+                            done = true;
+                            return ";; ok";
+                        }
+                        return ";; revised rrset: " + json.toJson(update);
+                    } else {
+                        if (!Boolean.TRUE.equals(dryRun)) {
+                            api.put(update);
+                        }
+                        done = true;
+                        return ";; ok";
+                    }
+                }
+
+                @Override
+                public void remove() {
+                    throw new UnsupportedOperationException();
+                }
+            });
+        }
+
+        private Map<String, Collection<String>> parseRegions() {
+            try {
+                return json.fromJson(regions, new TypeToken<Map<String, Collection<String>>>() {
+                }.getType());
+            } catch (RuntimeException e) {
+                throw new IllegalArgumentException(
+                        "parse failure on regions! check json syntax. ex. {\"United States (US)\":[\"Arizona\"]}", e);
+            }
+        }
+    }
+
+    static void validateRegions(Map<String, Collection<String>> regionsToAdd,
+            Map<String, Collection<String>> supportedRegions) {
+        MapDifference<String, Collection<String>> comparison = Maps.difference(regionsToAdd, supportedRegions);
+        checkArgument(comparison.entriesOnlyOnLeft().isEmpty(), "unsupported regions: %s", comparison
+                .entriesOnlyOnLeft().keySet());
+        for (Entry<String, Collection<String>> entry : regionsToAdd.entrySet()) {
+            ImmutableSet<String> toAdd = ImmutableSet.copyOf(entry.getValue());
+            SetView<String> intersection = Sets.intersection(toAdd,
+                    ImmutableSet.copyOf(supportedRegions.get(entry.getKey())));
+            SetView<String> unsupported = Sets.difference(toAdd, intersection);
+            checkArgument(unsupported.isEmpty(), "unsupported territories in %s:", entry.getKey(), unsupported);
+        }
+    }
+
     static enum GeoResourceRecordSetToString implements Function<ResourceRecordSet<?>, String> {
         INSTANCE;
 
@@ -157,7 +265,8 @@ class GeoResourceRecordSetCommands {
             for (String line : Splitter.on('\n').split(ResourceRecordSetToString.INSTANCE.apply(rrset))) {
                 Geo geo = asGeo(rrset);
                 if (geo != null) {
-                    lines.add(new StringBuilder().append(line).append(' ').append(geo.regions()).toString());
+                    lines.add(new StringBuilder().append(line).append(' ').append(json.toJson(geo.regions()))
+                            .toString());
                 } else {
                     lines.add(line);
                 }
