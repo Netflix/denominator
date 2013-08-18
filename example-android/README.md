@@ -8,7 +8,7 @@ You will need to use either [Android Studio](http://developer.android.com/sdk/in
 4. `echo sdk.dir=$ANDROID_HOME >>local.properties`
 
 ## Build
-From denominator's base dir, run `./gradlew clean assemble` to build the android package.
+`gradle clean assemble` to build the android package.
 
 ## Install on your device
 Use adb to install a new copy of the example onto your connected device.
