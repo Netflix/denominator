@@ -157,8 +157,8 @@ public class Denominator {
         @Option(type = OptionType.GLOBAL, name = { "-c", "--credential" }, description = "adds a credential argument (execute denominator providers for what these are)")
         public List<String> credentialArgs;
 
-        @Option(type = OptionType.GLOBAL, name = { "-C", "--config" }, description = "path to configuration file (used to store credentials)")
-        public String configPath;
+        @Option(type = OptionType.GLOBAL, name = { "-C", "--config" }, description = "path to configuration file (used to store credentials). default: ~/.denominatorconfig")
+        public String configPath = "~/.denominatorconfig";
 
         @Option(type = OptionType.GLOBAL, name = { "-n", "--name" }, description = "unique name of provider configuration")
         public String name;
@@ -169,7 +169,7 @@ public class Denominator {
         public void run() {
             if (providerName != null && credentialArgs != null) {
                 credentials = Credentials.ListCredentials.from(credentialArgs);
-            } else if (configPath != null) {
+            } else if (name != null) {
                 Map<?, ?> configFromFile = getConfigFromFile();
                 if (configFromFile != null) {
                     credentials = MapCredentials.from(Map.class.cast(configFromFile.get("credentials")));

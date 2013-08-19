@@ -10,11 +10,11 @@ Here's how to get denominator-cli `3.5.0` from [bintray](https://bintray.com/pkg
 3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
 
 ## Building
-To build the cli, execute `./gradlew clean test install` from the root of your denominator clone.  The binary will end up at `/denominator-cli/build/denominator`
+To build the cli, execute `./gradlew clean test install` from the root of your denominator clone.  The binary will end up at `cli/build/denominator`
 
 ## Configuring
 
-You may optionally use a configuration file in YAML format to define named providers and credentials for each.
+You may optionally use a configuration file in YAML format to define named providers and credentials for each.  The default path to this file is `~/.denominatorconfig`.
 
 Here's an example of a configuration file:
 
@@ -33,7 +33,11 @@ credentials:
   password: your_password
 ```
 
-Then use the `-C` arg to define the path to the configuration file and the `-n` arg to select the named provider.
+Use the `-n` arg to select the named provider.
+
+For example, `./denominator -n route53-test zone`
+
+To use an alternate config file, specify the `-C` arg to its path.
 
 For example, `./denominator -C /path/to/config.yml -n route53-test zone`
 
