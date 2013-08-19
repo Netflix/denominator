@@ -86,8 +86,8 @@ public class Route53Provider extends BasicProvider {
         return options;
     }
 
-    @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
-            GeoUnsupported.class, InstanceProfileCredentialsProvider.class, FeignModule.class })
+    @dagger.Module(injects = DNSApiManager.class, complete = false, includes = { GeoUnsupported.class,
+            InstanceProfileCredentialsProvider.class, FeignModule.class })
     public static final class Module {
 
         @Provides
