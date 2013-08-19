@@ -1,5 +1,6 @@
 ### Version 3.6
 * default cli config to `~/.denominatorconfig`
+* add new Providers utility class
 
 ### Version 3.5
 * lazy lookup regions in ultradns

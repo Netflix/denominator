@@ -1,7 +1,7 @@
 package denominator.mock;
 
 import static denominator.Denominator.create;
-import static denominator.Denominator.providers;
+import static denominator.Providers.list;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -26,7 +26,7 @@ public class MockProviderTest {
 
     @Test
     public void testMockRegistered() {
-        Set<Provider> allProviders = ImmutableSet.copyOf(providers());
+        Set<Provider> allProviders = ImmutableSet.copyOf(list());
         assertTrue(allProviders.contains(PROVIDER));
     }
 

@@ -3,8 +3,8 @@ package denominator.route53;
 import static denominator.CredentialsConfiguration.anonymous;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
-import static denominator.Denominator.provider;
-import static denominator.Denominator.providers;
+import static denominator.Providers.provide;
+import static denominator.Providers.list;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -35,7 +35,7 @@ public class Route53ProviderTest {
 
     @Test
     public void testRoute53Registered() {
-        Set<Provider> allProviders = ImmutableSet.copyOf(providers());
+        Set<Provider> allProviders = ImmutableSet.copyOf(list());
         assertTrue(allProviders.contains(PROVIDER));
     }
 
@@ -69,7 +69,7 @@ public class Route53ProviderTest {
     @Test
     public void testViaDagger() {
         DNSApiManager manager = ObjectGraph
-                .create(provider(new Route53Provider()), new Route53Provider.Module(), credentials("accesskey", "secretkey"))
+                .create(provide(new Route53Provider()), new Route53Provider.Module(), credentials("accesskey", "secretkey"))
                 .get(DNSApiManager.class);
         assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
     }
