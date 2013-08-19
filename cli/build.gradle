@@ -14,13 +14,14 @@ eclipse {
 
 dependencies {
   compile      project(':denominator-core')
+  compile     'io.airlift:airline:0.5'
+  compile     'org.yaml:snakeyaml:1.12'
+  // TODO: the following should really only be in the fatJar
   compile      project(':denominator-dynect')
   compile      project(':denominator-ultradns')
   compile      project(':denominator-route53')
   compile      project(':denominator-clouddns')
   compile      project(':denominator-designate')
-  compile     'io.airlift:airline:0.5'
-  compile     'org.yaml:snakeyaml:1.12'
   testCompile 'org.testng:testng:6.8.5'
   testCompile 'com.google.mockwebserver:mockwebserver:20130706'
 }
@@ -33,6 +34,8 @@ task fatJar(dependsOn: classes, type: Jar) {
 
   // exclude service provider lookup as updating denominator.cli.Denominator is no big deal
   def providerFile = "META-INF/services/denominator.Provider"
+  from "supportedProviders.txt"
+  rename "supportedProviders.txt", providerFile
 
   doFirst {
     // Delay evaluation until the compile configuration is ready
