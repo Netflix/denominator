@@ -36,7 +36,7 @@ import denominator.model.rdata.CNAMEData;
 @Test
 public class DenominatorTest {
 
-    @Test(description = "denominator -p mock providers")
+    @Test(description = "denominator providers")
     public void listsAllProvidersWithCredentials() {
         assertEquals(ListProviders.providerAndCredentialsTable(), Joiner.on('\n').join(
                 "provider   url                                                 duplicateZones credentialType credentialArgs",

@@ -2,8 +2,8 @@ package denominator.designate;
 
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
-import static denominator.Denominator.provider;
-import static denominator.Denominator.providers;
+import static denominator.Providers.provide;
+import static denominator.Providers.list;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -33,7 +33,7 @@ public class DesignateProviderTest {
 
     @Test
     public void testDesignateRegistered() {
-        Set<Provider> allProviders = ImmutableSet.copyOf(providers());
+        Set<Provider> allProviders = ImmutableSet.copyOf(list());
         assertTrue(allProviders.contains(PROVIDER));
     }
 
@@ -58,7 +58,7 @@ public class DesignateProviderTest {
     @Test
     public void testViaDagger() {
         DNSApiManager manager = ObjectGraph
-                .create(provider(new DesignateProvider()), new DesignateProvider.Module(), credentials("tenantId", "username", "password"))
+                .create(provide(new DesignateProvider()), new DesignateProvider.Module(), credentials("tenantId", "username", "password"))
                 .get(DNSApiManager.class);
         assertEquals(manager.api().zones().getClass(), DesignateZoneApi.class);
     }
