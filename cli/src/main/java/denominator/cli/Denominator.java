@@ -1,7 +1,7 @@
 package denominator.cli;
 import static com.google.common.base.Preconditions.checkArgument;
 import static denominator.CredentialsConfiguration.credentials;
-import static denominator.Denominator.provider;
+import static denominator.Providers.provide;
 import static java.lang.String.format;
 import io.airlift.command.Cli;
 import io.airlift.command.Cli.CliBuilder;
@@ -179,7 +179,7 @@ public class Denominator {
                 }
             }
             Builder<Object> modulesForGraph = ImmutableList.builder() //
-                    .add(provider(newProvider())) //
+                    .add(provide(newProvider())) //
                     .add(newModule());
 
             Object logModule = logModule(quiet, verbose);
