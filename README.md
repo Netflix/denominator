@@ -10,7 +10,7 @@ Denominator is a portable Java library for manipulating DNS clouds.  Denominator
 For your convenience, the denominator cli is a [single executable file](http://skife.org/java/unix/2011/06/20/really_executable_jars.html).  Under the hood, the cli uses [airline](https://github.com/airlift/airline) to look and feel like dig or git.
 
 ## Android
-There's no official android client, yet.  However, we do have an [Android Example](https://github.com/Netflix/denominator/tree/master/examples/denominator-example-android) you can try out.
+There's no official android client, yet.  However, we do have an [Android Example](https://github.com/Netflix/denominator/tree/master/example-android) you can try out.
 
 ### Binaries
 If you are using OSX, [Homebrew](http://mxcl.github.io/homebrew/) has a built-in installer for denominator.
@@ -23,7 +23,7 @@ Here's how to get denominator-cli `3.5.0` from [bintray](https://bintray.com/pkg
 
 ### Getting Started
 
-Advanced usage, including ec2 hooks are covered in the [readme](https://github.com/Netflix/denominator/tree/master/denominator-cli).  Here's a quick start for the impatient.
+Advanced usage, including ec2 hooks are covered in the [readme](https://github.com/Netflix/denominator/tree/master/cli).  Here's a quick start for the impatient.
 
 If you just want to fool around, you can use the `mock` provider.
 ```bash

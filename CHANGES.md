@@ -1,3 +1,6 @@
+### Version 3.6
+* default cli config to `~/.denominatorconfig`
+
 ### Version 3.5
 * lazy lookup regions in ultradns
 

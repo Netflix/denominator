@@ -235,7 +235,7 @@ public class DenominatorTest {
         command.type = "CNAME";
         command.qualifier = "alazona";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)),
-                "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io.");
+                "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {United States (US)=[Alaska, Arizona]}");
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. get -n www.geo.denominator.io. -t A -g alazona")
