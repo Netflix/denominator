@@ -1,0 +1,10 @@
+# Update this file to add more default providers to the fat jar.
+# Note that these providers must be specified as a fatJarProviders dependency
+# At build time, this will become META-INF/services/denominator.Provider
+# see http://docs.oracle.com/javase/7/docs/api/java/util/ServiceLoader.html
+denominator.clouddns.CloudDNSProvider
+denominator.designate.DesignateProvider
+denominator.dynect.DynECTProvider
+denominator.mock.MockProvider
+denominator.route53.Route53Provider
+denominator.ultradns.UltraDNSProvider

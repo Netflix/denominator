@@ -1,7 +1,6 @@
 package denominator.cli;
 import static com.google.common.base.Preconditions.checkArgument;
 import static denominator.CredentialsConfiguration.credentials;
-import static denominator.Denominator.provider;
 import static java.lang.String.format;
 import io.airlift.command.Cli;
 import io.airlift.command.Cli.CliBuilder;
@@ -41,6 +40,7 @@ import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.Denominator.Version;
 import denominator.Provider;
+import denominator.Providers;
 import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet;
@@ -53,13 +53,7 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
-import denominator.clouddns.CloudDNSProvider;
-import denominator.designate.DesignateProvider;
-import denominator.dynect.DynECTProvider;
-import denominator.mock.MockProvider;
 import denominator.model.Zone;
-import denominator.route53.Route53Provider;
-import denominator.ultradns.UltraDNSProvider;
 import feign.Logger;
 import feign.Logger.Level;
 
@@ -127,7 +121,7 @@ public class Denominator {
             StringBuilder builder = new StringBuilder();
             
             builder.append(format(table, "provider", "url", "duplicateZones", "credentialType", "credentialArgs"));
-            for (Provider provider : listProviders()) {
+            for (Provider provider : Providers.list()) {
                 if (provider.credentialTypeToParameterNames().isEmpty())
                     builder.append(format("%-10s %-51s %-14s %n", provider.name(), provider.url(),
                             provider.supportsDuplicateZoneNames()));
@@ -178,9 +172,13 @@ public class Denominator {
                         url = configFromFile.get("url").toString();
                 }
             }
+            Provider provider = Providers.getByName(providerName);
+            if (url != null) {
+                provider = Providers.withUrl(provider, url);
+            }
             Builder<Object> modulesForGraph = ImmutableList.builder() //
-                    .add(provider(newProvider())) //
-                    .add(newModule());
+                    .add(Providers.provide(provider)) //
+                    .add(Providers.instantiateModule(provider));
 
             Object logModule = logModule(quiet, verbose);
             if (logModule != null)
@@ -242,69 +240,6 @@ public class Denominator {
          * return a lazy iterator where possible to improve the perceived responsiveness of the cli
          */
         protected abstract Iterator<String> doRun(DNSApiManager mgr);
-
-        /**
-         * This avoids service loader lookup which adds runtime and build
-         * complexity.
-         * 
-         * <br><br><b>Note</b><br>
-         * 
-         * update this code block when adding new providers to the CLI.
-         */
-        // TODO: consider generating this method at compile time
-        protected Provider newProvider() {
-            if ("mock".equals(providerName)) {
-                return new MockProvider(url);
-            } else if ("clouddns".equals(providerName)) {
-                return new CloudDNSProvider(url);
-            } else if ("designate".equals(providerName)) {
-                return new DesignateProvider(url);
-            } else if ("dynect".equals(providerName)) {
-                return new DynECTProvider(url);
-            } else if ("route53".equals(providerName)) {
-                return new Route53Provider(url);
-            } else if ("ultradns".equals(providerName)) {
-                return new UltraDNSProvider(url);
-            }
-            throw new IllegalArgumentException("provider " + providerName
-                    + " unsupported.  Please execute \"denominator providers\" to list configured providers.");
-        }
-
-        protected Object newModule() {
-            if ("mock".equals(providerName)) {
-                return new MockProvider.Module();
-            } else if ("clouddns".equals(providerName)) {
-                return new CloudDNSProvider.Module();
-            } else if ("designate".equals(providerName)) {
-                return new DesignateProvider.Module();
-            } else if ("dynect".equals(providerName)) {
-                return new DynECTProvider.Module();
-            } else if ("route53".equals(providerName)) {
-                return new Route53Provider.Module();
-            } else if ("ultradns".equals(providerName)) {
-                return new UltraDNSProvider.Module();
-            }
-            throw new IllegalArgumentException("provider " + providerName
-                    + " unsupported.  Please execute \"denominator providers\" to list configured providers.");
-        }
-    }
-
-    /**
-     * Lazy to avoid loading the classes unless they are requested.
-     * 
-     * <br><br><b>Note</b><br>
-     * 
-     * update this code block when adding new providers to the CLI.
-     */
-    // TODO: consider generating this method at compile time
-    private static Iterable<Provider> listProviders() {
-        return ImmutableList.<Provider> builder()
-                            .add(new MockProvider())
-                            .add(new CloudDNSProvider())
-                            .add(new DesignateProvider())
-                            .add(new DynECTProvider())
-                            .add(new Route53Provider())
-                            .add(new UltraDNSProvider()).build();
     }
 
     @Command(name = "list", description = "Lists the zones present in this provider.  If the second column is present, it is the zone id.")
