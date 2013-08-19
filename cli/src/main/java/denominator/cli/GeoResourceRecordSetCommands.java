@@ -27,6 +27,7 @@ import denominator.DNSApiManager;
 import denominator.cli.Denominator.DenominatorCommand;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetToString;
 import denominator.model.ResourceRecordSet;
+import denominator.model.profile.Geo;
 import denominator.profile.GeoResourceRecordSetApi;
 
 class GeoResourceRecordSetCommands {
@@ -151,10 +152,15 @@ class GeoResourceRecordSetCommands {
         INSTANCE;
 
         @Override
-        public String apply(ResourceRecordSet<?> geoRRS) {
+        public String apply(ResourceRecordSet<?> rrset) {
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
-            for (String line : Splitter.on('\n').split(ResourceRecordSetToString.INSTANCE.apply(geoRRS))) {
-                lines.add(new StringBuilder().append(line).append(' ').append(asGeo(geoRRS).regions()).toString());
+            for (String line : Splitter.on('\n').split(ResourceRecordSetToString.INSTANCE.apply(rrset))) {
+                Geo geo = asGeo(rrset);
+                if (geo != null) {
+                    lines.add(new StringBuilder().append(line).append(' ').append(geo.regions()).toString());
+                } else {
+                    lines.add(line);
+                }
             }
             return Joiner.on('\n').join(lines.build());
         }
