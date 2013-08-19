@@ -21,7 +21,7 @@ public class WeightedTest {
         Weighted.create(-1);
     }
 
-    Weighted weighted = Weighted.create(2);
+    static Weighted weighted = Weighted.create(2);
 
     String asJson = "{\"type\":\"weighted\",\"weight\":2}";
 
@@ -33,7 +33,7 @@ public class WeightedTest {
         assertEquals(new ObjectMapper().readValue(asJson, Map.class), weighted);
     }
 
-    Map<String, Object> weightedMap = ImmutableMap.<String, Object> builder()//
+    static Map<String, Object> weightedMap = ImmutableMap.<String, Object> builder()//
             .put("type", "weighted")//
             .put("weight", 2).build();
 
@@ -41,7 +41,7 @@ public class WeightedTest {
         assertEquals(Weighted.asWeighted(weightedMap), weighted);
     }
 
-    ResourceRecordSet<AData> weightedRRS = ResourceRecordSet.<AData> builder()//
+    static ResourceRecordSet<AData> weightedRRS = ResourceRecordSet.<AData> builder()//
             .name("www.denominator.io.")//
             .type("A")//
             .qualifier("US-East")//

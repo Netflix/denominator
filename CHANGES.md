@@ -1,7 +1,10 @@
 ### Version 3.6
 * default cli config to `~/.denominatorconfig`
+* new `geo add` cli command for adding regions to an rrset
+  * includes `--dry-run` and `--validate-regions` options
 * add new Providers utility class
 * removed hard-coding of CLI providers
+* add Geos utility for manipulating regions in an rrset
 
 ### Version 3.5
 * lazy lookup regions in ultradns
