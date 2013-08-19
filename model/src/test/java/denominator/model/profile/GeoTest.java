@@ -18,7 +18,7 @@ import denominator.model.rdata.AData;
 @Test
 public class GeoTest {
 
-    Geo geo = Geo.create(ImmutableMultimap.<String, String> builder()//
+    static Geo geo = Geo.create(ImmutableMultimap.<String, String> builder()//
             .put("US", "US-VA")//
             .put("US", "US-CA")//
             .put("IM", "IM").build().asMap());
@@ -33,7 +33,7 @@ public class GeoTest {
         assertEquals(new ObjectMapper().readValue(asJson, Map.class), geo);
     }
 
-    Map<String, Object> geoWhereRegionsAreMapStringCollectionString = ImmutableMap.<String, Object> builder()//
+    static Map<String, Object> geoWhereRegionsAreMapStringCollectionString = ImmutableMap.<String, Object> builder()//
             .put("type", "geo")//
             .put("regions", ImmutableMultimap.<String, String> builder()//
                     .put("US", "US-VA")//
@@ -67,7 +67,7 @@ public class GeoTest {
         Geo.asGeo(geoWhereRegionsAreMultimapStringString);
     }
 
-    ResourceRecordSet<AData> geoRRS = ResourceRecordSet.<AData> builder()//
+    static ResourceRecordSet<AData> geoRRS = ResourceRecordSet.<AData> builder()//
             .name("www.denominator.io.")//
             .type("A")//
             .qualifier("US-East")//

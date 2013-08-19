@@ -11,8 +11,10 @@ import io.airlift.command.OptionType;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +34,15 @@ import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.Iterators;
 import com.google.common.io.Files;
 import com.google.common.net.InternetDomainName;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.InstanceCreator;
+import com.google.gson.TypeAdapter;
+import com.google.gson.internal.ConstructorConstructor;
+import com.google.gson.internal.bind.MapTypeAdapterFactory;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 import dagger.ObjectGraph;
 import dagger.Provides;
@@ -42,6 +53,7 @@ import denominator.Denominator.Version;
 import denominator.Provider;
 import denominator.Providers;
 import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList;
@@ -89,7 +101,8 @@ public class Denominator {
                .withCommand(GeoRegionList.class)
                .withCommand(GeoResourceRecordSetList.class)
                .withCommand(GeoResourceRecordSetGet.class)
-               .withCommand(GeoResourceRecordSetApplyTTL.class);
+               .withCommand(GeoResourceRecordSetApplyTTL.class)
+               .withCommand(GeoResourceRecordAddRegions.class);
 
         Cli<Runnable> denominatorParser = builder.build();
         try {
@@ -309,4 +322,31 @@ public class Denominator {
         }
         return zoneIdOrName;
     }
+
+    static final TypeToken<Map<String, Object>> token = new TypeToken<Map<String, Object>>() {
+    };
+
+    static final TypeAdapter<Map<String, Object>> doubleToInt = new TypeAdapter<Map<String, Object>>() {
+        TypeAdapter<Map<String, Object>> delegate = new MapTypeAdapterFactory(new ConstructorConstructor(
+                Collections.<Type, InstanceCreator<?>> emptyMap()), false).create(new Gson(), token);
+
+        @Override
+        public void write(JsonWriter out, Map<String, Object> value) throws IOException {
+            delegate.write(out, value);
+        }
+
+        @Override
+        public Map<String, Object> read(JsonReader in) throws IOException {
+            Map<String, Object> map = delegate.read(in);
+            for (Entry<String, Object> entry : map.entrySet()) {
+                if (entry.getValue() instanceof Double) {
+                    entry.setValue(Double.class.cast(entry.getValue()).intValue());
+                }
+            }
+            return map;
+        }
+    }.nullSafe();
+
+    // deals with scenario where gson Object type treats all numbers as doubles.
+    static final Gson json = new GsonBuilder().registerTypeAdapter(token.getType(), doubleToInt).create();
 }
