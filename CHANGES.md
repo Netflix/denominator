@@ -5,6 +5,7 @@
 * add new Providers utility class
 * removed hard-coding of CLI providers
 * add Geos utility for manipulating regions in an rrset
+* update to feign 4.3
 
 ### Version 3.5
 * lazy lookup regions in ultradns

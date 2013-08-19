@@ -113,8 +113,8 @@ public class CloudDNSProvider extends BasicProvider {
 
     // unbound wildcards are not currently injectable in dagger.
     @SuppressWarnings("rawtypes")
-    @dagger.Module(injects = CloudDNSResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
-            Defaults.class, ReflectiveFeign.Module.class, GsonModule.class })
+    @dagger.Module(injects = CloudDNSResourceRecordSetApi.Factory.class, complete = false, includes = { Defaults.class,
+            ReflectiveFeign.Module.class, GsonModule.class })
     public static final class FeignModule {
 
         @Provides

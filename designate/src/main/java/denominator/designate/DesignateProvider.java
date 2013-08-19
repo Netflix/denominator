@@ -112,7 +112,7 @@ public class DesignateProvider extends BasicProvider {
 
     // unbound wildcards are not currently injectable in dagger.
     @SuppressWarnings("rawtypes")
-    @dagger.Module(injects = DesignateResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
+    @dagger.Module(injects = DesignateResourceRecordSetApi.Factory.class, complete = false, includes = {
             Defaults.class, ReflectiveFeign.Module.class, GsonModule.class })
     public static final class FeignModule {
 

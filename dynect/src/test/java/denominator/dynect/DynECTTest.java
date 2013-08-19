@@ -293,7 +293,7 @@ public class DynECTTest {
             public String url() {
                 return "http://localhost:" + port;
             }
-        }, lazyToken), new DynECTProvider.FeignModule(), new GsonModule());
+        }, lazyToken), new DynECTProvider.FeignModule());
     }
 
     @Module(library = true)
