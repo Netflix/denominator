@@ -31,7 +31,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
         try {
-            return api.rrsetsInZone(zone);
+            return api.rrsets(zone);
         } catch (FeignException e) {
             if (e.getMessage().indexOf("status 404") != -1) {
                 throw new IllegalArgumentException("zone " + zone + " not found", e);

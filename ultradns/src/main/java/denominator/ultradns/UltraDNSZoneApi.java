@@ -23,6 +23,6 @@ public final class UltraDNSZoneApi implements denominator.ZoneApi {
      */
     @Override
     public Iterator<Zone> iterator() {
-        return api.zonesOfAccount(account.get()).iterator();
+        return api.getZonesOfAccount(account.get()).iterator();
     }
 }

@@ -88,7 +88,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getPort()).networkStatus(), NetworkStatus.GOOD);
+            assertEquals(mockApi(server.getPort()).getNeustarNetworkStatus(), NetworkStatus.GOOD);
 
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
         } finally {
@@ -112,7 +112,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getPort()).networkStatus(), NetworkStatus.FAILED);
+            assertEquals(mockApi(server.getPort()).getNeustarNetworkStatus(), NetworkStatus.FAILED);
 
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
         } finally {
@@ -130,7 +130,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getPort()).networkStatus(), NetworkStatus.GOOD);
+            assertEquals(mockApi(server.getPort()).getNeustarNetworkStatus(), NetworkStatus.GOOD);
 
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
@@ -149,14 +149,14 @@ public class UltraDNSTest {
             + "    </soap:Body>\n"//
             + "</soap:Envelope>";
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.networkStatus\\(\\) failed: Invalid User")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.getNeustarNetworkStatus\\(\\) failed: Invalid User")
     public void noRetryOnInvalidUser() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(invalidUser));
         server.play();
 
         try {
-            mockApi(server.getPort()).networkStatus();
+            mockApi(server.getPort()).getNeustarNetworkStatus();
 
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
         } finally {
@@ -171,7 +171,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getPort()).networkStatus();
+            mockApi(server.getPort()).getNeustarNetworkStatus();
         } finally {
             assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
             server.shutdown();
@@ -198,7 +198,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getPort()).accountId(), "AAAAAAAAAAAAAAAA");
+            assertEquals(mockApi(server.getPort()).getAccountsListOfUser(), "AAAAAAAAAAAAAAAA");
 
             assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);
         } finally {
@@ -234,7 +234,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getPort()).zonesOfAccount("AAAAAAAAAAAAAAAA"),
+            assertEquals(mockApi(server.getPort()).getZonesOfAccount("AAAAAAAAAAAAAAAA"),
                     ImmutableList.of(Zone.create("denominator.io."), Zone.create("0.1.2.3.4.5.6.7.ip6.arpa.")));
 
             assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
@@ -252,7 +252,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getPort()).zonesOfAccount("AAAAAAAAAAAAAAAA").isEmpty());
+            assertTrue(mockApi(server.getPort()).getZonesOfAccount("AAAAAAAAAAAAAAAA").isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
         } finally {
@@ -292,7 +292,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<Record> records = mockApi(server.getPort()).recordsInZone("denominator.io.");
+            List<Record> records = mockApi(server.getPort()).getResourceRecordsOfZone("denominator.io.");
 
             assertEquals(records.size(), 2);
 
@@ -327,7 +327,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getPort()).recordsInZone("denominator.io.").isEmpty());
+            assertTrue(mockApi(server.getPort()).getResourceRecordsOfZone("denominator.io.").isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), getResourceRecordsOfZone);
         } finally {
@@ -368,7 +368,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<Record> records = mockApi(server.getPort()).recordsInZoneByNameAndType("denominator.io.",
+            List<Record> records = mockApi(server.getPort()).getResourceRecordsOfDNameByType("denominator.io.",
                     "denominator.io.", 6);
             assertEquals(records.size(), 1);
             checkSOARecord(records.get(0));
@@ -386,7 +386,8 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getPort()).recordsInZoneByNameAndType("denominator.io.", "denominator.io.", 6),
+            assertEquals(
+                    mockApi(server.getPort()).getResourceRecordsOfDNameByType("denominator.io.", "denominator.io.", 6),
                     ImmutableList.of());
 
             assertEquals(new String(server.takeRequest().getBody()), format(getResourceRecordsOfDNameByType));
@@ -421,7 +422,7 @@ public class UltraDNSTest {
             record.ttl = 1800;
             record.rdata.add("10");
             record.rdata.add("maileast.denominator.io.");
-            mockApi(server.getPort()).createRecordInZone(record, "denominator.io.");
+            mockApi(server.getPort()).createResourceRecord(record, "denominator.io.");
 
             assertEquals(new String(server.takeRequest().getBody()), createResourceRecord);
         } finally {
@@ -455,7 +456,7 @@ public class UltraDNSTest {
             record.typeCode = 1;
             record.ttl = 3600;
             record.rdata.add("1.1.1.1");
-            mockApi(server.getPort()).updateRecordInZone(record, "denominator.io.");
+            mockApi(server.getPort()).updateResourceRecord(record, "denominator.io.");
 
             assertEquals(new String(server.takeRequest().getBody()), updateResourceRecord);
         } finally {
@@ -470,7 +471,7 @@ public class UltraDNSTest {
      * Granted, this doesn't make sense, but testing found update to return this
      * error.
      */
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.updateRecordInZone\\(Record,String\\) failed with error 2111: Resource Record of type 1 with these attributes already exists in the system.")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.updateResourceRecord\\(Record,String\\) failed with error 2111: Resource Record of type 1 with these attributes already exists in the system.")
     public void updateRecordInZoneAlreadyExists() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(rrAlreadyExists));
@@ -483,7 +484,7 @@ public class UltraDNSTest {
             record.typeCode = 1;
             record.ttl = 3600;
             record.rdata.add("1.1.1.1");
-            mockApi(server.getPort()).updateRecordInZone(record, "denominator.io.");
+            mockApi(server.getPort()).updateResourceRecord(record, "denominator.io.");
         } finally {
             server.shutdown();
         }
@@ -508,7 +509,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getPort()).deleteRecord("ABCDEF");
+            mockApi(server.getPort()).deleteResourceRecord("ABCDEF");
 
             assertEquals(new String(server.takeRequest().getBody()), deleteResourceRecord);
         } finally {
@@ -549,7 +550,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            Map<NameAndType, String> pools = mockApi(server.getPort()).rrPoolNameTypeToIdInZone("denominator.io.");
+            Map<NameAndType, String> pools = mockApi(server.getPort()).getLoadBalancingPoolsByZone("denominator.io.");
             assertEquals(pools.size(), 2);
 
             NameAndType one = new NameAndType();
@@ -578,7 +579,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getPort()).rrPoolNameTypeToIdInZone("denominator.io.").isEmpty());
+            assertTrue(mockApi(server.getPort()).getLoadBalancingPoolsByZone("denominator.io.").isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), getLoadBalancingPoolsByZone);
         } finally {
@@ -618,7 +619,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<Record> records = mockApi(server.getPort()).recordsInRRPool("000000000000002");
+            List<Record> records = mockApi(server.getPort()).getRRPoolRecords("000000000000002");
 
             assertEquals(records.size(), 2);
 
@@ -652,7 +653,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getPort()).recordsInRRPool("000000000000002").isEmpty());
+            assertTrue(mockApi(server.getPort()).getRRPoolRecords("000000000000002").isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), getRRPoolRecords);
         } finally {
@@ -680,9 +681,8 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(
-                    mockApi(server.getPort()).createRRPoolInZoneForNameAndType("denominator.io.",
-                            "www.denominator.io.", 1), "AAAAAAAAAAAAAAAA");
+            assertEquals(mockApi(server.getPort()).addRRLBPool("denominator.io.", "www.denominator.io.", 1),
+                    "AAAAAAAAAAAAAAAA");
 
             assertEquals(new String(server.takeRequest().getBody()), addRRLBPool);
         } finally {
@@ -693,14 +693,14 @@ public class UltraDNSTest {
     static String poolAlreadyExists = format(FAULT_TEMPLATE, POOL_ALREADY_EXISTS,
             "Pool already created for this host name : www.denominator.io.");
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#createRRPoolInZoneForNameAndType\\(String,String,int\\) failed with error 2912: Pool already created for this host name : www.denominator.io.")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#addRRLBPool\\(String,String,int\\) failed with error 2912: Pool already created for this host name : www.denominator.io.")
     public void createRRPoolInZoneForNameAndTypeWhenAlreadyExists() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(poolAlreadyExists));
         server.play();
 
         try {
-            mockApi(server.getPort()).createRRPoolInZoneForNameAndType("denominator.io.", "www.denominator.io.", 1);
+            mockApi(server.getPort()).addRRLBPool("denominator.io.", "www.denominator.io.", 1);
         } finally {
             server.shutdown();
         }
@@ -726,7 +726,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getPort()).createRecordInRRPoolInZone(1, 300, "www1.denominator.io.", "AAAAAAAAAAAAAAAA",
+            mockApi(server.getPort()).addRecordToRRPool(1, 300, "www1.denominator.io.", "AAAAAAAAAAAAAAAA",
                     "denominator.io.");
 
             assertEquals(new String(server.takeRequest().getBody()), addRecordToRRPool);
@@ -755,7 +755,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getPort()).deleteRRPool("AAAAAAAAAAAAAAAA");
+            mockApi(server.getPort()).deleteLBPool("AAAAAAAAAAAAAAAA");
 
             assertEquals(new String(server.takeRequest().getBody()), deleteLBPool);
         } finally {
@@ -765,14 +765,14 @@ public class UltraDNSTest {
 
     static String poolNotFound = format(FAULT_TEMPLATE, POOL_NOT_FOUND, "Pool does not exist in the system");
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteRRPool\\(String\\) failed with error 2911: Pool does not exist in the system")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteLBPool\\(String\\) failed with error 2911: Pool does not exist in the system")
     public void deleteRRPoolWhenPoolNotFound() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(poolNotFound));
         server.play();
 
         try {
-            mockApi(server.getPort()).deleteRRPool("AAAAAAAAAAAAAAAA");
+            mockApi(server.getPort()).deleteLBPool("AAAAAAAAAAAAAAAA");
         } finally {
             server.shutdown();
         }
@@ -781,14 +781,14 @@ public class UltraDNSTest {
     static String recordNotFound = format(FAULT_TEMPLATE, RESOURCE_RECORD_NOT_FOUND,
             "No resource record with GUID found in the system AAAAAAAAAAAAAAAA");
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteRRPool\\(String\\) failed with error 2103: No resource record with GUID found in the system AAAAAAAAAAAAAAAA")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteLBPool\\(String\\) failed with error 2103: No resource record with GUID found in the system AAAAAAAAAAAAAAAA")
     public void deleteRRPoolWhenRecordNotFound() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(recordNotFound));
         server.play();
 
         try {
-            mockApi(server.getPort()).deleteRRPool("AAAAAAAAAAAAAAAA");
+            mockApi(server.getPort()).deleteLBPool("AAAAAAAAAAAAAAAA");
         } finally {
             server.shutdown();
         }
@@ -822,7 +822,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            Map<String, String> pools = mockApi(server.getPort()).directionalPoolNameToIdsInZone("denominator.io.");
+            Map<String, String> pools = mockApi(server.getPort()).getDirectionalPoolsOfZone("denominator.io.");
             assertEquals(pools.size(), 1);
 
             assertEquals(pools.get("www.denominator.io."), "D000000000000001");
@@ -845,7 +845,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getPort()).directionalPoolNameToIdsInZone("denominator.io.").isEmpty());
+            assertTrue(mockApi(server.getPort()).getDirectionalPoolsOfZone("denominator.io.").isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), getDirectionalPoolsOfZone);
         } finally {
@@ -907,7 +907,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<DirectionalRecord> records = mockApi(server.getPort()).directionalRecordsInZoneByNameAndType(
+            List<DirectionalRecord> records = mockApi(server.getPort()).getDirectionalDNSRecordsForHost(
                     "denominator.io.", "www.denominator.io.", 0);
 
             assertEquals(records.size(), 3);
@@ -953,7 +953,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getPort()).directionalRecordsInZoneByNameAndType("denominator.io.",
+            assertTrue(mockApi(server.getPort()).getDirectionalDNSRecordsForHost("denominator.io.",
                     "www.denominator.io.", 0).isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), format(getDirectionalDNSRecordsForHost));
@@ -965,15 +965,14 @@ public class UltraDNSTest {
     static String dirPoolNotFound = format(FAULT_TEMPLATE, DIRECTIONALPOOL_NOT_FOUND,
             "No Pool or Multiple pools of same type exists for the PoolName : www.denominator.io.");
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.directionalRecordsInZoneByNameAndType\\(String,String,int\\) failed with error 2142: No Pool or Multiple pools of same type exists for the PoolName : www.denominator.io.")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS.getDirectionalDNSRecordsForHost\\(String,String,int\\) failed with error 2142: No Pool or Multiple pools of same type exists for the PoolName : www.denominator.io.")
     public void directionalRecordsByNameAndTypeWhenPoolNotFound() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(dirPoolNotFound));
         server.play();
 
         try {
-            mockApi(server.getPort())
-                    .directionalRecordsInZoneByNameAndType("denominator.io.", "www.denominator.io.", 0);
+            mockApi(server.getPort()).getDirectionalDNSRecordsForHost("denominator.io.", "www.denominator.io.", 0);
         } finally {
             server.shutdown();
         }
@@ -1002,7 +1001,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<DirectionalRecord> records = mockApi(server.getPort()).directionalRecordsInZoneByNameAndType(
+            List<DirectionalRecord> records = mockApi(server.getPort()).getDirectionalDNSRecordsForHost(
                     "denominator.io.", "www.denominator.io.", 0);
 
             assertEquals(records.size(), 1);
@@ -1064,7 +1063,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            List<DirectionalRecord> records = mockApi(server.getPort()).directionalRecordsInZoneAndGroupByNameAndType(
+            List<DirectionalRecord> records = mockApi(server.getPort()).getDirectionalDNSRecordsForGroup(
                     "denominator.io.", "Europe", "www.denominator.io.", 1);
 
             assertEquals(records.size(), 1);
@@ -1091,8 +1090,8 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertTrue(mockApi(server.getPort()).directionalRecordsInZoneAndGroupByNameAndType("denominator.io.",
-                    "Europe", "www.denominator.io.", 1).isEmpty());
+            assertTrue(mockApi(server.getPort()).getDirectionalDNSRecordsForGroup("denominator.io.", "Europe",
+                    "www.denominator.io.", 1).isEmpty());
 
             assertEquals(new String(server.takeRequest().getBody()), format(getDirectionalDNSRecordsForGroup));
         } finally {
@@ -1102,7 +1101,7 @@ public class UltraDNSTest {
 
     static String groupNotFound = format(FAULT_TEMPLATE, GROUP_NOT_FOUND, "Group does not exist.");
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#directionalRecordsInZoneAndGroupByNameAndType\\(String,String,String,int\\) failed with error 4003: Group does not exist.")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#getDirectionalDNSRecordsForGroup\\(String,String,String,int\\) failed with error 4003: Group does not exist.")
     public void directionalRecordsInZoneAndGroupByNameAndTypeWhenGroupNotFound() throws IOException,
             InterruptedException {
         MockWebServer server = new MockWebServer();
@@ -1110,7 +1109,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getPort()).directionalRecordsInZoneAndGroupByNameAndType("denominator.io.", "Europe",
+            mockApi(server.getPort()).getDirectionalDNSRecordsForGroup("denominator.io.", "Europe",
                     "www.denominator.io.", 1);
         } finally {
             server.shutdown();
@@ -1137,9 +1136,8 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            assertEquals(
-                    mockApi(server.getPort()).createDirectionalPoolInZoneForNameAndType("denominator.io.",
-                            "www.denominator.io.", "A"), "AAAAAAAAAAAAAAAA");
+            assertEquals(mockApi(server.getPort()).addDirectionalPool("denominator.io.", "www.denominator.io.", "A"),
+                    "AAAAAAAAAAAAAAAA");
 
             assertEquals(new String(server.takeRequest().getBody()), addDirectionalPool);
         } finally {
@@ -1147,15 +1145,14 @@ public class UltraDNSTest {
         }
     }
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#createDirectionalPoolInZoneForNameAndType\\(String,String,String\\) failed with error 2912: Pool already created for this host name : www.denominator.io.")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#addDirectionalPool\\(String,String,String\\) failed with error 2912: Pool already created for this host name : www.denominator.io.")
     public void createDirectionalPoolInZoneForNameAndTypeWhenAlreadyExists() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(poolAlreadyExists));
         server.play();
 
         try {
-            mockApi(server.getPort()).createDirectionalPoolInZoneForNameAndType("denominator.io.",
-                    "www.denominator.io.", "A");
+            mockApi(server.getPort()).addDirectionalPool("denominator.io.", "www.denominator.io.", "A");
         } finally {
             server.shutdown();
         }
@@ -1209,7 +1206,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            mockApi(server.getPort()).deleteDirectionalRecord("00000000000");
+            mockApi(server.getPort()).deleteDirectionalPoolRecord("00000000000");
 
             assertEquals(new String(server.takeRequest().getBody()), deleteDirectionalPoolRecord);
         } finally {
@@ -1220,14 +1217,14 @@ public class UltraDNSTest {
     static String dirRecordNotFound = format(FAULT_TEMPLATE, DIRECTIONALPOOL_RECORD_NOT_FOUND,
             "Directional Pool Record does not exist in the system");
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteDirectionalRecord\\(String\\) failed with error 2705: Directional Pool Record does not exist in the system")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteDirectionalPoolRecord\\(String\\) failed with error 2705: Directional Pool Record does not exist in the system")
     public void deleteDirectionalRecordNotFound() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(dirRecordNotFound));
         server.play();
 
         try {
-            mockApi(server.getPort()).deleteDirectionalRecord("00000000000");
+            mockApi(server.getPort()).deleteDirectionalPoolRecord("00000000000");
         } finally {
             server.shutdown();
         }
@@ -1276,8 +1273,7 @@ public class UltraDNSTest {
                     .putAll("United States (US)", "Maryland", "Texas")//
                     .build().asMap();
 
-            assertEquals(
-                    mockApi(server.getPort()).createRecordAndDirectionalGroupInPool(record, group, "AAAAAAAAAAAAAAAA"),
+            assertEquals(mockApi(server.getPort()).addDirectionalPoolRecord(record, group, "AAAAAAAAAAAAAAAA"),
                     "06063DC355058294");
 
             assertEquals(new String(server.takeRequest().getBody()), addDirectionalPoolRecord);
@@ -1289,7 +1285,7 @@ public class UltraDNSTest {
     static String poolRecordAlreadyExists = format(FAULT_TEMPLATE, POOL_RECORD_ALREADY_EXISTS,
             "Resource Record already exists.");
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#createRecordAndDirectionalGroupInPool\\(DirectionalRecord,DirectionalGroup,String\\) failed with error 4009: Resource Record already exists.")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#addDirectionalPoolRecord\\(DirectionalRecord,DirectionalGroup,String\\) failed with error 4009: Resource Record already exists.")
     public void createDirectionalRecordAndGroupInPoolWhenExists() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(poolRecordAlreadyExists));
@@ -1309,8 +1305,7 @@ public class UltraDNSTest {
                     .putAll("United States (US)", "Maryland", "Texas")//
                     .build().asMap();
 
-            assertEquals(
-                    mockApi(server.getPort()).createRecordAndDirectionalGroupInPool(record, group, "AAAAAAAAAAAAAAAA"),
+            assertEquals(mockApi(server.getPort()).addDirectionalPoolRecord(record, group, "AAAAAAAAAAAAAAAA"),
                     "06063DC355058294");
 
             assertEquals(new String(server.takeRequest().getBody()), addDirectionalPoolRecord);
@@ -1359,7 +1354,7 @@ public class UltraDNSTest {
                     .putAll("Europe", "Aland Islands")//
                     .build().asMap();
 
-            mockApi(server.getPort()).updateRecordAndDirectionalGroup(record, group);
+            mockApi(server.getPort()).updateDirectionalPoolRecord(record, group);
 
             assertEquals(new String(server.takeRequest().getBody()), updateDirectionalPoolRecordRegions);
         } finally {
@@ -1370,7 +1365,7 @@ public class UltraDNSTest {
     static String existsWithSameAttributes = format(FAULT_TEMPLATE, RESOURCE_RECORD_ALREADY_EXISTS,
             "Resource Record of type CNAME with these attributes already exists in the system.");
 
-    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#updateRecordAndDirectionalGroup\\(DirectionalRecord,DirectionalGroup\\) failed with error 2111: Resource Record of type CNAME with these attributes already exists in the system.")
+    @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#updateDirectionalPoolRecord\\(DirectionalRecord,DirectionalGroup\\) failed with error 2111: Resource Record of type CNAME with these attributes already exists in the system.")
     public void updateDirectionalRecordAndGroupWhenExistsWithSameAttributes() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(500).setBody(existsWithSameAttributes));
@@ -1391,7 +1386,7 @@ public class UltraDNSTest {
                     .putAll("United States (US)", "Maryland", "Texas")//
                     .build().asMap();
 
-            mockApi(server.getPort()).updateRecordAndDirectionalGroup(record, group);
+            mockApi(server.getPort()).updateDirectionalPoolRecord(record, group);
         } finally {
             server.shutdown();
         }
@@ -1422,7 +1417,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            DirectionalGroup group = mockApi(server.getPort()).getDirectionalGroup("AAAAAAAAAAAAAAAA");
+            DirectionalGroup group = mockApi(server.getPort()).getDirectionalDNSGroupDetails("AAAAAAAAAAAAAAAA");
             assertEquals(group.name, "Europe");
             assertEquals(group.regionToTerritories.get("Europe"), ImmutableSet.of("Aland Islands", "Albania",
                     "Andorra", "Armenia", "Austria", "Azerbaijan", "Belarus", "Belgium", "Bosnia-Herzegovina",
@@ -1461,7 +1456,7 @@ public class UltraDNSTest {
         server.play();
 
         try {
-            Map<String, Collection<String>> group = mockApi(server.getPort()).availableRegions();
+            Map<String, Collection<String>> group = mockApi(server.getPort()).getAvailableRegions();
             assertEquals(group.get("Anonymous Proxy (A1)"), ImmutableSortedSet.of("Anonymous Proxy"));
             assertEquals(
                     group.get("Antarctica"),

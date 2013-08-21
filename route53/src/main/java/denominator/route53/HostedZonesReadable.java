@@ -15,7 +15,7 @@ class HostedZonesReadable implements CheckConnection {
     @Override
     public boolean ok() {
         try {
-            api.zones();
+            api.listHostedZones();
             return true;
         } catch (RuntimeException e) {
             return false;
