@@ -1,3 +1,6 @@
+### Version 3.6.1
+* permit anonymous credentials in cli
+
 ### Version 3.6
 * default cli config to `~/.denominatorconfig`
 * new `geo add` cli command for adding regions to an rrset
