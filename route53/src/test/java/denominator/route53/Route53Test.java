@@ -66,7 +66,7 @@ public class Route53Test {
 
             ImmutableList<ActionOnResourceRecordSet> batch = ImmutableList.of(ActionOnResourceRecordSet.create(a(
                     "www.denominator.io.", 3600, "192.0.2.1")));
-            api.changeBatch("Z1PA6795UKMFR9", batch);
+            api.changeResourceRecordSets("Z1PA6795UKMFR9", batch);
 
             RecordedRequest createRRSet = server.takeRequest();
             assertEquals(createRRSet.getRequestLine(), "POST /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
@@ -84,7 +84,7 @@ public class Route53Test {
             + "  </Messages>\n"//
             + "</InvalidChangeBatch>";
 
-    @Test(expectedExceptions = InvalidChangeBatchException.class, expectedExceptionsMessageRegExp = "Route53#changeBatch\\(String,List\\) failed with errors \\[Tried to create resource record set www.denominator.io. type A, but it already exists\\]")
+    @Test(expectedExceptions = InvalidChangeBatchException.class, expectedExceptionsMessageRegExp = "Route53#changeResourceRecordSets\\(String,List\\) failed with errors \\[Tried to create resource record set www.denominator.io. type A, but it already exists\\]")
     public void changeResourceRecordSetsRequestCreateADuplicate() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setResponseCode(400).setBody(invalidChangeBatchDuplicate));
@@ -95,7 +95,7 @@ public class Route53Test {
 
             ImmutableList<ActionOnResourceRecordSet> batch = ImmutableList.of(ActionOnResourceRecordSet.create(a(
                     "www.denominator.io.", 3600, "192.0.2.1")));
-            api.changeBatch("Z1PA6795UKMFR9", batch);
+            api.changeResourceRecordSets("Z1PA6795UKMFR9", batch);
         } finally {
             RecordedRequest createRRSet = server.takeRequest();
             assertEquals(createRRSet.getRequestLine(), "POST /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
