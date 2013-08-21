@@ -34,7 +34,7 @@ class Route53ErrorDecoder extends SAXDecoder<Route53ErrorDecoder.Route53Error> i
     @Override
     public Exception decode(String methodKey, Response response) {
         try {
-            if ("Route53#changeBatch(String,List)".equals(methodKey)) {
+            if ("Route53#changeResourceRecordSets(String,List)".equals(methodKey)) {
                 List<String> messages = response.body() != null ? messagesDecoder.decode(response.body().asReader(),
                         null) : null;
                 return new InvalidChangeBatchException(methodKey, messages);

@@ -28,20 +28,20 @@ class UltraDNSRoundRobinPoolApi {
         for (Map<String, Object> rdata : rdatas) {
             String address = rdata.get("address").toString();
             int typeCode = lookup(type);
-            api.createRecordInRRPoolInZone(typeCode, ttl, address, poolId, zoneName);
+            api.addRecordToRRPool(typeCode, ttl, address, poolId, zoneName);
         }
     }
 
     private String reuseOrCreatePoolForNameAndType(String name, String type) {
         try {
-            return api.createRRPoolInZoneForNameAndType(zoneName, name, lookup(type));
+            return api.addRRLBPool(zoneName, name, lookup(type));
         } catch (UltraDNSException e) {
             if (e.code() != UltraDNSException.POOL_ALREADY_EXISTS)
                 throw e;
             NameAndType nameAndType = new NameAndType();
             nameAndType.name = name;
             nameAndType.type = type;
-            return api.rrPoolNameTypeToIdInZone(zoneName).get(nameAndType);
+            return api.getLoadBalancingPoolsByZone(zoneName).get(nameAndType);
         }
     }
 
@@ -49,11 +49,11 @@ class UltraDNSRoundRobinPoolApi {
         NameAndType nameAndType = new NameAndType();
         nameAndType.name = checkNotNull(name, "pool name was null");
         nameAndType.type = checkNotNull(type, "pool record type was null");
-        String poolId = api.rrPoolNameTypeToIdInZone(zoneName).get(nameAndType);
+        String poolId = api.getLoadBalancingPoolsByZone(zoneName).get(nameAndType);
         if (poolId != null) {
-            if (api.recordsInRRPool(poolId).isEmpty()) {
+            if (api.getRRPoolRecords(poolId).isEmpty()) {
                 try {
-                    api.deleteRRPool(poolId);
+                    api.deleteLBPool(poolId);
                 } catch (UltraDNSException e) {
                     switch (e.code()) {
                     // lost race

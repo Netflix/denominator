@@ -17,7 +17,7 @@ public final class Route53ZoneApi implements denominator.ZoneApi {
 
     @Override
     public Iterator<Zone> iterator() {
-        final ZoneList first = api.zones();
+        final ZoneList first = api.listHostedZones();
         if (first.next == null)
             return first.iterator();
         return new Iterator<Zone>() {
@@ -27,7 +27,7 @@ public final class Route53ZoneApi implements denominator.ZoneApi {
             @Override
             public boolean hasNext() {
                 while (!current.hasNext() && next != null) {
-                    ZoneList nextPage = api.zones(next);
+                    ZoneList nextPage = api.listHostedZones(next);
                     current = nextPage.iterator();
                     next = nextPage.next;
                 }

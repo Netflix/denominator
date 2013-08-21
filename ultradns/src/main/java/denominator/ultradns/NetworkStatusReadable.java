@@ -16,7 +16,7 @@ class NetworkStatusReadable implements CheckConnection {
     @Override
     public boolean ok() {
         try {
-            return NetworkStatus.GOOD == api.networkStatus();
+            return NetworkStatus.GOOD == api.getNeustarNetworkStatus();
         } catch (RuntimeException e) {
             return false;
         }

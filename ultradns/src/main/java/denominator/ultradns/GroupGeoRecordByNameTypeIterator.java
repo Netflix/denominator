@@ -79,7 +79,7 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
         builder.add(forTypeAndRData(record.type, record.rdata));
         
         if (!cache.containsKey(record.geoGroupId)) {
-            Geo profile = Geo.create(api.getDirectionalGroup(record.geoGroupId).regionToTerritories);
+            Geo profile = Geo.create(api.getDirectionalDNSGroupDetails(record.geoGroupId).regionToTerritories);
             cache.put(record.geoGroupId,profile);
         }
 

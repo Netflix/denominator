@@ -56,7 +56,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
         List<Iterable<ResourceRecordSet<?>>> eachPool = new ArrayList<Iterable<ResourceRecordSet<?>>>();
-        for (final String poolName : api.directionalPoolNameToIdsInZone(zoneName).keySet()) {
+        for (final String poolName : api.getDirectionalPoolsOfZone(zoneName).keySet()) {
             eachPool.add(new Iterable<ResourceRecordSet<?>>() {
                 public Iterator<ResourceRecordSet<?>> iterator() {
                     return iteratorForDNameAndDirectionalType(poolName, 0);
@@ -118,7 +118,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
     private Iterator<DirectionalRecord> recordsForNameTypeAndQualifier(String name, String type, String qualifier) {
         try {
-            return api.directionalRecordsInZoneAndGroupByNameAndType(zoneName, qualifier, name, dirType(type))
+            return api.getDirectionalDNSRecordsForGroup(zoneName, qualifier, name, dirType(type))
                     .iterator();
         } catch (UltraDNSException e) {
             switch (e.code()) {
@@ -157,7 +157,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
                     record.ttl = ttlToApply;
                     shouldUpdate = true;
                 } else {
-                    directionalGroup = api.getDirectionalGroup(record.geoGroupId);
+                    directionalGroup = api.getDirectionalDNSGroupDetails(record.geoGroupId);
                     if (!regions.equals(directionalGroup.regionToTerritories)) {
                         directionalGroup.regionToTerritories = regions;
                         shouldUpdate = true;
@@ -165,7 +165,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
                 }
                 if (shouldUpdate) {
                     try {
-                        api.updateRecordAndDirectionalGroup(record, directionalGroup);
+                        api.updateDirectionalPoolRecord(record, directionalGroup);
                     } catch (UltraDNSException e) {
                         // lost race
                         if (e.code() != UltraDNSException.RESOURCE_RECORD_ALREADY_EXISTS)
@@ -174,7 +174,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
                 }
             } else {
                 try {
-                    api.deleteRecord(record.id);
+                    api.deleteResourceRecord(record.id);
                 } catch (UltraDNSException e) {
                     // lost race
                     if (e.code() != UltraDNSException.RESOURCE_RECORD_NOT_FOUND)
@@ -191,11 +191,11 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
                 if ("CNAME".equals(type)) {
                     type = "A";
                 }
-                poolId = api.createDirectionalPoolInZoneForNameAndType(zoneName, rrset.name(), type);
+                poolId = api.addDirectionalPool(zoneName, rrset.name(), type);
             } catch (UltraDNSException e) {
                 // lost race
                 if (e.code() == UltraDNSException.POOL_ALREADY_EXISTS) {
-                    poolId = api.directionalPoolNameToIdsInZone(zoneName).get(rrset.name());
+                    poolId = api.getDirectionalPoolsOfZone(zoneName).get(rrset.name());
                 } else {
                     throw e;
                 }
@@ -209,7 +209,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
                     record.rdata.add(rdatum.toString());
                 }
                 try {
-                    api.createRecordAndDirectionalGroupInPool(record, directionalGroup, poolId);
+                    api.addDirectionalPoolRecord(record, directionalGroup, poolId);
                 } catch (UltraDNSException e) {
                     // lost race
                     if (e.code() != UltraDNSException.POOL_RECORD_ALREADY_EXISTS)
@@ -234,7 +234,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         Iterator<DirectionalRecord> record = recordsByNameTypeAndQualifier(name, type, qualifier);
         while (record.hasNext()) {
             try {
-                api.deleteDirectionalRecord(record.next().id);
+                api.deleteDirectionalPoolRecord(record.next().id);
             } catch (UltraDNSException e) {
                 // lost race
                 if (e.code() != UltraDNSException.DIRECTIONALPOOL_RECORD_NOT_FOUND)
@@ -246,7 +246,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     private Iterator<ResourceRecordSet<?>> iteratorForDNameAndDirectionalType(String name, int dirType) {
         List<DirectionalRecord> list;
         try {
-            list = api.directionalRecordsInZoneByNameAndType(zoneName, name, dirType);
+            list = api.getDirectionalDNSRecordsForHost(zoneName, name, dirType);
         } catch (UltraDNSException e) {
             if (e.code() == UltraDNSException.DIRECTIONALPOOL_NOT_FOUND) {
                 list = Collections.emptyList();

@@ -1,3 +1,6 @@
+### Version 3.7
+* match java method names with soap or action names.
+
 ### Version 3.6.1
 * permit anonymous credentials in cli
 

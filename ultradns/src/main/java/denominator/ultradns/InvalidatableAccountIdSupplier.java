@@ -46,7 +46,7 @@ class InvalidatableAccountIdSupplier {
                 if (needsRefresh(currentUrl, currentCreds)) {
                     lastCredentialsHashCode = currentCreds.hashCode();
                     lastUrl = currentUrl;
-                    String accountId = api.accountId();
+                    String accountId = api.getAccountsListOfUser();
                     value = accountId;
                     initialized = true;
                     return accountId;
