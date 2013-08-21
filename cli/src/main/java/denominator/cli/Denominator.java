@@ -170,7 +170,7 @@ public class Denominator {
         @Option(type = OptionType.GLOBAL, name = { "-n", "--name" }, description = "unique name of provider configuration")
         public String name;
 
-        protected Credentials credentials;
+        protected Credentials credentials = Credentials.AnonymousCredentials.INSTANCE;
 
         @SuppressWarnings("unchecked")
         public void run() {
