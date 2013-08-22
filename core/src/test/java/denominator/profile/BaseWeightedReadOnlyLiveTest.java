@@ -2,7 +2,6 @@ package denominator.profile;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Ordering.usingToString;
-import static denominator.model.profile.Weighted.asWeighted;
 import static java.lang.String.format;
 import static java.util.logging.Logger.getAnonymousLogger;
 import static org.testng.Assert.assertEquals;
@@ -43,13 +42,13 @@ public abstract class BaseWeightedReadOnlyLiveTest extends BaseProviderLiveTest 
                 assertNotNull(weightedRRS.qualifier(), "Weighted record sets should include a qualifier: " + weightedRRS);
                 checkWeightedRRS(weightedRRS);
 
-                Weighted weighted = asWeighted(weightedRRS);
+                Weighted weighted = weightedRRS.weighted();
                 assertTrue(weightedApi(zone).supportedWeights().contains(weighted.weight()));
                 assertTrue(manager.provider().profileToRecordTypes().get("weighted").contains(weightedRRS.type()));
 
                 getAnonymousLogger().info(format("%s ::: weightedRRS: %s", manager, weightedRRS));
                 recordTypeCounts.getUnchecked(weightedRRS.type()).addAndGet(weightedRRS.records().size());
-                weightedRecordCounts.getUnchecked(asWeighted(weightedRRS)).addAndGet(weightedRRS.records().size());
+                weightedRecordCounts.getUnchecked(weightedRRS.weighted()).addAndGet(weightedRRS.records().size());
                 
                 Iterator<ResourceRecordSet<?>> byNameAndType = weightedApi(zone).iterateByNameAndType(weightedRRS.name(), weightedRRS.type());
                 assertTrue(byNameAndType.hasNext(), "could not list by name and type: " + weightedRRS);
@@ -65,10 +64,10 @@ public abstract class BaseWeightedReadOnlyLiveTest extends BaseProviderLiveTest 
     }
 
     static void checkWeightedRRS(ResourceRecordSet<?> weightedRRS) {
-        assertFalse(weightedRRS.profiles().isEmpty(), "Profile absent: " + weightedRRS);
+        checkNotNull(weightedRRS.weighted(), "Weighted absent: " + weightedRRS);
         checkNotNull(weightedRRS.qualifier(), "Qualifier: ResourceRecordSet %s", weightedRRS);
 
-        Weighted weighted = asWeighted(weightedRRS);
+        Weighted weighted = weightedRRS.weighted();
         assertTrue(weighted.weight() >= 0, "Weight negative on ResourceRecordSet: " + weightedRRS);
         
         checkNotNull(weightedRRS.name(), "Name: ResourceRecordSet %s", weightedRRS);

@@ -7,7 +7,6 @@ import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
 import static denominator.model.ResourceRecordSets.nameTypeAndQualifierEqualTo;
 import static denominator.model.ResourceRecordSets.notNull;
-import static denominator.model.ResourceRecordSets.withoutProfile;
 import static denominator.route53.Route53.ActionOnResourceRecordSet.create;
 import static denominator.route53.Route53.ActionOnResourceRecordSet.delete;
 
@@ -15,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.inject.Inject;
 
@@ -70,7 +68,7 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
     }
 
     public ResourceRecordSet<?> getByNameAndType(String name, String type) {
-        return nextOrNull(filter(iterateByNameAndType(name, type), withoutProfile()));
+        return nextOrNull(filter(iterateByNameAndType(name, type), notAlias()));
     }
 
     @Override
@@ -142,12 +140,8 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
         public boolean apply(ResourceRecordSet<?> input) {
             if (!first.apply(input))
                 return false;
-            if (input.profiles().isEmpty())
+            if (input.records().isEmpty())
                 return true;
-            for (Map<String, Object> profile : input.profiles()) {
-                if ("alias".equals(profile.get("type")))
-                    return false;
-            }
             return true;
         }
     }

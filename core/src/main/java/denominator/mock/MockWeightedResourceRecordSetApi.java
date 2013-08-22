@@ -1,9 +1,7 @@
 package denominator.mock;
 
 import static denominator.common.Preconditions.checkArgument;
-import static denominator.model.ResourceRecordSets.profileContainsType;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.SortedSet;
 
@@ -18,15 +16,18 @@ import denominator.profile.WeightedResourceRecordSetApi;
 
 public final class MockWeightedResourceRecordSetApi extends MockAllProfileResourceRecordSetApi implements
         WeightedResourceRecordSetApi {
-    private static final Filter<ResourceRecordSet<?>> IS_WEIGHTED = profileContainsType("weighted");
+    private static final Filter<ResourceRecordSet<?>> IS_WEIGHTED = new Filter<ResourceRecordSet<?>>(){
+        @Override
+        public boolean apply(ResourceRecordSet<?> in) {
+            return in != null && in.weighted() != null;
+        }
+    };
 
-    private final Collection<String> supportedTypes;
     private final SortedSet<Integer> supportedWeights;
 
     MockWeightedResourceRecordSetApi(Provider provider, SortedSet<ResourceRecordSet<?>> records,
             SortedSet<Integer> supportedWeights) {
         super(provider, records, IS_WEIGHTED);
-        this.supportedTypes = provider.profileToRecordTypes().get("weighted");
         this.supportedWeights = supportedWeights;
     }
 
@@ -37,8 +38,6 @@ public final class MockWeightedResourceRecordSetApi extends MockAllProfileResour
 
     @Override
     public void put(ResourceRecordSet<?> rrset) {
-        checkArgument(supportedTypes.contains(rrset.type()), "%s not a supported type for weighted: %s", rrset.type(),
-                supportedTypes);
         put(IS_WEIGHTED, rrset);
     }
 

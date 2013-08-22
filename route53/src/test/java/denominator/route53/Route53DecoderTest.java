@@ -92,7 +92,7 @@ public class Route53DecoderTest {
                 .name("apple.myzone.com.")//
                 .type("A")//
                 .qualifier("foobar").ttl(300)//
-                .addProfile(Weighted.create(1)).add(AData.create("1.2.3.4")).build());
+                .weighted(Weighted.create(1)).add(AData.create("1.2.3.4")).build());
 
         // alias has no rdata!
         assertEquals(result.get(1), ResourceRecordSet.<AData> builder()//

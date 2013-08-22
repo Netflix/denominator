@@ -112,7 +112,7 @@ public class ResourceRecordSetsTest {
                                                        .qualifier("US-East")
                                                        .ttl(3600)
                                                        .add(AData.create("1.1.1.1"))
-                                                       .addProfile(geo).build();
+                                                       .geo(geo).build();
 
     public void qualifierEqualToReturnsFalseOnNull() {
         assertFalse(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), geoRRS.qualifier()).apply(null));
@@ -190,8 +190,8 @@ public class ResourceRecordSetsTest {
                 .qualifier("US-East")
                 .ttl(3600)
                 .add(AData.create("1.1.1.1"))
-                .addProfile(geo)
-                .addProfile(Weighted.create(2))
+                .geo(geo)
+                .weighted(Weighted.create(2))
                 .build();
         assertEquals(toProfileTypes(geoWeightedRRS), ImmutableSet.of("geo", "weighted"));
     }

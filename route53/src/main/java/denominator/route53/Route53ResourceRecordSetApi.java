@@ -1,7 +1,7 @@
 package denominator.route53;
 
 import static denominator.common.Util.filter;
-import static denominator.model.ResourceRecordSets.withoutProfile;
+import static denominator.model.ResourceRecordSets.alwaysVisible;
 import static denominator.route53.Route53.ActionOnResourceRecordSet.delete;
 
 import java.util.Arrays;
@@ -27,17 +27,18 @@ public final class Route53ResourceRecordSetApi implements ResourceRecordSetApi {
 
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
-        return filter(allApi.iterator(), withoutProfile());
+        return filter(allApi.iterator(), alwaysVisible());
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
-        return filter(allApi.iterateByName(name), withoutProfile());
+        return filter(allApi.iterateByName(name), alwaysVisible());
     }
 
     @Override
     public ResourceRecordSet<?> getByNameAndType(String name, String type) {
-        return allApi.getByNameAndType(name, type);
+        ResourceRecordSet<?> rrset = allApi.getByNameAndType(name, type);
+        return alwaysVisible().apply(rrset) ? rrset : null;
     }
 
     @Override

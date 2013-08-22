@@ -6,7 +6,6 @@ import static com.google.common.base.Predicates.not;
 import static com.google.common.collect.Iterables.getLast;
 import static com.google.common.collect.Maps.filterKeys;
 import static com.google.common.collect.Multimaps.filterValues;
-import static denominator.model.profile.Geo.asGeo;
 import static denominator.profile.BaseGeoReadOnlyLiveTest.checkGeoRRS;
 import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
@@ -20,7 +19,6 @@ import org.testng.annotations.Test;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 
@@ -67,18 +65,14 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         for (String qualifier : new String[] { qualifier1, qualifier2 }) {
             skipIfRRSetExists(zone, recordSet.name(), recordSet.type(), qualifier);
 
-            // prove map can be used as a profile
-            Map<String, Object> territories = ImmutableMap.<String, Object> builder()
-                                                          .put("type", "geo")
-                                                          .put("regions", i == 0 ? allButOne.asMap() : onlyOne.asMap())
-                                                          .build();
+            Geo territories = Geo.create(i == 0 ? allButOne.asMap() : onlyOne.asMap());
 
             allApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
                                               .name(recordSet.name())
                                               .type(recordSet.type())
                                               .ttl(1800)
                                               .qualifier(qualifier)
-                                              .addProfile(territories)
+                                              .geo(territories)
                                               .add(recordSet.records().get(i)).build());
     
             ResourceRecordSet<?> rrs = geoApi(zone).getByNameTypeAndQualifier(recordSet.name(), recordSet.type(),
@@ -91,7 +85,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
             assertEquals(rrs.ttl(), Integer.valueOf(1800));
             assertEquals(rrs.type(), recordSet.type());
             assertEquals(rrs.qualifier(), qualifier);
-            assertEquals(json.toJson(asGeo(rrs)), json.toJson(asGeo(territories)));
+            assertEquals(json.toJson(rrs.geo()), json.toJson(territories));
             assertEquals(rrs.records().size(), 1);
             assertEquals(rrs.records().get(0), recordSet.records().get(i++));
         }
@@ -105,14 +99,14 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         ResourceRecordSet<?> rrs1 = geoApi(zone)
                 .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier1);
 
-        Multimap<String, String> regionsFrom1 = multimap(asGeo(rrs1).regions());
+        Multimap<String, String> regionsFrom1 = multimap(rrs1.geo().regions());
         Multimap<String, String> toYank = filterValues(regionsFrom1, equalTo(getLast(regionsFrom1.values())));
 
         ResourceRecordSet<?> rrs2 = geoApi(zone)
                 .getByNameTypeAndQualifier(recordSet.name(), recordSet.type(), qualifier2);
 
         Multimap<String, String> plus1 = ImmutableMultimap.<String, String> builder()//
-                .putAll(multimap(asGeo(rrs2).regions()))//
+                .putAll(multimap(rrs2.geo().regions()))//
                 .putAll(toYank).build();
 
         geoApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
@@ -120,7 +114,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
                                           .type(recordSet.type())
                                           .qualifier(qualifier2)
                                           .ttl(rrs2.ttl())
-                                          .addProfile(Geo.create(plus1.asMap()))
+                                          .geo(Geo.create(plus1.asMap()))
                                           .addAll(rrs2.records()).build());
 
         rrs1 = geoApi(zone).getByNameTypeAndQualifier(
@@ -129,12 +123,12 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
         Multimap<String, String> minus1 = ImmutableMultimap.copyOf(
                 filterValues(regionsFrom1, not(equalTo(getLast(regionsFrom1.values())))));
 
-        assertEquals(multimap(asGeo(rrs1).regions()), minus1);
+        assertEquals(multimap(rrs1.geo().regions()), minus1);
 
         rrs2 = geoApi(zone).getByNameTypeAndQualifier(
                 recordSet.name(), recordSet.type(), qualifier2);
 
-        assertEquals(multimap(asGeo(rrs2).regions()), plus1);
+        assertEquals(multimap(rrs2.geo().regions()), plus1);
     }
 
     @Test(dependsOnMethods = "yankTerritoryIntoAnotherRRSet", dataProvider = "geoRecords")
@@ -148,14 +142,14 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
                     qualifier);
 
             int ttl = Optional.fromNullable(rrs.ttl()).or(60000) + 60000;
-            Geo oldGeo = asGeo(rrs);
+            Geo oldGeo = rrs.geo();
 
             allApi(zone).put(ResourceRecordSet.<Map<String, Object>> builder()
                                               .name(recordSet.name())
                                               .type(recordSet.type())
                                               .ttl(ttl)
                                               .qualifier(qualifier)
-                                              .addProfile(oldGeo)
+                                              .geo(oldGeo)
                                               .add(recordSet.records().get(i)).build());
 
             rrs = geoApi(zone).getByNameTypeAndQualifier(recordSet.name(), recordSet.type(),
@@ -166,7 +160,7 @@ public abstract class BaseGeoWriteCommandsLiveTest extends BaseProviderLiveTest 
             assertEquals(rrs.ttl(), Integer.valueOf(ttl));
             assertEquals(rrs.type(), recordSet.type());
             assertEquals(rrs.qualifier(), qualifier);
-            assertEquals(asGeo(rrs).regions(), oldGeo.regions());
+            assertEquals(rrs.geo().regions(), oldGeo.regions());
             assertEquals(rrs.records().size(), 1);
             assertEquals(rrs.records().get(0), recordSet.records().get(i++));
         }

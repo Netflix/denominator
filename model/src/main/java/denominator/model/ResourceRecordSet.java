@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import denominator.model.profile.Geo;
+import denominator.model.profile.Weighted;
 
 /**
  * A grouping of resource records by name and type. In implementation, this is
@@ -29,9 +30,10 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
     private ResourceRecordSet() {
     }
 
-    @ConstructorProperties({ "name", "type", "qualifier", "ttl", "records", "profiles" })
+    @SuppressWarnings("unchecked")
+    @ConstructorProperties({ "name", "type", "qualifier", "ttl", "records", "geo", "weighted", "profiles" })
     ResourceRecordSet(String name, String type, String qualifier, Integer ttl, List<D> records,
-            List<Map<String, Object>> profiles) {
+            Geo geo, Weighted weighted, List<Map<String, Object>> profiles) {
         checkArgument(checkNotNull(name, "name").length() <= 255, "Name must be limited to 255 characters");
         put("name", name);
         put("type", checkNotNull(type, "type of %s", name));
@@ -46,9 +48,27 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
         if (records != null) {
             put("records", records);
         }
-        if (profiles != null) {
-            put("profiles", profiles);
+        // TODO: remove in 4.0
+        List<Map<String, Object>> updateProfiles = new ArrayList<Map<String, Object>>();
+        for (Map<String, Object> profile : profiles != null ? profiles : new ArrayList<Map<String, Object>>()) {
+            if ("geo".equals(profile.get("type")) && geo == null) {
+                geo = Geo.create(Map.class.cast(profile.get("regions")));
+            } else if ("weighted".equals(profile.get("type")) && weighted == null) {
+                weighted = Weighted.create(Integer.class.cast(profile.get("weight")));
+            } else {
+                updateProfiles.add(profile);
+            }
         }
+        if (geo != null) {
+            put("geo", geo);
+            updateProfiles.add(geo);
+        }
+        if (weighted != null) {
+            put("weighted", weighted);
+            updateProfiles.add(weighted);
+        }
+        // TODO: remove in 4.0
+        put("profiles", updateProfiles);
     }
 
     /**
@@ -73,8 +93,8 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
     /**
      * A user-defined identifier that differentiates among multiple resource
      * record sets that have the same combination of DNS name and type. Only
-     * present when there's a {@link #profiles() profile} such as {@link Geo
-     * geo}, which is otherwise ambiguous on name, type.
+     * present when there's a {@link Geo geo} or {@link Weighted} profile which
+     * affects visibility to resolvers.
      * 
      * @return qualifier or null.
      * @since 1.3
@@ -95,6 +115,34 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
     }
 
     /**
+     * When present, this record set has a {@link #qualifier() qualifier} and is
+     * visible to a subset of all {@link Geo#regions() regions}.
+     * 
+     * <br>
+     * For example, if this record set is intended for resolvers in Utah, the
+     * geo profile would be present and its
+     * {@link denominator.model.profile.Geo#regions() regions} might contain
+     * `Utah` or `US-UT`.
+     * 
+     * @return geo profile or null.
+     * @since 3.7
+     */
+    public Geo geo() {
+        return (Geo) get("geo");
+    }
+
+    /**
+     * When present, this record set has a {@link #qualifier() qualifier} and is
+     * served to its {@link Weighted#weight() weight}.
+     * 
+     * @return geo profile or null.
+     * @since 3.7
+     */
+    public Weighted weighted() {
+        return (Weighted) get("weighted");
+    }
+
+    /**
      * server-side profiles of the record set, often controls visibility based
      * on client origin, latency or server health. If empty, this is a basic
      * record, visible to all resolvers.
@@ -106,7 +154,10 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
      * `Utah` or `US-UT`.
      * 
      * @since 1.3
+     * @deprecated will be removed in version 4.0 for type-safe accessors such
+     *             as {@link #geo()} and {@link #weighted()}.
      */
+    @Deprecated
     @SuppressWarnings("unchecked")
     public List<Map<String, Object>> profiles() {
         return List.class.cast(get("profiles"));

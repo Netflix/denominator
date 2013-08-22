@@ -2,7 +2,6 @@ package denominator.profile;
 
 import static com.google.common.base.Predicates.in;
 import static com.google.common.collect.Maps.filterKeys;
-import static denominator.model.profile.Weighted.asWeighted;
 import static denominator.profile.BaseWeightedReadOnlyLiveTest.checkWeightedRRS;
 import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
@@ -15,7 +14,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
 import denominator.BaseProviderLiveTest;
 import denominator.model.ResourceRecordSet;
@@ -60,10 +58,7 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
                                               .type(recordSet.type())
                                               .ttl(1800)
                                               .qualifier(qualifier)
-                                              // prove maps can be used as profiles
-                                              .addProfile(ImmutableMap.<String, Object> builder()//
-                                                      .put("type", "weighted")//
-                                                      .put("weight", 0).build())
+                                              .weighted(Weighted.create(0))
                                               .add(recordSet.records().get(i)).build());
     
             ResourceRecordSet<?> rrs = weightedApi(zone)
@@ -76,7 +71,7 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
             assertEquals(rrs.ttl(), Integer.valueOf(1800));
             assertEquals(rrs.type(), recordSet.type());
             assertEquals(rrs.qualifier(), qualifier);
-            assertEquals(asWeighted(rrs).weight(), 0);
+            assertEquals(rrs.weighted().weight(), 0);
             assertEquals(rrs.records().size(), 1);
             assertEquals(rrs.records().get(0), recordSet.records().get(i++));
         }
@@ -94,18 +89,18 @@ public abstract class BaseWeightedWriteCommandsLiveTest extends BaseProviderLive
                                                .type(recordSet.type())
                                                .ttl(1800)
                                                .qualifier(qualifier1)
-                                               .addProfile(Weighted.create(heaviest))
+                                               .weighted(Weighted.create(heaviest))
                                                .add(recordSet.records().get(0)).build());
 
         ResourceRecordSet<?> rrs1 = weightedApi(zone).getByNameTypeAndQualifier(
                 recordSet.name(), recordSet.type(), qualifier1);
 
-        assertEquals(asWeighted(rrs1).weight(), heaviest);
+        assertEquals(rrs1.weighted().weight(), heaviest);
 
         ResourceRecordSet<?> rrs2 = weightedApi(zone).getByNameTypeAndQualifier(
                 recordSet.name(), recordSet.type(), qualifier2);
 
-        assertEquals(asWeighted(rrs2).weight(), 0);
+        assertEquals(rrs2.weighted().weight(), 0);
     }
 
     @Test(dependsOnMethods = "replaceWeight", dataProvider = "weightedRecords")

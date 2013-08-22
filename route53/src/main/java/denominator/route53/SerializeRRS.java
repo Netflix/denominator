@@ -23,8 +23,8 @@ enum SerializeRRS {
                     .append(rrs.qualifier())//
                     .append("</SetIdentifier>");
         // note lowercase as this is a supported profile
-        if (ext.containsKey("weight"))
-            builder.append("<Weight>").append(ext.get("weight")).append("</Weight>");
+        if (rrs.weighted() != null)
+            builder.append("<Weight>").append(rrs.weighted().get("weight")).append("</Weight>");
         if (ext.containsKey("Region"))
             builder.append("<Region>").append(ext.get("Region")).append("</Region>");
         if (ext.containsKey("HostedZoneId")) {

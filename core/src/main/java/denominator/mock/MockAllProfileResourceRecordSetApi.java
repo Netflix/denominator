@@ -1,19 +1,17 @@
 package denominator.mock;
 
-import static denominator.common.Util.and;
 import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.and;
 import static denominator.common.Util.filter;
 import static denominator.common.Util.nextOrNull;
 import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
 import static denominator.model.ResourceRecordSets.nameTypeAndQualifierEqualTo;
 import static denominator.model.ResourceRecordSets.notNull;
-import static denominator.model.ResourceRecordSets.toProfileTypes;
 
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedSet;
 
 import javax.inject.Inject;
@@ -63,11 +61,6 @@ public class MockAllProfileResourceRecordSetApi implements denominator.AllProfil
 
     @Override
     public void put(ResourceRecordSet<?> rrset) {
-        Set<String> profiles = toProfileTypes(rrset);
-        checkArgument(provider.profileToRecordTypes().keySet().containsAll(profiles),
-                "cannot put rrset %s:%s%s as it contains profiles %s which aren't supported %s", rrset.name(),
-                rrset.type(), rrset.qualifier() != null ? ":" + rrset.qualifier() : "", profiles,
-                provider.profileToRecordTypes());
         put(notNull(), rrset);
     }
 

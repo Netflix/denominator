@@ -27,7 +27,7 @@ public class GeosTest {
             .qualifier("US-East")//
             .ttl(3600)//
             .add(AData.create("1.1.1.1"))//
-            .addProfile(geo).build();
+            .geo(geo).build();
 
     public void withAdditionalRegionsIdentityWhenAlreadyHaveRegions() {
         assertEquals(Geos.withAdditionalRegions(geoRRS, geo.regions()), geoRRS);
@@ -38,7 +38,7 @@ public class GeosTest {
                 .put("US", "US-OR").build().asMap());
         
         //TODO: switch to fest so we don't have to play games like this.
-        assertEquals(Geo.asGeo(withOregon).regions().toString(), ImmutableMultimap.<String, String> builder()//
+        assertEquals(withOregon.geo().regions().toString(), ImmutableMultimap.<String, String> builder()//
                 .putAll("US", "US-VA", "US-CA", "US-OR")//
                 .put("IM", "IM").build().asMap().toString());
     }
@@ -48,7 +48,7 @@ public class GeosTest {
                 .putAll("GB", "GB-SLG", "GB-LAN").build().asMap());
         
         //TODO: switch to fest so we don't have to play games like this.
-        assertEquals(Geo.asGeo(withGB).regions().toString(), ImmutableMultimap.<String, String> builder()//
+        assertEquals(withGB.geo().regions().toString(), ImmutableMultimap.<String, String> builder()//
                 .putAll("US", "US-VA", "US-CA")//
                 .put("IM", "IM")//
                 .putAll("GB", "GB-SLG", "GB-LAN").build().asMap().toString());
@@ -61,18 +61,18 @@ public class GeosTest {
                 .qualifier("US-East")//
                 .ttl(3600)//
                 .add(AData.create("1.1.1.1"))//
-                .addProfile(weighted)
-                .addProfile(geo).build();
+                .weighted(weighted)
+                .geo(geo).build();
 
         ResourceRecordSet<?> withOregon = Geos.withAdditionalRegions(geoRRS, ImmutableMultimap.<String, String> builder()//
                 .put("US", "US-OR").build().asMap());
         
         //TODO: switch to fest so we don't have to play games like this.
-        assertEquals(Geo.asGeo(withOregon).regions().toString(), ImmutableMultimap.<String, String> builder()//
+        assertEquals(withOregon.geo().regions().toString(), ImmutableMultimap.<String, String> builder()//
                 .putAll("US", "US-VA", "US-CA", "US-OR")//
                 .put("IM", "IM").build().asMap().toString());
 
-        assertEquals(Weighted.asWeighted(withOregon), weighted);
+        assertEquals(withOregon.weighted(), weighted);
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no regions specified")
