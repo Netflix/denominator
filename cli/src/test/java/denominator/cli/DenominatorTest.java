@@ -32,7 +32,6 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.mock.MockProvider;
 import denominator.model.ResourceRecordSet;
-import denominator.model.profile.Geo;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 
@@ -508,9 +507,8 @@ public class DenominatorTest {
                 ";; ok"));
 
         assertEquals(
-                json.toJson(Geo.asGeo(
-                        mgr.api().recordSetsInZone(command.zoneIdOrName)
-                                .getByNameTypeAndQualifier(command.name, command.type, command.group)).regions()),
+                json.toJson(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                               .getByNameTypeAndQualifier(command.name, command.type, command.group).geo().regions()),
                 "{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"]}");
 
         api.put(old);
@@ -557,9 +555,8 @@ public class DenominatorTest {
                 ";; ok"));
 
         assertEquals(
-                json.toJson(Geo.asGeo(
-                        mgr.api().recordSetsInZone(command.zoneIdOrName)
-                                .getByNameTypeAndQualifier(command.name, command.type, command.group)).regions()),
+                json.toJson(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                               .getByNameTypeAndQualifier(command.name, command.type, command.group).geo().regions()),
                 "{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}");
 
         api.put(old);

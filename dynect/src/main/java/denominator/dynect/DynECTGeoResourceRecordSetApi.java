@@ -7,7 +7,6 @@ import static denominator.common.Util.nextOrNull;
 import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
 import static denominator.model.ResourceRecordSets.nameTypeAndQualifierEqualTo;
-import static denominator.model.ResourceRecordSets.profileContainsType;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -23,7 +22,12 @@ import denominator.model.ResourceRecordSet;
 import denominator.profile.GeoResourceRecordSetApi;
 
 public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
-    private static final Filter<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
+    private static final Filter<ResourceRecordSet<?>> IS_GEO = new Filter<ResourceRecordSet<?>>(){
+        @Override
+        public boolean apply(ResourceRecordSet<?> in) {
+            return in != null && in.geo() != null;
+        }
+    };
 
     private final Map<String, Collection<String>> regions;
     private final DynECT api;

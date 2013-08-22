@@ -1,4 +1,5 @@
 ### Version 3.7
+* introduce `ResourceRecordSet.geo()` and `ResourceRecordSet.weighted()`, which deprecate `ResourceRecordSet.profiles()`
 * match java method names with soap or action names.
 
 ### Version 3.6.1

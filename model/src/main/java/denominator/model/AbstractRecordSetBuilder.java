@@ -7,6 +7,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import denominator.model.profile.Geo;
+import denominator.model.profile.Weighted;
+
 /**
  * Capable of building record sets from rdata input types expressed as {@code E}
  * 
@@ -22,6 +25,8 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
     private String qualifier;
     private Integer ttl;
     private List<Map<String, Object>> profile = new ArrayList<Map<String, Object>>();
+    private Geo geo;
+    private Weighted weighted;
 
     /**
      * @see ResourceRecordSet#name()
@@ -67,7 +72,10 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
      * <pre>
      * builder.addProfile(geo);
      * </pre>
+     * @deprecated will be removed in version 4.0 for type-safe accessors such
+     *             as {@link #geo(Geo)} and {@link #weighted(Weighted)}.
      */
+    @Deprecated
     @SuppressWarnings("unchecked")
     public B addProfile(Map<String, Object> profile) {
         this.profile.add(checkNotNull(profile, "profile"));
@@ -83,7 +91,10 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
      * 
      * builder.addAllProfile(otherProfile);
      * </pre>
+     * @deprecated will be removed in version 4.0 for type-safe accessors such
+     *             as {@link #geo(Geo)} and {@link #weighted(Weighted)}.
      */
+    @Deprecated
     @SuppressWarnings("unchecked")
     public B addAllProfile(Collection<Map<String, Object>> profile) {
         this.profile.addAll(checkNotNull(profile, "profile"));
@@ -92,7 +103,10 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
 
     /**
      * @see ResourceRecordSet#profiles()
+     * @deprecated will be removed in version 4.0 for type-safe accessors such
+     *             as {@link #geo(Geo)} and {@link #weighted(Weighted)}.
      */
+    @Deprecated
     @SuppressWarnings("unchecked")
     public B profile(Collection<Map<String, Object>> profile) {
         this.profile = new ArrayList<Map<String, Object>>();
@@ -100,8 +114,26 @@ abstract class AbstractRecordSetBuilder<E, D extends Map<String, Object>, B exte
         return (B) this;
     }
 
+    /**
+     * @see ResourceRecordSet#geo()
+     */
+    @SuppressWarnings("unchecked")
+    public B geo(Geo geo) {
+        this.geo = geo;
+        return (B) this;
+    }
+
+    /**
+     * @see ResourceRecordSet#weighted()
+     */
+    @SuppressWarnings("unchecked")
+    public B weighted(Weighted weighted) {
+        this.weighted = weighted;
+        return (B) this;
+    }
+
     public ResourceRecordSet<D> build() {
-        return new ResourceRecordSet<D>(name, type, qualifier, ttl, records(), profile);
+        return new ResourceRecordSet<D>(name, type, qualifier, ttl, records(), geo, weighted, profile);
     }
 
     /**

@@ -37,10 +37,9 @@ public class Geos {
     public static ResourceRecordSet<?> withAdditionalRegions(ResourceRecordSet<?> existing,
             Map<String, Collection<String>> regionsToAdd) throws IllegalArgumentException {
         checkArgument(!regionsToAdd.isEmpty(), "no regions specified");
-        Geo geo = Geo.asGeo(existing);
-        checkArgument(geo != null, "rrset does not include geo configuration: %s", existing);
+        checkArgument(existing.geo() != null, "rrset does not include geo configuration: %s", existing);
         Map<String, Collection<String>> regionsToApply = new LinkedHashMap<String, Collection<String>>();
-        for (Entry<String, Collection<String>> entry : geo.regions().entrySet()) {
+        for (Entry<String, Collection<String>> entry : existing.geo().regions().entrySet()) {
             regionsToApply.put(entry.getKey(), entry.getValue());
         }
         for (Entry<String, Collection<String>> entry : regionsToAdd.entrySet()) {
@@ -53,11 +52,11 @@ public class Geos {
         }
         boolean noop = true;
         for (Entry<String, Collection<String>> entry : regionsToApply.entrySet()) {
-            if (!geo.regions().containsKey(entry.getKey())) {
+            if (!existing.geo().regions().containsKey(entry.getKey())) {
                 noop = false;
                 break;
             }
-            Collection<String> existingTerritories = geo.regions().get(entry.getKey());
+            Collection<String> existingTerritories = existing.geo().regions().get(entry.getKey());
             if (!existingTerritories.containsAll(entry.getValue())) {
                 noop = false;
                 break;
@@ -66,6 +65,7 @@ public class Geos {
         if (noop) {
             return existing;
         }
+        // TODO: remove in 4.0
         List<Map<String, Object>> updateProfiles = new ArrayList<Map<String, Object>>();
         for (Map<String, Object> profile : existing.profiles()) {
             if ("geo".equals(profile.get("type"))) {
@@ -79,7 +79,9 @@ public class Geos {
                 .type(existing.type())//
                 .qualifier(existing.qualifier())//
                 .ttl(existing.ttl())//
-                .addAllProfile(updateProfiles)//
+                .geo(Geo.create(regionsToApply))//
+                .weighted(existing.weighted())//
+                .profile(updateProfiles)
                 .addAll(existing.records()).build();
     }
 }

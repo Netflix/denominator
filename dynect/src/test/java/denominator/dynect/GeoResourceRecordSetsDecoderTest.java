@@ -40,13 +40,13 @@ public class GeoResourceRecordSetsDecoderTest {
                 .qualifier("Everywhere Else")
                 .ttl(300)
                 .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
-                .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
-                                                        .put("11", "11")
-                                                        .put("16", "16")
-                                                        .put("12", "12")
-                                                        .put("17", "17")
-                                                        .put("15", "15")
-                                                        .put("14", "14").build().asMap()))                                                   
+                .geo(Geo.create(ImmutableMultimap.<String, String> builder()
+                                                 .put("11", "11")
+                                                 .put("16", "16")
+                                                 .put("12", "12")
+                                                 .put("17", "17")
+                                                 .put("15", "15")
+                                                 .put("14", "14").build().asMap()))                                                   
                 .build());
         assertEquals(rrsets.get(1), ResourceRecordSet.<CNAMEData> builder()
                 .name("srv.denominator.io")
@@ -54,7 +54,7 @@ public class GeoResourceRecordSetsDecoderTest {
                 .qualifier("Europe")
                 .ttl(300)
                 .add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
-                .addProfile(Geo.create(ImmutableMultimap.of("13", "13").asMap()))
+                .geo(Geo.create(ImmutableMultimap.of("13", "13").asMap()))
                 .build());
         assertEquals(rrsets.get(2),ResourceRecordSet.<CNAMEData> builder()
                 .name("srv.denominator.io")
@@ -62,9 +62,9 @@ public class GeoResourceRecordSetsDecoderTest {
                 .qualifier("Fallback")
                 .ttl(300)
                 .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
-                .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
-                                                        .put("Unknown IP", "@!")
-                                                        .put("Fallback", "@@").build().asMap()))
+                .geo(Geo.create(ImmutableMultimap.<String, String> builder()
+                                                 .put("Unknown IP", "@!")
+                                                 .put("Fallback", "@@").build().asMap()))
                 .build());
     }
 }

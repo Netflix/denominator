@@ -1,7 +1,6 @@
 package denominator.model.profile;
 
 import static denominator.common.Preconditions.checkArgument;
-import static denominator.model.ResourceRecordSets.tryFindProfile;
 
 import java.beans.ConstructorProperties;
 import java.util.Map;
@@ -30,7 +29,9 @@ public class Weighted extends NumbersAreUnsignedIntsLinkedHashMap {
      * profile found.
      * 
      * @since 1.3.1
+     * @deprecated will be removed in version 4.0. use {@link #create(int)}
      */
+    @Deprecated
     public static Weighted asWeighted(Map<String, Object> profile) {
         if (profile == null)
             return null;
@@ -44,9 +45,12 @@ public class Weighted extends NumbersAreUnsignedIntsLinkedHashMap {
      * profile found.
      * 
      * @since 1.3.1
+     * @deprecated will be removed in version 4.0. use
+     *             {@link ResourceRecordSet#weighted()}
      */
+    @Deprecated
     public static Weighted asWeighted(ResourceRecordSet<?> rrset) {
-        return asWeighted(tryFindProfile(rrset, "weighted"));
+        return rrset.weighted();
     }
 
     /**

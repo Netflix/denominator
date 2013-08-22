@@ -7,7 +7,6 @@ import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
 import static denominator.cli.Denominator.idOrName;
 import static denominator.cli.Denominator.json;
-import static denominator.model.profile.Geo.asGeo;
 import static denominator.model.profile.Geos.withAdditionalRegions;
 import static java.lang.String.format;
 import io.airlift.command.Arguments;
@@ -36,7 +35,6 @@ import denominator.DNSApiManager;
 import denominator.cli.Denominator.DenominatorCommand;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetToString;
 import denominator.model.ResourceRecordSet;
-import denominator.model.profile.Geo;
 import denominator.profile.GeoResourceRecordSetApi;
 
 class GeoResourceRecordSetCommands {
@@ -142,6 +140,8 @@ class GeoResourceRecordSetCommands {
                                                  .type(type)
                                                  .qualifier(group)
                                                  .ttl(ttl)
+                                                 .weighted(rrs.weighted())
+                                                 .geo(rrs.geo())
                                                  .addAllProfile(rrs.profiles())
                                                  .addAll(rrs.records()).build());
                     }
@@ -263,9 +263,8 @@ class GeoResourceRecordSetCommands {
         public String apply(ResourceRecordSet<?> rrset) {
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
             for (String line : Splitter.on('\n').split(ResourceRecordSetToString.INSTANCE.apply(rrset))) {
-                Geo geo = asGeo(rrset);
-                if (geo != null) {
-                    lines.add(new StringBuilder().append(line).append(' ').append(json.toJson(geo.regions()))
+                if (rrset.geo() != null) {
+                    lines.add(new StringBuilder().append(line).append(' ').append(json.toJson(rrset.geo().regions()))
                             .toString());
                 } else {
                     lines.add(line);
