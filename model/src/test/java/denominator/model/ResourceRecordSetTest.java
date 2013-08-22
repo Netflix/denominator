@@ -20,7 +20,7 @@ public class ResourceRecordSetTest {
                                                        .ttl(3600)
                                                        .add(AData.create("192.0.2.1")).build();
 
-    String asJson = "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"ttl\":3600,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[]}";
+    String asJson = "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"ttl\":3600,\"records\":[{\"address\":\"192.0.2.1\"}]}";
 
     public void canBuildARecordSetInLongForm() {
         assertEquals(record.name(), "www.denominator.io.");
@@ -44,7 +44,10 @@ public class ResourceRecordSetTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Invalid ttl.*")
     public void testInvalidTTL() {
-        ResourceRecordSet.<AData> builder().name("www.denominator.io.").type("A").ttl(0xFFFFFFFF)
+        ResourceRecordSet.<AData> builder()//
+                .name("www.denominator.io.")//
+                .type("A")//
+                .ttl(0xFFFFFFFF)//
                 .add(AData.create("192.0.2.1")).build();
     }
 }

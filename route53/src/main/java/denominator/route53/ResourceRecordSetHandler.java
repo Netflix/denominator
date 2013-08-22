@@ -2,8 +2,6 @@ package denominator.route53;
 
 import static denominator.common.Util.split;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,21 +32,12 @@ class ResourceRecordSetHandler extends DefaultHandler implements
     ResourceRecordSetHandler() {
     }
 
-    private static final List<String> profileFields = Arrays.asList("Failover", "Region", "HealthCheckId");
-    private static final List<String> aliasFields = Arrays.asList("HostedZoneId", "DNSName", "EvaluateTargetHealth");
-
     private StringBuilder currentText = new StringBuilder();
     private Builder<Map<String, Object>> builder = ResourceRecordSet.builder();
-    private List<Map<String, Object>> profiles = new ArrayList<Map<String, Object>>();
-    private Map<String, Object> alias = new LinkedHashMap<String, Object>();
 
     @Override
     public ResourceRecordSet<?> result() {
-        if (!alias.isEmpty()) {
-            alias.put("type", "alias");
-            profiles.add(alias);
-        }
-        return builder.profile(profiles).build();
+        return builder.build();
     }
 
     @Override
@@ -67,14 +56,10 @@ class ResourceRecordSetHandler extends DefaultHandler implements
             builder.ttl(Integer.parseInt(currentText.toString().trim()));
         } else if (qName.equals("Value")) {
             builder.add(parseTextFormat(currentType, currentText.toString().trim()));
-        } else if (aliasFields.contains(qName)) {
-            alias.put(qName, currentText.toString().trim());
         } else if (qName.equals("SetIdentifier")) {
             builder.qualifier(currentText.toString().trim());
         } else if ("Weight".equals(qName)) {
             builder.weighted(Weighted.create(Integer.parseInt(currentText.toString().trim())));
-        } else if (profileFields.contains(qName)) {
-            addProfile(qName, currentText.toString().trim());
         }
         currentText = new StringBuilder();
     }
@@ -82,19 +67,6 @@ class ResourceRecordSetHandler extends DefaultHandler implements
     @Override
     public void characters(char ch[], int start, int length) {
         currentText.append(ch, start, length);
-    }
-
-    private void addProfile(String key, Object value) {
-        Map<String, Object> profile = new LinkedHashMap<String, Object>();
-        profile.put("type", lowerFirst(key));
-        profile.put(key, value);
-        profiles.add(profile);
-    }
-
-    private static String lowerFirst(String key) {
-        char c[] = key.toCharArray();
-        c[0] = Character.toLowerCase(c[0]);
-        return new String(c);
     }
 
     /**

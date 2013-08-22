@@ -34,7 +34,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
             .type("CNAME")//
             .qualifier(identifier1)//
             .ttl(0)//
-            .addProfile(Weighted.create(1))//
+            .weighted(Weighted.create(1))//
             .add(CNAMEData.create("www1.denominator.io.")).build();
     
     private String identifier2 = "MyService-West";
@@ -44,7 +44,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
             .type("CNAME")//
             .qualifier(identifier2)//
             .ttl(0)//
-            .addProfile(Weighted.create(5))//
+            .weighted(Weighted.create(5))//
             .add(CNAMEData.create("www2.denominator.io.")).build();
 
     @Test

@@ -30,10 +30,9 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
     private ResourceRecordSet() {
     }
 
-    @SuppressWarnings("unchecked")
-    @ConstructorProperties({ "name", "type", "qualifier", "ttl", "records", "geo", "weighted", "profiles" })
-    ResourceRecordSet(String name, String type, String qualifier, Integer ttl, List<D> records,
-            Geo geo, Weighted weighted, List<Map<String, Object>> profiles) {
+    @ConstructorProperties({ "name", "type", "qualifier", "ttl", "records", "geo", "weighted" })
+    ResourceRecordSet(String name, String type, String qualifier, Integer ttl, List<D> records, Geo geo,
+            Weighted weighted) {
         checkArgument(checkNotNull(name, "name").length() <= 255, "Name must be limited to 255 characters");
         put("name", name);
         put("type", checkNotNull(type, "type of %s", name));
@@ -48,27 +47,12 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
         if (records != null) {
             put("records", records);
         }
-        // TODO: remove in 4.0
-        List<Map<String, Object>> updateProfiles = new ArrayList<Map<String, Object>>();
-        for (Map<String, Object> profile : profiles != null ? profiles : new ArrayList<Map<String, Object>>()) {
-            if ("geo".equals(profile.get("type")) && geo == null) {
-                geo = Geo.create(Map.class.cast(profile.get("regions")));
-            } else if ("weighted".equals(profile.get("type")) && weighted == null) {
-                weighted = Weighted.create(Integer.class.cast(profile.get("weight")));
-            } else {
-                updateProfiles.add(profile);
-            }
-        }
         if (geo != null) {
             put("geo", geo);
-            updateProfiles.add(geo);
         }
         if (weighted != null) {
             put("weighted", weighted);
-            updateProfiles.add(weighted);
         }
-        // TODO: remove in 4.0
-        put("profiles", updateProfiles);
     }
 
     /**
@@ -140,27 +124,6 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
      */
     public Weighted weighted() {
         return (Weighted) get("weighted");
-    }
-
-    /**
-     * server-side profiles of the record set, often controls visibility based
-     * on client origin, latency or server health. If empty, this is a basic
-     * record, visible to all resolvers.
-     * 
-     * For example, if this record set is intended for resolvers in Utah,
-     * profiles will include a Map whose entries include {@code type -> "geo"},
-     * and is an instance of {@link denominator.model.profile.Geo}, where
-     * {@link denominator.model.profile.Geo#regions()} contains something like
-     * `Utah` or `US-UT`.
-     * 
-     * @since 1.3
-     * @deprecated will be removed in version 4.0 for type-safe accessors such
-     *             as {@link #geo()} and {@link #weighted()}.
-     */
-    @Deprecated
-    @SuppressWarnings("unchecked")
-    public List<Map<String, Object>> profiles() {
-        return List.class.cast(get("profiles"));
     }
 
     /**

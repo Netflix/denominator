@@ -9,8 +9,6 @@ import javax.inject.Provider;
 
 import org.testng.annotations.Test;
 
-import com.google.common.collect.ImmutableMap;
-
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import denominator.model.profile.Weighted;
@@ -98,11 +96,7 @@ public class Route53DecoderTest {
         assertEquals(result.get(1), ResourceRecordSet.<AData> builder()//
                 .name("fooo.myzone.com.")//
                 .type("A")//
-                .addProfile(ImmutableMap.<String, Object> builder()//
-                        .put("type", "alias")//
-                        .put("HostedZoneId", "Z3I0BTR7N27QRM")//
-                        .put("DNSName", "ipv4-route53recordsetlivetest.adrianc.myzone.com.")//
-                        .put("EvaluateTargetHealth", "false").build()).build());
+                .build());
         assertNull(result.next);
     }
 }

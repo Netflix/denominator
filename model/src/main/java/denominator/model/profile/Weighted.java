@@ -3,10 +3,8 @@ package denominator.model.profile;
 import static denominator.common.Preconditions.checkArgument;
 
 import java.beans.ConstructorProperties;
-import java.util.Map;
 
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
-import denominator.model.ResourceRecordSet;
 
 /**
  * Record sets with this profile are load balanced, differentiated by an integer
@@ -25,35 +23,6 @@ import denominator.model.ResourceRecordSet;
 public class Weighted extends NumbersAreUnsignedIntsLinkedHashMap {
 
     /**
-     * returns a Weighted view of the {@code profile} or null if no weighted
-     * profile found.
-     * 
-     * @since 1.3.1
-     * @deprecated will be removed in version 4.0. use {@link #create(int)}
-     */
-    @Deprecated
-    public static Weighted asWeighted(Map<String, Object> profile) {
-        if (profile == null)
-            return null;
-        if (profile instanceof Weighted)
-            return Weighted.class.cast(profile);
-        return new Weighted(Integer.class.cast(profile.get("weight")));
-    }
-
-    /**
-     * returns a Weighted view of the {@code rrset} or null if no weighted
-     * profile found.
-     * 
-     * @since 1.3.1
-     * @deprecated will be removed in version 4.0. use
-     *             {@link ResourceRecordSet#weighted()}
-     */
-    @Deprecated
-    public static Weighted asWeighted(ResourceRecordSet<?> rrset) {
-        return rrset.weighted();
-    }
-
-    /**
      * @param weight
      *            corresponds to {@link #weight()}
      */
@@ -64,7 +33,6 @@ public class Weighted extends NumbersAreUnsignedIntsLinkedHashMap {
     @ConstructorProperties({ "weight" })
     private Weighted(int weight) {
         checkArgument(weight >= 0, "weight must be positive");
-        put("type", "weighted");
         put("weight", weight);
     }
 
