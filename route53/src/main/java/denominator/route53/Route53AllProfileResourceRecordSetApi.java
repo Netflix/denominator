@@ -43,7 +43,7 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
      */
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
-        return lazyIterateRRSets(api.rrsets(zoneId), notAlias());
+        return lazyIterateRRSets(api.listResourceRecordSets(zoneId), notAlias());
     }
 
     /**
@@ -53,19 +53,19 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
         Filter<ResourceRecordSet<?>> filter = andNotAlias(nameEqualTo(name));
-        return lazyIterateRRSets(api.rrsetsStartingAtName(zoneId, name), filter);
+        return lazyIterateRRSets(api.listResourceRecordSets(zoneId, name), filter);
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
         Filter<ResourceRecordSet<?>> filter = andNotAlias(nameAndTypeEqualTo(name,type));
-        return lazyIterateRRSets(api.rrsetsStartingAtNameAndType(zoneId, name, type), filter);
+        return lazyIterateRRSets(api.listResourceRecordSets(zoneId, name, type), filter);
     }
 
     @Override
     public ResourceRecordSet<?> getByNameTypeAndQualifier(String name, String type, String qualifier) {
         Filter<ResourceRecordSet<?>> filter = andNotAlias(nameTypeAndQualifierEqualTo(name, type, qualifier));
-        ResourceRecordSetList first = api.rrsetsStartingAtNameTypeAndIdentifier(zoneId, name, type, qualifier);
+        ResourceRecordSetList first = api.listResourceRecordSets(zoneId, name, type, qualifier);
         return nextOrNull(lazyIterateRRSets(first, filter));
     }
 
@@ -88,7 +88,7 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
             changes.add(delete(oldRRS));
         }
         changes.add(create(rrset));
-        api.changeBatch(zoneId, changes);
+        api.changeResourceRecordSets(zoneId, changes);
     }
 
     @Override
@@ -96,7 +96,7 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
         ResourceRecordSet<?> oldRRS = getByNameTypeAndQualifier(name, type, qualifier);
         if (oldRRS == null)
             return;
-        api.changeBatch(zoneId, Arrays.asList(delete(oldRRS)));
+        api.changeResourceRecordSets(zoneId, Arrays.asList(delete(oldRRS)));
     }
 
     @Override
@@ -105,7 +105,7 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
         for (Iterator<ResourceRecordSet<?>> it = iterateByNameAndType(name, type); it.hasNext();) {
             changes.add(delete(it.next()));
         }
-        api.changeBatch(zoneId, changes);
+        api.changeResourceRecordSets(zoneId, changes);
     }
 
     static final class Factory implements denominator.AllProfileResourceRecordSetApi.Factory {
@@ -165,10 +165,10 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
                 while (!current.hasNext() && next != null) {
                     ResourceRecordSetList nextPage;
                     if (next.identifier != null) {
-                        nextPage = api.rrsetsStartingAtNameTypeAndIdentifier(zoneId, next.name, next.type,
+                        nextPage = api.listResourceRecordSets(zoneId, next.name, next.type,
                                 next.identifier);
                     } else {
-                        nextPage = api.rrsetsStartingAtNameAndType(zoneId, next.name, next.type);
+                        nextPage = api.listResourceRecordSets(zoneId, next.name, next.type);
                     }
                     current = peekingIterator(nextPage.iterator());
                     next = nextPage.next;

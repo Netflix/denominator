@@ -32,14 +32,14 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
         // this will list all basic or RR pool records.
-        Iterator<Record> orderedRecords = api.recordsInZone(zoneName).iterator();
+        Iterator<Record> orderedRecords = api.getResourceRecordsOfZone(zoneName).iterator();
         return new GroupByRecordNameAndTypeIterator(orderedRecords);
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
         checkNotNull(name, "name");
-        Iterator<Record> orderedRecords = api.recordsInZoneByNameAndType(zoneName, name, 0).iterator();
+        Iterator<Record> orderedRecords = api.getResourceRecordsOfDNameByType(zoneName, name, 0).iterator();
         return new GroupByRecordNameAndTypeIterator(orderedRecords);
     }
 
@@ -55,7 +55,7 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
         checkNotNull(name, "name");
         checkNotNull(type, "type");
         int typeValue = checkNotNull(lookup(type), "typeValue for %s", type);
-        return api.recordsInZoneByNameAndType(zoneName, name, typeValue);
+        return api.getResourceRecordsOfDNameByType(zoneName, name, typeValue);
     }
 
     private static final int DEFAULT_TTL = 300;
@@ -78,7 +78,7 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
                     continue;
                 }
                 record.ttl = ttlToApply;
-                api.updateRecordInZone(record, zoneName);
+                api.updateResourceRecord(record, zoneName);
             } else {
                 remove(rrset.name(), rrset.type(), record.id);
             }
@@ -102,7 +102,7 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
                     for (Object rdatum : rdata.values()) {
                         record.rdata.add(rdatum.toString());
                     }
-                    api.createRecordInZone(record, zoneName);
+                    api.createResourceRecord(record, zoneName);
                 }
             }
         }
@@ -117,7 +117,7 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
 
     private void remove(String name, String type, String id) {
         try {
-            api.deleteRecord(id);
+            api.deleteResourceRecord(id);
         } catch (UltraDNSException e) {
             // lost race
             if (e.code() != UltraDNSException.RESOURCE_RECORD_NOT_FOUND)

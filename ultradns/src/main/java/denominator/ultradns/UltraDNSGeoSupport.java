@@ -14,6 +14,6 @@ public class UltraDNSGeoSupport {
     @Provides
     @Named("geo")
     Map<String, Collection<String>> regions(UltraDNS api) {
-        return api.availableRegions();
+        return api.getAvailableRegions();
     }
 }

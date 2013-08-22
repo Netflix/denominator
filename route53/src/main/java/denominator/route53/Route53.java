@@ -12,10 +12,10 @@ import feign.RequestLine;
 
 interface Route53 {
     @RequestLine("GET /2012-12-12/hostedzone")
-    ZoneList zones();
+    ZoneList listHostedZones();
 
     @RequestLine("GET /2012-12-12/hostedzone?marker={marker}")
-    ZoneList zones(@Named("marker") String marker);
+    ZoneList listHostedZones(@Named("marker") String marker);
 
     static class ZoneList extends ArrayList<Zone> {
         String next;
@@ -23,18 +23,18 @@ interface Route53 {
     }
 
     @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset")
-    ResourceRecordSetList rrsets(@Named("zoneId") String zoneId);
+    ResourceRecordSetList listResourceRecordSets(@Named("zoneId") String zoneId);
 
     @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset?name={name}")
-    ResourceRecordSetList rrsetsStartingAtName(@Named("zoneId") String zoneId, @Named("name") String name);
+    ResourceRecordSetList listResourceRecordSets(@Named("zoneId") String zoneId, @Named("name") String name);
 
     @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset?name={name}&type={type}")
-    ResourceRecordSetList rrsetsStartingAtNameAndType(@Named("zoneId") String zoneId, @Named("name") String name,
+    ResourceRecordSetList listResourceRecordSets(@Named("zoneId") String zoneId, @Named("name") String name,
             @Named("type") String type);
 
     @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset?name={name}&type={type}&identifier={identifier}")
-    ResourceRecordSetList rrsetsStartingAtNameTypeAndIdentifier(@Named("zoneId") String zoneId,
-            @Named("name") String name, @Named("type") String type, @Named("identifier") String identifier);
+    ResourceRecordSetList listResourceRecordSets(@Named("zoneId") String zoneId, @Named("name") String name,
+            @Named("type") String type, @Named("identifier") String identifier);
 
     static class ResourceRecordSetList extends ArrayList<ResourceRecordSet<?>> {
         NextRecord next;
@@ -55,7 +55,7 @@ interface Route53 {
 
     @RequestLine("POST /2012-12-12/hostedzone/{zoneId}/rrset")
     @Headers("Content-Type: application/xml")
-    void changeBatch(@Named("zoneId") String zoneId, List<ActionOnResourceRecordSet> changes)
+    void changeResourceRecordSets(@Named("zoneId") String zoneId, List<ActionOnResourceRecordSet> changes)
             throws InvalidChangeBatchException;
 
     static class ActionOnResourceRecordSet {

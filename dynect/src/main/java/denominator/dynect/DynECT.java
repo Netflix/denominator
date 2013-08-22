@@ -31,9 +31,6 @@ public interface DynECT {
     @RequestLine("GET /Geo?detail=Y")
     Map<String, Collection<ResourceRecordSet<?>>> geoRRSetsByZone();
 
-    @RequestLine("GET /AllRecord/{zone}?detail=Y")
-    Iterator<ResourceRecordSet<?>> rrsetsInZone(@Named("zone") String zone);
-
     @RequestLine("GET /AllRecord/{zone}/{fqdn}?detail=Y")
     Iterator<ResourceRecordSet<?>> rrsetsInZoneByName(@Named("zone") String zone, @Named("fqdn") String fqdn);
 

@@ -50,7 +50,7 @@ public final class Route53ResourceRecordSetApi implements ResourceRecordSetApi {
         ResourceRecordSet<?> oldRRS = getByNameAndType(name, type);
         if (oldRRS == null)
             return;
-        api.changeBatch(zoneId, Arrays.asList(delete(oldRRS)));
+        api.changeResourceRecordSets(zoneId, Arrays.asList(delete(oldRRS)));
     }
 
     static final class Factory implements denominator.ResourceRecordSetApi.Factory {
