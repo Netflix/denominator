@@ -30,7 +30,7 @@ import dagger.Provides;
 import denominator.BasicProvider;
 import denominator.CheckConnection;
 import denominator.DNSApiManager;
-import denominator.QualifiedResourceRecordSetApi.Factory;
+import denominator.QualifiedResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
@@ -152,12 +152,9 @@ public class UltraDNSProvider extends BasicProvider {
             return factory;
         }
 
-        @Provides
-        @Singleton
-        Map<Factory, Collection<String>> factoryToProfiles(GeoResourceRecordSetApi.Factory in) {
-            Map<Factory, Collection<String>> factories = new LinkedHashMap<Factory, Collection<String>>();
-            factories.put(in, Arrays.asList("geo"));
-            return factories;
+        @Provides(type = SET)
+        QualifiedResourceRecordSetApi.Factory factoryToProfiles(GeoResourceRecordSetApi.Factory in) {
+            return in;
         }
     }
 

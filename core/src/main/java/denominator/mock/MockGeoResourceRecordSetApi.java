@@ -2,7 +2,6 @@ package denominator.mock;
 
 import static denominator.common.Preconditions.checkArgument;
 import static denominator.model.ResourceRecordSets.profileContainsType;
-import static denominator.model.profile.Geo.asGeo;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -25,15 +24,18 @@ import denominator.profile.GeoResourceRecordSetApi;
 
 public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRecordSetApi implements
         GeoResourceRecordSetApi {
-    private static final Filter<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
+    private static final Filter<ResourceRecordSet<?>> IS_GEO = new Filter<ResourceRecordSet<?>>(){
+        @Override
+        public boolean apply(ResourceRecordSet<?> in) {
+            return in != null && in.geo() != null;
+        }
+    };
 
-    private final Collection<String> supportedTypes;
     private final Map<String, Collection<String>> supportedRegions;
 
     MockGeoResourceRecordSetApi(Provider provider, SortedSet<ResourceRecordSet<?>> records,
             Map<String, Collection<String>> supportedRegions) {
         super(provider, records, IS_GEO);
-        this.supportedTypes = provider.profileToRecordTypes().get("geo");
         this.supportedRegions = supportedRegions;
     }
 
@@ -44,17 +46,15 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
 
     @Override
     public void put(ResourceRecordSet<?> rrset) {
-        checkArgument(supportedTypes.contains(rrset.type()), "%s not a supported type for geo: %s", rrset.type(),
-                supportedTypes);
         synchronized (records) {
             put(IS_GEO, rrset);
-            Geo newGeo = asGeo(rrset);
+            Geo newGeo = rrset.geo();
             Iterator<ResourceRecordSet<?>> iterateByNameAndType = iterateByNameAndType(rrset.name(), rrset.type());
             while (iterateByNameAndType.hasNext()) {
                 ResourceRecordSet<?> toTest = iterateByNameAndType.next();
                 if (toTest.qualifier().equals(rrset.qualifier()))
                     continue;
-                Geo currentGeo = asGeo(toTest);
+                Geo currentGeo = toTest.geo();
                 Map<String, Collection<String>> without = new LinkedHashMap<String, Collection<String>>();
                 for (Entry<String, Collection<String>> entry : currentGeo.regions().entrySet()) {
                     if (newGeo.regions().containsKey(entry.getKey())) {
@@ -75,7 +75,8 @@ public final class MockGeoResourceRecordSetApi extends MockAllProfileResourceRec
                         .type(toTest.type())//
                         .qualifier(toTest.qualifier())//
                         .ttl(toTest.ttl())//
-                        .addProfile(Geo.create(without))//
+                        .geo(Geo.create(without))//
+                        .weighted(toTest.weighted())//
                         .addAll(toTest.records()).build());
             }
         }

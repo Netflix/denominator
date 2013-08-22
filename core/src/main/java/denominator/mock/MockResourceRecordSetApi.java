@@ -7,7 +7,7 @@ import static denominator.common.Util.filter;
 import static denominator.common.Util.nextOrNull;
 import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
-import static denominator.model.ResourceRecordSets.withoutProfile;
+import static denominator.model.ResourceRecordSets.alwaysVisible;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -32,17 +32,17 @@ public final class MockResourceRecordSetApi implements denominator.ResourceRecor
      */
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
-        return filter(records.iterator(), withoutProfile());
+        return filter(records.iterator(), alwaysVisible());
     }
 
     @Override
     public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
-        return filter(records.iterator(), and(nameEqualTo(name), withoutProfile()));
+        return filter(records.iterator(), and(nameEqualTo(name), alwaysVisible()));
     }
 
     @Override
     public ResourceRecordSet<?> getByNameAndType(String name, String type) {
-        return nextOrNull(filter(records.iterator(), and(nameAndTypeEqualTo(name, type), withoutProfile())));
+        return nextOrNull(filter(records.iterator(), and(nameAndTypeEqualTo(name, type), alwaysVisible())));
     }
 
     @Override

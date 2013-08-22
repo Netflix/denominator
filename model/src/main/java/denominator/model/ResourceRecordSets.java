@@ -158,9 +158,30 @@ public class ResourceRecordSets {
     }
 
     /**
+     * Returns true if the input has no visibility qualifier. Typically
+     * indicates a basic record set.
+     */
+    public static Filter<ResourceRecordSet<?>> alwaysVisible() {
+        return new Filter<ResourceRecordSet<?>>() {
+
+            @Override
+            public boolean apply(ResourceRecordSet<?> in) {
+                return in != null && in.qualifier() == null;
+            }
+
+            @Override
+            public String toString() {
+                return "alwaysVisible()";
+            }
+        };
+    }
+
+    /**
      * returns true if the input is not null and
      * {@link ResourceRecordSet#profiles() profile} is empty.
+     * @deprecated will be removed in version 4.0 for {@link #alwaysVisible()}.
      */
+    @Deprecated
     public static Filter<ResourceRecordSet<?>> withoutProfile() {
         return new Filter<ResourceRecordSet<?>>() {
 
@@ -193,7 +214,10 @@ public class ResourceRecordSets {
      * @param profileType
      *            expected type of the profile
      * @since 1.3.1
+     * @deprecated will be removed in version 4.0 for type-safe accessors such
+     *             as {@link #geo()} and {@link #weighted()}.
      */
+    @Deprecated
     public static Filter<ResourceRecordSet<?>> profileContainsType(final String profileType) {
         checkNotNull(profileType, "profileType");
         return new Filter<ResourceRecordSet<?>>() {
@@ -216,7 +240,10 @@ public class ResourceRecordSets {
      * profile is found, null is returned
      * 
      * @since 1.3.1
+     * @deprecated will be removed in version 4.0 for type-safe accessors such
+     *             as {@link #geo()} and {@link #weighted()}.
      */
+    @Deprecated
     public static Map<String, Object> tryFindProfile(ResourceRecordSet<?> rrset, String profileType) {
         checkNotNull(rrset, "rrset");
         checkNotNull(profileType, "profileType");
@@ -229,7 +256,10 @@ public class ResourceRecordSets {
 
     /**
      * Returns the set of profile types, if present, in the {@code rrset}.
+     * @deprecated will be removed in version 4.0 for type-safe accessors such
+     *             as {@link #geo()} and {@link #weighted()}.
      */
+    @Deprecated
     public static Set<String> toProfileTypes(ResourceRecordSet<?> rrset) {
         checkNotNull(rrset, "rrset");
         Set<String> types = new LinkedHashSet<String>();

@@ -41,7 +41,7 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             .qualifier("Europe")
             .ttl(300)
             .add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
-            .addProfile(Geo.create(ImmutableMultimap.of("13", "13").asMap()))
+            .geo(Geo.create(ImmutableMultimap.of("13", "13").asMap()))
             .build();
 
     ResourceRecordSet<CNAMEData> everywhereElse = ResourceRecordSet.<CNAMEData> builder()
@@ -50,13 +50,13 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             .qualifier("Everywhere Else")
             .ttl(300)
             .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
-            .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
-                                                    .put("11", "11")
-                                                    .put("16", "16")
-                                                    .put("12", "12")
-                                                    .put("17", "17")
-                                                    .put("15", "15")
-                                                    .put("14", "14").build().asMap()))                                                   
+            .geo(Geo.create(ImmutableMultimap.<String, String> builder()
+                                             .put("11", "11")
+                                             .put("16", "16")
+                                             .put("12", "12")
+                                             .put("17", "17")
+                                             .put("15", "15")
+                                             .put("14", "14").build().asMap()))                                                   
             .build();
     
     ResourceRecordSet<CNAMEData> fallback = ResourceRecordSet.<CNAMEData> builder()
@@ -65,9 +65,9 @@ public class DynECTGeoResourceRecordSetApiMockTest {
             .qualifier("Fallback")
             .ttl(300)
             .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
-            .addProfile(Geo.create(ImmutableMultimap.<String, String> builder()
-                                                    .put("Unknown IP", "@!")
-                                                    .put("Fallback", "@@").build().asMap()))
+            .geo(Geo.create(ImmutableMultimap.<String, String> builder()
+                                             .put("Unknown IP", "@!")
+                                             .put("Fallback", "@@").build().asMap()))
             .build();
 
     @Test

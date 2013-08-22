@@ -49,21 +49,18 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             .qualifier("Europe")
             .ttl(300)
             .add(CNAMEData.create("www-000000001.eu-west-1.elb.amazonaws.com."))
-            .addProfile(
-                    Geo.create(ImmutableMultimap
-                            .<String, String> builder()
-                            .orderKeysBy(Ordering.natural())
-                            .putAll("Europe", "Aland Islands", "Albania", "Andorra", "Armenia", "Austria",
-                                    "Azerbaijan", "Belarus", "Belgium", "Bosnia-Herzegovina", "Bulgaria", "Croatia",
-                                    "Czech Republic", "Denmark", "Estonia", "Faroe Islands", "Finland", "France",
-                                    "Georgia", "Germany", "Gibraltar", "Greece", "Guernsey", "Hungary", "Iceland",
-                                    "Ireland", "Isle of Man", "Italy", "Jersey", "Latvia", "Liechtenstein",
-                                    "Lithuania", "Luxembourg", "Macedonia, the former Yugoslav Republic of", "Malta",
-                                    "Moldova, Republic of", "Monaco", "Montenegro", "Netherlands", "Norway", "Poland",
-                                    "Portugal", "Romania", "San Marino", "Serbia", "Slovakia", "Slovenia", "Spain",
-                                    "Svalbard and Jan Mayen", "Sweden", "Switzerland", "Ukraine", "Undefined Europe",
-                                    "United Kingdom - England, Northern Ireland, Scotland, Wales", "Vatican City")
-                            .build().asMap())).build();
+            .geo(Geo.create(ImmutableMultimap.<String, String> builder().orderKeysBy(Ordering.natural())
+                    .putAll("Europe", "Aland Islands", "Albania", "Andorra", "Armenia", "Austria",
+                            "Azerbaijan", "Belarus", "Belgium", "Bosnia-Herzegovina", "Bulgaria", "Croatia",
+                            "Czech Republic", "Denmark", "Estonia", "Faroe Islands", "Finland", "France",
+                            "Georgia", "Germany", "Gibraltar", "Greece", "Guernsey", "Hungary", "Iceland",
+                            "Ireland", "Isle of Man", "Italy", "Jersey", "Latvia", "Liechtenstein",
+                            "Lithuania", "Luxembourg", "Macedonia, the former Yugoslav Republic of", "Malta",
+                            "Moldova, Republic of", "Monaco", "Montenegro", "Netherlands", "Norway", "Poland",
+                            "Portugal", "Romania", "San Marino", "Serbia", "Slovakia", "Slovenia", "Spain",
+                            "Svalbard and Jan Mayen", "Sweden", "Switzerland", "Ukraine", "Undefined Europe",
+                            "United Kingdom - England, Northern Ireland, Scotland, Wales", "Vatican City")
+                    .build().asMap())).build();
 
     ResourceRecordSet<CNAMEData> us = ResourceRecordSet
             .<CNAMEData> builder()
@@ -72,21 +69,19 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             .qualifier("US")
             .ttl(300)
             .add(CNAMEData.create("www-000000001.us-east-1.elb.amazonaws.com."))
-            .addProfile(
-                    Geo.create(ImmutableMultimap
-                            .<String, String> builder()
-                            .putAll("United States (US)", "Alabama", "Alaska", "Arizona", "Arkansas",
-                                    "Armed Forces Americas", "Armed Forces Europe, Middle East, and Canada",
-                                    "Armed Forces Pacific", "California", "Colorado", "Connecticut", "Delaware",
-                                    "District of Columbia", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois",
-                                    "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
-                                    "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana",
-                                    "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York",
-                                    "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania",
-                                    "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas",
-                                    "Undefined United States", "United States Minor Outlying Islands", "Utah",
-                                    "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming")
-                            .build().asMap())).build();
+            .geo(Geo.create(ImmutableMultimap.<String, String> builder()
+                    .putAll("United States (US)", "Alabama", "Alaska", "Arizona", "Arkansas",
+                            "Armed Forces Americas", "Armed Forces Europe, Middle East, and Canada",
+                            "Armed Forces Pacific", "California", "Colorado", "Connecticut", "Delaware",
+                            "District of Columbia", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois",
+                            "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland",
+                            "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana",
+                            "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York",
+                            "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania",
+                            "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas",
+                            "Undefined United States", "United States Minor Outlying Islands", "Utah",
+                            "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming")
+                    .build().asMap())).build();
 
     ResourceRecordSet<CNAMEData> everywhereElse = ResourceRecordSet
             .<CNAMEData> builder()
@@ -95,64 +90,61 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
             .qualifier("Everywhere Else")
             .ttl(60)
             .add(CNAMEData.create("www-000000002.us-east-1.elb.amazonaws.com."))
-            .addProfile(
-                    Geo.create(ImmutableMultimap
-                            .<String, String> builder()
-                            .orderKeysBy(Ordering.natural())
-                            .put("Anonymous Proxy (A1)", "Anonymous Proxy")
-                            .put("Mexico", "Mexico")
-                            .put("Satellite Provider (A2)", "Satellite Provider")
-                            .put("Unknown / Uncategorized IPs", "Unknown / Uncategorized IPs")
-                            .putAll("Canada (CA)", "Alberta", "British Columbia", "Greenland", "Manitoba",
-                                    "New Brunswick", "Newfoundland and Labrador", "Northwest Territories",
-                                    "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island", "Quebec",
-                                    "Saint Pierre and Miquelon", "Saskatchewan", "Undefined Canada", "Yukon")
-                            .putAll("The Caribbean", "Anguilla", "Antigua and Barbuda", "Aruba", "Bahamas", "Barbados",
-                                    "Bermuda", "British Virgin Islands", "Cayman Islands", "Cuba", "Dominica",
-                                    "Dominican Republic", "Grenada", "Guadeloupe", "Haiti", "Jamaica", "Martinique",
-                                    "Montserrat", "Netherlands Antilles", "Puerto Rico", "Saint Barthelemy",
-                                    "Saint Martin", "Saint Vincent and the Grenadines", "St. Kitts and Nevis",
-                                    "St. Lucia", "Trinidad and Tobago", "Turks and Caicos Islands",
-                                    "U.S. Virgin Islands")
-                            .putAll("Central America", "Belize", "Costa Rica", "El Salvador", "Guatemala", "Honduras",
-                                    "Nicaragua", "Panama", "Undefined Central America")
-                            .putAll("South America", "Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador",
-                                    "Falkland Islands", "French Guiana", "Guyana", "Paraguay", "Peru",
-                                    "South Georgia and the South Sandwich Islands", "Suriname",
-                                    "Undefined South America", "Uruguay", "Venezuela, Bolivarian Republic of")
-                            .put("Russian Federation", "Russian Federation")
-                            .putAll("Middle East", "Afghanistan", "Bahrain", "Cyprus", "Iran", "Iraq", "Israel",
-                                    "Jordan", "Kuwait", "Lebanon", "Oman", "Palestinian Territory, Occupied", "Qatar",
-                                    "Saudi Arabia", "Syrian Arab Republic", "Turkey, Republic of",
-                                    "Undefined Middle East", "United Arab Emirates", "Yemen")
-                            .putAll("Africa", "Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi",
-                                    "Cameroon", "Cape Verde", "Central African Republic", "Chad", "Comoros", "Congo",
-                                    "Cote d'Ivoire", "Democratic Republic of the Congo", "Djibouti", "Egypt",
-                                    "Equatorial Guinea", "Eritrea", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea",
-                                    "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Libyan Arab Jamahiriya",
-                                    "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Mayotte", "Morocco",
-                                    "Mozambique", "Namibia", "Niger", "Nigeria", "Reunion", "Rwanda",
-                                    "Sao Tome and Principe", "Senegal", "Seychelles", "Sierra Leone", "Somalia",
-                                    "South Africa", "St. Helena", "Sudan", "Swaziland", "Tanzania, United Republic of",
-                                    "Togo", "Tunisia", "Uganda", "Undefined Africa", "Western Sahara", "Zambia",
-                                    "Zimbabwe")
-                            .putAll("Asia", "Bangladesh", "Bhutan", "British Indian Ocean Territory - Chagos Islands",
-                                    "Brunei Darussalam", "Cambodia", "China", "Hong Kong", "India", "Indonesia",
-                                    "Japan", "Kazakhstan", "Korea, Democratic People's Republic of",
-                                    "Korea, Republic of", "Kyrgyzstan", "Lao People's Democratic Republic", "Macao",
-                                    "Malaysia", "Maldives", "Mongolia", "Myanmar", "Nepal", "Pakistan", "Philippines",
-                                    "Singapore", "Sri Lanka", "Taiwan", "Tajikistan", "Thailand",
-                                    "Timor-Leste, Democratic Republic of", "Turkmenistan", "Undefined Asia",
-                                    "Uzbekistan", "Vietnam")
-                            .putAll("Australia / Oceania", "American Samoa", "Australia", "Christmas Island",
-                                    "Cocos (Keeling) Islands", "Cook Islands", "Fiji", "French Polynesia", "Guam",
-                                    "Heard Island and McDonald Islands", "Kiribati", "Marshall Islands",
-                                    "Micronesia , Federated States of", "Nauru", "New Caledonia", "New Zealand",
-                                    "Niue", "Norfolk Island", "Northern Mariana Islands, Commonwealth of", "Palau",
-                                    "Papua New Guinea", "Pitcairn", "Samoa", "Solomon Islands", "Tokelau", "Tonga",
-                                    "Tuvalu", "Undefined Australia / Oceania", "Vanuatu", "Wallis and Futuna")
-                            .putAll("Antarctica", "Antarctica", "Bouvet Island", "French Southern Territories").build()
-                            .asMap())).build();
+            .geo(Geo.create(ImmutableMultimap.<String, String> builder().orderKeysBy(Ordering.natural())
+                    .put("Anonymous Proxy (A1)", "Anonymous Proxy")
+                    .put("Mexico", "Mexico")
+                    .put("Satellite Provider (A2)", "Satellite Provider")
+                    .put("Unknown / Uncategorized IPs", "Unknown / Uncategorized IPs")
+                    .putAll("Canada (CA)", "Alberta", "British Columbia", "Greenland", "Manitoba",
+                            "New Brunswick", "Newfoundland and Labrador", "Northwest Territories",
+                            "Nova Scotia", "Nunavut", "Ontario", "Prince Edward Island", "Quebec",
+                            "Saint Pierre and Miquelon", "Saskatchewan", "Undefined Canada", "Yukon")
+                    .putAll("The Caribbean", "Anguilla", "Antigua and Barbuda", "Aruba", "Bahamas", "Barbados",
+                            "Bermuda", "British Virgin Islands", "Cayman Islands", "Cuba", "Dominica",
+                            "Dominican Republic", "Grenada", "Guadeloupe", "Haiti", "Jamaica", "Martinique",
+                            "Montserrat", "Netherlands Antilles", "Puerto Rico", "Saint Barthelemy",
+                            "Saint Martin", "Saint Vincent and the Grenadines", "St. Kitts and Nevis",
+                            "St. Lucia", "Trinidad and Tobago", "Turks and Caicos Islands",
+                            "U.S. Virgin Islands")
+                    .putAll("Central America", "Belize", "Costa Rica", "El Salvador", "Guatemala", "Honduras",
+                            "Nicaragua", "Panama", "Undefined Central America")
+                    .putAll("South America", "Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador",
+                            "Falkland Islands", "French Guiana", "Guyana", "Paraguay", "Peru",
+                            "South Georgia and the South Sandwich Islands", "Suriname",
+                            "Undefined South America", "Uruguay", "Venezuela, Bolivarian Republic of")
+                    .put("Russian Federation", "Russian Federation")
+                    .putAll("Middle East", "Afghanistan", "Bahrain", "Cyprus", "Iran", "Iraq", "Israel",
+                            "Jordan", "Kuwait", "Lebanon", "Oman", "Palestinian Territory, Occupied", "Qatar",
+                            "Saudi Arabia", "Syrian Arab Republic", "Turkey, Republic of",
+                            "Undefined Middle East", "United Arab Emirates", "Yemen")
+                    .putAll("Africa", "Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi",
+                            "Cameroon", "Cape Verde", "Central African Republic", "Chad", "Comoros", "Congo",
+                            "Cote d'Ivoire", "Democratic Republic of the Congo", "Djibouti", "Egypt",
+                            "Equatorial Guinea", "Eritrea", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea",
+                            "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Libyan Arab Jamahiriya",
+                            "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Mayotte", "Morocco",
+                            "Mozambique", "Namibia", "Niger", "Nigeria", "Reunion", "Rwanda",
+                            "Sao Tome and Principe", "Senegal", "Seychelles", "Sierra Leone", "Somalia",
+                            "South Africa", "St. Helena", "Sudan", "Swaziland", "Tanzania, United Republic of",
+                            "Togo", "Tunisia", "Uganda", "Undefined Africa", "Western Sahara", "Zambia",
+                            "Zimbabwe")
+                    .putAll("Asia", "Bangladesh", "Bhutan", "British Indian Ocean Territory - Chagos Islands",
+                            "Brunei Darussalam", "Cambodia", "China", "Hong Kong", "India", "Indonesia",
+                            "Japan", "Kazakhstan", "Korea, Democratic People's Republic of",
+                            "Korea, Republic of", "Kyrgyzstan", "Lao People's Democratic Republic", "Macao",
+                            "Malaysia", "Maldives", "Mongolia", "Myanmar", "Nepal", "Pakistan", "Philippines",
+                            "Singapore", "Sri Lanka", "Taiwan", "Tajikistan", "Thailand",
+                            "Timor-Leste, Democratic Republic of", "Turkmenistan", "Undefined Asia",
+                            "Uzbekistan", "Vietnam")
+                    .putAll("Australia / Oceania", "American Samoa", "Australia", "Christmas Island",
+                            "Cocos (Keeling) Islands", "Cook Islands", "Fiji", "French Polynesia", "Guam",
+                            "Heard Island and McDonald Islands", "Kiribati", "Marshall Islands",
+                            "Micronesia , Federated States of", "Nauru", "New Caledonia", "New Zealand",
+                            "Niue", "Norfolk Island", "Northern Mariana Islands, Commonwealth of", "Palau",
+                            "Papua New Guinea", "Pitcairn", "Samoa", "Solomon Islands", "Tokelau", "Tonga",
+                            "Tuvalu", "Undefined Australia / Oceania", "Vanuatu", "Wallis and Futuna")
+                    .putAll("Antarctica", "Antarctica", "Bouvet Island", "French Southern Territories").build()
+                    .asMap())).build();
 
     static String getDirectionalDNSGroupDetailsResponseEverywhereElse = ""//
             + "<?xml version=\"1.0\"?>\n"//
@@ -364,7 +356,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                     .qualifier(europe.qualifier())//
                     .ttl(europe.ttl())//
                     .addAll(europe.records())//
-                    .addProfile(Geo.create(ImmutableMultimap.of("Europe", "Aland Islands").asMap())).build();
+                    .geo(Geo.create(ImmutableMultimap.of("Europe", "Aland Islands").asMap())).build();
             api.put(lessOfEurope);
 
             assertEquals(server.getRequestCount(), 4);
@@ -401,7 +393,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                     .qualifier(europe.qualifier())//
                     .ttl(600)//
                     .addAll(europe.records())//
-                    .addAllProfile(europe.profiles()).build();
+                    .geo(europe.geo()).build();
             api.put(lessTTL);
 
             assertEquals(server.getRequestCount(), 3);

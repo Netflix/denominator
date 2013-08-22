@@ -2,7 +2,6 @@ package denominator.profile;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.collect.Iterators.size;
-import static denominator.model.profile.Geo.asGeo;
 import static java.lang.String.format;
 import static java.util.logging.Logger.getAnonymousLogger;
 import static org.testng.Assert.assertEquals;
@@ -53,7 +52,7 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
 
                 getAnonymousLogger().info(format("%s ::: geoRRS: %s", manager, geoRRS));
                 recordTypeCounts.getUnchecked(geoRRS.type()).addAndGet(geoRRS.records().size());
-                geoRecordCounts.getUnchecked(asGeo(geoRRS)).addAndGet(geoRRS.records().size());
+                geoRecordCounts.getUnchecked(geoRRS.geo()).addAndGet(geoRRS.records().size());
                 
                 Iterator<ResourceRecordSet<?>> byNameAndType = geoApi(zone).iterateByNameAndType(geoRRS.name(), geoRRS.type());
                 assertTrue(byNameAndType.hasNext(), "could not list by name and type: " + geoRRS);
@@ -69,10 +68,10 @@ public abstract class BaseGeoReadOnlyLiveTest extends BaseProviderLiveTest {
     }
 
     static void checkGeoRRS(ResourceRecordSet<?> geoRRS) {
-        assertFalse(geoRRS.profiles().isEmpty(), "Profile absent: " + geoRRS);
+        checkNotNull(geoRRS.geo(), "Geo absent: " + geoRRS);
         checkNotNull(geoRRS.qualifier(), "Qualifier: ResourceRecordSet %s", geoRRS);
 
-        Geo geo = asGeo(geoRRS);
+        Geo geo = geoRRS.geo();
         assertTrue(!geo.regions().isEmpty(), "Regions empty on Geo: " + geoRRS);
         checkNotNull(geoRRS.name(), "Name: ResourceRecordSet %s", geoRRS);
         checkNotNull(geoRRS.type(), "Type: ResourceRecordSet %s", geoRRS);
