@@ -7,7 +7,6 @@ import static denominator.common.Util.concat;
 import static denominator.common.Util.filter;
 import static denominator.common.Util.nextOrNull;
 import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
-import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.ultradns.UltraDNSFunctions.forTypeAndRData;
 
 import java.util.ArrayList;

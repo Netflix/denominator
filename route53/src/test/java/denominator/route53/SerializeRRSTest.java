@@ -29,7 +29,7 @@ public class SerializeRRSTest {
                 .type("CNAME")//
                 .qualifier("foobar")
                 .add(CNAMEData.create("dom1.foo.com."))//
-                .addProfile(Weighted.create(1)).build();
+                .weighted(Weighted.create(1)).build();
         assertEquals(
                 SerializeRRS.INSTANCE.apply(rrs),
                 "<ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>foobar</SetIdentifier><Weight>1</Weight><TTL>300</TTL><ResourceRecords><ResourceRecord><Value>dom1.foo.com.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet>");

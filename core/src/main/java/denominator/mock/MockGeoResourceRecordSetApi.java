@@ -1,7 +1,6 @@
 package denominator.mock;
 
 import static denominator.common.Preconditions.checkArgument;
-import static denominator.model.ResourceRecordSets.profileContainsType;
 
 import java.util.ArrayList;
 import java.util.Collection;

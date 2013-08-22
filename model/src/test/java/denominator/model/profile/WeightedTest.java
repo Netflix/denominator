@@ -9,7 +9,6 @@ import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.rdata.AData;
@@ -23,7 +22,7 @@ public class WeightedTest {
 
     static Weighted weighted = Weighted.create(2);
 
-    String asJson = "{\"type\":\"weighted\",\"weight\":2}";
+    String asJson = "{\"weight\":2}";
 
     public void serializeNaturallyAsJson() throws JsonProcessingException {
         assertEquals(new ObjectMapper().writeValueAsString(weighted), asJson);
@@ -33,23 +32,11 @@ public class WeightedTest {
         assertEquals(new ObjectMapper().readValue(asJson, Map.class), weighted);
     }
 
-    static Map<String, Object> weightedMap = ImmutableMap.<String, Object> builder()//
-            .put("type", "weighted")//
-            .put("weight", 2).build();
-
-    public void asWeighted() {
-        assertEquals(Weighted.asWeighted(weightedMap), weighted);
-    }
-
     static ResourceRecordSet<AData> weightedRRS = ResourceRecordSet.<AData> builder()//
             .name("www.denominator.io.")//
             .type("A")//
             .qualifier("US-East")//
             .ttl(3600)//
             .add(AData.create("1.1.1.1"))//
-            .addProfile(weightedMap).build();
-
-    public void asWeightedRRSet() {
-        assertEquals(Weighted.asWeighted(weightedRRS), weighted);
-    }
+            .weighted(Weighted.create(2)).build();
 }

@@ -3,9 +3,7 @@ package denominator.model;
 import static denominator.common.Preconditions.checkNotNull;
 
 import java.util.Collection;
-import java.util.LinkedHashSet;
 import java.util.Map;
-import java.util.Set;
 
 import denominator.common.Filter;
 import denominator.model.rdata.AAAAData;
@@ -174,99 +172,6 @@ public class ResourceRecordSets {
                 return "alwaysVisible()";
             }
         };
-    }
-
-    /**
-     * returns true if the input is not null and
-     * {@link ResourceRecordSet#profiles() profile} is empty.
-     * @deprecated will be removed in version 4.0 for {@link #alwaysVisible()}.
-     */
-    @Deprecated
-    public static Filter<ResourceRecordSet<?>> withoutProfile() {
-        return new Filter<ResourceRecordSet<?>>() {
-
-            @Override
-            public boolean apply(ResourceRecordSet<?> in) {
-                return in != null && toProfileTypes(in).isEmpty();
-            }
-
-            @Override
-            public String toString() {
-                return "withoutProfile()";
-            }
-        };
-    }
-
-    /**
-     * returns true if {@link ResourceRecordSet#profiles() profile} contains a
-     * value is where the value of key {@code type} corresponds to the parameter
-     * {@code type}.
-     * 
-     * <br>
-     * Ex.
-     * 
-     * <pre>
-     * if (profileContainsType(&quot;weighted&quot;).apply(rrs)) {
-     *     // delegate accordingly
-     * }
-     * </pre>
-     * 
-     * @param profileType
-     *            expected type of the profile
-     * @since 1.3.1
-     * @deprecated will be removed in version 4.0 for type-safe accessors such
-     *             as {@link #geo()} and {@link #weighted()}.
-     */
-    @Deprecated
-    public static Filter<ResourceRecordSet<?>> profileContainsType(final String profileType) {
-        checkNotNull(profileType, "profileType");
-        return new Filter<ResourceRecordSet<?>>() {
-
-            @Override
-            public boolean apply(ResourceRecordSet<?> in) {
-                return in != null && toProfileTypes(in).contains(profileType);
-            }
-
-            @Override
-            public String toString() {
-                return "profileContainsType(" + profileType + ")";
-            }
-        };
-    }
-
-    /**
-     * Returns the first profile in {@code rrset} that has an entry whose type
-     * corresponds to {@code profileType}, if such a profile exists. If no such
-     * profile is found, null is returned
-     * 
-     * @since 1.3.1
-     * @deprecated will be removed in version 4.0 for type-safe accessors such
-     *             as {@link #geo()} and {@link #weighted()}.
-     */
-    @Deprecated
-    public static Map<String, Object> tryFindProfile(ResourceRecordSet<?> rrset, String profileType) {
-        checkNotNull(rrset, "rrset");
-        checkNotNull(profileType, "profileType");
-        for (Map<String, Object> profile : rrset.profiles()) {
-            if (profileType.equals(profile.get("type")))
-                return profile;
-        }
-        return null;
-    }
-
-    /**
-     * Returns the set of profile types, if present, in the {@code rrset}.
-     * @deprecated will be removed in version 4.0 for type-safe accessors such
-     *             as {@link #geo()} and {@link #weighted()}.
-     */
-    @Deprecated
-    public static Set<String> toProfileTypes(ResourceRecordSet<?> rrset) {
-        checkNotNull(rrset, "rrset");
-        Set<String> types = new LinkedHashSet<String>();
-        for (Map<String, Object> profile : rrset.profiles()) {
-            types.add(profile.get("type").toString());
-        }
-        return types;
     }
 
     /**
