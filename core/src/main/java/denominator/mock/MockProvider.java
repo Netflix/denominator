@@ -129,33 +129,33 @@ public class MockProvider extends BasicProvider {
             Map<String, Collection<String>> alazona = new LinkedHashMap<String, Collection<String>>();
             alazona.put("United States (US)", Arrays.asList("Alaska", "Arizona"));
             records.add(ResourceRecordSet.<Map<String, Object>> builder().name("www2.geo.denominator.io.").type("A")
-                    .qualifier("alazona").ttl(300).add(AData.create("192.0.2.1")).addProfile(Geo.create(alazona))
+                    .qualifier("alazona").ttl(300).add(AData.create("192.0.2.1")).geo(Geo.create(alazona))
                     .build());
             records.add(ResourceRecordSet.<Map<String, Object>> builder().name("www.geo.denominator.io.").type("CNAME")
                     .qualifier("alazona").ttl(300).add(CNAMEData.create("a.denominator.io."))
-                    .addProfile(Geo.create(alazona)).build());
+                    .geo(Geo.create(alazona)).build());
             Map<String, Collection<String>> columbador = new LinkedHashMap<String, Collection<String>>();
             columbador.put("South America", Arrays.asList("Colombia", "Ecuador"));
             records.add(ResourceRecordSet.<Map<String, Object>> builder().name("www.geo.denominator.io.").type("CNAME")
                     .qualifier("columbador").ttl(86400).add(CNAMEData.create("b.denominator.io."))
-                    .addProfile(Geo.create(columbador)).build());
+                    .geo(Geo.create(columbador)).build());
             Map<String, Collection<String>> antarctica = new LinkedHashMap<String, Collection<String>>();
             antarctica.put("Antarctica", Arrays.asList("Bouvet Island", "French Southern Territories", "Antarctica"));
             records.add(ResourceRecordSet.<Map<String, Object>> builder().name("www.geo.denominator.io.").type("CNAME")
                     .qualifier("antarctica").ttl(0).add(CNAMEData.create("c.denominator.io."))
-                    .addProfile(Geo.create(antarctica)).build());
+                    .geo(Geo.create(antarctica)).build());
             records.add(ResourceRecordSet.<Map<String, Object>> builder().name("www2.weighted.denominator.io.")
                     .type("A").qualifier("US-West").ttl(0).add(AData.create("192.0.2.1"))
-                    .addProfile(Weighted.create(0)).build());
+                    .weighted(Weighted.create(0)).build());
             records.add(ResourceRecordSet.<Map<String, Object>> builder().name("www.weighted.denominator.io.")
                     .type("CNAME").qualifier("US-West").ttl(0).add(CNAMEData.create("a.denominator.io."))
-                    .addProfile(Weighted.create(1)).build());
+                    .weighted(Weighted.create(1)).build());
             records.add(ResourceRecordSet.<Map<String, Object>> builder().name("www.weighted.denominator.io.")
                     .type("CNAME").qualifier("US-East").ttl(0).add(CNAMEData.create("b.denominator.io."))
-                    .addProfile(Weighted.create(1)).build());
+                    .weighted(Weighted.create(1)).build());
             records.add(ResourceRecordSet.<Map<String, Object>> builder().name("www.weighted.denominator.io.")
                     .type("CNAME").qualifier("EU-West").ttl(0).add(CNAMEData.create("c.denominator.io."))
-                    .addProfile(Weighted.create(1)).build());
+                    .weighted(Weighted.create(1)).build());
             Map<Zone, SortedSet<ResourceRecordSet<?>>> zoneToRecords = new LinkedHashMap<Zone, SortedSet<ResourceRecordSet<?>>>();
             zoneToRecords.put(Zone.create(idOrName), records);
             return Map.class.cast(zoneToRecords);

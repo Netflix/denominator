@@ -72,7 +72,7 @@ class ResourceRecordSetHandler extends DefaultHandler implements
         } else if (qName.equals("SetIdentifier")) {
             builder.qualifier(currentText.toString().trim());
         } else if ("Weight".equals(qName)) {
-            profiles.add(Weighted.create(Integer.parseInt(currentText.toString().trim())));
+            builder.weighted(Weighted.create(Integer.parseInt(currentText.toString().trim())));
         } else if (profileFields.contains(qName)) {
             addProfile(qName, currentText.toString().trim());
         }

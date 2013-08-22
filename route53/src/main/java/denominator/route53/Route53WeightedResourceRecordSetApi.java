@@ -2,7 +2,6 @@ package denominator.route53;
 
 import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Util.filter;
-import static denominator.model.ResourceRecordSets.profileContainsType;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -17,7 +16,12 @@ import denominator.model.ResourceRecordSet;
 import denominator.profile.WeightedResourceRecordSetApi;
 
 final class Route53WeightedResourceRecordSetApi implements WeightedResourceRecordSetApi {
-    private static final Filter<ResourceRecordSet<?>> IS_WEIGHTED = profileContainsType("weighted");
+    private static final Filter<ResourceRecordSet<?>> IS_WEIGHTED = new Filter<ResourceRecordSet<?>>(){
+        @Override
+        public boolean apply(ResourceRecordSet<?> in) {
+            return in != null && in.weighted() != null;
+        }
+    };
 
     private final Collection<String> supportedTypes;
     private final SortedSet<Integer> supportedWeights;

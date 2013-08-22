@@ -83,7 +83,7 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
             cache.put(record.geoGroupId,profile);
         }
 
-        builder.addProfile(cache.get(record.geoGroupId));
+        builder.geo(cache.get(record.geoGroupId));
         while (hasNext()) {
             DirectionalRecord next = peekingIterator.peek();
             if (typeTTLAndGeoGroupEquals(next, record)) {

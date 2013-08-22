@@ -90,7 +90,7 @@ class GeoResourceRecordSetsDecoder implements DynECTDecoder.Parser<Map<String, C
         private final Map<String, Collection<String>> regions;
         private final Map<String, String> countryToRegions;
 
-        private ToBuilders(@Named("geo") final Map<String, Collection<String>> regions) {
+        private ToBuilders(Map<String, Collection<String>> regions) {
             this.regions = regions;
             Map<String, String> countryToRegions = new HashMap<String, String>(regions.values().size());
             for (Entry<String, Collection<String>> entry : regions.entrySet()) {
@@ -116,11 +116,11 @@ class GeoResourceRecordSetsDecoder implements DynECTDecoder.Parser<Map<String, C
                 rrset.qualifier(creepyGeoRegionGroup.name != null ? creepyGeoRegionGroup.name
                         : creepyGeoRegionGroup.service_name);
                 rrset.ttl(ttl);
-                rrset.addProfile(geo);
+                rrset.geo(geo);
                 // weight is only present for a couple record types
                 List<Integer> weights = creepyGeoRegionGroup.weight.get(type.toLowerCase() + "_weight");
                 if (weights != null && !weights.isEmpty())
-                    rrset.addProfile(Weighted.create(weights.get(0)));
+                    rrset.weighted(Weighted.create(weights.get(0)));
 
                 for (int i = 0; i < entry.getValue().size(); i++) {
                     rrset.add(ToRecord.toRData(entry.getValue().get(i).getAsJsonObject()));

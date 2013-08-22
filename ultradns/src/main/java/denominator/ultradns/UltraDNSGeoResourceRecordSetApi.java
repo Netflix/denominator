@@ -8,7 +8,6 @@ import static denominator.common.Util.filter;
 import static denominator.common.Util.nextOrNull;
 import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.profileContainsType;
-import static denominator.model.profile.Geo.asGeo;
 import static denominator.ultradns.UltraDNSFunctions.forTypeAndRData;
 
 import java.util.ArrayList;
@@ -30,7 +29,12 @@ import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
 
 final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
-    private static final Filter<ResourceRecordSet<?>> IS_GEO = profileContainsType("geo");
+    private static final Filter<ResourceRecordSet<?>> IS_GEO = new Filter<ResourceRecordSet<?>>(){
+        @Override
+        public boolean apply(ResourceRecordSet<?> in) {
+            return in != null && in.geo() != null;
+        }
+    };
     private static final int DEFAULT_TTL = 300;
 
     private final Collection<String> supportedTypes;
@@ -140,7 +144,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         int ttlToApply = rrset.ttl() != null ? rrset.ttl() : DEFAULT_TTL;
         String group = rrset.qualifier();
 
-        Map<String, Collection<String>> regions = asGeo(rrset).regions();
+        Map<String, Collection<String>> regions = rrset.geo().regions();
         DirectionalGroup directionalGroup = new DirectionalGroup();
         directionalGroup.name = group;
         directionalGroup.regionToTerritories = regions;
