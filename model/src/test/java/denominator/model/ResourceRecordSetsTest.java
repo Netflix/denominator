@@ -7,16 +7,11 @@ import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
 import static denominator.model.ResourceRecordSets.nameTypeAndQualifierEqualTo;
 import static denominator.model.ResourceRecordSets.ns;
-import static denominator.model.ResourceRecordSets.profileContainsType;
 import static denominator.model.ResourceRecordSets.ptr;
 import static denominator.model.ResourceRecordSets.spf;
-import static denominator.model.ResourceRecordSets.toProfileTypes;
-import static denominator.model.ResourceRecordSets.tryFindProfile;
 import static denominator.model.ResourceRecordSets.txt;
-import static denominator.model.ResourceRecordSets.withoutProfile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
@@ -30,7 +25,6 @@ import org.testng.annotations.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import com.google.common.collect.ForwardingMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
@@ -46,7 +40,6 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import denominator.model.profile.Geo;
-import denominator.model.profile.Weighted;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
@@ -130,72 +123,6 @@ public class ResourceRecordSetsTest {
         assertTrue(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), geoRRS.qualifier()).apply(geoRRS));
     }
 
-    public void withoutProfileReturnsFalseOnNull() {
-        assertFalse(withoutProfile().apply(null));
-    }
-
-    public void withoutProfileReturnsFalseWhenProfileNotEmpty() {
-        assertFalse(withoutProfile().apply(geoRRS));
-    }
-
-    public void withoutProfileReturnsTrueWhenProfileEmpty() {
-        assertTrue(withoutProfile().apply(aRRS));
-    }
-
-    public void profileContainsTypeReturnsFalseOnNull() {
-        assertFalse(profileContainsType("geo").apply(null));
-    }
-
-    public void profileContainsTypeReturnsFalseOnDifferentType() {
-        assertFalse(profileContainsType("weighted").apply(geoRRS));
-    }
-
-    public void profileContainsTypeReturnsFalseOnAbsent() {
-        assertFalse(profileContainsType("geo").apply(aRRS));
-    }
-
-    public void profileContainsTypeReturnsTrueOnSameType() {
-        assertTrue(profileContainsType("geo").apply(geoRRS));
-    }
-
-    static final class Foo extends ForwardingMap<String, Object> {
-
-        @Override
-        protected Map<String, Object> delegate() {
-            return null;
-        }
-
-    }
-
-    public void tryFindProfileReturnsAbsentOnDifferentType() {
-        assertNull(tryFindProfile(aRRS, "geo"));
-    }
-
-    public void tryFindProfileReturnsProfileOnSameType() {
-        assertEquals(tryFindProfile(geoRRS, "geo"), geo);
-    }
-
-    public void toProfileTypesEmptyOnBasicRRSet() {
-        assertEquals(toProfileTypes(aRRS), ImmutableSet.of());
-    }
-
-    public void toProfileTypesWithSingleProfile() {
-        assertEquals(toProfileTypes(geoRRS), ImmutableSet.of("geo"));
-    }
-
-    public void toProfileTypesWithMultipleProfile() {
-        ResourceRecordSet<AData> geoWeightedRRS = ResourceRecordSet.<AData> builder()
-                .name("www.denominator.io.")
-                .type("A")
-                .qualifier("US-East")
-                .ttl(3600)
-                .add(AData.create("1.1.1.1"))
-                .geo(geo)
-                .weighted(Weighted.create(2))
-                .build();
-        assertEquals(toProfileTypes(geoWeightedRRS), ImmutableSet.of("geo", "weighted"));
-    }
-
     @DataProvider(name = "a")
     public Object[][] createData() {
         Object[][] data = new Object[28][3];
@@ -204,14 +131,14 @@ public class ResourceRecordSetsTest {
                                       .name("www.denominator.io.")
                                       .type("A")
                                       .add(AData.create("192.0.2.1")).build();
-        data[0][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[]}";
+        data[0][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"records\":[{\"address\":\"192.0.2.1\"}]}";
         data[1][0] = a("www.denominator.io.", 3600, "192.0.2.1");
         data[1][1] = ResourceRecordSet.<AData> builder()
                                       .name("www.denominator.io.")
                                       .type("A")
                                       .ttl(3600)
                                       .add(AData.create("192.0.2.1")).build();
-        data[1][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"ttl\":3600,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[]}";
+        data[1][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"ttl\":3600,\"records\":[{\"address\":\"192.0.2.1\"}]}";
         data[2][0] = a("www.denominator.io.", ImmutableSet.of("192.0.2.1"));
         data[2][1] = data[0][1];
         data[2][2] = data[0][2];
@@ -223,14 +150,14 @@ public class ResourceRecordSetsTest {
                                       .name("www.denominator.io.")
                                       .type("AAAA")
                                       .add(AAAAData.create("1234:ab00:ff00::6b14:abcd")).build();
-        data[4][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"AAAA\",\"records\":[{\"address\":\"1234:ab00:ff00::6b14:abcd\"}],\"profiles\":[]}";
+        data[4][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"AAAA\",\"records\":[{\"address\":\"1234:ab00:ff00::6b14:abcd\"}]}";
         data[5][0] = aaaa("www.denominator.io.", 3600, "1234:ab00:ff00::6b14:abcd");
         data[5][1] = ResourceRecordSet.<AAAAData> builder()
                                       .name("www.denominator.io.")
                                       .type("AAAA")
                                       .ttl(3600)
                                       .add(AAAAData.create("1234:ab00:ff00::6b14:abcd")).build();
-        data[5][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"AAAA\",\"ttl\":3600,\"records\":[{\"address\":\"1234:ab00:ff00::6b14:abcd\"}],\"profiles\":[]}";
+        data[5][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"AAAA\",\"ttl\":3600,\"records\":[{\"address\":\"1234:ab00:ff00::6b14:abcd\"}]}";
         data[6][0] = aaaa("www.denominator.io.", ImmutableSet.of("1234:ab00:ff00::6b14:abcd"));
         data[6][1] = data[4][1];
         data[6][2] = data[4][2];
@@ -242,14 +169,14 @@ public class ResourceRecordSetsTest {
                                       .name("www.denominator.io.")
                                       .type("CNAME")
                                       .add(CNAMEData.create("www1.denominator.io.")).build();
-        data[8][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"CNAME\",\"records\":[{\"cname\":\"www1.denominator.io.\"}],\"profiles\":[]}";
+        data[8][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"CNAME\",\"records\":[{\"cname\":\"www1.denominator.io.\"}]}";
         data[9][0] = cname("www.denominator.io.", 3600, "www1.denominator.io.");
         data[9][1] = ResourceRecordSet.<CNAMEData> builder()
                                       .name("www.denominator.io.")
                                       .type("CNAME")
                                       .ttl(3600)
                                       .add(CNAMEData.create("www1.denominator.io.")).build();
-        data[9][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"CNAME\",\"ttl\":3600,\"records\":[{\"cname\":\"www1.denominator.io.\"}],\"profiles\":[]}";
+        data[9][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"CNAME\",\"ttl\":3600,\"records\":[{\"cname\":\"www1.denominator.io.\"}]}";
         data[10][0] = cname("www.denominator.io.", ImmutableSet.of("www1.denominator.io."));
         data[10][1] = data[8][1];
         data[10][2] = data[8][2];
@@ -261,14 +188,14 @@ public class ResourceRecordSetsTest {
                                        .name("denominator.io.")
                                        .type("NS")
                                        .add(NSData.create("ns.denominator.io.")).build();
-        data[12][2] = "{\"name\":\"denominator.io.\",\"type\":\"NS\",\"records\":[{\"nsdname\":\"ns.denominator.io.\"}],\"profiles\":[]}";
+        data[12][2] = "{\"name\":\"denominator.io.\",\"type\":\"NS\",\"records\":[{\"nsdname\":\"ns.denominator.io.\"}]}";
         data[13][0] = ns("denominator.io.", 3600, "ns.denominator.io.");
         data[13][1] = ResourceRecordSet.<NSData> builder()
                                        .name("denominator.io.")
                                        .type("NS")
                                        .ttl(3600)
                                        .add(NSData.create("ns.denominator.io.")).build();
-        data[13][2] = "{\"name\":\"denominator.io.\",\"type\":\"NS\",\"ttl\":3600,\"records\":[{\"nsdname\":\"ns.denominator.io.\"}],\"profiles\":[]}";
+        data[13][2] = "{\"name\":\"denominator.io.\",\"type\":\"NS\",\"ttl\":3600,\"records\":[{\"nsdname\":\"ns.denominator.io.\"}]}";
         data[14][0] = ns("denominator.io.", ImmutableSet.of("ns.denominator.io."));
         data[14][1] = data[12][1];
         data[14][2] = data[12][2];
@@ -280,14 +207,14 @@ public class ResourceRecordSetsTest {
                                        .name("denominator.io.")
                                        .type("PTR")
                                        .add(PTRData.create("ptr.denominator.io.")).build();
-        data[16][2] = "{\"name\":\"denominator.io.\",\"type\":\"PTR\",\"records\":[{\"ptrdname\":\"ptr.denominator.io.\"}],\"profiles\":[]}";
+        data[16][2] = "{\"name\":\"denominator.io.\",\"type\":\"PTR\",\"records\":[{\"ptrdname\":\"ptr.denominator.io.\"}]}";
         data[17][0] = ptr("denominator.io.", 3600, "ptr.denominator.io.");
         data[17][1] = ResourceRecordSet.<PTRData> builder()
                                        .name("denominator.io.")
                                        .type("PTR")
                                        .ttl(3600)
                                        .add(PTRData.create("ptr.denominator.io.")).build();
-        data[17][2] = "{\"name\":\"denominator.io.\",\"type\":\"PTR\",\"ttl\":3600,\"records\":[{\"ptrdname\":\"ptr.denominator.io.\"}],\"profiles\":[]}";
+        data[17][2] = "{\"name\":\"denominator.io.\",\"type\":\"PTR\",\"ttl\":3600,\"records\":[{\"ptrdname\":\"ptr.denominator.io.\"}]}";
         data[18][0] = ptr("denominator.io.", ImmutableSet.of("ptr.denominator.io."));
         data[18][1] = data[16][1];
         data[18][2] = data[16][2];
@@ -299,14 +226,14 @@ public class ResourceRecordSetsTest {
                                        .name("denominator.io.")
                                        .type("TXT")
                                        .add(TXTData.create("\"made in sweden\"")).build();
-        data[20][2] = "{\"name\":\"denominator.io.\",\"type\":\"TXT\",\"records\":[{\"txtdata\":\"\\\"made in sweden\\\"\"}],\"profiles\":[]}";
+        data[20][2] = "{\"name\":\"denominator.io.\",\"type\":\"TXT\",\"records\":[{\"txtdata\":\"\\\"made in sweden\\\"\"}]}";
         data[21][0] = txt("denominator.io.", 3600, "\"made in sweden\"");
         data[21][1] = ResourceRecordSet.<TXTData> builder()
                                        .name("denominator.io.")
                                        .type("TXT")
                                        .ttl(3600)
                                        .add(TXTData.create("\"made in sweden\"")).build();
-        data[21][2] = "{\"name\":\"denominator.io.\",\"type\":\"TXT\",\"ttl\":3600,\"records\":[{\"txtdata\":\"\\\"made in sweden\\\"\"}],\"profiles\":[]}";
+        data[21][2] = "{\"name\":\"denominator.io.\",\"type\":\"TXT\",\"ttl\":3600,\"records\":[{\"txtdata\":\"\\\"made in sweden\\\"\"}]}";
         data[22][0] = txt("denominator.io.", ImmutableSet.of("\"made in sweden\""));
         data[22][1] = data[20][1];
         data[22][2] = data[20][2];
@@ -318,14 +245,14 @@ public class ResourceRecordSetsTest {
                                        .name("denominator.io.")
                                        .type("SPF")
                                        .add(SPFData.create("\"v=spf1 a mx -all\"")).build();
-        data[24][2] = "{\"name\":\"denominator.io.\",\"type\":\"SPF\",\"records\":[{\"txtdata\":\"\\\"v=spf1 a mx -all\\\"\"}],\"profiles\":[]}";
+        data[24][2] = "{\"name\":\"denominator.io.\",\"type\":\"SPF\",\"records\":[{\"txtdata\":\"\\\"v=spf1 a mx -all\\\"\"}]}";
         data[25][0] = spf("denominator.io.", 3600, "\"v=spf1 a mx -all\"");
         data[25][1] = ResourceRecordSet.<SPFData> builder()
                                        .name("denominator.io.")
                                        .type("SPF")
                                        .ttl(3600)
                                        .add(SPFData.create("\"v=spf1 a mx -all\"")).build();
-        data[25][2] = "{\"name\":\"denominator.io.\",\"type\":\"SPF\",\"ttl\":3600,\"records\":[{\"txtdata\":\"\\\"v=spf1 a mx -all\\\"\"}],\"profiles\":[]}";
+        data[25][2] = "{\"name\":\"denominator.io.\",\"type\":\"SPF\",\"ttl\":3600,\"records\":[{\"txtdata\":\"\\\"v=spf1 a mx -all\\\"\"}]}";
         data[26][0] = spf("denominator.io.", ImmutableSet.of("\"v=spf1 a mx -all\""));
         data[26][1] = data[24][1];
         data[26][2] = data[24][2];

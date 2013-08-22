@@ -142,7 +142,6 @@ class GeoResourceRecordSetCommands {
                                                  .ttl(ttl)
                                                  .weighted(rrs.weighted())
                                                  .geo(rrs.geo())
-                                                 .addAllProfile(rrs.profiles())
                                                  .addAll(rrs.records()).build());
                     }
                     done = true;

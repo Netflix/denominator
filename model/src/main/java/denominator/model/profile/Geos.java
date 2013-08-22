@@ -2,11 +2,9 @@ package denominator.model.profile;
 
 import static denominator.common.Preconditions.checkArgument;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -65,15 +63,6 @@ public class Geos {
         if (noop) {
             return existing;
         }
-        // TODO: remove in 4.0
-        List<Map<String, Object>> updateProfiles = new ArrayList<Map<String, Object>>();
-        for (Map<String, Object> profile : existing.profiles()) {
-            if ("geo".equals(profile.get("type"))) {
-                updateProfiles.add(Geo.create(regionsToApply));
-            } else {
-                updateProfiles.add(profile);
-            }
-        }
         return ResourceRecordSet.<Map<String, Object>> builder()//
                 .name(existing.name())//
                 .type(existing.type())//
@@ -81,7 +70,6 @@ public class Geos {
                 .ttl(existing.ttl())//
                 .geo(Geo.create(regionsToApply))//
                 .weighted(existing.weighted())//
-                .profile(updateProfiles)
                 .addAll(existing.records()).build();
     }
 }
