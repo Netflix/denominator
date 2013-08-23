@@ -1,3 +1,6 @@
+### Version 4.0.2
+* ttl field should follow qualifier
+
 ### Version 4.0.1
 * remove map implementation from known types except rdata.
 

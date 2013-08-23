@@ -30,8 +30,8 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
 
     private final String name;
     private final String type;
-    private final Integer ttl;
     private final String qualifier;
+    private final Integer ttl;
     private final List<D> records;
     private final Geo geo;
     private final Weighted weighted;
