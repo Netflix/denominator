@@ -5,12 +5,8 @@ import static org.testng.Assert.assertNotEquals;
 import static org.testng.Assert.assertNull;
 
 import java.io.IOException;
-import java.util.Map;
 
 import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Test
 public class ZoneTest {
@@ -21,7 +17,7 @@ public class ZoneTest {
         assertNull(name.id());
         assertEquals(name, new Zone("denominator.io.", null));
         assertEquals(name.hashCode(), new Zone("denominator.io.", null).hashCode());
-        assertEquals(name.toString(), "{name=denominator.io.}");
+        assertEquals(name.toString(), "Zone [name=denominator.io.]");
 
         Zone id = Zone.create("denominator.io.", "ABCD");
 
@@ -29,23 +25,23 @@ public class ZoneTest {
         assertEquals(id.id(), "ABCD");
         assertEquals(id, new Zone("denominator.io.", "ABCD"));
         assertEquals(id.hashCode(), new Zone("denominator.io.", "ABCD").hashCode());
-        assertEquals(id.toString(), "{name=denominator.io., id=ABCD}");
+        assertEquals(id.toString(), "Zone [name=denominator.io., id=ABCD]");
 
         assertNotEquals(name, id);
         assertNotEquals(name.hashCode(), id.hashCode());
     }
 
-    public void serializeNaturallyAsJson() throws JsonProcessingException {
-        assertEquals(new ObjectMapper().writeValueAsString(Zone.create("denominator.io.")),
+    public void serializeNaturallyAsJson() {
+        assertEquals(ResourceRecordSetsTest.gson.toJson(Zone.create("denominator.io.")),
                 "{\"name\":\"denominator.io.\"}");
-        assertEquals(new ObjectMapper().writeValueAsString(Zone.create("denominator.io.", "ABCD")),
+        assertEquals(ResourceRecordSetsTest.gson.toJson(Zone.create("denominator.io.", "ABCD")),
                 "{\"name\":\"denominator.io.\",\"id\":\"ABCD\"}");
     }
 
-    public void equalToDeserializedMap() throws IOException {
-        assertEquals(new ObjectMapper().readValue("{\"name\":\"denominator.io.\"}", Map.class),
+    public void deserializesNaturallyFromJson() throws IOException {
+        assertEquals(ResourceRecordSetsTest.gson.fromJson("{\"name\":\"denominator.io.\"}", Zone.class),
                 Zone.create("denominator.io."));
-        assertEquals(new ObjectMapper().readValue("{\"name\":\"denominator.io.\",\"id\":\"ABCD\"}", Map.class),
+        assertEquals(ResourceRecordSetsTest.gson.fromJson("{\"name\":\"denominator.io.\",\"id\":\"ABCD\"}", Zone.class),
                 Zone.create("denominator.io.", "ABCD"));
     }
 
