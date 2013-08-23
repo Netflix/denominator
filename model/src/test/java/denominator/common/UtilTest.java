@@ -2,6 +2,7 @@ package denominator.common;
 
 import static denominator.common.Util.and;
 import static denominator.common.Util.concat;
+import static denominator.common.Util.equal;
 import static denominator.common.Util.filter;
 import static denominator.common.Util.join;
 import static denominator.common.Util.nextOrNull;
@@ -45,6 +46,15 @@ public class UtilTest {
     public void joinNadaReturnsEmpty() {
         assertEquals(join(';', (Object[]) null), "");
         assertEquals(join(';', new Object[] {}), "");
+    }
+
+    @Test
+    public void equalTest() {
+        assertTrue(equal(null, null));
+        assertTrue(equal("1", "1"));
+        assertFalse(equal(null, "1"));
+        assertFalse(equal("1", null));
+        assertFalse(equal("1", "2"));
     }
 
     @Test

@@ -4,7 +4,7 @@ import static denominator.common.Preconditions.checkNotNull;
 
 import java.beans.ConstructorProperties;
 import java.util.Collection;
-import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -18,7 +18,7 @@ import java.util.Map;
  * Geo profile = Geo.create(Map.of(&quot;United States (US)&quot;, Collection.of(&quot;Maryland&quot;)));
  * </pre>
  */
-public class Geo extends LinkedHashMap<String, Object> {
+public class Geo {
 
     /**
      * @param regions
@@ -30,9 +30,11 @@ public class Geo extends LinkedHashMap<String, Object> {
         return new Geo(regions);
     }
 
+    private final Map<String, Collection<String>> regions;
+
     @ConstructorProperties({ "regions" })
     private Geo(Map<String, Collection<String>> regions) {
-        put("regions", checkNotNull(regions, "regions"));
+        this.regions = Collections.unmodifiableMap(checkNotNull(regions, "regions"));
     }
 
     /**
@@ -42,10 +44,27 @@ public class Geo extends LinkedHashMap<String, Object> {
      * 
      * @since 1.3
      */
-    @SuppressWarnings("unchecked")
     public Map<String, Collection<String>> regions() {
-        return Map.class.cast(get("regions"));
+        return regions;
     }
 
-    private static final long serialVersionUID = 1L;
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+        if (!(o instanceof Geo))
+            return false;
+        Geo that = Geo.class.cast(o);
+        return regions().equals(that.regions());
+    }
+
+    @Override
+    public int hashCode() {
+        return regions().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder().append("Geo [regions=").append(regions()).append("]").toString();
+    }
 }
