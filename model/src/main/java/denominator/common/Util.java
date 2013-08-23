@@ -17,6 +17,10 @@ public class Util {
     private Util() { // no instances
     }
 
+    public static boolean equal(Object a, Object b) {
+        return a == b || (a != null && a.equals(b));
+    }
+    
     /** returns the {@code reader} as a string without closing it. */
     public static String slurp(Reader reader) throws IOException {
         StringBuilder to = new StringBuilder();

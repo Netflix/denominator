@@ -20,7 +20,7 @@ enum SerializeRRS {
                     .append("</SetIdentifier>");
         // note lowercase as this is a supported profile
         if (rrs.weighted() != null) {
-            builder.append("<Weight>").append(rrs.weighted().get("weight")).append("</Weight>");
+            builder.append("<Weight>").append(rrs.weighted().weight()).append("</Weight>");
         }
         // default ttl from the amazon console is 300
         builder.append("<TTL>").append(rrs.ttl() == null ? 300 : rrs.ttl()).append("</TTL>");

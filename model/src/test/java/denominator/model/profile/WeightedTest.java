@@ -3,14 +3,11 @@ package denominator.model.profile;
 import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
-import java.util.Map;
 
 import org.testng.annotations.Test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import denominator.model.ResourceRecordSet;
+import denominator.model.ResourceRecordSetsTest;
 import denominator.model.rdata.AData;
 
 @Test
@@ -24,12 +21,12 @@ public class WeightedTest {
 
     String asJson = "{\"weight\":2}";
 
-    public void serializeNaturallyAsJson() throws JsonProcessingException {
-        assertEquals(new ObjectMapper().writeValueAsString(weighted), asJson);
+    public void serializeNaturallyAsJson() {
+        assertEquals(ResourceRecordSetsTest.gson.toJson(weighted), asJson);
     }
 
-    public void equalToDeserializedMap() throws IOException {
-        assertEquals(new ObjectMapper().readValue(asJson, Map.class), weighted);
+    public void deserializesNaturallyFromJson() throws IOException {
+        assertEquals(ResourceRecordSetsTest.gson.fromJson(asJson, Weighted.class), weighted);
     }
 
     static ResourceRecordSet<AData> weightedRRS = ResourceRecordSet.<AData> builder()//
