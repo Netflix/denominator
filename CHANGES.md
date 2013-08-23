@@ -1,3 +1,6 @@
+### Version 4.0.1
+* remove map implementation from known types except rdata.
+
 ### Version 4.0
 * remove `ResourceRecordSet.profiles()`
 

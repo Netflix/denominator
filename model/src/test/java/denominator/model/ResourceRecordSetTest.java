@@ -3,12 +3,8 @@ package denominator.model;
 import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
-import java.util.Map;
 
 import org.testng.annotations.Test;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import denominator.model.rdata.AData;
 
@@ -29,12 +25,12 @@ public class ResourceRecordSetTest {
         assertEquals(record.records().get(0), AData.create("192.0.2.1"));
     }
 
-    public void serializeNaturallyAsJson() throws JsonProcessingException {
-        assertEquals(new ObjectMapper().writeValueAsString(record), asJson);
+    public void serializeNaturallyAsJson() {
+        assertEquals(ResourceRecordSetsTest.gson.toJson(record), asJson);
     }
 
-    public void equalToDeserializedMap() throws IOException {
-        assertEquals(new ObjectMapper().readValue(asJson, Map.class), record);
+    public void deserializesNaturallyFromJson() throws IOException {
+        assertEquals(ResourceRecordSetsTest.gson.fromJson(asJson, ResourceRecordSet.class), record);
     }
 
     @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "record")

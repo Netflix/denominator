@@ -4,8 +4,6 @@ import static denominator.common.Preconditions.checkArgument;
 
 import java.beans.ConstructorProperties;
 
-import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
-
 /**
  * Record sets with this profile are load balanced, differentiated by an integer
  * {@code weight}.
@@ -20,7 +18,7 @@ import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
  * 
  * @since 1.3
  */
-public class Weighted extends NumbersAreUnsignedIntsLinkedHashMap {
+public class Weighted {
 
     /**
      * @param weight
@@ -30,10 +28,12 @@ public class Weighted extends NumbersAreUnsignedIntsLinkedHashMap {
         return new Weighted(weight);
     }
 
+    private final int weight;
+
     @ConstructorProperties({ "weight" })
     private Weighted(int weight) {
         checkArgument(weight >= 0, "weight must be positive");
-        put("weight", weight);
+        this.weight = weight;
     }
 
     /**
@@ -52,8 +52,26 @@ public class Weighted extends NumbersAreUnsignedIntsLinkedHashMap {
      * 
      */
     public int weight() {
-        return Integer.class.cast(get("weight"));
+        return weight;
     }
 
-    private static final long serialVersionUID = 1L;
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+        if (!(o instanceof Weighted))
+            return false;
+        Weighted that = Weighted.class.cast(o);
+        return weight() == that.weight();
+    }
+
+    @Override
+    public int hashCode() {
+        return 37 * 17 + weight();
+    }
+
+    @Override
+    public String toString() {
+        return new StringBuilder().append("Weighted [weight=").append(weight()).append("]").toString();
+    }
 }

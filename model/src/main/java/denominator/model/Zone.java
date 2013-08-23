@@ -1,9 +1,9 @@
 package denominator.model;
 
 import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.equal;
 
 import java.beans.ConstructorProperties;
-import java.util.LinkedHashMap;
 
 /**
  * A zone is a delegated portion of DNS. We use the word {@code zone} instead of
@@ -11,7 +11,7 @@ import java.util.LinkedHashMap;
  * 
  * @since 1.2 See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class Zone extends LinkedHashMap<String, Object> {
+public class Zone {
 
     /**
      * Represent a zone without an {@link #id() id}.
@@ -35,16 +35,13 @@ public class Zone extends LinkedHashMap<String, Object> {
         return new Zone(name, id);
     }
 
+    private final String name;
+    private final String id;
+
     @ConstructorProperties({ "name", "id" })
     Zone(String name, String id) {
-        put("name", checkNotNull(name, "name"));
-        if (id != null)
-            put("id", id);
-    }
-
-    @SuppressWarnings("unused")
-    private Zone(){
-        // for serializers
+        this.name = checkNotNull(name, "name");
+        this.id = id;
     }
 
     /**
@@ -52,7 +49,7 @@ public class Zone extends LinkedHashMap<String, Object> {
      * includes a trailing dot, ex. "{@code netflix.com.}"
      */
     public String name() {
-        return get("name").toString();
+        return name;
     }
 
     /**
@@ -64,7 +61,7 @@ public class Zone extends LinkedHashMap<String, Object> {
      * @see #idOrName()
      */
     public String id() {
-        return (String) get("id");
+        return id;
     }
 
     /**
@@ -85,5 +82,33 @@ public class Zone extends LinkedHashMap<String, Object> {
         return id() != null ? id() : name();
     }
 
-    private static final long serialVersionUID = 1L;
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+        if (!(o instanceof Zone))
+            return false;
+        Zone that = Zone.class.cast(o);
+        return equal(name(), that.name()) && equal(id(), that.id());
+    }
+    
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + name().hashCode();
+        result = prime * result + ((id() == null) ? 0 : id().hashCode());
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Zone [");
+        builder.append("name=").append(name());
+        if (id() != null)
+            builder.append(", ").append("id=").append(id());
+        builder.append("]");
+        return builder.toString();
+    }
 }

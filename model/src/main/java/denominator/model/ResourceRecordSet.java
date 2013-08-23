@@ -2,11 +2,13 @@ package denominator.model;
 
 import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
+import static denominator.common.Util.equal;
 
 import java.beans.ConstructorProperties;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -15,8 +17,8 @@ import denominator.model.profile.Weighted;
 
 /**
  * A grouping of resource records by name and type. In implementation, this is
- * an immutable list of rdata values corresponding to records sharing the same
- * {@link #name() name} and {@link #type}.
+ * an unmodifiable list of rdata values corresponding to records sharing the
+ * same {@link #name() name} and {@link #type}.
  * 
  * @param <D>
  *            RData type shared across elements. This may be empty in the case
@@ -24,35 +26,31 @@ import denominator.model.profile.Weighted;
  * 
  *            See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAreUnsignedIntsLinkedHashMap {
+public class ResourceRecordSet<D extends Map<String, Object>> {
 
-    @SuppressWarnings("unused")
-    private ResourceRecordSet() {
-    }
+    private final String name;
+    private final String type;
+    private final Integer ttl;
+    private final String qualifier;
+    private final List<D> records;
+    private final Geo geo;
+    private final Weighted weighted;
 
     @ConstructorProperties({ "name", "type", "qualifier", "ttl", "records", "geo", "weighted" })
     ResourceRecordSet(String name, String type, String qualifier, Integer ttl, List<D> records, Geo geo,
             Weighted weighted) {
         checkArgument(checkNotNull(name, "name").length() <= 255, "Name must be limited to 255 characters");
-        put("name", name);
-        put("type", checkNotNull(type, "type of %s", name));
-        if (qualifier != null) {
-            put("qualifier", qualifier);
-        }
+        this.name = name;
+        this.type = checkNotNull(type, "type of %s", name);
+        this.qualifier = qualifier;
         if (ttl != null) {
             boolean rfc2181 = ttl >= 0 && ttl.longValue() <= 0x7FFFFFFFL;
             checkArgument(rfc2181, "Invalid ttl value: %s, must be 0-2147483647", ttl);
-            put("ttl", ttl);
         }
-        if (records != null) {
-            put("records", records);
-        }
-        if (geo != null) {
-            put("geo", geo);
-        }
-        if (weighted != null) {
-            put("weighted", weighted);
-        }
+        this.ttl = ttl;
+        this.records = Collections.unmodifiableList(records != null ? records : Collections.<D> emptyList());
+        this.geo = geo;
+        this.weighted = weighted;
     }
 
     /**
@@ -62,7 +60,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
      * @since 1.3
      */
     public String name() {
-        return get("name").toString();
+        return name;
     }
 
     /**
@@ -71,7 +69,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
      * @since 1.3
      */
     public String type() {
-        return get("type").toString();
+        return type;
     }
 
     /**
@@ -84,7 +82,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
      * @since 1.3
      */
     public String qualifier() {
-        return (String) get("qualifier");
+        return qualifier;
     }
 
     /**
@@ -95,7 +93,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
      * @since 1.3
      */
     public Integer ttl() {
-        return (Integer) get("ttl");
+        return ttl;
     }
 
     /**
@@ -112,7 +110,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
      * @since 3.7
      */
     public Geo geo() {
-        return (Geo) get("geo");
+        return geo;
     }
 
     /**
@@ -123,7 +121,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
      * @since 3.7
      */
     public Weighted weighted() {
-        return (Weighted) get("weighted");
+        return weighted;
     }
 
     /**
@@ -132,9 +130,53 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
      * 
      * @since 2.3
      */
-    @SuppressWarnings("unchecked")
     public List<D> records() {
-        return List.class.cast(get("records"));
+        return records;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == this)
+            return true;
+        if (!(o instanceof ResourceRecordSet))
+            return false;
+        ResourceRecordSet<?> that = ResourceRecordSet.class.cast(o);
+        return equal(name(), that.name()) && equal(type(), that.type()) && equal(qualifier(), that.qualifier())
+                && equal(ttl(), that.ttl()) && equal(records(), that.records()) && equal(geo(), that.geo())
+                && equal(weighted(), that.weighted());
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * name().hashCode();
+        result = prime * type().hashCode();
+        result = prime * result + ((qualifier() == null) ? 0 : qualifier().hashCode());
+        result = prime * result + ((ttl() == null) ? 0 : ttl().hashCode());
+        result = prime * records().hashCode();
+        result = prime * result + ((geo() == null) ? 0 : geo().hashCode());
+        result = prime * result + ((weighted() == null) ? 0 : weighted().hashCode());
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("ResourceRecordSet [");
+        builder.append("name=").append(name());
+        builder.append(", ").append("type=").append(type());
+        if (qualifier() != null)
+            builder.append(", ").append("qualifier=").append(qualifier());
+        if (ttl() != null)
+            builder.append(", ").append("ttl=").append(ttl());
+        builder.append(", ").append("records=").append(records());
+        if (geo() != null)
+            builder.append(", ").append("geo=").append(geo());
+        if (weighted() != null)
+            builder.append(", ").append("weighted=").append(weighted());
+        builder.append("]");
+        return builder.toString();
     }
 
     public static <D extends Map<String, Object>> Builder<D> builder() {
@@ -202,6 +244,4 @@ public class ResourceRecordSet<D extends Map<String, Object>> extends NumbersAre
             return records;
         }
     }
-
-    private static final long serialVersionUID = 1L;
 }
