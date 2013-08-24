@@ -1,3 +1,6 @@
+### Version 4.5
+* Adds example server
+
 ### Version 4.4.2
 * Updates to feign 8.1
 
