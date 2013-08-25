@@ -49,6 +49,7 @@ import denominator.ultradns.UltraDNSContentHandlers.RecordListHandler;
 import denominator.ultradns.UltraDNSContentHandlers.RegionTableHandler;
 import feign.Feign;
 import feign.Feign.Defaults;
+import feign.Request.Options;
 import feign.FeignException;
 import feign.ReflectiveFeign;
 import feign.codec.DecodeException;
@@ -163,6 +164,17 @@ public class UltraDNSProvider extends BasicProvider {
     @dagger.Module(injects = UltraDNSResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
             Defaults.class, ReflectiveFeign.Module.class })
     public static final class FeignModule {
+
+        /**
+         * {@link UltraDNS#updateDirectionalPoolRecord(DirectionalRecord, DirectionalGroup)}
+         * and
+         * {@link UltraDNS#addDirectionalPoolRecord(DirectionalRecord, DirectionalGroup, String)}
+         * can take up to 10 minutes to complete.
+         */
+        @Provides
+        Options options() {
+            return new Options(10 * 1000, 10 * 60 * 1000);
+        }
 
         @Provides(type = SET)
         Decoder networkStatusDecoder() {
