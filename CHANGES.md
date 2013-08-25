@@ -1,3 +1,6 @@
+### Version 4.0.3
+* update socket read timeout for ultradns to 10m to accomodate updateDirectionalPoolRecord and addDirectionalPoolRecord latency.
+
 ### Version 4.0.2
 * ttl field should follow qualifier
 
