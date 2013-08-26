@@ -162,6 +162,26 @@ $ cd denominator/
 $ ./gradlew clean test install
 ```
 
+## Intellij Idea IDE
+
+Generate the Idea project files:
+
+```bash
+$ ./gradlew idea
+```
+
+Import the project:
+
+1. File > Import Project...
+2. Preferences > Compiler > Annotation Processors > Check "Enable annotation processing"
+
+Run the live tests:
+
+1. Choose a live test (e.g. ```CloudDNSCheckConnectionLiveTest```)
+2. Right click and select "Create CloudDNSCheckConnectionLiveTest"
+3. VM options: ```-ea -Dclouddns.username=<username> -Dclouddns.password=<password>```
+4. Working directory: ```/path/to/denominator/clouddns```
+
 ## Feedback and Collaboration
 
 * For high-level updates, follow [denominatorOSS](https://twitter.com/denominatorOSS) on Twitter.
