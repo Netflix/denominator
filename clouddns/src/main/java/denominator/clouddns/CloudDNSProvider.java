@@ -21,6 +21,7 @@ import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.clouddns.RackspaceAdapters.DomainListAdapter;
 import denominator.clouddns.RackspaceAdapters.RecordListAdapter;
+import denominator.clouddns.RackspaceAdapters.JobIdAndStatusAdapter;
 import denominator.clouddns.RackspaceApis.CloudDNS;
 import denominator.clouddns.RackspaceApis.CloudIdentity;
 import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
@@ -52,12 +53,13 @@ public class CloudDNSProvider extends BasicProvider {
         return url;
     }
 
-    // TODO: verify when write support is added
     // http://docs.rackspace.com/cdns/api/v1.0/cdns-devguide/content/supported_record_types.htm
+    // PTR records can only be created with a live Cloud Server
+    // SRV records fail to be found by name and type, a bug has been filed and SRV records may be supported later
     @Override
     public Set<String> basicRecordTypes() {
         Set<String> types = new LinkedHashSet<String>();
-        types.addAll(Arrays.asList("A", "AAAA", "CNAME", "MX", "NS", "PTR", "SRV", "TXT"));
+        types.addAll(Arrays.asList("A", "AAAA", "CNAME", "MX", "NS", "TXT"));
         return types;
     }
 
@@ -128,6 +130,11 @@ public class CloudDNSProvider extends BasicProvider {
         @Provides(type = SET)
         TypeAdapter tokenIdAndPublicURLAdapter() {
             return new KeystoneAccessAdapter("rax:dns");
+        }
+
+        @Provides(type = SET)
+        TypeAdapter jobIdAndStatusAdapter(JobIdAndStatusAdapter adapter) {
+            return adapter;
         }
 
         @Provides(type = SET)
