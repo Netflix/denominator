@@ -1,5 +1,6 @@
 ### Version 4.3
 * Add `--alias-dnsname` flag to record commands.
+* Add create, update, and delete for Rackspace Cloud DNS.
 
 ### Version 4.2
 * Add support for Route53 alias record sets.

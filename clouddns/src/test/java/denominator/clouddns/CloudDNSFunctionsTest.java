@@ -1,16 +1,13 @@
 package denominator.clouddns;
 
-import static org.testng.Assert.assertEquals;
-import static denominator.clouddns.CloudDNSFunctions.toRDataMap;
-
+import com.google.common.collect.ImmutableMap;
+import denominator.clouddns.RackspaceApis.Record;
 import org.testng.annotations.Test;
 
-import com.google.common.collect.ImmutableMap;
-
-import denominator.clouddns.RackspaceApis.Record;
+import static org.testng.Assert.assertEquals;
 
 @Test
-public class ToRDataTest {
+public class CloudDNSFunctionsTest {
 
     public void transformsNSRecordSet() {
         Record input = new Record();
@@ -19,7 +16,7 @@ public class ToRDataTest {
         input.ttl = 3600;
         input.data("dns1.stabletransit.com");
 
-        assertEquals(toRDataMap(input), ImmutableMap.<String, String> of(
+        assertEquals(CloudDNSFunctions.toRDataMap(input), ImmutableMap.<String, String> of(
         		"nsdname", "dns1.stabletransit.com"));
     }
 
@@ -30,7 +27,7 @@ public class ToRDataTest {
         input.ttl = 3600;
         input.data("Hello DNS");
 
-        assertEquals(toRDataMap(input), ImmutableMap.<String, String> of(
+        assertEquals(CloudDNSFunctions.toRDataMap(input), ImmutableMap.<String, String> of(
         		"txtdata", "Hello DNS"));
     }
 }

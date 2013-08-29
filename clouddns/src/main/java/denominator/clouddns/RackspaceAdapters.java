@@ -1,21 +1,55 @@
 package denominator.clouddns;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.Collections;
-import java.util.Comparator;
-
-import javax.inject.Inject;
-
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
 import denominator.clouddns.RackspaceApis.ListWithNext;
 import denominator.clouddns.RackspaceApis.Record;
+import denominator.clouddns.RackspaceApis.JobIdAndStatus;
 import denominator.model.Zone;
 
+import javax.inject.Inject;
+import java.io.IOException;
+import java.net.URI;
+import java.util.Collections;
+import java.util.Comparator;
+
 class RackspaceAdapters {
+    static class JobIdAndStatusAdapter extends TypeAdapter<JobIdAndStatus> {
+        @Inject
+        JobIdAndStatusAdapter() {
+        }
+
+        @Override
+        public void write(JsonWriter out, JobIdAndStatus value) throws IOException {
+            // never need to write this object
+        }
+
+        @Override
+        public JobIdAndStatus read(JsonReader reader) throws IOException {
+            JobIdAndStatus jobIdAndStatus = new JobIdAndStatus();
+
+            reader.beginObject();
+
+            while (reader.hasNext()) {
+                String key = reader.nextName();
+                if (key.equals("jobId")) {
+                    jobIdAndStatus.id = reader.nextString();
+                } else if (key.equals("status")) {
+                    jobIdAndStatus.status = reader.nextString();
+                } else {
+                    reader.skipValue();
+                }
+            }
+
+            reader.endObject();
+            reader.close();
+
+            return jobIdAndStatus;
+        }
+    }
+
     static class DomainListAdapter extends ListWithNextAdapter<Zone> {
         @Inject
         DomainListAdapter() {
@@ -57,14 +91,16 @@ class RackspaceAdapters {
             Record record = new Record();
             while (reader.hasNext()) {
                 String key = reader.nextName();
-                if (key.equals("name")) {
+                if (key.equals("id")) {
+                    record.id = reader.nextString();
+                } else if (key.equals("name")) {
                     record.name = reader.nextString();
                 } else if (key.equals("type")) {
                     record.type = reader.nextString();
                 } else if (key.equals("ttl")) {
                     record.ttl = reader.nextInt();
                 } else if (key.equals("data")) {
-                    record.data = reader.nextString();
+                    record.data(reader.nextString());
                 } else if (key.equals("priority")) {
                     record.priority = reader.nextInt();
                 } else {
