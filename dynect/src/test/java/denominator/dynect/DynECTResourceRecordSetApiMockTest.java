@@ -4,6 +4,8 @@ import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.io.Resources.getResource;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.dynect.DynECTProviderDynamicUpdateMockTest.session;
+import static denominator.dynect.DynECTTest.noneWithName;
+import static denominator.dynect.DynECTTest.noneWithNameAndType;
 import static denominator.model.ResourceRecordSets.a;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
@@ -49,10 +51,10 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void putFirstRecordPostsAndPublishes() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
+        server.enqueue(new MockResponse().setBody(success));
+        server.enqueue(new MockResponse().setBody(success));
         server.play();
 
         try {
@@ -80,8 +82,8 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void putExistingRecordDoesNothing() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(records1));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setBody(records1));
         server.play();
 
         try {
@@ -107,10 +109,10 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void putSecondRecordPostsRecordPublishes() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(records1));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setBody(records1));
+        server.enqueue(new MockResponse().setBody(success));
+        server.enqueue(new MockResponse().setBody(success));
         server.play();
 
         try {
@@ -152,12 +154,12 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void putReplacingRecordSet() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(records1));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setBody(records1));
+        server.enqueue(new MockResponse().setBody(success));
+        server.enqueue(new MockResponse().setBody(success));
+        server.enqueue(new MockResponse().setBody(success));
+        server.enqueue(new MockResponse().setBody(success));
         server.play();
 
         try {
@@ -188,8 +190,8 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void putRecordSetSkipsWhenEqual() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(records1));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setBody(records1));
         server.play();
 
         try {
@@ -210,11 +212,11 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void putOneLessRecordSendsDeleteAndPublish() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(records1And2));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setBody(records1And2));
+        server.enqueue(new MockResponse().setBody(success));
+        server.enqueue(new MockResponse().setBody(success));
+        server.enqueue(new MockResponse().setBody(success));
         server.play();
 
         try {
@@ -237,8 +239,8 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void listWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(records));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setBody(records));
         server.play();
 
         try {
@@ -260,8 +262,8 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "zone denominator.io not found")
     public void listWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithName));
         server.play();
 
         try {
@@ -278,8 +280,8 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void iterateByNameWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordsByName));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setBody(recordsByName));
         server.play();
 
         try {
@@ -298,8 +300,8 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void iterateByNameWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithName));
         server.play();
 
         try {
@@ -317,8 +319,8 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void getByNameAndTypeWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(records1And2));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setBody(records1And2));
         server.play();
 
         try {
@@ -337,8 +339,8 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void getByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
         server.play();
 
         try {
@@ -356,11 +358,11 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void deleteRRSet() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(recordIds1And2));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(success));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setBody(recordIds1And2));
+        server.enqueue(new MockResponse().setBody(success));
+        server.enqueue(new MockResponse().setBody(success));
+        server.enqueue(new MockResponse().setBody(success));
         server.play();
 
         try {
@@ -384,8 +386,8 @@ public class DynECTResourceRecordSetApiMockTest {
     @Test
     public void deleteAbsentRRSDoesNothing() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
         server.play();
 
         try {
