@@ -1,6 +1,5 @@
 package denominator.dynect;
 
-import static com.google.common.util.concurrent.Atomics.newReference;
 import static org.testng.Assert.assertEquals;
 
 import java.io.InputStreamReader;
@@ -28,43 +27,39 @@ public class GeoResourceRecordSetsDecoderTest {
     public void decodeZoneListWithNext() throws Throwable {
         Reader response = new InputStreamReader(getClass().getResourceAsStream("/geoservice.json"));
         Map<String, Collection<ResourceRecordSet<?>>> result = new DynECTDecoder<Map<String, Collection<ResourceRecordSet<?>>>>(
-                newReference(true), decoder).decode(response, null);
+                decoder).decode(response, null);
 
         assertEquals(result.size(), 1);
         assertEquals(result.keySet(), ImmutableSet.of("denominator.io"));
         List<ResourceRecordSet<?>> rrsets = ImmutableList.copyOf(result.get("denominator.io"));
-        assertEquals(rrsets.get(0), ResourceRecordSet.<CNAMEData> builder()
-                .name("srv.denominator.io")
-                .qualifier("Everywhere Else")
-                .type("CNAME")
-                .qualifier("Everywhere Else")
-                .ttl(300)
-                .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
-                .geo(Geo.create(ImmutableMultimap.<String, String> builder()
-                                                 .put("11", "11")
-                                                 .put("16", "16")
-                                                 .put("12", "12")
-                                                 .put("17", "17")
-                                                 .put("15", "15")
-                                                 .put("14", "14").build().asMap()))                                                   
-                .build());
-        assertEquals(rrsets.get(1), ResourceRecordSet.<CNAMEData> builder()
-                .name("srv.denominator.io")
-                .type("CNAME")
-                .qualifier("Europe")
-                .ttl(300)
-                .add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
-                .geo(Geo.create(ImmutableMultimap.of("13", "13").asMap()))
-                .build());
-        assertEquals(rrsets.get(2),ResourceRecordSet.<CNAMEData> builder()
-                .name("srv.denominator.io")
-                .type("CNAME")
-                .qualifier("Fallback")
-                .ttl(300)
-                .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
-                .geo(Geo.create(ImmutableMultimap.<String, String> builder()
-                                                 .put("Unknown IP", "@!")
-                                                 .put("Fallback", "@@").build().asMap()))
-                .build());
+        assertEquals(
+                rrsets.get(0),
+                ResourceRecordSet
+                        .<CNAMEData> builder()
+                        .name("srv.denominator.io")
+                        .qualifier("Everywhere Else")
+                        .type("CNAME")
+                        .qualifier("Everywhere Else")
+                        .ttl(300)
+                        .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
+                        .geo(Geo.create(ImmutableMultimap.<String, String> builder().put("11", "11").put("16", "16")
+                                .put("12", "12").put("17", "17").put("15", "15").put("14", "14").build().asMap()))
+                        .build());
+        assertEquals(
+                rrsets.get(1),
+                ResourceRecordSet.<CNAMEData> builder().name("srv.denominator.io").type("CNAME").qualifier("Europe")
+                        .ttl(300).add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
+                        .geo(Geo.create(ImmutableMultimap.of("13", "13").asMap())).build());
+        assertEquals(
+                rrsets.get(2),
+                ResourceRecordSet
+                        .<CNAMEData> builder()
+                        .name("srv.denominator.io")
+                        .type("CNAME")
+                        .qualifier("Fallback")
+                        .ttl(300)
+                        .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
+                        .geo(Geo.create(ImmutableMultimap.<String, String> builder().put("Unknown IP", "@!")
+                                .put("Fallback", "@@").build().asMap())).build());
     }
 }

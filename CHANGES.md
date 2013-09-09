@@ -1,3 +1,6 @@
+### Version 4.0.4
+* introduce dynect error handler as the api no longer returns errors as http 200.
+
 ### Version 4.0.3
 * update socket read timeout for ultradns to 10m to accomodate updateDirectionalPoolRecord and addDirectionalPoolRecord latency.
 
