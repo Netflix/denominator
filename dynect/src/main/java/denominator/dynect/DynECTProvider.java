@@ -39,6 +39,7 @@ import feign.Feign;
 import feign.Feign.Defaults;
 import feign.ReflectiveFeign;
 import feign.codec.Decoder;
+import feign.codec.ErrorDecoder;
 import feign.gson.GsonModule;
 
 public class DynECTProvider extends BasicProvider {
@@ -137,7 +138,7 @@ public class DynECTProvider extends BasicProvider {
 
     // unbound wildcards are not currently injectable in dagger.
     @SuppressWarnings("rawtypes")
-    @dagger.Module(injects = DynECTResourceRecordSetApi.Factory.class, complete = false, includes = {
+    @dagger.Module(injects = DynECTResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
             CountryToRegions.class, Defaults.class, ReflectiveFeign.Module.class, GsonModule.class })
     public static final class FeignModule {
 
@@ -166,45 +167,51 @@ public class DynECTProvider extends BasicProvider {
         }
 
         @Provides(type = SET)
-        Decoder loginDecoder(AtomicReference<Boolean> sessionValid) {
-            return new DynECTDecoder<String>(sessionValid, TokenDecoder.INSTANCE) {
+        Decoder loginDecoder() {
+            return new DynECTDecoder<String>(TokenDecoder.INSTANCE) {
             };
         }
 
         @Provides(type = SET)
-        Decoder hasAllGeoPermissionsDecoder(AtomicReference<Boolean> sessionValid) {
-            return new DynECTDecoder<Boolean>(sessionValid, NothingForbiddenDecoder.INSTANCE) {
+        Decoder hasAllGeoPermissionsDecoder() {
+            return new DynECTDecoder<Boolean>(NothingForbiddenDecoder.INSTANCE) {
             };
         }
 
         @Provides(type = SET)
-        Decoder resourceRecordSetsDecoder(AtomicReference<Boolean> sessionValid, ResourceRecordSetsDecoder decoder) {
-            return new DynECTDecoder<Iterator<ResourceRecordSet<?>>>(sessionValid, decoder) {
+        Decoder resourceRecordSetsDecoder(ResourceRecordSetsDecoder decoder) {
+            return new DynECTDecoder<Iterator<ResourceRecordSet<?>>>(decoder) {
             };
         }
 
         @Provides(type = SET)
-        Decoder zonesDecoder(AtomicReference<Boolean> sessionValid) {
-            return new DynECTDecoder<List<Zone>>(sessionValid, ZonesDecoder.INSTANCE) {
+        Decoder zonesDecoder() {
+            return new DynECTDecoder<List<Zone>>(ZonesDecoder.INSTANCE) {
             };
         }
 
         @Provides(type = SET)
-        Decoder geoRRSetsDecoder(AtomicReference<Boolean> sessionValid, GeoResourceRecordSetsDecoder decoder) {
-            return new DynECTDecoder<Map<String, Collection<ResourceRecordSet<?>>>>(sessionValid, decoder) {
+        Decoder geoRRSetsDecoder(GeoResourceRecordSetsDecoder decoder) {
+            return new DynECTDecoder<Map<String, Collection<ResourceRecordSet<?>>>>(decoder) {
             };
         }
 
         @Provides(type = SET)
-        Decoder recordIdsDecoder(AtomicReference<Boolean> sessionValid) {
-            return new DynECTDecoder<List<String>>(sessionValid, RecordIdsDecoder.INSTANCE) {
+        Decoder recordIdsDecoder() {
+            return new DynECTDecoder<List<String>>(RecordIdsDecoder.INSTANCE) {
             };
         }
 
         @Provides(type = SET)
-        Decoder recordsDecoder(AtomicReference<Boolean> sessionValid) {
-            return new DynECTDecoder<Iterator<Record>>(sessionValid, RecordsByNameAndTypeDecoder.INSTANCE) {
+        Decoder recordsDecoder() {
+            return new DynECTDecoder<Iterator<Record>>(RecordsByNameAndTypeDecoder.INSTANCE) {
             };
+        }
+
+        // This is why we need overrides = true
+        @Provides
+        ErrorDecoder errorDecoders(DynECTErrorDecoder errorDecoder) {
+            return errorDecoder;
         }
     }
 }

@@ -33,7 +33,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         try {
             return api.rrsets(zone);
         } catch (FeignException e) {
-            if (e.getMessage().indexOf("status 404") != -1) {
+            if (e.getMessage().indexOf("NOT_FOUND") != -1) {
                 throw new IllegalArgumentException("zone " + zone + " not found", e);
             }
             throw e;
@@ -120,7 +120,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         try {
             return supplier.iterator();
         } catch (FeignException e) {
-            if (e.getMessage().indexOf("status 404") != -1) {
+            if (e.getMessage().indexOf("NOT_FOUND") != -1) {
                 return Collections.<X> emptyList().iterator();
             }
             throw e;

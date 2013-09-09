@@ -8,24 +8,15 @@ import static org.testng.Assert.fail;
 import java.io.IOException;
 import java.util.Iterator;
 
-import javax.inject.Singleton;
-
 import org.testng.annotations.Test;
 
-import com.google.gson.Gson;
 import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 
-import dagger.Module;
-import dagger.Provides;
 import denominator.model.Zone;
 import feign.Feign;
 
-/**
- * 
- * @author Adrian Cole
- */
 public class DynECTTest {
 
     static String allGeoPermissions = ""//
@@ -62,7 +53,7 @@ public class DynECTTest {
     @Test
     public void hasAllGeoPermissions() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
+        server.enqueue(new MockResponse().setBody(allGeoPermissions));
         server.play();
 
         try {
@@ -113,7 +104,7 @@ public class DynECTTest {
     @Test
     public void doesntHaveGeoPermissions() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoPermissions));
+        server.enqueue(new MockResponse().setBody(noGeoPermissions));
         server.play();
 
         try {
@@ -135,7 +126,7 @@ public class DynECTTest {
     @Test
     public void zonesWhenPresent() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(zones));
+        server.enqueue(new MockResponse().setBody(zones));
         server.play();
 
         try {
@@ -157,8 +148,8 @@ public class DynECTTest {
     @Test
     public void incompleteRetries() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(incomplete));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(zones));
+        server.enqueue(new MockResponse().setResponseCode(400).setBody(incomplete));
+        server.enqueue(new MockResponse().setBody(zones));
         server.play();
 
         DynECT api = mockApi(server.getPort());
@@ -179,8 +170,8 @@ public class DynECTTest {
     @Test
     public void runningRetries() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(running));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(zones));
+        server.enqueue(new MockResponse().setResponseCode(400).setBody(running));
+        server.enqueue(new MockResponse().setBody(zones));
 
         server.play();
 
@@ -202,8 +193,8 @@ public class DynECTTest {
     @Test
     public void ipMisMatchRetries() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(mismatch));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(zones));
+        server.enqueue(new MockResponse().setResponseCode(400).setBody(mismatch));
+        server.enqueue(new MockResponse().setBody(zones));
 
         server.play();
 
@@ -224,8 +215,10 @@ public class DynECTTest {
 
     @Test
     public void blockedDoesntRetry() throws IOException, InterruptedException {
+        System.out.println(taskBlocking);
+
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(taskBlocking));
+        server.enqueue(new MockResponse().setResponseCode(400).setBody(taskBlocking));
         server.play();
 
         DynECT api = mockApi(server.getPort());
@@ -255,7 +248,8 @@ public class DynECTTest {
     @Test
     public void alreadyExistsDoesntRetry() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(targetExists));
+        System.out.println(targetExists);
+        server.enqueue(new MockResponse().setResponseCode(400).setBody(targetExists));
         server.play();
 
         DynECT api = mockApi(server.getPort());
@@ -278,6 +272,9 @@ public class DynECTTest {
         }
     }
 
+    static final String noneWithName = "{\"status\": \"failure\", \"data\": {}, \"job_id\": 478442824, \"msgs\": [{\"INFO\": \"node: Node is not in the zone\", \"SOURCE\": \"BLL\", \"ERR_CD\": \"NOT_FOUND\", \"LVL\": \"ERROR\"}, {\"INFO\": \"get_tree: Node name not found within the zone\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+    static final String noneWithNameAndType = "{\"status\": \"failure\", \"data\": {}, \"job_id\": 478442805, \"msgs\": [{\"INFO\": \"node: Not in zone\", \"SOURCE\": \"BLL\", \"ERR_CD\": \"NOT_FOUND\", \"LVL\": \"ERROR\"}, {\"INFO\": \"detail: Host is not in this zone\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+
     static javax.inject.Provider<String> lazyToken = new javax.inject.Provider<String>() {
 
         @Override
@@ -294,14 +291,5 @@ public class DynECTTest {
                 return "http://localhost:" + port;
             }
         }, lazyToken), new DynECTProvider.FeignModule());
-    }
-
-    @Module(library = true)
-    static class GsonModule {
-        @Provides
-        @Singleton
-        Gson provideGson() {
-            return new Gson();
-        }
     }
 }
