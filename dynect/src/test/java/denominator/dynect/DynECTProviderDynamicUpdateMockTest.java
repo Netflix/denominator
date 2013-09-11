@@ -1,6 +1,7 @@
 package denominator.dynect;
 
 import static denominator.CredentialsConfiguration.credentials;
+import static denominator.dynect.DynECTTest.noneWithNameAndType;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -34,10 +35,10 @@ public class DynECTProviderDynamicUpdateMockTest {
     @Test
     public void ipMisMatchInvalidatesAndRetries() throws IOException, InterruptedException {
         final MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setBody(mismatch));
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(400).setBody(mismatch));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
         server.play();
 
         try {
@@ -53,9 +54,11 @@ public class DynECTProviderDynamicUpdateMockTest {
 
             assertEquals(server.getRequestCount(), 4);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(),
+                    "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(),
+                    "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -64,10 +67,10 @@ public class DynECTProviderDynamicUpdateMockTest {
     @Test
     public void dynamicEndpointUpdates() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
         server.play();
 
         try {
@@ -89,9 +92,11 @@ public class DynECTProviderDynamicUpdateMockTest {
 
             assertEquals(server.getRequestCount(), 4);
             assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(),
+                    "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
             assertEquals(server.takeRequest().getRequestLine(), "POST /alt/Session HTTP/1.1");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /alt/ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
+            assertEquals(server.takeRequest().getRequestLine(),
+                    "GET /alt/ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -100,14 +105,15 @@ public class DynECTProviderDynamicUpdateMockTest {
     @Test
     public void dynamicCredentialUpdates() throws IOException, InterruptedException {
         final MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
-        server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-        server.enqueue(new MockResponse().setResponseCode(404)); // no existing records
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
+        server.enqueue(new MockResponse().setBody(session));
+        server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
         server.play();
 
         try {
-            AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(ListCredentials.from("customer", "joe", "letmein"));
+            AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(ListCredentials.from(
+                    "customer", "joe", "letmein"));
 
             DNSApi api = Denominator.create(new DynECTProvider() {
                 @Override
@@ -121,10 +127,14 @@ public class DynECTProviderDynamicUpdateMockTest {
             assertNull(api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
 
             assertEquals(server.getRequestCount(), 4);
-            assertEquals(new String(server.takeRequest().getBody()), "{\"customer_name\":\"customer\",\"user_name\":\"joe\",\"password\":\"letmein\"}");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
-            assertEquals(new String(server.takeRequest().getBody()), "{\"customer_name\":\"customer2\",\"user_name\":\"bob\",\"password\":\"comeon\"}");
-            assertEquals(server.takeRequest().getRequestLine(), "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
+            assertEquals(new String(server.takeRequest().getBody()),
+                    "{\"customer_name\":\"customer\",\"user_name\":\"joe\",\"password\":\"letmein\"}");
+            assertEquals(server.takeRequest().getRequestLine(),
+                    "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
+            assertEquals(new String(server.takeRequest().getBody()),
+                    "{\"customer_name\":\"customer2\",\"user_name\":\"bob\",\"password\":\"comeon\"}");
+            assertEquals(server.takeRequest().getRequestLine(),
+                    "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
         } finally {
             server.shutdown();
         }
