@@ -31,7 +31,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     @Override
     public Iterator<ResourceRecordSet<?>> iterator() {
         try {
-            return api.rrsets(zone);
+            return api.rrsets(zone).data;
         } catch (FeignException e) {
             if (e.getMessage().indexOf("NOT_FOUND") != -1) {
                 throw new IllegalArgumentException("zone " + zone + " not found", e);
@@ -45,7 +45,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         checkNotNull(name, "name");
         return emptyIteratorOn404(new Iterable<ResourceRecordSet<?>>() {
             public Iterator<ResourceRecordSet<?>> iterator() {
-                return api.rrsetsInZoneByName(zone, name);
+                return api.rrsetsInZoneByName(zone, name).data;
             }
         });
     }
@@ -56,7 +56,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
         checkNotNull(type, "type");
         Iterator<ResourceRecordSet<?>> rrset = emptyIteratorOn404(new Iterable<ResourceRecordSet<?>>() {
             public Iterator<ResourceRecordSet<?>> iterator() {
-                return api.rrsetsInZoneByNameAndType(zone, name, type);
+                return api.rrsetsInZoneByNameAndType(zone, name, type).data;
             }
         });
         return nextOrNull(rrset);
@@ -72,7 +72,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
 
         Iterator<Record> existingRecords = emptyIteratorOn404(new Iterable<Record>() {
             public Iterator<Record> iterator() {
-                return api.recordsInZoneByNameAndType(zone, rrset.name(), rrset.type());
+                return api.recordsInZoneByNameAndType(zone, rrset.name(), rrset.type()).data;
             }
         });
 
@@ -101,7 +101,7 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     public void deleteByNameAndType(final String name, final String type) {
         Iterator<String> existingRecords = emptyIteratorOn404(new Iterable<String>() {
             public Iterator<String> iterator() {
-                return api.recordIdsInZoneByNameAndType(zone, name, type).iterator();
+                return api.recordIdsInZoneByNameAndType(zone, name, type).data.iterator();
             }
         });
 

@@ -20,11 +20,14 @@ import javax.inject.Inject;
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
+import denominator.model.Zone;
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
 import denominator.ultradns.UltraDNS.NameAndType;
+import denominator.ultradns.UltraDNS.NetworkStatus;
 import denominator.ultradns.UltraDNS.Record;
-import feign.codec.SAXDecoder.ContentHandlerWithResult;
+import feign.sax.SAXDecoder;
+import feign.sax.SAXDecoder.ContentHandlerWithResult;
 
 /**
  * all decoders use {@code .endsWith} as a cheap way to strip out namespaces,
@@ -32,9 +35,96 @@ import feign.codec.SAXDecoder.ContentHandlerWithResult;
  */
 class UltraDNSContentHandlers {
 
+    // text of <DirPoolID> <RRPoolID> <DirectionalPoolRecordID
+    // xmlns:ns2=...>
+    // or attribute accountID, where ids are uppercase hex
+    static class IDHandler extends DefaultHandler implements ContentHandlerWithResult<String> {
+        @Inject
+        IDHandler() {
+        }
+
+        private StringBuilder currentText = new StringBuilder();
+
+        private String id;
+
+        @Override
+        public String result() {
+            return id;
+        }
+
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attrs) {
+            if (attrs.getValue("accountID") != null) {
+                id = attrs.getValue("accountID");
+            }
+        }
+
+        @Override
+        public void endElement(String uri, String name, String qName) {
+            if ("DirPoolID".equals(qName) || "RRPoolID".equals(qName) || "DirectionalPoolRecordID".equals(qName)) {
+                this.id = currentText.toString().trim().toUpperCase();
+            }
+            currentText = new StringBuilder();
+        }
+
+        @Override
+        public void characters(char ch[], int start, int length) {
+            currentText.append(ch, start, length);
+        }
+    }
+
+    static class NetworkStatusHandler extends DefaultHandler implements
+            SAXDecoder.ContentHandlerWithResult<NetworkStatus> {
+        @Inject
+        NetworkStatusHandler() {
+        }
+
+        private StringBuilder currentText = new StringBuilder();
+
+        private NetworkStatus status;
+
+        @Override
+        public NetworkStatus result() {
+            return status;
+        }
+
+        @Override
+        public void endElement(String uri, String name, String qName) {
+            if (qName.equals("NeustarNetworkStatus")) {
+                this.status = NetworkStatus.valueOf(currentText.toString().trim().toUpperCase());
+            }
+            currentText = new StringBuilder();
+        }
+
+        @Override
+        public void characters(char ch[], int start, int length) {
+            currentText.append(ch, start, length);
+        }
+    }
+
+    static class ZoneListHandler extends DefaultHandler implements ContentHandlerWithResult<List<Zone>> {
+        @Inject
+        ZoneListHandler() {
+        }
+
+        private final List<Zone> zones = new ArrayList<Zone>();
+
+        @Override
+        public List<Zone> result() {
+            return zones;
+        }
+
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attrs) {
+            if (attrs.getValue("zoneName") != null) {
+                zones.add(Zone.create(attrs.getValue("zoneName")));
+            }
+        }
+    }
+
     static class RecordListHandler extends DefaultHandler implements ContentHandlerWithResult<List<Record>> {
         @Inject
-        RecordListHandler(){
+        RecordListHandler() {
         }
 
         private Record rr = new Record();
@@ -93,7 +183,7 @@ class UltraDNSContentHandlers {
 
     static class RRPoolListHandler extends DefaultHandler implements ContentHandlerWithResult<Map<NameAndType, String>> {
         @Inject
-        RRPoolListHandler(){
+        RRPoolListHandler() {
         }
 
         private final Map<NameAndType, String> pools = new LinkedHashMap<NameAndType, String>();
@@ -124,10 +214,43 @@ class UltraDNSContentHandlers {
         }
     }
 
+    static class DirectionalPoolListHandler extends DefaultHandler implements
+            ContentHandlerWithResult<Map<String, String>> {
+        @Inject
+        DirectionalPoolListHandler() {
+        }
+
+        private final Map<String, String> pools = new LinkedHashMap<String, String>();
+        private String name;
+        private String id;
+
+        @Override
+        public Map<String, String> result() {
+            return pools;
+        }
+
+        @Override
+        public void startElement(String uri, String localName, String qName, Attributes attrs) {
+            if (qName.endsWith("PoolData") && "GEOLOCATION".equals(attrs.getValue("DirPoolType"))) {
+                name = attrs.getValue("Pooldname");
+                id = attrs.getValue("dirpoolid");
+            }
+        }
+
+        @Override
+        public void endElement(String uri, String ignored, String qName) {
+            if (qName.endsWith("DirectionalPoolData") && name != null) {
+                pools.put(name, id);
+                name = null;
+                id = null;
+            }
+        }
+    }
+
     static class RegionTableHandler extends DefaultHandler implements
             ContentHandlerWithResult<Map<String, Collection<String>>> {
         @Inject
-        RegionTableHandler(){
+        RegionTableHandler() {
         }
 
         private final Map<String, Collection<String>> regions = new TreeMap<String, Collection<String>>();
@@ -149,7 +272,7 @@ class UltraDNSContentHandlers {
 
     static class DirectionalGroupHandler extends DefaultHandler implements ContentHandlerWithResult<DirectionalGroup> {
         @Inject
-        DirectionalGroupHandler(){
+        DirectionalGroupHandler() {
         }
 
         private final DirectionalGroup group = new DirectionalGroup();
@@ -175,7 +298,7 @@ class UltraDNSContentHandlers {
     static class DirectionalRecordListHandler extends DefaultHandler implements
             ContentHandlerWithResult<List<DirectionalRecord>> {
         @Inject
-        DirectionalRecordListHandler(){
+        DirectionalRecordListHandler() {
         }
 
         private DirectionalRecord rr = new DirectionalRecord();

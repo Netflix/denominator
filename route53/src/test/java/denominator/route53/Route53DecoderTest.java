@@ -3,12 +3,15 @@ package denominator.route53;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
-
-import javax.inject.Provider;
+import java.util.Collection;
+import java.util.Collections;
 
 import org.testng.annotations.Test;
 
+import dagger.ObjectGraph;
+import denominator.common.Util;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import denominator.model.profile.Weighted;
@@ -17,18 +20,17 @@ import denominator.model.rdata.NSData;
 import denominator.model.rdata.SOAData;
 import denominator.route53.Route53.ResourceRecordSetList;
 import denominator.route53.Route53.ZoneList;
-import feign.codec.SAXDecoder;
+import denominator.route53.Route53Provider.XMLCodec;
+import feign.Response;
+import feign.codec.Decoder;
 
 public class Route53DecoderTest {
 
+    Decoder decoder = ObjectGraph.create(new XMLCodec()).get(Decoder.class);
+
     @Test
-    public void decodeZoneListWithNext() throws Throwable {
-        ZoneList result = new SAXDecoder<ZoneList>(new Provider<ListHostedZonesResponseHandler>() {
-            public ListHostedZonesResponseHandler get() {
-                return new ListHostedZonesResponseHandler();
-            }
-        }) {
-        }.decode(new InputStreamReader(getClass().getResourceAsStream("/hosted_zones.xml")), ZoneList.class);
+    public void decodeZoneListWithNext() throws Exception {
+        ZoneList result = ZoneList.class.cast(decoder.decode(response("/hosted_zones.xml"), ZoneList.class));
 
         assertEquals(result.size(), 2);
         assertEquals(result.get(0), Zone.create("example.com.", "Z21DW1QVGID6NG"));
@@ -37,15 +39,9 @@ public class Route53DecoderTest {
     }
 
     @Test
-    public void decodeBasicResourceRecordSetListWithNext() throws Throwable {
-        ResourceRecordSetList result = new SAXDecoder<ResourceRecordSetList>(
-                new Provider<ListResourceRecordSetsResponseHandler>() {
-                    public ListResourceRecordSetsResponseHandler get() {
-                        return new ListResourceRecordSetsResponseHandler();
-                    }
-                }) {
-        }.decode(new InputStreamReader(getClass().getResourceAsStream("/basic_rrsets.xml")),
-                ResourceRecordSetList.class);
+    public void decodeBasicResourceRecordSetListWithNext() throws Exception {
+        ResourceRecordSetList result = ResourceRecordSetList.class.cast(decoder.decode(response("/basic_rrsets.xml"),
+                ResourceRecordSetList.class));
 
         assertEquals(result.size(), 2);
         assertEquals(result.get(0), ResourceRecordSet.<SOAData> builder()//
@@ -75,15 +71,9 @@ public class Route53DecoderTest {
     }
 
     @Test
-    public void decodeAdvancedResourceRecordSetListWithoutNext() throws Throwable {
-        ResourceRecordSetList result = new SAXDecoder<ResourceRecordSetList>(
-                new Provider<ListResourceRecordSetsResponseHandler>() {
-                    public ListResourceRecordSetsResponseHandler get() {
-                        return new ListResourceRecordSetsResponseHandler();
-                    }
-                }) {
-        }.decode(new InputStreamReader(getClass().getResourceAsStream("/advanced_rrsets.xml")),
-                ResourceRecordSetList.class);
+    public void decodeAdvancedResourceRecordSetListWithoutNext() throws Exception {
+        ResourceRecordSetList result = ResourceRecordSetList.class.cast(decoder.decode(response("/advanced_rrsets.xml"),
+                ResourceRecordSetList.class));
 
         assertEquals(result.size(), 2);
         assertEquals(result.get(0), ResourceRecordSet.<AData> builder()//
@@ -99,4 +89,10 @@ public class Route53DecoderTest {
                 .build());
         assertNull(result.next);
     }
+
+    Response response(String resource) throws IOException {
+        return Response.create(200, "OK", Collections.<String, Collection<String>> emptyMap(),
+                Util.slurp(new InputStreamReader(getClass().getResourceAsStream(resource))));
+    }
+
 }
