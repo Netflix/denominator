@@ -1,32 +1,35 @@
-package denominator.clouddns;
+package denominator.designate;
 
 import static denominator.common.Preconditions.checkNotNull;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.lang.reflect.Type;
+
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.TypeAdapter;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
-import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
-import feign.codec.Decoder;
+import denominator.designate.KeystoneV2.TokenIdAndPublicURL;
 
-class KeystoneAccessDecoder implements Decoder.TextStream<TokenIdAndPublicURL> {
-    // rax:dns
-    private final String type;
+class KeystoneV2AccessAdapter extends TypeAdapter<TokenIdAndPublicURL> {
+    private final String serviceTypeSuffix;
 
-    KeystoneAccessDecoder(String type) {
-        this.type = checkNotNull(type, "type was null");
+    @Inject
+    KeystoneV2AccessAdapter(@Named("serviceTypeSuffix") String serviceTypeSuffix) {
+        this.serviceTypeSuffix = checkNotNull(serviceTypeSuffix, "serviceTypeSuffix was null");
     }
 
     @Override
-    public TokenIdAndPublicURL decode(Reader reader, Type ignored) throws IOException {
+    public TokenIdAndPublicURL read(JsonReader in) throws IOException {
         JsonObject access = null;
         try {
-            access = new JsonParser().parse(reader).getAsJsonObject().get("access").getAsJsonObject();
+            access = new JsonParser().parse(in).getAsJsonObject().get("access").getAsJsonObject();
         } catch (JsonIOException e) {
             if (e.getCause() != null && e.getCause() instanceof IOException) {
                 throw IOException.class.cast(e.getCause());
@@ -49,10 +52,12 @@ class KeystoneAccessDecoder implements Decoder.TextStream<TokenIdAndPublicURL> {
             JsonObject service = s.getAsJsonObject();
             JsonElement typeField = service.get("type");
             JsonElement endpointsField = service.get("endpoints");
-            if (!isNull(typeField) && !isNull(endpointsField) && type.equals(typeField.getAsString())) {
+            if (!isNull(typeField) && !isNull(endpointsField) && typeField.getAsString().endsWith(serviceTypeSuffix)) {
                 for (JsonElement e : endpointsField.getAsJsonArray()) {
                     JsonObject endpoint = e.getAsJsonObject();
                     tokenUrl.publicURL = endpoint.get("publicURL").getAsString();
+                    if (tokenUrl.publicURL.endsWith("/"))
+                        tokenUrl.publicURL = tokenUrl.publicURL.substring(0, tokenUrl.publicURL.length() - 1);
                 }
             }
         }
@@ -61,10 +66,15 @@ class KeystoneAccessDecoder implements Decoder.TextStream<TokenIdAndPublicURL> {
 
     @Override
     public String toString() {
-        return "KeystoneAccessDecoder(" + type + ")";
+        return "KeystoneV2AccessAdapter(" + serviceTypeSuffix + ")";
     }
 
     static boolean isNull(JsonElement element) {
         return element == null || element.isJsonNull();
+    }
+
+    @Override
+    public void write(JsonWriter out, TokenIdAndPublicURL value) throws IOException {
+        throw new UnsupportedOperationException();
     }
 };

@@ -16,6 +16,6 @@ public final class DynECTZoneApi implements denominator.ZoneApi {
 
     @Override
     public Iterator<Zone> iterator() {
-        return api.zones().iterator();
+        return api.zones().data.iterator();
     }
 }

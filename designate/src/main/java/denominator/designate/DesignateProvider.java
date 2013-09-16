@@ -2,7 +2,6 @@ package denominator.designate;
 
 import static dagger.Provides.Type.SET;
 
-import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -13,6 +12,8 @@ import java.util.Set;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import com.google.gson.TypeAdapter;
+
 import dagger.Provides;
 import denominator.BasicProvider;
 import denominator.CheckConnection;
@@ -20,19 +21,15 @@ import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.GeoUnsupported;
+import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
-import denominator.designate.DesignateDecoders.DomainListDecoder;
-import denominator.designate.DesignateDecoders.RecordDecoder;
-import denominator.designate.DesignateDecoders.RecordListDecoder;
-import denominator.designate.DesignateEncoders.RecordEncoder;
+import denominator.designate.DesignateAdapters.DomainListAdapter;
+import denominator.designate.DesignateAdapters.RecordAdapter;
+import denominator.designate.DesignateAdapters.RecordListAdapter;
 import denominator.designate.KeystoneV2.TokenIdAndPublicURL;
 import feign.Feign;
-import feign.Feign.Defaults;
-import feign.ReflectiveFeign;
 import feign.Target.HardCodedTarget;
-import feign.codec.Decoder;
-import feign.codec.Encoder;
 import feign.gson.GsonModule;
 
 public class DesignateProvider extends BasicProvider {
@@ -83,18 +80,13 @@ public class DesignateProvider extends BasicProvider {
     }
 
     @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
-            GeoUnsupported.class, WeightedUnsupported.class, OnlyBasicResourceRecordSets.class, FeignModule.class })
+            NothingToClose.class, GeoUnsupported.class, WeightedUnsupported.class, OnlyBasicResourceRecordSets.class,
+            FeignModule.class })
     public static final class Module {
 
         @Provides
         CheckConnection checkConnection(LimitsReadable checkConnection) {
             return checkConnection;
-        }
-
-        @Provides
-        @Singleton
-        Closeable provideCloser(Feign feign) {
-            return feign;
         }
 
         @Provides
@@ -110,10 +102,11 @@ public class DesignateProvider extends BasicProvider {
         }
     }
 
-    // unbound wildcards are not currently injectable in dagger.
+    @dagger.Module(//
+    injects = DesignateResourceRecordSetApi.Factory.class, //
+    complete = false, // doesn't bind Provider used by DesignateTarget
+    includes = { Feign.Defaults.class, GsonModule.class })
     @SuppressWarnings("rawtypes")
-    @dagger.Module(injects = DesignateResourceRecordSetApi.Factory.class, complete = false, includes = {
-            Defaults.class, ReflectiveFeign.Module.class, GsonModule.class })
     public static final class FeignModule {
 
         @Provides
@@ -136,32 +129,27 @@ public class DesignateProvider extends BasicProvider {
         }
 
         @Provides(type = SET)
-        Decoder tokenIdAndPublicURLDecoder(KeystoneV2AccessDecoder decoder) {
-            return decoder;
+        TypeAdapter tokenIdAndPublicURLAdapter(KeystoneV2AccessAdapter adapter) {
+            return adapter;
         }
 
         @Provides(type = SET)
-        Decoder domainListDecoder(DomainListDecoder decoder) {
-            return decoder;
+        TypeAdapter domainListAdapter(DomainListAdapter adapter) {
+            return adapter;
         }
 
         @Provides(type = SET)
-        Decoder recordListDecoder(RecordListDecoder decoder) {
-            return decoder;
+        TypeAdapter recordListAdapter(RecordListAdapter adapter) {
+            return adapter;
         }
 
         @Provides(type = SET)
-        Decoder recordDecoder(RecordDecoder decoder) {
-            return decoder;
-        }
-
-        @Provides(type = SET)
-        Encoder recordEncoder(RecordEncoder encoder) {
-            return encoder;
+        TypeAdapter recordAdapter(RecordAdapter adapter) {
+            return adapter;
         }
 
         @Provides
-        public TokenIdAndPublicURL urlAndToken(InvalidatableAuthProvider supplier) {
+        TokenIdAndPublicURL urlAndToken(InvalidatableAuthProvider supplier) {
             return supplier.get();
         }
     }

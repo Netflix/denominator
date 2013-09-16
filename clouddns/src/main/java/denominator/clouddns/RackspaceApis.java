@@ -2,6 +2,7 @@ package denominator.clouddns;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Map;
 
 import javax.inject.Named;
 
@@ -31,10 +32,8 @@ class RackspaceApis {
     }
 
     static interface CloudDNS {
-
-        // String result as we really don't care at the moment
         @RequestLine("GET /limits")
-        String limits();
+        Map<String, Object> limits();
 
         @RequestLine("GET")
         ListWithNext<Zone> domains(URI href);

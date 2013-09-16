@@ -6,21 +6,23 @@ import static java.lang.String.format;
 import java.io.IOException;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import org.xml.sax.helpers.DefaultHandler;
 
 import feign.FeignException;
 import feign.Response;
 import feign.RetryableException;
+import feign.codec.Decoder;
 import feign.codec.ErrorDecoder;
-import feign.codec.SAXDecoder;
+import feign.sax.SAXDecoder.ContentHandlerWithResult;
 
-class UltraDNSErrorDecoder extends SAXDecoder<UltraDNSErrorDecoder.UltraDNSError> implements ErrorDecoder {
+class UltraDNSErrorDecoder implements ErrorDecoder {
+
+    private final Decoder decoder;
 
     @Inject
-    UltraDNSErrorDecoder(Provider<UltraDNSErrorDecoder.UltraDNSError> handlers) {
-        super(handlers);
+    UltraDNSErrorDecoder(Decoder decoder) {
+        this.decoder = decoder;
     }
 
     @Override
@@ -28,7 +30,7 @@ class UltraDNSErrorDecoder extends SAXDecoder<UltraDNSErrorDecoder.UltraDNSError
         try {
             // in case of error parsing, we can access the original contents.
             response = bufferResponse(response);
-            UltraDNSError error = response.body() != null ? super.decode(response.body().asReader(), null) : null;
+            UltraDNSError error = UltraDNSError.class.cast(decoder.decode(response, UltraDNSError.class));
             if (error == null)
                 return FeignException.errorStatus(methodKey, response);
             String message = format("%s failed", methodKey);
@@ -47,8 +49,7 @@ class UltraDNSErrorDecoder extends SAXDecoder<UltraDNSErrorDecoder.UltraDNSError
         }
     }
 
-    static class UltraDNSError extends DefaultHandler implements
-            feign.codec.SAXDecoder.ContentHandlerWithResult<UltraDNSError> {
+    static class UltraDNSError extends DefaultHandler implements ContentHandlerWithResult<UltraDNSError> {
         @Inject
         UltraDNSError() {
         }

@@ -164,7 +164,7 @@ public class UltraDNSTest {
         }
     }
 
-    @Test(expectedExceptions = DecodeException.class, expectedExceptionsMessageRegExp = "couldn't parse networkstatus from: \\{\"foo\": \"bar\"\\}")
+    @Test(expectedExceptions = DecodeException.class, expectedExceptionsMessageRegExp = "Content is not allowed in prolog.")
     public void networkStatusCantParse() throws IOException, InterruptedException {
         MockWebServer server = new MockWebServer();
         server.enqueue(new MockResponse().setBody("{\"foo\": \"bar\"}"));

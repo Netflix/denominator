@@ -3,8 +3,6 @@ package denominator.dynect;
 import static denominator.common.Preconditions.checkState;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -15,23 +13,30 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonParser;
+import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
+import denominator.dynect.DynECT.Data;
 import denominator.dynect.DynECT.Record;
 import denominator.model.Zone;
-import feign.codec.Decoder;
 
-class DynECTDecoder<T> implements Decoder.TextStream<T> {
+/**
+ * DynECT json includes an envelope called "data". These type adapters apply at
+ * that level.
+ * 
+ * @see DynECTDecoder
+ */
+class DynECTAdapters {
 
-    interface Parser<T> {
-        T apply(JsonReader reader) throws IOException;
+    private DynECTAdapters() {
+        // no instances.
     }
 
-    static enum NothingForbiddenDecoder implements Parser<Boolean> {
-        INSTANCE;
+    static class NothingForbiddenAdapter extends DataAdapter<Boolean> {
 
         @Override
-        public Boolean apply(JsonReader reader) throws IOException {
+        public Boolean build(JsonReader reader) throws IOException {
             try {
                 return new JsonParser().parse(reader).getAsJsonObject().get("forbidden").getAsJsonArray().size() == 0;
             } catch (JsonIOException e) {
@@ -43,11 +48,10 @@ class DynECTDecoder<T> implements Decoder.TextStream<T> {
         }
     }
 
-    static enum TokenDecoder implements Parser<String> {
-        INSTANCE;
+    static class TokenAdapter extends DataAdapter<String> {
 
         @Override
-        public String apply(JsonReader reader) throws IOException {
+        public String build(JsonReader reader) throws IOException {
             try {
                 return new JsonParser().parse(reader).getAsJsonObject().get("token").getAsString();
             } catch (JsonIOException e) {
@@ -59,11 +63,10 @@ class DynECTDecoder<T> implements Decoder.TextStream<T> {
         }
     }
 
-    static enum ZonesDecoder implements Parser<List<Zone>> {
-        INSTANCE;
+    static class ZonesAdapter extends DataAdapter<List<Zone>> {
 
         @Override
-        public List<Zone> apply(JsonReader reader) throws IOException {
+        public List<Zone> build(JsonReader reader) throws IOException {
             JsonArray data;
             try {
                 data = new JsonParser().parse(reader).getAsJsonArray();
@@ -81,11 +84,10 @@ class DynECTDecoder<T> implements Decoder.TextStream<T> {
         }
     }
 
-    static enum RecordIdsDecoder implements Parser<List<String>> {
-        INSTANCE;
+    static class RecordIdsAdapter extends DataAdapter<List<String>> {
 
         @Override
-        public List<String> apply(JsonReader reader) throws IOException {
+        public List<String> build(JsonReader reader) throws IOException {
             JsonArray data;
             try {
                 data = new JsonParser().parse(reader).getAsJsonArray();
@@ -99,11 +101,10 @@ class DynECTDecoder<T> implements Decoder.TextStream<T> {
         }
     }
 
-    static enum RecordsByNameAndTypeDecoder implements Parser<Iterator<Record>> {
-        INSTANCE;
+    static class RecordsByNameAndTypeAdapter extends DataAdapter<Iterator<Record>> {
 
         @Override
-        public Iterator<Record> apply(JsonReader reader) throws IOException {
+        public Iterator<Record> build(JsonReader reader) throws IOException {
             JsonArray data;
             try {
                 data = new JsonParser().parse(reader).getAsJsonArray();
@@ -121,44 +122,6 @@ class DynECTDecoder<T> implements Decoder.TextStream<T> {
         }
     }
 
-    private final Parser<T> fn;
-
-    /**
-     * You must subclass this, in order to prevent type erasure on {@code T}. In
-     * addition to making a concrete type, you can also use the following form.
-     * <p/>
-     * <br>
-     * <p/>
-     * 
-     * <pre>
-     * new DynECTDecoder&lt;Foo&gt;(sessionValid, fn) {
-     * }; // note the curly braces ensures no type erasure!
-     * </pre>
-     */
-    protected DynECTDecoder(Parser<T> fn) {
-        this.fn = fn;
-    }
-
-    @Override
-    public T decode(Reader ireader, Type ignored) throws IOException {
-        JsonReader reader = new JsonReader(ireader);
-        try {
-            reader.beginObject();
-            while (reader.hasNext()) {
-                String nextName = reader.nextName();
-                if ("data".equals(nextName)) {
-                    return fn.apply(reader);
-                } else {
-                    reader.skipValue();
-                }
-            }
-            reader.endObject();
-            throw new IllegalStateException("no data returned in response");
-        } finally {
-            reader.close();
-        }
-    }
-
     private static List<String> toFirstGroup(String pattern, JsonArray elements) {
         Pattern compiled = Pattern.compile(pattern);
         List<String> results = new ArrayList<String>(elements.size());
@@ -168,5 +131,32 @@ class DynECTDecoder<T> implements Decoder.TextStream<T> {
             results.add(matcher.group(1));
         }
         return results;
+    }
+
+    static abstract class DataAdapter<X> extends TypeAdapter<Data<X>> {
+
+        protected abstract X build(JsonReader reader) throws IOException;
+
+        @Override
+        public Data<X> read(JsonReader reader) throws IOException {
+            Data<X> data = new Data<X>();
+            reader.beginObject();
+            while (reader.hasNext()) {
+                String nextName = reader.nextName();
+                if ("data".equals(nextName)) {
+                    data.data = build(reader);
+                } else {
+                    reader.skipValue();
+                }
+            }
+            reader.endObject();
+            reader.close();
+            return data;
+        }
+
+        @Override
+        public void write(JsonWriter out, Data<X> value) throws IOException {
+            throw new UnsupportedOperationException();
+        }
     }
 }

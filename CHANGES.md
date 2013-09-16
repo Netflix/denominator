@@ -1,3 +1,6 @@
+### Version 4.1
+* update to feign 5
+
 ### Version 4.0.4
 * introduce dynect error handler as the api no longer returns errors as http 200.
 

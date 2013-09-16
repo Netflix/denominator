@@ -12,13 +12,12 @@ import static denominator.ultradns.UltraDNSTest.systemError;
 
 import java.util.Collection;
 
-import javax.inject.Provider;
-
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableMap;
 
-import denominator.ultradns.UltraDNSErrorDecoder.UltraDNSError;
+import dagger.ObjectGraph;
+import denominator.ultradns.UltraDNSProvider.XMLCodec;
 import feign.FeignException;
 import feign.Response;
 import feign.RetryableException;
@@ -26,12 +25,7 @@ import feign.codec.ErrorDecoder;
 
 @Test(singleThreaded = true)
 public class UltraDNSErrorDecoderTest {
-
-    ErrorDecoder errorDecoder = new UltraDNSErrorDecoder(new Provider<UltraDNSErrorDecoder.UltraDNSError>() {
-        public UltraDNSError get() {
-            return new UltraDNSError();
-        }
-    });
+    ErrorDecoder errorDecoder = ObjectGraph.create(new XMLCodec()).get(ErrorDecoder.class);
 
     @Test(expectedExceptions = FeignException.class, expectedExceptionsMessageRegExp = "status 500 reading UltraDNS.accountId\\(\\)")
     public void noBody() throws Throwable {

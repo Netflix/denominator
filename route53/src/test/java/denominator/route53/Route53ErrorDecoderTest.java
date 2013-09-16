@@ -2,14 +2,12 @@ package denominator.route53;
 
 import java.util.Collection;
 
-import javax.inject.Provider;
-
 import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableMap;
 
-import denominator.route53.Route53ErrorDecoder.Route53Error;
-
+import dagger.ObjectGraph;
+import denominator.route53.Route53Provider.XMLCodec;
 import feign.Response;
 import feign.RetryableException;
 import feign.codec.ErrorDecoder;
@@ -17,12 +15,7 @@ import feign.codec.ErrorDecoder;
 @Test(singleThreaded = true)
 public class Route53ErrorDecoderTest {
 
-    ErrorDecoder errorDecoder = new Route53ErrorDecoder(new Provider<Route53ErrorDecoder.Route53Error>(){
-        @Override
-        public Route53Error get() {
-            return new Route53Error();
-        }
-    });
+    ErrorDecoder errorDecoder = ObjectGraph.create(new XMLCodec()).get(ErrorDecoder.class);
 
     @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error RequestExpired: Request has expired. Timestamp date is 2013-06-07T12:16:22Z")
     public void requestExpired() throws Throwable {
