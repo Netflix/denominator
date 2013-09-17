@@ -11,6 +11,7 @@ import javax.inject.Singleton;
 import denominator.CheckConnection;
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
+import denominator.dynect.DynECT.Data;
 import feign.Body;
 import feign.Headers;
 import feign.RequestLine;
@@ -24,7 +25,7 @@ class InvalidatableTokenProvider implements Provider<String>, CheckConnection {
     interface Session {
         @RequestLine("POST /Session")
         @Body("%7B\"customer_name\":\"{customer_name}\",\"user_name\":\"{user_name}\",\"password\":\"{password}\"%7D")
-        String login(@Named("customer_name") String customer, @Named("user_name") String user,
+        Data<String> login(@Named("customer_name") String customer, @Named("user_name") String user,
                 @Named("password") String password);
 
         @RequestLine("GET /Session")
@@ -59,6 +60,8 @@ class InvalidatableTokenProvider implements Provider<String>, CheckConnection {
             session.check(get());
             return true;
         } catch (RuntimeException e) {
+            e.printStackTrace();
+            sessionValid.set(false);
             return false;
         }
     }
@@ -89,7 +92,7 @@ class InvalidatableTokenProvider implements Provider<String>, CheckConnection {
 
     private String auth(Credentials currentCreds) {
         List<Object> listCreds = ListCredentials.asList(currentCreds);
-        return session.login(listCreds.get(0).toString(), listCreds.get(1).toString(), listCreds.get(2).toString());
+        return session.login(listCreds.get(0).toString(), listCreds.get(1).toString(), listCreds.get(2).toString()).data;
     }
 
     @Override

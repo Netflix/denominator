@@ -5,16 +5,19 @@ import java.util.List;
 import javax.inject.Inject;
 
 import denominator.route53.Route53.ActionOnResourceRecordSet;
+import feign.RequestTemplate;
 import feign.codec.EncodeException;
 import feign.codec.Encoder;
 
-class EncodeChanges implements Encoder.Text<List<ActionOnResourceRecordSet>> {
+class EncodeChanges implements Encoder {
     @Inject
-    EncodeChanges(){
+    EncodeChanges() {
     }
 
     @Override
-    public String encode(List<ActionOnResourceRecordSet> actions) throws EncodeException {
+    public void encode(Object object, RequestTemplate template) throws EncodeException {
+        @SuppressWarnings("unchecked")
+        List<ActionOnResourceRecordSet> actions = List.class.cast(object);
         StringBuilder b = new StringBuilder();
         b.append("<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\"><ChangeBatch>");
         b.append("<Changes>");
@@ -23,6 +26,6 @@ class EncodeChanges implements Encoder.Text<List<ActionOnResourceRecordSet>> {
                     .append(SerializeRRS.INSTANCE.apply(change.rrs)).append("</Change>");
         b.append("</Changes>");
         b.append("</ChangeBatch></ChangeResourceRecordSetsRequest>");
-        return b.toString();
+        template.body(b.toString());
     }
 }

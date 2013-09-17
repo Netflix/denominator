@@ -7,14 +7,15 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import denominator.route53.Route53.ResourceRecordSetList;
 import denominator.route53.Route53.ResourceRecordSetList.NextRecord;
+import feign.sax.SAXDecoder.ContentHandlerWithResult;
 
 /**
  * See <a href=
- *      "http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListResourceRecordSets.html"
- *      />
+ * "http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListResourceRecordSets.html"
+ * />
  */
 class ListResourceRecordSetsResponseHandler extends DefaultHandler implements
-        feign.codec.SAXDecoder.ContentHandlerWithResult<ResourceRecordSetList> {
+        ContentHandlerWithResult<ResourceRecordSetList> {
 
     @Inject
     ListResourceRecordSetsResponseHandler() {

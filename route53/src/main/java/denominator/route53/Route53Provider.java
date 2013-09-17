@@ -1,8 +1,5 @@
 package denominator.route53;
 
-import static dagger.Provides.Type.SET;
-
-import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,7 +11,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import javax.inject.Named;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import dagger.Provides;
@@ -25,16 +21,15 @@ import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.GeoUnsupported;
+import denominator.config.NothingToClose;
 import denominator.profile.WeightedResourceRecordSetApi;
-import denominator.route53.Route53.ResourceRecordSetList;
-import denominator.route53.Route53.ZoneList;
+import denominator.route53.Route53ErrorDecoder.Messages;
+import denominator.route53.Route53ErrorDecoder.Route53Error;
 import feign.Feign;
-import feign.Feign.Defaults;
-import feign.ReflectiveFeign;
 import feign.codec.Decoder;
 import feign.codec.Encoder;
 import feign.codec.ErrorDecoder;
-import feign.codec.SAXDecoder;
+import feign.sax.SAXDecoder;
 
 public class Route53Provider extends BasicProvider {
     private final String url;
@@ -86,19 +81,13 @@ public class Route53Provider extends BasicProvider {
         return options;
     }
 
-    @dagger.Module(injects = DNSApiManager.class, complete = false, includes = { GeoUnsupported.class,
-            InstanceProfileCredentialsProvider.class, FeignModule.class })
+    @dagger.Module(injects = DNSApiManager.class, complete = false, includes = { NothingToClose.class,
+            GeoUnsupported.class, InstanceProfileCredentialsProvider.class, FeignModule.class })
     public static final class Module {
 
         @Provides
         CheckConnection checkConnection(HostedZonesReadable checkConnection) {
             return checkConnection;
-        }
-
-        @Provides
-        @Singleton
-        Closeable provideCloser(Feign feign) {
-            return feign;
         }
 
         @Provides
@@ -142,10 +131,10 @@ public class Route53Provider extends BasicProvider {
         }
     }
 
-    // unbound wildcards are not currently injectable in dagger.
-    @SuppressWarnings("rawtypes")
-    @dagger.Module(injects = Route53ResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
-            Defaults.class, ReflectiveFeign.Module.class })
+    @dagger.Module(//
+    injects = Route53ResourceRecordSetApi.Factory.class, //
+    complete = false, // doesn't bind Provider used by Route53Target
+    includes = { Feign.Defaults.class, XMLCodec.class })
     public static final class FeignModule {
 
         @Provides
@@ -155,30 +144,36 @@ public class Route53Provider extends BasicProvider {
         }
 
         @Provides
-        public Map<String, String> authHeaders(InvalidatableAuthenticationHeadersProvider provider) {
+        Map<String, String> authHeaders(InvalidatableAuthenticationHeadersProvider provider) {
             return provider.get();
         }
+    }
 
-        @Provides(type = SET)
-        Decoder zoneListDecoder(Provider<ListHostedZonesResponseHandler> handlers) {
-            return new SAXDecoder<ZoneList>(handlers) {
-            };
+    @dagger.Module(//
+    injects = { Encoder.class, Decoder.class, ErrorDecoder.class },//
+    overrides = true, // ErrorDecoder
+    addsTo = Feign.Defaults.class //
+    )
+    static final class XMLCodec {
+
+        @Provides
+        Encoder encodeChanges(EncodeChanges encoder) {
+            return encoder;
         }
 
-        @Provides(type = SET)
-        Decoder resourceRecordSetListDecoder(Provider<ListResourceRecordSetsResponseHandler> handlers) {
-            return new SAXDecoder<ResourceRecordSetList>(handlers) {
-            };
+        @Provides
+        Decoder saxDecoder() {
+            return SAXDecoder.builder()//
+                    .registerContentHandler(ListHostedZonesResponseHandler.class)//
+                    .registerContentHandler(ListResourceRecordSetsResponseHandler.class)//
+                    .registerContentHandler(Messages.class)//
+                    .registerContentHandler(Route53Error.class)//
+                    .build();
         }
 
         @Provides
         ErrorDecoder errorDecoders(Route53ErrorDecoder errorDecoder) {
             return errorDecoder;
-        }
-
-        @Provides(type = SET)
-        Encoder encodeChanges(EncodeChanges encoder) {
-            return encoder;
         }
     }
 }

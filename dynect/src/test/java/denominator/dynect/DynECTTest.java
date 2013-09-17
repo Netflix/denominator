@@ -14,6 +14,7 @@ import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 
+import dagger.ObjectGraph;
 import denominator.model.Zone;
 import feign.Feign;
 
@@ -58,7 +59,7 @@ public class DynECTTest {
 
         try {
             DynECT api = mockApi(server.getPort());
-            assertTrue(api.hasAllGeoPermissions());
+            assertTrue(api.hasAllGeoPermissions().data);
 
             assertEquals(server.getRequestCount(), 1);
             RecordedRequest checkGeoPermissions = server.takeRequest();
@@ -109,7 +110,7 @@ public class DynECTTest {
 
         try {
             DynECT api = mockApi(server.getPort());
-            assertFalse(api.hasAllGeoPermissions());
+            assertFalse(api.hasAllGeoPermissions().data);
 
             assertEquals(server.getRequestCount(), 1);
             RecordedRequest checkGeoPermissions = server.takeRequest();
@@ -131,7 +132,7 @@ public class DynECTTest {
 
         try {
             DynECT api = mockApi(server.getPort());
-            Iterator<Zone> iterator = api.zones().iterator();
+            Iterator<Zone> iterator = api.zones().data.iterator();
             iterator.next();
             iterator.next();
             assertEquals(iterator.next(), Zone.create("denominator.io"));
@@ -285,11 +286,12 @@ public class DynECTTest {
     };
 
     static DynECT mockApi(final int port) {
-        return Feign.create(new DynECTTarget(new DynECTProvider() {
-            @Override
-            public String url() {
-                return "http://localhost:" + port;
-            }
-        }, lazyToken), new DynECTProvider.FeignModule());
+        return ObjectGraph.create(new DynECTProvider.FeignModule()).get(Feign.class)
+                .newInstance(new DynECTTarget(new DynECTProvider() {
+                    @Override
+                    public String url() {
+                        return "http://localhost:" + port;
+                    }
+                }, lazyToken));
     }
 }

@@ -24,9 +24,9 @@ import denominator.model.rdata.SOAData;
 import denominator.model.rdata.SPFData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.TXTData;
+import feign.sax.SAXDecoder.ContentHandlerWithResult;
 
-class ResourceRecordSetHandler extends DefaultHandler implements
-        feign.codec.SAXDecoder.ContentHandlerWithResult<ResourceRecordSet<?>> {
+class ResourceRecordSetHandler extends DefaultHandler implements ContentHandlerWithResult<ResourceRecordSet<?>> {
 
     @Inject
     ResourceRecordSetHandler() {
@@ -71,11 +71,10 @@ class ResourceRecordSetHandler extends DefaultHandler implements
 
     /**
      * See <a
-     *      href="http://aws.amazon.com/route53/faqs/#Supported_DNS_record_types">supported
-     *      types</a>
-     * See <a
-     *      href="http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/ResourceRecordTypes.html">record
-     *      type formats</a>
+     * href="http://aws.amazon.com/route53/faqs/#Supported_DNS_record_types"
+     * >supported types</a> See <a href=
+     * "http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/ResourceRecordTypes.html"
+     * >record type formats</a>
      */
     static Map<String, Object> parseTextFormat(String type, String rdata) {
         if ("A".equals(type)) {

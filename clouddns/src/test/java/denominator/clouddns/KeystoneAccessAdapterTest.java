@@ -1,16 +1,41 @@
 package denominator.clouddns;
 
+import static dagger.Provides.Type.SET;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
-import java.io.StringReader;
+import javax.inject.Inject;
 
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import com.google.gson.Gson;
+import com.google.gson.TypeAdapter;
+
+import dagger.Module;
+import dagger.ObjectGraph;
+import dagger.Provides;
 import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
+import feign.gson.GsonModule;
 
 @Test
-public class KeystoneAccessDecoderTest {
+public class KeystoneAccessAdapterTest {
+    @Inject
+    Gson gson;
+
+    @Module(includes = GsonModule.class, library = true, injects = KeystoneAccessAdapterTest.class)
+    static class AdapterBindings {
+        @SuppressWarnings("rawtypes")
+        @Provides(type = SET)
+        TypeAdapter tokenIdAndPublicURLDecoder() {
+            return new KeystoneAccessAdapter("rax:dns");
+        }
+    }
+
+    @BeforeClass
+    void setUp() {
+        ObjectGraph.create(new AdapterBindings()).inject(this);
+    }
 
     @Test
     public void publicURLFound() throws Throwable {
@@ -22,8 +47,8 @@ public class KeystoneAccessDecoderTest {
                 + "            }],\n" //
                 + "            \"type\": \"rax:dns\"\n";
 
-        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(new StringReader(
-                ACCESS_HEADER + nameThenType + SERVICE + ACCESS_FOOTER), null);
+        TokenIdAndPublicURL tokenIdAndPublicUrl = gson.fromJson(ACCESS_HEADER + nameThenType + SERVICE + ACCESS_FOOTER,
+                TokenIdAndPublicURL.class);
 
         assertEquals(tokenIdAndPublicUrl.tokenId, "1bcd122d87494f5ab39a185b9ec5ff73");
         assertEquals(tokenIdAndPublicUrl.publicURL, "https://dns.api.rackspacecloud.com/v1.0/1234");
@@ -35,8 +60,8 @@ public class KeystoneAccessDecoderTest {
                 + "            \"name\": \"cloudDNS\",\n" //
                 + "            \"type\": \"rax:dns\"\n";
 
-        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(new StringReader(
-                ACCESS_HEADER + noEndpoints + SERVICE + ACCESS_FOOTER), null);
+        TokenIdAndPublicURL tokenIdAndPublicUrl = gson.fromJson(ACCESS_HEADER + noEndpoints + SERVICE + ACCESS_FOOTER,
+                TokenIdAndPublicURL.class);
 
         assertEquals(tokenIdAndPublicUrl.tokenId, "1bcd122d87494f5ab39a185b9ec5ff73");
         assertNull(tokenIdAndPublicUrl.publicURL);
@@ -44,8 +69,8 @@ public class KeystoneAccessDecoderTest {
 
     @Test
     public void serviceNotFound() throws Throwable {
-        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(new StringReader(
-                ACCESS_HEADER + SERVICE + ACCESS_FOOTER), null);
+        TokenIdAndPublicURL tokenIdAndPublicUrl = gson.fromJson(ACCESS_HEADER + SERVICE + ACCESS_FOOTER,
+                TokenIdAndPublicURL.class);
 
         assertEquals(tokenIdAndPublicUrl.tokenId, "1bcd122d87494f5ab39a185b9ec5ff73");
         assertNull(tokenIdAndPublicUrl.publicURL);
@@ -53,8 +78,8 @@ public class KeystoneAccessDecoderTest {
 
     @Test
     public void noServices() throws Throwable {
-        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(new StringReader(
-                ACCESS_HEADER + ACCESS_FOOTER), null);
+        TokenIdAndPublicURL tokenIdAndPublicUrl = gson.fromJson(ACCESS_HEADER + ACCESS_FOOTER,
+                TokenIdAndPublicURL.class);
 
         assertEquals(tokenIdAndPublicUrl.tokenId, "1bcd122d87494f5ab39a185b9ec5ff73");
         assertNull(tokenIdAndPublicUrl.publicURL);
@@ -62,11 +87,10 @@ public class KeystoneAccessDecoderTest {
 
     @Test
     public void noToken() throws Throwable {
-        TokenIdAndPublicURL tokenIdAndPublicUrl = new KeystoneAccessDecoder("rax:dns").decode(new StringReader(
-                "{\n" //
-                        + "    \"access\": {\n" //
-                        + "        \"serviceCatalog\": [{\n"//
-                        + ACCESS_FOOTER), null);
+        TokenIdAndPublicURL tokenIdAndPublicUrl = gson.fromJson("{\n" //
+                + "    \"access\": {\n" //
+                + "        \"serviceCatalog\": [{\n"//
+                + ACCESS_FOOTER, TokenIdAndPublicURL.class);
 
         assertNull(tokenIdAndPublicUrl);
     }
@@ -96,5 +120,4 @@ public class KeystoneAccessDecoderTest {
             + "        }]\n"//
             + "    }\n" //
             + "}";
-
 }

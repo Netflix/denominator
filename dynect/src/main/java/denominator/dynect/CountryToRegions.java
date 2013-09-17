@@ -11,7 +11,7 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 
-@Module(injects = GeoResourceRecordSetsDecoder.class, complete = false)
+@Module(injects = DynECTGeoResourceRecordSetApi.Factory.class, complete = false)
 public class CountryToRegions {
 
     /**

@@ -6,14 +6,14 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import denominator.model.Zone;
 import denominator.route53.Route53.ZoneList;
+import feign.sax.SAXDecoder.ContentHandlerWithResult;
 
 /**
  * See <a href=
  * "http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListHostedZones.html"
  * >docs</a>
  */
-class ListHostedZonesResponseHandler extends DefaultHandler implements
-        feign.codec.SAXDecoder.ContentHandlerWithResult<ZoneList> {
+class ListHostedZonesResponseHandler extends DefaultHandler implements ContentHandlerWithResult<ZoneList> {
 
     @Inject
     ListHostedZonesResponseHandler() {
