@@ -1,6 +1,7 @@
 package denominator.designate;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Named;
 
@@ -10,9 +11,8 @@ import feign.RequestLine;
 
 // http://docs.hpcloud.com/api/dns/#4.RESTAPISpecifications
 public interface Designate {
-    // String result as we really don't care at the moment
     @RequestLine("GET /limits")
-    String limits();
+    Map<String, Object> limits();
 
     @RequestLine("GET /domains")
     List<Zone> domains();

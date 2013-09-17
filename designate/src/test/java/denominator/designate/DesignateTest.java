@@ -2,6 +2,7 @@ package denominator.designate;
 
 import static java.lang.String.format;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
@@ -124,7 +125,7 @@ public class DesignateTest {
         server.play();
 
         try {
-            assertEquals(mockApi(server.getPort()).limits(), limitsResponse);
+            assertFalse(mockApi(server.getPort()).limits().isEmpty());
 
             assertEquals(server.takeRequest().getRequestLine(), "GET /v1/limits HTTP/1.1");
         } finally {
@@ -313,9 +314,14 @@ public class DesignateTest {
 
             RecordedRequest createRequest = server.takeRequest();
             assertEquals(createRequest.getRequestLine(), format("POST /v1/domains/%s/records HTTP/1.1", domainId));
-            assertEquals(new String(createRequest.getBody()),
-                    "{\"name\":\"denominator.io.\",\"type\":\"MX\",\"ttl\":300,\"data\":\"www.denominator.io.\",\"priority\":10}");
-
+            assertEquals(new String(createRequest.getBody()), ""//
+                    + "{\n"//
+                    + "  \"name\": \"denominator.io.\",\n"//
+                    + "  \"type\": \"MX\",\n"//
+                    + "  \"ttl\": 300,\n"//
+                    + "  \"data\": \"www.denominator.io.\",\n"//
+                    + "  \"priority\": 10\n"//
+                    + "}");
         } finally {
             server.shutdown();
         }
@@ -348,8 +354,14 @@ public class DesignateTest {
             RecordedRequest updateRequest = server.takeRequest();
             assertEquals(updateRequest.getRequestLine(),
                     format("PUT /v1/domains/%s/records/%s HTTP/1.1", domainId, record.id));
-            assertEquals(new String(updateRequest.getBody()),
-                    "{\"name\":\"denominator.io.\",\"type\":\"MX\",\"ttl\":300,\"data\":\"www.denominator.io.\",\"priority\":10}");
+            assertEquals(new String(updateRequest.getBody()), ""//
+                    + "{\n"//
+                    + "  \"name\": \"denominator.io.\",\n"//
+                    + "  \"type\": \"MX\",\n"//
+                    + "  \"ttl\": 300,\n"//
+                    + "  \"data\": \"www.denominator.io.\",\n"//
+                    + "  \"priority\": 10\n"//
+                    + "}");
 
         } finally {
             server.shutdown();
@@ -391,8 +403,12 @@ public class DesignateTest {
 
             RecordedRequest createRequest = server.takeRequest();
             assertEquals(createRequest.getRequestLine(), format("POST /v1/domains/%s/records HTTP/1.1", domainId));
-            assertEquals(new String(createRequest.getBody()),
-                    "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"data\":\"192.0.2.1\"}");
+            assertEquals(new String(createRequest.getBody()), ""//
+                    + "{\n"//
+                    + "  \"name\": \"www.denominator.io.\",\n"//
+                    + "  \"type\": \"A\",\n"//
+                    + "  \"data\": \"192.0.2.1\"\n"//
+                    + "}");
 
         } finally {
             server.shutdown();
@@ -424,8 +440,12 @@ public class DesignateTest {
             RecordedRequest updateRequest = server.takeRequest();
             assertEquals(updateRequest.getRequestLine(),
                     format("PUT /v1/domains/%s/records/%s HTTP/1.1", domainId, record.id));
-            assertEquals(new String(updateRequest.getBody()),
-                    "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"data\":\"192.0.2.1\"}");
+            assertEquals(new String(updateRequest.getBody()), ""//
+                    + "{\n"//
+                    + "  \"name\": \"www.denominator.io.\",\n"//
+                    + "  \"type\": \"A\",\n"//
+                    + "  \"data\": \"192.0.2.1\"\n"//
+                    + "}");
 
         } finally {
             server.shutdown();

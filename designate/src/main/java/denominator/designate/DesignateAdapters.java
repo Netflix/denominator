@@ -3,8 +3,6 @@ package denominator.designate;
 import static com.google.gson.stream.JsonToken.NULL;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -12,16 +10,45 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 import denominator.designate.Designate.Record;
 import denominator.model.Zone;
-import feign.codec.Decoder;
 
-class DesignateDecoders {
-    static class DomainListDecoder extends ListDecoder<Zone> {
+class DesignateAdapters {
+
+    static class RecordAdapter extends TypeAdapter<Record> {
         @Inject
-        DomainListDecoder() {
+        RecordAdapter() {
+        }
+
+        @Override
+        public void write(JsonWriter out, Record record) throws IOException {
+            out.beginObject();
+            out.name("name").value(record.name);
+            out.name("type").value(record.type);
+            if (record.ttl != null)
+                out.name("ttl").value(record.ttl);
+            out.name("data").value(record.data);
+            if (record.priority != null)
+                out.name("priority").value(record.priority);
+            out.endObject();
+        }
+
+        @Override
+        public Record read(JsonReader reader) throws IOException {
+            reader.beginObject();
+            Record record = buildRecord(reader);
+            reader.endObject();
+            return record;
+        }
+    }
+
+    static class DomainListAdapter extends ListAdapter<Zone> {
+        @Inject
+        DomainListAdapter() {
         }
 
         @Override
@@ -46,25 +73,9 @@ class DesignateDecoders {
         }
     }
 
-    static class RecordDecoder implements Decoder.TextStream<Record> {
+    static class RecordListAdapter extends ListAdapter<Record> {
         @Inject
-        RecordDecoder() {
-        }
-
-        @Override
-        public Record decode(Reader ireader, Type type) throws IOException {
-            JsonReader reader = new JsonReader(ireader);
-            reader.beginObject();
-            Record record = buildRecord(reader);
-            reader.endObject();
-            reader.close();
-            return record;
-        }
-    }
-
-    static class RecordListDecoder extends ListDecoder<Record> {
-        @Inject
-        RecordListDecoder() {
+        RecordListAdapter() {
         }
 
         @Override
@@ -100,15 +111,14 @@ class DesignateDecoders {
         return record;
     }
 
-    static abstract class ListDecoder<X> implements Decoder.TextStream<List<X>> {
+    static abstract class ListAdapter<X> extends TypeAdapter<List<X>> {
         protected abstract String jsonKey();
 
         protected abstract X build(JsonReader reader) throws IOException;
 
         @Override
-        public List<X> decode(Reader ireader, Type type) throws IOException {
+        public List<X> read(JsonReader reader) throws IOException {
             List<X> elements = new LinkedList<X>();
-            JsonReader reader = new JsonReader(ireader);
             reader.beginObject();
             while (reader.hasNext()) {
                 String nextName = reader.nextName();
@@ -128,6 +138,11 @@ class DesignateDecoders {
             reader.close();
             Collections.sort(elements, toStringComparator());
             return elements;
+        }
+
+        @Override
+        public void write(JsonWriter out, List<X> value) throws IOException {
+            throw new UnsupportedOperationException();
         }
     }
 

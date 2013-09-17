@@ -2,19 +2,18 @@ package denominator.dynect;
 
 import static dagger.Provides.Type.SET;
 
-import java.io.Closeable;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
+
+import com.google.gson.TypeAdapter;
 
 import dagger.Provides;
 import denominator.BasicProvider;
@@ -24,21 +23,16 @@ import denominator.QualifiedResourceRecordSetApi;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
+import denominator.config.NothingToClose;
 import denominator.config.WeightedUnsupported;
-import denominator.dynect.DynECT.Record;
-import denominator.dynect.DynECTDecoder.NothingForbiddenDecoder;
-import denominator.dynect.DynECTDecoder.RecordIdsDecoder;
-import denominator.dynect.DynECTDecoder.RecordsByNameAndTypeDecoder;
-import denominator.dynect.DynECTDecoder.TokenDecoder;
-import denominator.dynect.DynECTDecoder.ZonesDecoder;
+import denominator.dynect.DynECTAdapters.NothingForbiddenAdapter;
+import denominator.dynect.DynECTAdapters.RecordIdsAdapter;
+import denominator.dynect.DynECTAdapters.RecordsByNameAndTypeAdapter;
+import denominator.dynect.DynECTAdapters.TokenAdapter;
+import denominator.dynect.DynECTAdapters.ZonesAdapter;
 import denominator.dynect.InvalidatableTokenProvider.Session;
-import denominator.model.ResourceRecordSet;
-import denominator.model.Zone;
 import denominator.profile.GeoResourceRecordSetApi;
 import feign.Feign;
-import feign.Feign.Defaults;
-import feign.ReflectiveFeign;
-import feign.codec.Decoder;
 import feign.codec.ErrorDecoder;
 import feign.gson.GsonModule;
 
@@ -91,18 +85,13 @@ public class DynECTProvider extends BasicProvider {
     }
 
     @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
-            WeightedUnsupported.class, ConcatBasicAndQualifiedResourceRecordSets.class, FeignModule.class })
+            NothingToClose.class, WeightedUnsupported.class, ConcatBasicAndQualifiedResourceRecordSets.class,
+            CountryToRegions.class, FeignModule.class })
     public static final class Module {
 
         @Provides
         CheckConnection checkConnection(InvalidatableTokenProvider checkConnection) {
             return checkConnection;
-        }
-
-        @Provides
-        @Singleton
-        Closeable provideCloser(Feign feign) {
-            return feign;
         }
 
         @Provides
@@ -115,7 +104,7 @@ public class DynECTProvider extends BasicProvider {
         @Singleton
         @Named("hasAllGeoPermissions")
         Boolean hasAllGeoPermissions(DynECT api) {
-            return api.hasAllGeoPermissions();
+            return api.hasAllGeoPermissions().data;
         }
 
         @Provides
@@ -136,10 +125,12 @@ public class DynECTProvider extends BasicProvider {
         }
     }
 
-    // unbound wildcards are not currently injectable in dagger.
+    @dagger.Module(//
+    injects = DynECTResourceRecordSetApi.Factory.class, //
+    complete = false, // doesn't bind Provider used by SessionTarget
+    overrides = true, // ErrorDecoder
+    includes = { Feign.Defaults.class, GsonModule.class })
     @SuppressWarnings("rawtypes")
-    @dagger.Module(injects = DynECTResourceRecordSetApi.Factory.class, complete = false, overrides = true, includes = {
-            CountryToRegions.class, Defaults.class, ReflectiveFeign.Module.class, GsonModule.class })
     public static final class FeignModule {
 
         @Provides
@@ -167,50 +158,37 @@ public class DynECTProvider extends BasicProvider {
         }
 
         @Provides(type = SET)
-        Decoder loginDecoder() {
-            return new DynECTDecoder<String>(TokenDecoder.INSTANCE) {
-            };
+        TypeAdapter loginAdapter() {
+            return new TokenAdapter();
         }
 
         @Provides(type = SET)
-        Decoder hasAllGeoPermissionsDecoder() {
-            return new DynECTDecoder<Boolean>(NothingForbiddenDecoder.INSTANCE) {
-            };
+        TypeAdapter hasAllGeoPermissionsAdapter() {
+            return new NothingForbiddenAdapter();
         }
 
         @Provides(type = SET)
-        Decoder resourceRecordSetsDecoder(ResourceRecordSetsDecoder decoder) {
-            return new DynECTDecoder<Iterator<ResourceRecordSet<?>>>(decoder) {
-            };
+        TypeAdapter resourceRecordSetsAdapter() {
+            return new ResourceRecordSetsAdapter();
         }
 
         @Provides(type = SET)
-        Decoder zonesDecoder() {
-            return new DynECTDecoder<List<Zone>>(ZonesDecoder.INSTANCE) {
-            };
+        TypeAdapter zonesAdapter() {
+            return new ZonesAdapter();
         }
 
         @Provides(type = SET)
-        Decoder geoRRSetsDecoder(GeoResourceRecordSetsDecoder decoder) {
-            return new DynECTDecoder<Map<String, Collection<ResourceRecordSet<?>>>>(decoder) {
-            };
+        TypeAdapter recordIdsAdapter() {
+            return new RecordIdsAdapter();
         }
 
         @Provides(type = SET)
-        Decoder recordIdsDecoder() {
-            return new DynECTDecoder<List<String>>(RecordIdsDecoder.INSTANCE) {
-            };
+        TypeAdapter recordsAdapter() {
+            return new RecordsByNameAndTypeAdapter();
         }
 
-        @Provides(type = SET)
-        Decoder recordsDecoder() {
-            return new DynECTDecoder<Iterator<Record>>(RecordsByNameAndTypeDecoder.INSTANCE) {
-            };
-        }
-
-        // This is why we need overrides = true
         @Provides
-        ErrorDecoder errorDecoders(DynECTErrorDecoder errorDecoder) {
+        ErrorDecoder errorDecoder(DynECTErrorDecoder errorDecoder) {
             return errorDecoder;
         }
     }

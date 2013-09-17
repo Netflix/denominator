@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.inject.Inject;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
@@ -20,16 +18,14 @@ import com.google.gson.stream.JsonReader;
 
 import denominator.common.PeekingIterator;
 import denominator.dynect.DynECT.Record;
+import denominator.dynect.DynECTAdapters.DataAdapter;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 
-class ResourceRecordSetsDecoder implements DynECTDecoder.Parser<Iterator<ResourceRecordSet<?>>> {
-    @Inject
-    ResourceRecordSetsDecoder(){
-    }
+class ResourceRecordSetsAdapter extends DataAdapter<Iterator<ResourceRecordSet<?>>> {
 
     @Override
-    public Iterator<ResourceRecordSet<?>> apply(JsonReader reader) throws IOException {
+    public Iterator<ResourceRecordSet<?>> build(JsonReader reader) throws IOException {
         JsonElement data;
         try {
             data = new JsonParser().parse(reader);
@@ -72,11 +68,8 @@ class ResourceRecordSetsDecoder implements DynECTDecoder.Parser<Iterator<Resourc
                 return endOfData();
             JsonElement current = peekingIterator.next();
             Record record = ToRecord.INSTANCE.apply(current);
-            Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
-                                                                    .name(record.name)
-                                                                    .type(record.type)
-                                                                    .ttl(record.ttl)
-                                                                    .add(record.rdata);
+            Builder<Map<String, Object>> builder = ResourceRecordSet.builder().name(record.name).type(record.type)
+                    .ttl(record.ttl).add(record.rdata);
             while (peekingIterator.hasNext()) {
                 JsonElement next = peekingIterator.peek();
                 if (next == null || next.isJsonNull())

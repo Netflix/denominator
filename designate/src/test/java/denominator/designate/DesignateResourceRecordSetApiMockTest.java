@@ -112,8 +112,13 @@ public class DesignateResourceRecordSetApiMockTest {
 
             RecordedRequest createRequest = server.takeRequest();
             assertEquals(createRequest.getRequestLine(), format("POST /v1/domains/%s/records HTTP/1.1", domainId));
-            assertEquals(new String(createRequest.getBody()),
-                    "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"ttl\":3600,\"data\":\"192.0.2.1\"}");
+            assertEquals(new String(createRequest.getBody()), ""//
+                    + "{\n"//
+                    + "  \"name\": \"www.denominator.io.\",\n"//
+                    + "  \"type\": \"A\",\n"//
+                    + "  \"ttl\": 3600,\n"//
+                    + "  \"data\": \"192.0.2.1\"\n"//
+                    + "}");
         } finally {
             server.shutdown();
         }
@@ -166,14 +171,24 @@ public class DesignateResourceRecordSetApiMockTest {
             RecordedRequest updateRequest = server.takeRequest();
             assertEquals(updateRequest.getRequestLine(),
                     format("PUT /v1/domains/%s/records/%s HTTP/1.1", domainId, "d7eb0fc4-e069-4c92-a272-c5c969b4f558"));
-            assertEquals(new String(updateRequest.getBody()),
-                    "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"ttl\":10000000,\"data\":\"192.0.2.1\"}");
+            assertEquals(new String(updateRequest.getBody()), ""//
+                    + "{\n"//
+                    + "  \"name\": \"www.denominator.io.\",\n"//
+                    + "  \"type\": \"A\",\n"//
+                    + "  \"ttl\": 10000000,\n"//
+                    + "  \"data\": \"192.0.2.1\"\n"//
+                    + "}");
 
             updateRequest = server.takeRequest();
             assertEquals(updateRequest.getRequestLine(),
                     format("PUT /v1/domains/%s/records/%s HTTP/1.1", domainId, "c538d70e-d65f-4d5a-92a2-cd5d4d1d9da4"));
-            assertEquals(new String(updateRequest.getBody()),
-                    "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"ttl\":10000000,\"data\":\"192.0.2.2\"}");
+            assertEquals(new String(updateRequest.getBody()), ""//
+                    + "{\n"//
+                    + "  \"name\": \"www.denominator.io.\",\n"//
+                    + "  \"type\": \"A\",\n"//
+                    + "  \"ttl\": 10000000,\n"//
+                    + "  \"data\": \"192.0.2.2\"\n"//
+                    + "}");
         } finally {
             server.shutdown();
         }

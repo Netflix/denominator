@@ -1,14 +1,15 @@
 package denominator.route53;
 
-import static feign.codec.Decoders.eachFirstGroup;
+import static feign.Util.resolveLastTypeParameter;
 import static java.lang.String.format;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -17,13 +18,15 @@ import feign.Response;
 import feign.RetryableException;
 import feign.codec.Decoder;
 import feign.codec.ErrorDecoder;
-import feign.codec.SAXDecoder;
+import feign.sax.SAXDecoder.ContentHandlerWithResult;
 
-class Route53ErrorDecoder extends SAXDecoder<Route53ErrorDecoder.Route53Error> implements ErrorDecoder {
+class Route53ErrorDecoder implements ErrorDecoder {
+
+    private final Decoder decoder;
 
     @Inject
-    Route53ErrorDecoder(Provider<Route53ErrorDecoder.Route53Error> handlers) {
-        super(handlers);
+    Route53ErrorDecoder(Decoder decoder) {
+        this.decoder = decoder;
     }
 
     // visible for testing;
@@ -31,15 +34,17 @@ class Route53ErrorDecoder extends SAXDecoder<Route53ErrorDecoder.Route53Error> i
         return System.currentTimeMillis();
     }
 
+    private static final Type LIST_STRING = resolveLastTypeParameter(Messages.class, ContentHandlerWithResult.class);
+
     @Override
     public Exception decode(String methodKey, Response response) {
         try {
             if ("Route53#changeResourceRecordSets(String,List)".equals(methodKey)) {
-                List<String> messages = response.body() != null ? messagesDecoder.decode(response.body().asReader(),
-                        null) : null;
+                @SuppressWarnings("unchecked")
+                List<String> messages = List.class.cast(decoder.decode(response, LIST_STRING));
                 return new InvalidChangeBatchException(methodKey, messages);
             }
-            Route53Error error = response.body() != null ? super.decode(response.body().asReader(), null) : null;
+            Route53Error error = Route53Error.class.cast(decoder.decode(response, Route53Error.class));
             if (error == null)
                 return FeignException.errorStatus(methodKey, response);
             String message = format("%s failed with error %s", methodKey, error.code);
@@ -60,10 +65,35 @@ class Route53ErrorDecoder extends SAXDecoder<Route53ErrorDecoder.Route53Error> i
         }
     }
 
-    Decoder.TextStream<List<String>> messagesDecoder = eachFirstGroup("<Message>([^<]+)</Message>");
+    static class Messages extends DefaultHandler implements ContentHandlerWithResult<List<String>> {
+        @Inject
+        Messages() {
+        }
 
-    static class Route53Error extends DefaultHandler implements
-            feign.codec.SAXDecoder.ContentHandlerWithResult<Route53Error> {
+        private StringBuilder currentText = new StringBuilder();
+
+        private List<String> messages = new ArrayList<String>(10);
+
+        @Override
+        public List<String> result() {
+            return messages;
+        }
+
+        @Override
+        public void endElement(String uri, String name, String qName) {
+            if (qName.equals("Message")) {
+                messages.add(currentText.toString().trim());
+            }
+            currentText = new StringBuilder();
+        }
+
+        @Override
+        public void characters(char ch[], int start, int length) {
+            currentText.append(ch, start, length);
+        }
+    }
+
+    static class Route53Error extends DefaultHandler implements ContentHandlerWithResult<Route53Error> {
         @Inject
         Route53Error() {
         }

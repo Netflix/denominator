@@ -10,16 +10,21 @@ import java.util.Map.Entry;
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
 import denominator.ultradns.UltraDNS.Record;
+import feign.RequestTemplate;
+import feign.codec.EncodeException;
 import feign.codec.Encoder;
 
-class UltraDNSFormEncoder implements Encoder.Text<Map<String, ?>> {
+class UltraDNSFormEncoder implements Encoder {
 
     @Override
-    public String encode(Map<String, ?> formParams) {
+    public void encode(Object object, RequestTemplate template) throws EncodeException {
+        @SuppressWarnings("unchecked")
+        Map<String, ?> formParams = Map.class.cast(object);
         if (formParams.containsKey("zoneName")) {
-            return encodeZoneAndResourceRecord(formParams);
+            template.body(encodeZoneAndResourceRecord(formParams));
+        } else {
+            template.body(encodeRecordAndDirectionalGroup(formParams));
         }
-        return encodeRecordAndDirectionalGroup(formParams);
     }
 
     static String encodeZoneAndResourceRecord(Map<String, ?> formParams) {

@@ -1,25 +1,24 @@
 package denominator.clouddns;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Comparator;
 
 import javax.inject.Inject;
 
+import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonWriter;
 
 import denominator.clouddns.RackspaceApis.ListWithNext;
 import denominator.clouddns.RackspaceApis.Record;
 import denominator.model.Zone;
-import feign.codec.Decoder;
 
-class RackspaceDecoders {
-    static class DomainListDecoder extends ListWithNextDecoder<Zone> {
+class RackspaceAdapters {
+    static class DomainListAdapter extends ListWithNextAdapter<Zone> {
         @Inject
-        DomainListDecoder() {
+        DomainListAdapter() {
         }
 
         @Override
@@ -44,9 +43,9 @@ class RackspaceDecoders {
         }
     }
 
-    static class RecordListDecoder extends ListWithNextDecoder<Record> {
+    static class RecordListAdapter extends ListWithNextAdapter<Record> {
         @Inject
-        RecordListDecoder() {
+        RecordListAdapter() {
         }
 
         @Override
@@ -76,15 +75,14 @@ class RackspaceDecoders {
         }
     }
 
-    static abstract class ListWithNextDecoder<X> implements Decoder.TextStream<ListWithNext<X>> {
+    static abstract class ListWithNextAdapter<X> extends TypeAdapter<ListWithNext<X>> {
         protected abstract String jsonKey();
 
         protected abstract X build(JsonReader reader) throws IOException;
 
         @Override
-        public ListWithNext<X> decode(Reader ireader, Type type) throws IOException {
+        public ListWithNext<X> read(JsonReader reader) throws IOException {
             ListWithNext<X> records = new ListWithNext<X>();
-            JsonReader reader = new JsonReader(ireader);
             reader.beginObject();
             while (reader.hasNext()) {
                 String nextName = reader.nextName();
@@ -128,6 +126,11 @@ class RackspaceDecoders {
             reader.close();
             Collections.sort(records, toStringComparator());
             return records;
+        }
+
+        @Override
+        public void write(JsonWriter out, ListWithNext<X> value) throws IOException {
+            throw new UnsupportedOperationException();
         }
     }
 
