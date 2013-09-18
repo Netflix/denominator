@@ -1,7 +1,5 @@
 package denominator.route53;
 
-import javax.inject.Inject;
-
 import org.xml.sax.helpers.DefaultHandler;
 
 import denominator.model.Zone;
@@ -15,12 +13,8 @@ import feign.sax.SAXDecoder.ContentHandlerWithResult;
  */
 class ListHostedZonesResponseHandler extends DefaultHandler implements ContentHandlerWithResult<ZoneList> {
 
-    @Inject
-    ListHostedZonesResponseHandler() {
-    }
-
-    private StringBuilder currentText = new StringBuilder();
-    private ZoneList zones = new ZoneList();
+    private final StringBuilder currentText = new StringBuilder();
+    private final ZoneList zones = new ZoneList();
 
     @Override
     public ZoneList result() {
@@ -42,7 +36,7 @@ class ListHostedZonesResponseHandler extends DefaultHandler implements ContentHa
         } else if (qName.equals("NextMarker")) {
             zones.next = currentText.toString().trim();
         }
-        currentText = new StringBuilder();
+        currentText.setLength(0);
     }
 
     @Override

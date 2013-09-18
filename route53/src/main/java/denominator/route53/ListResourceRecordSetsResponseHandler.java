@@ -1,7 +1,5 @@
 package denominator.route53;
 
-import javax.inject.Inject;
-
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -17,17 +15,8 @@ import feign.sax.SAXDecoder.ContentHandlerWithResult;
 class ListResourceRecordSetsResponseHandler extends DefaultHandler implements
         ContentHandlerWithResult<ResourceRecordSetList> {
 
-    @Inject
-    ListResourceRecordSetsResponseHandler() {
-    }
-
-    private ResourceRecordSetHandler resourceRecordSetHandler = new ResourceRecordSetHandler();
-
-    private StringBuilder currentText = new StringBuilder();
-    private ResourceRecordSetList rrsets = new ResourceRecordSetList();
-    private NextRecord next = null;
-
-    private boolean inResourceRecordSets;
+    private final StringBuilder currentText = new StringBuilder();
+    private final ResourceRecordSetList rrsets = new ResourceRecordSetList();
 
     @Override
     public ResourceRecordSetList result() {
@@ -35,13 +24,14 @@ class ListResourceRecordSetsResponseHandler extends DefaultHandler implements
         return rrsets;
     }
 
+    private ResourceRecordSetHandler resourceRecordSetHandler = new ResourceRecordSetHandler();
+    private NextRecord next = null;
+    private boolean inResourceRecordSets;
+
     @Override
     public void startElement(String url, String name, String qName, Attributes attributes) {
         if ("ResourceRecordSets".equals(qName)) {
             inResourceRecordSets = true;
-        }
-        if (inResourceRecordSets) {
-            resourceRecordSetHandler.startElement(url, name, qName, attributes);
         }
     }
 
@@ -63,7 +53,7 @@ class ListResourceRecordSetsResponseHandler extends DefaultHandler implements
         } else if (qName.equals("NextRecordIdentifier")) {
             next.identifier = currentText.toString().trim();
         }
-        currentText = new StringBuilder();
+        currentText.setLength(0);
     }
 
     @Override
