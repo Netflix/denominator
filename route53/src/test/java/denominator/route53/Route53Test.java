@@ -14,6 +14,7 @@ import com.google.mockwebserver.MockResponse;
 import com.google.mockwebserver.MockWebServer;
 import com.google.mockwebserver.RecordedRequest;
 
+import denominator.model.ResourceRecordSet;
 import denominator.route53.Route53.ActionOnResourceRecordSet;
 import feign.Feign;
 
@@ -71,6 +72,38 @@ public class Route53Test {
             RecordedRequest createRRSet = server.takeRequest();
             assertEquals(createRRSet.getRequestLine(), "POST /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
             assertEquals(new String(createRRSet.getBody()), changeResourceRecordSetsRequestCreateA);
+        } finally {
+            server.shutdown();
+        }
+    }
+
+    static String changeResourceRecordSetsRequestCreateAliasTarget = ""//
+            + "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">"//
+            + "<ChangeBatch><Changes><Change><Action>CREATE</Action>"//
+            + "<ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><AliasTarget><HostedZoneId>Z3I0BTR7N27QRM</HostedZoneId><DNSName>ipv4-route53recordsetlivetest.adrianc.myzone.com.</DNSName><EvaluateTargetHealth>false</EvaluateTargetHealth></AliasTarget></ResourceRecordSet>"//
+            + "</Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
+
+    @Test
+    public void changeResourceRecordSetsWhenAliasTarget() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setResponseCode(200).setBody(changeResourceRecordSetsResponsePending));
+        server.play();
+
+        try {
+            Route53 api = mockApi(server.getPort());
+
+            ImmutableList<ActionOnResourceRecordSet> batch = ImmutableList.of(ActionOnResourceRecordSet
+                    .create(ResourceRecordSet
+                            .<AliasTarget> builder()
+                            .name("www.denominator.io.")
+                            .type("A")
+                            .add(AliasTarget.create("Z3I0BTR7N27QRM",
+                                    "ipv4-route53recordsetlivetest.adrianc.myzone.com.")).build()));
+            api.changeResourceRecordSets("Z1PA6795UKMFR9", batch);
+
+            RecordedRequest createRRSet = server.takeRequest();
+            assertEquals(createRRSet.getRequestLine(), "POST /2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset HTTP/1.1");
+            assertEquals(new String(createRRSet.getBody()), changeResourceRecordSetsRequestCreateAliasTarget);
         } finally {
             server.shutdown();
         }

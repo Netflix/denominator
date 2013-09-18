@@ -6,9 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
-
-import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 
 import denominator.model.ResourceRecordSet;
@@ -28,23 +25,17 @@ import feign.sax.SAXDecoder.ContentHandlerWithResult;
 
 class ResourceRecordSetHandler extends DefaultHandler implements ContentHandlerWithResult<ResourceRecordSet<?>> {
 
-    @Inject
-    ResourceRecordSetHandler() {
-    }
-
-    private StringBuilder currentText = new StringBuilder();
-    private Builder<Map<String, Object>> builder = ResourceRecordSet.builder();
+    private final StringBuilder currentText = new StringBuilder();
+    private final Builder<Map<String, Object>> builder = ResourceRecordSet.builder();
 
     @Override
     public ResourceRecordSet<?> result() {
         return builder.build();
     }
 
-    @Override
-    public void startElement(String url, String name, String qName, Attributes attributes) {
-    }
-
-    private String currentType = null;
+    private String currentType;
+    private String hostedZoneId;
+    private String dnsName;
 
     @Override
     public void endElement(String uri, String name, String qName) {
@@ -58,10 +49,16 @@ class ResourceRecordSetHandler extends DefaultHandler implements ContentHandlerW
             builder.add(parseTextFormat(currentType, currentText.toString().trim()));
         } else if (qName.equals("SetIdentifier")) {
             builder.qualifier(currentText.toString().trim());
+        } else if (qName.equals("HostedZoneId")) {
+            hostedZoneId = currentText.toString().trim();
+        } else if (qName.equals("DNSName")) {
+            dnsName = currentText.toString().trim();
+        } else if (qName.equals("AliasTarget")) {
+            builder.add(AliasTarget.create(hostedZoneId, dnsName));
         } else if ("Weight".equals(qName)) {
             builder.weighted(Weighted.create(Integer.parseInt(currentText.toString().trim())));
         }
-        currentText = new StringBuilder();
+        currentText.setLength(0);
     }
 
     @Override
