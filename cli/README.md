@@ -220,3 +220,21 @@ $ ./denominator -p route53 record -z myzone.com. add -n wonky.myzone.com. -t A -
 ;; in zone myzone.com. adding to rrset wonky.myzone.com. A values: [{address=75.101.168.33}]
 ;; ok
 ```
+
+### ELB Alias
+When using route53, you can setup `A` and `AAAA` aliases to an elastic load balancer, given its public dns name.  Use the `--elb-dnsname` flag instead of `-d` to setup an alias.
+
+Ex.
+```bash
+$ denominator -n route53 record -z myzone.com. add -t A -n foo.myzone.com. --elb-dnsname abadmin-795710131.us-east-1.elb.amazonaws.com
+;; in zone myzone.com. adding to rrset foo.myzone.com. A values: [{HostedZoneId=Z3DZXE0Q79N41H, DNSName=abadmin-795710131.us-east-1.elb.amazonaws.com}]
+[Route53#listHostedZones] ---> GET https://route53.amazonaws.com/2012-12-12/hostedzone HTTP/1.1
+[Route53#listHostedZones] <--- HTTP/1.1 200 OK (623ms)
+[Route53#listResourceRecordSets] ---> GET https://route53.amazonaws.com/2012-12-12/hostedzone/Z3I0BTR7N27QRM/rrset?name=foo.myzone.com.&type=A HTTP/1.1
+[Route53#listResourceRecordSets] <--- HTTP/1.1 200 OK (161ms)
+[Route53#listResourceRecordSets] ---> GET https://route53.amazonaws.com/2012-12-12/hostedzone/Z3I0BTR7N27QRM/rrset?name=foo.myzone.com.&type=A HTTP/1.1
+[Route53#listResourceRecordSets] <--- HTTP/1.1 200 OK (146ms)
+[Route53#changeResourceRecordSets] ---> POST https://route53.amazonaws.com/2012-12-12/hostedzone/Z3I0BTR7N27QRM/rrset HTTP/1.1
+[Route53#changeResourceRecordSets] <--- HTTP/1.1 200 OK (152ms)
+;; ok
+```
