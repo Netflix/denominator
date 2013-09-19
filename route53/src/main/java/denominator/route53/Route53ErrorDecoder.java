@@ -66,13 +66,9 @@ class Route53ErrorDecoder implements ErrorDecoder {
     }
 
     static class Messages extends DefaultHandler implements ContentHandlerWithResult<List<String>> {
-        @Inject
-        Messages() {
-        }
 
-        private StringBuilder currentText = new StringBuilder();
-
-        private List<String> messages = new ArrayList<String>(10);
+        private final StringBuilder currentText = new StringBuilder();
+        private final List<String> messages = new ArrayList<String>(10);
 
         @Override
         public List<String> result() {
@@ -84,7 +80,7 @@ class Route53ErrorDecoder implements ErrorDecoder {
             if (qName.equals("Message")) {
                 messages.add(currentText.toString().trim());
             }
-            currentText = new StringBuilder();
+            currentText.setLength(0);
         }
 
         @Override
@@ -94,18 +90,16 @@ class Route53ErrorDecoder implements ErrorDecoder {
     }
 
     static class Route53Error extends DefaultHandler implements ContentHandlerWithResult<Route53Error> {
-        @Inject
-        Route53Error() {
-        }
 
-        private StringBuilder currentText = new StringBuilder();
-        private String code;
-        private String message;
+        private final StringBuilder currentText = new StringBuilder();
 
         @Override
         public Route53Error result() {
             return this;
         }
+
+        private String code;
+        private String message;
 
         @Override
         public void endElement(String uri, String name, String qName) {
@@ -114,7 +108,7 @@ class Route53ErrorDecoder implements ErrorDecoder {
             } else if (qName.equals("Message")) {
                 message = currentText.toString().trim();
             }
-            currentText = new StringBuilder();
+            currentText.setLength(0);
         }
 
         @Override

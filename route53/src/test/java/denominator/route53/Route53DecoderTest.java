@@ -82,10 +82,10 @@ public class Route53DecoderTest {
                 .qualifier("foobar").ttl(300)//
                 .weighted(Weighted.create(1)).add(AData.create("1.2.3.4")).build());
 
-        // alias has no rdata!
-        assertEquals(result.get(1), ResourceRecordSet.<AData> builder()//
+        assertEquals(result.get(1), ResourceRecordSet.<AliasTarget> builder()//
                 .name("fooo.myzone.com.")//
                 .type("A")//
+                .add(AliasTarget.create("Z3I0BTR7N27QRM", "ipv4-route53recordsetlivetest.adrianc.myzone.com."))//
                 .build());
         assertNull(result.next);
     }
@@ -94,5 +94,4 @@ public class Route53DecoderTest {
         return Response.create(200, "OK", Collections.<String, Collection<String>> emptyMap(),
                 Util.slurp(new InputStreamReader(getClass().getResourceAsStream(resource))));
     }
-
 }
