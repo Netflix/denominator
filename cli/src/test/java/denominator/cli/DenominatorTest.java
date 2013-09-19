@@ -34,6 +34,7 @@ import denominator.mock.MockProvider;
 import denominator.model.ResourceRecordSet;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
+import denominator.route53.AliasTarget;
 
 @Test(singleThreaded = true)
 public class DenominatorTest {
@@ -288,6 +289,50 @@ public class DenominatorTest {
                                  .ttl(3600)
                                  .add(AData.create("192.0.2.1"))
                                  .add(AData.create("192.0.2.2")).build().toString());
+    }
+
+    @Test(description = "denominator -p route53 record -z denominator.io. add -n www3.denominator.io. -t A --elb-dnsname nccp-cbp-frontend-12345678.us-west-2.elb.amazonaws.com.")
+    public void testResourceRecordSetAddELBAlias() {
+        ResourceRecordSetAdd command = new ResourceRecordSetAdd();
+        command.zoneIdOrName = "denominator.io.";
+        command.name = "www3.denominator.io.";
+        command.type = "A";
+        command.elbDNSName = "nccp-cbp-frontend-12345678.us-west-2.elb.amazonaws.com.";
+
+        AliasTarget target = AliasTarget.create(ResourceRecordSetAdd.REGION_TO_HOSTEDZONE.get("us-west-2"), command.elbDNSName);
+
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                ";; in zone denominator.io. adding to rrset www3.denominator.io. A values: [" + target + "]",
+                ";; ok"));
+        
+        assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                ResourceRecordSet.<AliasTarget> builder()
+                                 .name(command.name)
+                                 .type(command.type)
+                                 .add(target).build().toString());
+    }
+
+    @Test(description = "denominator -p route53 record -z denominator.io. replace -n www4.denominator.io. -t A --elb-dnsname nccp-cbp-frontend-12345678.us-west-2.elb.amazonaws.com.")
+    public void testResourceRecordSetReplaceELBAlias() {
+        ResourceRecordSetReplace command = new ResourceRecordSetReplace();
+        command.zoneIdOrName = "denominator.io.";
+        command.name = "www4.denominator.io.";
+        command.type = "A";
+        command.elbDNSName = "nccp-cbp-frontend-12345678.us-west-2.elb.amazonaws.com.";
+
+        AliasTarget target = AliasTarget.create(ResourceRecordSetReplace.REGION_TO_HOSTEDZONE.get("us-west-2"), command.elbDNSName);
+
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                ";; in zone denominator.io. replacing rrset www4.denominator.io. A with values: [" + target + "]",
+                ";; ok"));
+        
+        assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                ResourceRecordSet.<AliasTarget> builder()
+                                 .name(command.name)
+                                 .type(command.type)
+                                 .add(target).build().toString());
     }
 
     @Test(description = "denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A --ttl 3600 -d 192.0.2.1 -d 192.0.2.2")
