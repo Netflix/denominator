@@ -1,3 +1,7 @@
+### Version 4.2
+* Add support for Route53 alias record sets.
+* Add `--elb-dnsname` flag to record commands.
+
 ### Version 4.1
 * update to feign 5
 
