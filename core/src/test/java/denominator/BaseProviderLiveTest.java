@@ -64,13 +64,17 @@ public abstract class BaseProviderLiveTest {
     protected Map<String, ResourceRecordSet<?>> stockRRSets() {
         Zone zone = skipIfNoMutableZone();
         String recordSuffix = recordPrefix + "." + zone.name();
-        // TODO: metadata about whether zone names have trailing dots or not.
-        String rdataSuffix = recordSuffix.endsWith(".") ? recordSuffix : recordSuffix + ".";
+        String rdataSuffix = recordSuffix;
+
+        if (addTrailingDotToZone && !recordSuffix.endsWith(".")) {
+            rdataSuffix = recordSuffix + ".";
+        }
+
         Builder<String, ResourceRecordSet<?>> builder = ImmutableMap.<String, ResourceRecordSet<?>> builder();
         builder.put(
                 "AAAA",
-                aaaa("ipv6-" + recordSuffix, ImmutableList.of("2001:0DB8:85A3:0000:0000:8A2E:0370:7334",
-                        "2001:0DB8:85A3:0000:0000:8A2E:0370:7335", "2001:0DB8:85A3:0000:0000:8A2E:0370:7336")));
+                aaaa("ipv6-" + recordSuffix, ImmutableList.of("2001:1DB8:85A3:1001:1001:8A2E:1371:7334",
+                        "2001:1DB8:85A3:1001:1001:8A2E:1371:7335", "2001:1DB8:85A3:1001:1001:8A2E:1371:7336")));
         builder.put("A", a("ipv4-" + recordSuffix, ImmutableList.of("192.0.2.1", "198.51.100.1", "203.0.113.1")));
         builder.put(
                 "CNAME",
@@ -115,6 +119,8 @@ public abstract class BaseProviderLiveTest {
 
     protected DNSApiManager manager;
     protected Zone mutableZone;
+    // TODO: metadata about whether zone names have trailing dots or not.
+    protected boolean addTrailingDotToZone = true;
 
     protected void checkRRS(ResourceRecordSet<?> rrs) {
         checkNotNull(rrs.name(), "Name: ResourceRecordSet %s", rrs);
