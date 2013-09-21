@@ -1,3 +1,6 @@
+### Version 4.3
+* Add `--alias-dnsname` flag to record commands.
+
 ### Version 4.2
 * Add support for Route53 alias record sets.
 * Add `--elb-dnsname` flag to record commands.
