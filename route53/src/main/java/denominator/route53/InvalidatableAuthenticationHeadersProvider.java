@@ -72,7 +72,7 @@ public class InvalidatableAuthenticationHeadersProvider {
         String token = null;
         if (creds.size() == 3)
             token = creds.get(2).toString();
-        String rfc1123Date = RFC1123.format(new Date());
+        String rfc1123Date = date();
         String signature = sign(rfc1123Date, secretKey);
         String auth = String.format(AUTH_FORMAT, accessKey, signature);
 
@@ -97,6 +97,10 @@ public class InvalidatableAuthenticationHeadersProvider {
 
     private static final String AUTH_FORMAT = "AWS3-HTTPS AWSAccessKeyId=%s,Algorithm=HmacSHA256,Signature=%s";
     private static final String HMACSHA256 = "HmacSHA256";
-    private static final SimpleDateFormat RFC1123 = new SimpleDateFormat("EEE, dd MMM yyyyy HH:mm:ss Z", US);
     private static final Charset UTF_8 = Charset.forName("UTF-8");
+    private static final SimpleDateFormat RFC1123 = new SimpleDateFormat("EEE, dd MMM yyyyy HH:mm:ss Z", US);
+    
+    private static synchronized String date() {
+        return RFC1123.format(new Date());
+    }
 }

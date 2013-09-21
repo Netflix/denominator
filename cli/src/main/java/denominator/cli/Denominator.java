@@ -170,8 +170,8 @@ public class Denominator {
         @Option(type = OptionType.GLOBAL, name = { "-C", "--config" }, description = "path to configuration file (used to store credentials). default: ~/.denominatorconfig")
         public String configPath = "~/.denominatorconfig";
 
-        @Option(type = OptionType.GLOBAL, name = { "-n", "--name" }, description = "unique name of provider configuration")
-        public String name;
+        @Option(type = OptionType.GLOBAL, name = { "-n", "--configuration-name" }, description = "unique name of provider configuration")
+        public String providerConfigurationName;
 
         protected Credentials credentials = Credentials.AnonymousCredentials.INSTANCE;
 
@@ -179,7 +179,7 @@ public class Denominator {
         public void run() {
             if (providerName != null && credentialArgs != null) {
                 credentials = Credentials.ListCredentials.from(credentialArgs);
-            } else if (name != null) {
+            } else if (providerConfigurationName != null) {
                 Map<?, ?> configFromFile = getConfigFromFile();
                 if (configFromFile != null) {
                     credentials = MapCredentials.from(Map.class.cast(configFromFile.get("credentials")));
@@ -219,7 +219,7 @@ public class Denominator {
         }
 
         /**
-         * Load configuration for given name from a YAML configuration file.
+         * Load configuration for given providerConfigurationName from a YAML configuration file.
          */
         Map<?, ?> getConfigFromFile() {
             if (configPath == null)
@@ -240,7 +240,7 @@ public class Denominator {
             Object providerConf = FluentIterable.from(configs).firstMatch(new Predicate<Object>() {
                 @Override
                 public boolean apply(Object input) {
-                    return name.equals(Map.class.cast(input).get("name"));
+                    return providerConfigurationName.equals(Map.class.cast(input).get("providerConfigurationName"));
                 }
             }).get();
             return Map.class.cast(providerConf);
