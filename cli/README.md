@@ -226,14 +226,28 @@ When using route53, you can setup `A` and `AAAA` aliases to an elastic load bala
 
 Ex.
 ```bash
-$ denominator -n route53 record -z myzone.com. add -t A -n foo.myzone.com. --elb-dnsname abadmin-795710131.us-east-1.elb.amazonaws.com
-;; in zone myzone.com. adding to rrset foo.myzone.com. A values: [{HostedZoneId=Z3DZXE0Q79N41H, DNSName=abadmin-795710131.us-east-1.elb.amazonaws.com}]
+$ denominator -n route53 record -z Z3I0BTR7N27QRM replace -t A -n foo.myzone.com. --elb-dnsname abadmin-795710131.us-east-1.elb.amazonaws.com
+;; in zone Z3I0BTR7N27QRM replacing rrset foo.myzone.com. A with values: [{HostedZoneId=Z3DZXE0Q79N41H, DNSName=abadmin-795710131.us-east-1.elb.amazonaws.com}]
 [Route53#listHostedZones] ---> GET https://route53.amazonaws.com/2012-12-12/hostedzone HTTP/1.1
 [Route53#listHostedZones] <--- HTTP/1.1 200 OK (623ms)
 [Route53#listResourceRecordSets] ---> GET https://route53.amazonaws.com/2012-12-12/hostedzone/Z3I0BTR7N27QRM/rrset?name=foo.myzone.com.&type=A HTTP/1.1
 [Route53#listResourceRecordSets] <--- HTTP/1.1 200 OK (161ms)
 [Route53#listResourceRecordSets] ---> GET https://route53.amazonaws.com/2012-12-12/hostedzone/Z3I0BTR7N27QRM/rrset?name=foo.myzone.com.&type=A HTTP/1.1
 [Route53#listResourceRecordSets] <--- HTTP/1.1 200 OK (146ms)
+[Route53#changeResourceRecordSets] ---> POST https://route53.amazonaws.com/2012-12-12/hostedzone/Z3I0BTR7N27QRM/rrset HTTP/1.1
+[Route53#changeResourceRecordSets] <--- HTTP/1.1 200 OK (152ms)
+;; ok
+```
+
+### Route53 Alias
+When using route53, you can setup `A` and `AAAA` aliases to any route53 resource, by specifying its hosted zone id and dnsname.  Use the `--alias-dnsname` flag instead of `-d` to setup an alias.
+
+Ex.
+```bash
+$ denominator -n route53 record -z Z3I0BTR7N27QRM add -t A -n foo.myzone.com. --alias-dnsname ipv4-route53roundrobinlivetest.adrianc.myzone.com. --alias-hosted-zone-id Z3I0BTR7N27QRM
+;; in zone Z3I0BTR7N27QRM replacing rrset foo.myzone.com. A with values: [{HostedZoneId=Z3I0BTR7N27QRM, DNSName=ipv4-route53roundrobinlivetest.adrianc.myzone.com.}]
+[Route53#listResourceRecordSets] ---> GET https://route53.amazonaws.com/2012-12-12/hostedzone/Z3I0BTR7N27QRM/rrset?name=foo.myzone.com.&type=A HTTP/1.1
+[Route53#listResourceRecordSets] <--- HTTP/1.1 200 OK (735ms)
 [Route53#changeResourceRecordSets] ---> POST https://route53.amazonaws.com/2012-12-12/hostedzone/Z3I0BTR7N27QRM/rrset HTTP/1.1
 [Route53#changeResourceRecordSets] <--- HTTP/1.1 200 OK (152ms)
 ;; ok

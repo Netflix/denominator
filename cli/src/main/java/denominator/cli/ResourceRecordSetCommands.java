@@ -175,6 +175,12 @@ class ResourceRecordSetCommands {
         @Option(type = OptionType.COMMAND, required = false, name = "--ec2-local-hostname", description = "take data from EC2 Instance Metadata local-hostname")
         public boolean ec2LocalHostname;
 
+        @Option(type = OptionType.COMMAND, required = false, name = "--alias-hosted-zone-id", description = "hosted zone id of the AWS resource to alias. ex. Z3DZXE0Q79N41H")
+        public String aliasHostedZoneId;
+
+        @Option(type = OptionType.COMMAND, required = false, name = "--alias-dnsname", description = "dnsname of the AWS resource to alias. ex. nccp-cbp-frontend-12345678.us-west-2.elb.amazonaws.com.")
+        public String aliasDNSName;
+
         @Option(type = OptionType.COMMAND, required = false, name = "--elb-dnsname", description = "dnsname of the ELB to alias. ex. nccp-cbp-frontend-12345678.us-west-2.elb.amazonaws.com.")
         public String elbDNSName;
 
@@ -199,9 +205,14 @@ class ResourceRecordSetCommands {
                 addIfPresentInMetadataService(valuesBuilder, "local-hostname", metadataService);
             }
             values = valuesBuilder.build();
-            checkArgument(elbDNSName != null || values.size() > 0, "you must pass data to add");
+            checkArgument(aliasDNSName != null || elbDNSName != null || values.size() > 0, "you must pass data to add");
             Builder<Map<String, Object>> builder = ResourceRecordSet.builder().name(name).type(type);
-            if (elbDNSName != null) {
+            if (aliasDNSName != null) {
+                checkArgument(aliasHostedZoneId != null, "--alias-hosted-zone-id must be present");
+                checkArgument(aliasHostedZoneId.indexOf('.') == -1,
+                        "--alias-hosted-zone-id must be a hosted zone id, not a zone name");
+                builder.add(AliasTarget.create(aliasHostedZoneId, aliasDNSName));
+            } else if (elbDNSName != null) {
                 Matcher getRegion = ELB_REGION.matcher(elbDNSName);
                 checkArgument(getRegion.matches(), "expected elb %s to match %s", ELB_REGION, elbDNSName);
                 String hostedZoneId = REGION_TO_HOSTEDZONE.get(getRegion.group(1));

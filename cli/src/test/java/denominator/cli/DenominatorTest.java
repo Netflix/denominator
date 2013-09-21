@@ -335,6 +335,50 @@ public class DenominatorTest {
                                  .add(target).build().toString());
     }
 
+    @Test(description = "denominator -p route53 record -z AAAAAAAA replace -n cbp.nccp.us-east-1.dynprod.netflix.net. -t A --alias-hosted-zone-id BBBBBBBB --alias-dnsname cbp.nccp.us-west-2.dynprod.netflix.net.")
+    public void testResourceRecordSetReplaceRoute53Alias() {
+        ResourceRecordSetReplace command = new ResourceRecordSetReplace();
+        command.zoneIdOrName = "denominator.io.";
+        command.name = "cbp.nccp.us-east-1.dynprod.netflix.net.";
+        command.type = "A";
+        command.aliasHostedZoneId = "Z3I0BTR7N27QRM"; 
+        command.aliasDNSName = "cbp.nccp.us-west-2.dynprod.netflix.net.";
+
+        AliasTarget target = AliasTarget.create(command.aliasHostedZoneId, command.aliasDNSName);
+
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                ";; in zone denominator.io. replacing rrset cbp.nccp.us-east-1.dynprod.netflix.net. A with values: [" + target + "]",
+                ";; ok"));
+        
+        assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                ResourceRecordSet.<AliasTarget> builder()
+                                 .name(command.name)
+                                 .type(command.type)
+                                 .add(target).build().toString());
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "--alias-hosted-zone-id must be present")
+    public void testResourceRecordSetReplaceRoute53AliasForgotZone() {
+        ResourceRecordSetReplace command = new ResourceRecordSetReplace();
+        command.zoneIdOrName = "denominator.io.";
+        command.name = "cbp.nccp.us-east-1.dynprod.netflix.net.";
+        command.type = "A";
+        command.aliasDNSName = "cbp.nccp.us-west-2.dynprod.netflix.net.";
+        command.doRun(mgr);
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "--alias-hosted-zone-id must be a hosted zone id, not a zone name")
+    public void testResourceRecordSetReplaceRoute53AliasZoneNameInsteadOfZoneId() {
+        ResourceRecordSetReplace command = new ResourceRecordSetReplace();
+        command.zoneIdOrName = "denominator.io.";
+        command.name = "cbp.nccp.us-east-1.dynprod.netflix.net.";
+        command.type = "A";
+        command.aliasHostedZoneId = "denominator.com."; 
+        command.aliasDNSName = "cbp.nccp.us-west-2.dynprod.netflix.net.";
+        command.doRun(mgr);
+    }
+
     @Test(description = "denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A --ttl 3600 -d 192.0.2.1 -d 192.0.2.2")
     public void testResourceRecordSetAddWithTTL() {
         ResourceRecordSetAdd command = new ResourceRecordSetAdd();
