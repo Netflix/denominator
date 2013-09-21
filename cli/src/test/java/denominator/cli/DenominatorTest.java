@@ -78,20 +78,20 @@ public class DenominatorTest {
     public void testCredentialsFromYaml() {
         String yaml = getTestYaml();
         ZoneList zoneList = new ZoneList();
-        zoneList.name = "blah1";
+        zoneList.providerConfigurationName = "blah1";
         Map<?, ?> credentials = Map.class.cast(zoneList.getConfigFromYaml(yaml).get("credentials"));
         assertEquals(credentials.get("accessKey"), "foo1");
         assertEquals(credentials.get("secretKey"), "foo2");
     }
 
     private String getTestYaml() {
-        return "name: blah1\n" +
+        return "providerConfigurationName: blah1\n" +
             "provider: route53\n" +
             "credentials:\n" +
             "  accessKey: foo1\n" +
             "  secretKey: foo2\n" +
             "---\n" +
-            "name: blah2\n" +
+            "providerConfigurationName: blah2\n" +
             "provider: mock\n" +
             "url: mem:mock2\n" +
             "credentials:\n" +
@@ -129,7 +129,7 @@ public class DenominatorTest {
                 return Iterators.emptyIterator();
             }
         };
-        zoneList.name = "blah2";
+        zoneList.providerConfigurationName = "blah2";
         zoneList.configPath = getTestConfigPath();
         zoneList.run();
     }
@@ -148,7 +148,7 @@ public class DenominatorTest {
                 return Iterators.emptyIterator();
             }
         };
-        zoneList.name = "blah1";
+        zoneList.providerConfigurationName = "blah1";
         zoneList.configPath = getTestConfigPath();
         zoneList.run();
     }
@@ -167,7 +167,7 @@ public class DenominatorTest {
                 return Iterators.emptyIterator();
             }
         };
-        zoneList.name = "blah1";
+        zoneList.providerConfigurationName = "blah1";
         zoneList.providerName = "route53";
         zoneList.configPath = getTestConfigPath();
         zoneList.credentialArgs = ImmutableList.of("user", "pass").asList();
@@ -368,7 +368,7 @@ public class DenominatorTest {
         command.doRun(mgr);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "--alias-hosted-zone-id must be a hosted zone id, not a zone name")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "--alias-hosted-zone-id must be a hosted zone id, not a zone providerConfigurationName")
     public void testResourceRecordSetReplaceRoute53AliasZoneNameInsteadOfZoneId() {
         ResourceRecordSetReplace command = new ResourceRecordSetReplace();
         command.zoneIdOrName = "denominator.io.";
@@ -591,8 +591,8 @@ public class DenominatorTest {
 
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"]} to rrset www2.geo.denominator.io. A alazona",
-                ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
-                ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"]}}]}",
+                ";; current rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
+                ";; revised rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"]}}]}",
                 ";; ok"));
 
         assertEquals(
@@ -617,7 +617,7 @@ public class DenominatorTest {
 
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding regions {\"United States (US)\":[\"Arizona\"]} to rrset www2.geo.denominator.io. A alazona",
-                ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
+                ";; current rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
                 ";; ok"));
 
         assertEquals(
@@ -639,8 +639,8 @@ public class DenominatorTest {
 
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona",
-                ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
-                ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}]}",
+                ";; current rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
+                ";; revised rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}]}",
                 ";; ok"));
 
         assertEquals(
@@ -668,8 +668,8 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona",
                 ";; validated regions: {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}",
-                ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
-                ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}]}",
+                ";; current rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
+                ";; revised rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}]}",
                 ";; ok"));
 
         assertEquals(
