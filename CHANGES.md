@@ -1,6 +1,7 @@
 ### Version 4.3
 * Add `--alias-dnsname` flag to record commands.
 * Add create, update, and delete for Rackspace Cloud DNS.
+* DynECT api no longer expects errors to be wrapped in json arrays.
 
 ### Version 4.2
 * Add support for Route53 alias record sets.
