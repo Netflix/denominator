@@ -108,6 +108,9 @@ public class Denominator {
         try {
             denominatorParser.parse(args).run();
         } catch (RuntimeException e) {
+            if (e instanceof NullPointerException) {
+                e.printStackTrace();
+            }
             System.err.println(";; error: "+ e.getMessage());
             System.exit(1);
         } 

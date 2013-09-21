@@ -1,5 +1,6 @@
 package denominator.route53;
 
+import static denominator.common.Util.equal;
 import static denominator.common.Util.filter;
 import static denominator.common.Util.nextOrNull;
 import static denominator.common.Util.peekingIterator;
@@ -81,7 +82,7 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
             oldRRS = getByNameAndType(rrset.name(), rrset.type());
         }
         if (oldRRS != null) {
-            if (oldRRS.ttl().equals(rrset.ttl()) && oldRRS.equals(rrset))
+            if (equal(oldRRS.ttl(), rrset.ttl()) && oldRRS.equals(rrset))
                 return;
             changes.add(delete(oldRRS));
         }
