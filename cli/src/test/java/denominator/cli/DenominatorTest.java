@@ -139,12 +139,9 @@ public class DenominatorTest {
         ZoneList zoneList = new ZoneList() {
             @Override
             public Iterator<String> doRun(DNSApiManager mgr) {
-                assertEquals(configPath, getTestConfigPath());
-                Map<?, ?> configFromFile = getConfigFromFile();
-                assertEquals(configFromFile.get("provider"), "route53");
-                Map<?, ?> credentials = Map.class.cast(configFromFile.get("credentials"));
-                assertEquals(credentials.get("accessKey"), "foo1");
-                assertEquals(credentials.get("secretKey"), "foo2");
+                assertEquals(providerName, "route53");
+                assertEquals(Map.class.cast(credentials).get("accessKey"), "foo1");
+                assertEquals(Map.class.cast(credentials).get("secretKey"), "foo2");
                 return Iterators.emptyIterator();
             }
         };
