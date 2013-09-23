@@ -240,7 +240,7 @@ public class Denominator {
             Object providerConf = FluentIterable.from(configs).firstMatch(new Predicate<Object>() {
                 @Override
                 public boolean apply(Object input) {
-                    return providerConfigurationName.equals(Map.class.cast(input).get("providerConfigurationName"));
+                    return providerConfigurationName.equals(Map.class.cast(input).get("provider"));
                 }
             }).get();
             return Map.class.cast(providerConf);

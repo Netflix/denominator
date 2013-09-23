@@ -1,3 +1,6 @@
+### Version 4.3.1
+* Fix regression regarding `-n` cli arg.
+
 ### Version 4.3
 * Add `--alias-dnsname` flag to record commands.
 * Add create, update, and delete for Rackspace Cloud DNS.
