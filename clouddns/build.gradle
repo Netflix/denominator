@@ -22,8 +22,8 @@ test {
 
 dependencies {
   compile      project(':denominator-core')
-  compile     'com.netflix.feign:feign-core:5.1.0'
-  compile     'com.netflix.feign:feign-gson:5.1.0'
+  compile     'com.netflix.feign:feign-core:5.3.0'
+  compile     'com.netflix.feign:feign-gson:5.3.0'
   testCompile  project(':denominator-core').sourceSets.test.output
   testCompile 'com.google.guava:guava:14.0.1'
   testCompile 'org.testng:testng:6.8.5'

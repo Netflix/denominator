@@ -37,14 +37,7 @@ class DynECTAdapters {
 
         @Override
         public Boolean build(JsonReader reader) throws IOException {
-            try {
-                return new JsonParser().parse(reader).getAsJsonObject().get("forbidden").getAsJsonArray().size() == 0;
-            } catch (JsonIOException e) {
-                if (e.getCause() != null && e.getCause() instanceof IOException) {
-                    throw IOException.class.cast(e.getCause());
-                }
-                throw e;
-            }
+            return new JsonParser().parse(reader).getAsJsonObject().get("forbidden").getAsJsonArray().size() == 0;
         }
     }
 
@@ -52,14 +45,7 @@ class DynECTAdapters {
 
         @Override
         public String build(JsonReader reader) throws IOException {
-            try {
-                return new JsonParser().parse(reader).getAsJsonObject().get("token").getAsString();
-            } catch (JsonIOException e) {
-                if (e.getCause() != null && e.getCause() instanceof IOException) {
-                    throw IOException.class.cast(e.getCause());
-                }
-                throw e;
-            }
+            return new JsonParser().parse(reader).getAsJsonObject().get("token").getAsString();
         }
     }
 
@@ -67,15 +53,7 @@ class DynECTAdapters {
 
         @Override
         public List<Zone> build(JsonReader reader) throws IOException {
-            JsonArray data;
-            try {
-                data = new JsonParser().parse(reader).getAsJsonArray();
-            } catch (JsonIOException e) {
-                if (e.getCause() != null && e.getCause() instanceof IOException) {
-                    throw IOException.class.cast(e.getCause());
-                }
-                throw e;
-            }
+            JsonArray data = new JsonParser().parse(reader).getAsJsonArray();
             List<Zone> zones = new ArrayList<Zone>();
             for (String name : toFirstGroup("/REST.*/([^/]+)/?$", data)) {
                 zones.add(Zone.create(name));
@@ -88,15 +66,7 @@ class DynECTAdapters {
 
         @Override
         public List<String> build(JsonReader reader) throws IOException {
-            JsonArray data;
-            try {
-                data = new JsonParser().parse(reader).getAsJsonArray();
-            } catch (JsonIOException e) {
-                if (e.getCause() != null && e.getCause() instanceof IOException) {
-                    throw IOException.class.cast(e.getCause());
-                }
-                throw e;
-            }
+            JsonArray data = new JsonParser().parse(reader).getAsJsonArray();
             return toFirstGroup("/REST/([a-zA-Z]+Record/[^\"]+/[^\"]+/[0-9]+)", data);
         }
     }
@@ -106,14 +76,7 @@ class DynECTAdapters {
         @Override
         public Iterator<Record> build(JsonReader reader) throws IOException {
             JsonArray data;
-            try {
-                data = new JsonParser().parse(reader).getAsJsonArray();
-            } catch (JsonIOException e) {
-                if (e.getCause() != null && e.getCause() instanceof IOException) {
-                    throw IOException.class.cast(e.getCause());
-                }
-                throw e;
-            }
+            data = new JsonParser().parse(reader).getAsJsonArray();
             List<Record> records = new ArrayList<Record>();
             for (JsonElement datum : data) {
                 records.add(ToRecord.INSTANCE.apply(datum));
@@ -144,13 +107,19 @@ class DynECTAdapters {
             while (reader.hasNext()) {
                 String nextName = reader.nextName();
                 if ("data".equals(nextName)) {
-                    data.data = build(reader);
+                    try {
+                        data.data = build(reader);
+                    } catch (JsonIOException e) {
+                        if (e.getCause() != null && e.getCause() instanceof IOException) {
+                            throw IOException.class.cast(e.getCause());
+                        }
+                        throw e;
+                    }
                 } else {
                     reader.skipValue();
                 }
             }
             reader.endObject();
-            reader.close();
             return data;
         }
 

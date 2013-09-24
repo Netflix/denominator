@@ -20,8 +20,8 @@ import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.clouddns.RackspaceAdapters.DomainListAdapter;
-import denominator.clouddns.RackspaceAdapters.RecordListAdapter;
 import denominator.clouddns.RackspaceAdapters.JobIdAndStatusAdapter;
+import denominator.clouddns.RackspaceAdapters.RecordListAdapter;
 import denominator.clouddns.RackspaceApis.CloudDNS;
 import denominator.clouddns.RackspaceApis.CloudIdentity;
 import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
@@ -31,6 +31,7 @@ import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
 import feign.Feign;
 import feign.Target.HardCodedTarget;
+import feign.gson.DoubleToIntMapTypeAdapter;
 import feign.gson.GsonModule;
 
 public class CloudDNSProvider extends BasicProvider {
@@ -125,6 +126,12 @@ public class CloudDNSProvider extends BasicProvider {
         CloudIdentity cloudIdentity(Feign feign) {
             return feign.newInstance(new HardCodedTarget<CloudIdentity>(CloudIdentity.class, "cloudidentity",
                     "http://invalid"));
+        }
+
+        // deals with scenario where gson Object type treats numbers as doubles
+        @Provides(type = SET)
+        TypeAdapter doubleToInt() {
+            return new DoubleToIntMapTypeAdapter();
         }
 
         @Provides(type = SET)

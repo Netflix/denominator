@@ -34,6 +34,7 @@ import denominator.dynect.InvalidatableTokenProvider.Session;
 import denominator.profile.GeoResourceRecordSetApi;
 import feign.Feign;
 import feign.codec.ErrorDecoder;
+import feign.gson.DoubleToIntMapTypeAdapter;
 import feign.gson.GsonModule;
 
 public class DynECTProvider extends BasicProvider {
@@ -155,6 +156,12 @@ public class DynECTProvider extends BasicProvider {
         @Singleton
         AtomicReference<Boolean> sessionValid() {
             return new AtomicReference<Boolean>(false);
+        }
+
+        // deals with scenario where gson Object type treats numbers as doubles
+        @Provides(type = SET)
+        TypeAdapter doubleToInt() {
+            return new DoubleToIntMapTypeAdapter();
         }
 
         @Provides(type = SET)

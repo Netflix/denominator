@@ -44,7 +44,6 @@ class RackspaceAdapters {
             }
 
             reader.endObject();
-            reader.close();
 
             return jobIdAndStatus;
         }
@@ -159,7 +158,6 @@ class RackspaceAdapters {
                 }
             }
             reader.endObject();
-            reader.close();
             Collections.sort(records, toStringComparator());
             return records;
         }

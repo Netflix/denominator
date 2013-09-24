@@ -1,3 +1,6 @@
+### Version 4.3.3
+* update to feign 5.3
+
 ### Version 4.3.2
 * Fix regression regarding `-n` cli arg.
 
