@@ -30,6 +30,7 @@ import denominator.designate.DesignateAdapters.RecordListAdapter;
 import denominator.designate.KeystoneV2.TokenIdAndPublicURL;
 import feign.Feign;
 import feign.Target.HardCodedTarget;
+import feign.gson.DoubleToIntMapTypeAdapter;
 import feign.gson.GsonModule;
 
 public class DesignateProvider extends BasicProvider {
@@ -126,6 +127,12 @@ public class DesignateProvider extends BasicProvider {
         @Singleton
         KeystoneV2 cloudIdentity(Feign feign) {
             return feign.newInstance(new HardCodedTarget<KeystoneV2>(KeystoneV2.class, "keystone", "http://invalid"));
+        }
+
+        // deals with scenario where gson Object type treats numbers as doubles
+        @Provides(type = SET)
+        TypeAdapter doubleToInt() {
+            return new DoubleToIntMapTypeAdapter();
         }
 
         @Provides(type = SET)

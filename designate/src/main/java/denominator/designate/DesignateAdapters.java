@@ -135,7 +135,6 @@ class DesignateAdapters {
                 }
             }
             reader.endObject();
-            reader.close();
             Collections.sort(elements, toStringComparator());
             return elements;
         }
