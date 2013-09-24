@@ -32,10 +32,12 @@ public class RackspaceApisTest {
     static String password = "letmein";
     static String tokenId = "b84f4a37-5126-4603-9521-ccd0665fbde1";
 
-    static String session = "{\"access\":{\"token\":{\"id\":\"" + tokenId + "\",\"expires\":\"2013-04-13T16:49:57.000-05:00\",\"tenant\":{\"id\":\"123123\",\"name\":\"123123\"}},\"serviceCatalog\":[{\"endpoints\":[{\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"}],\"name\":\"cloudMonitoring\",\"type\":\"rax:monitor\"},{\"endpoints\":[{\"region\":\"DFW\",\"tenantId\":\"MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"publicURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\"},{\"region\":\"ORD\",\"tenantId\":\"MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"publicURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\"}],\"name\":\"cloudFilesCDN\",\"type\":\"rax:object-cdn\"},{\"endpoints\":[{\"region\":\"ORD\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"},{\"region\":\"DFW\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"}],\"name\":\"cloudLoadBalancers\",\"type\":\"rax:load-balancer\"},{\"endpoints\":[{\"region\":\"DFW\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"},{\"region\":\"ORD\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"}],\"name\":\"cloudDatabases\",\"type\":\"rax:database\"},{\"endpoints\":[{\"region\":\"DFW\",\"tenantId\":\"MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"publicURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"internalURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\"},{\"region\":\"ORD\",\"tenantId\":\"MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"publicURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"internalURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\"}],\"name\":\"cloudFiles\",\"type\":\"object-store\"},{\"endpoints\":[{\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\",\"versionInfo\":\"URL/v1.0\",\"versionList\":\"URL/\",\"versionId\":\"1.0\"}],\"name\":\"cloudServers\",\"type\":\"compute\"},{\"endpoints\":[{\"region\":\"DFW\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v2/123123\",\"versionInfo\":\"URL/v2\",\"versionList\":\"URL/\",\"versionId\":\"2\"},{\"region\":\"ORD\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v2/123123\",\"versionInfo\":\"URL/v2\",\"versionList\":\"URL/\",\"versionId\":\"2\"}],\"name\":\"cloudServersOpenStack\",\"type\":\"compute\"},{\"endpoints\":[{\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"}],\"name\":\"cloudDNS\",\"type\":\"rax:dns\"},{\"endpoints\":[{\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"}],\"name\":\"cloudBackup\",\"type\":\"rax:backup\"},{\"endpoints\":[{\"region\":\"DFW\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1/123123\"},{\"region\":\"ORD\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1/123123\"}],\"name\":\"cloudBlockStorage\",\"type\":\"volume\"}],\"user\":{\"id\":\"1234\",\"roles\":[{\"id\":\"3\",\"description\":\"User Admin Role.\",\"name\":\"identity:user-admin\"}],\"name\":\"jclouds-joe\",\"RAX-AUTH:defaultRegion\":\"DFW\"}}}";
+    static String session = "{\"access\":{\"token\":{\"id\":\""
+            + tokenId
+            + "\",\"expires\":\"2013-04-13T16:49:57.000-05:00\",\"tenant\":{\"id\":\"123123\",\"name\":\"123123\"}},\"serviceCatalog\":[{\"endpoints\":[{\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"}],\"name\":\"cloudMonitoring\",\"type\":\"rax:monitor\"},{\"endpoints\":[{\"region\":\"DFW\",\"tenantId\":\"MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"publicURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\"},{\"region\":\"ORD\",\"tenantId\":\"MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"publicURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\"}],\"name\":\"cloudFilesCDN\",\"type\":\"rax:object-cdn\"},{\"endpoints\":[{\"region\":\"ORD\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"},{\"region\":\"DFW\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"}],\"name\":\"cloudLoadBalancers\",\"type\":\"rax:load-balancer\"},{\"endpoints\":[{\"region\":\"DFW\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"},{\"region\":\"ORD\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"}],\"name\":\"cloudDatabases\",\"type\":\"rax:database\"},{\"endpoints\":[{\"region\":\"DFW\",\"tenantId\":\"MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"publicURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"internalURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\"},{\"region\":\"ORD\",\"tenantId\":\"MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"publicURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\",\"internalURL\":\"URL/v1/MossoCloudFS_5bcf396e-39dd-45ff-93a1-712b9aba90a9\"}],\"name\":\"cloudFiles\",\"type\":\"object-store\"},{\"endpoints\":[{\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\",\"versionInfo\":\"URL/v1.0\",\"versionList\":\"URL/\",\"versionId\":\"1.0\"}],\"name\":\"cloudServers\",\"type\":\"compute\"},{\"endpoints\":[{\"region\":\"DFW\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v2/123123\",\"versionInfo\":\"URL/v2\",\"versionList\":\"URL/\",\"versionId\":\"2\"},{\"region\":\"ORD\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v2/123123\",\"versionInfo\":\"URL/v2\",\"versionList\":\"URL/\",\"versionId\":\"2\"}],\"name\":\"cloudServersOpenStack\",\"type\":\"compute\"},{\"endpoints\":[{\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"}],\"name\":\"cloudDNS\",\"type\":\"rax:dns\"},{\"endpoints\":[{\"tenantId\":\"123123\",\"publicURL\":\"URL/v1.0/123123\"}],\"name\":\"cloudBackup\",\"type\":\"rax:backup\"},{\"endpoints\":[{\"region\":\"DFW\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1/123123\"},{\"region\":\"ORD\",\"tenantId\":\"123123\",\"publicURL\":\"URL/v1/123123\"}],\"name\":\"cloudBlockStorage\",\"type\":\"volume\"}],\"user\":{\"id\":\"1234\",\"roles\":[{\"id\":\"3\",\"description\":\"User Admin Role.\",\"name\":\"identity:user-admin\"}],\"name\":\"jclouds-joe\",\"RAX-AUTH:defaultRegion\":\"DFW\"}}}";
 
-    static String auth = format(
-            "{\"auth\":{\"passwordCredentials\":{\"username\":\"%s\",\"password\":\"%s\"}}}", username, password);
+    static String auth = format("{\"auth\":{\"passwordCredentials\":{\"username\":\"%s\",\"password\":\"%s\"}}}",
+            username, password);
 
     @Test
     public void authSuccess() throws IOException, InterruptedException, URISyntaxException {
@@ -148,7 +150,8 @@ public class RackspaceApisTest {
             assertEquals(records.get(3).ttl.intValue(), 300);
             assertEquals(records.get(3).type, "NS");
 
-            assertEquals(server.takeRequest().getRequestLine(), format("GET /v1.0/123123/domains/%s/records HTTP/1.1", domainId));
+            assertEquals(server.takeRequest().getRequestLine(),
+                    format("GET /v1.0/123123/domains/%s/records HTTP/1.1", domainId));
         } finally {
             server.shutdown();
         }
@@ -163,7 +166,8 @@ public class RackspaceApisTest {
         try {
             assertTrue(mockApi(server.getPort()).records(domainId).isEmpty());
 
-            assertEquals(server.takeRequest().getRequestLine(), format("GET /v1.0/123123/domains/%s/records HTTP/1.1", domainId));
+            assertEquals(server.takeRequest().getRequestLine(),
+                    format("GET /v1.0/123123/domains/%s/records HTTP/1.1", domainId));
 
         } finally {
             server.shutdown();
@@ -184,31 +188,35 @@ public class RackspaceApisTest {
         server.play();
 
         try {
-            JobIdAndStatus job = mockApi(server.getPort()).
-                    createRecordWithPriority(domainId, "www.denominator.io", "MX", 1800, "mail.denominator.io", 10);
+            CloudDNS api = mockApi(server.getPort());
+            JobIdAndStatus job = api.createRecordWithPriority(domainId, "www.denominator.io", "MX", 1800,
+                    "mail.denominator.io", 10);
 
             assertEquals(job.id, "0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
             assertEquals(job.status, "RUNNING");
 
-            job = mockApi(server.getPort()).getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
+            job = api.getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
 
             assertEquals(job.id, "0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
             assertEquals(job.status, "RUNNING");
 
-            job = mockApi(server.getPort()).getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
+            job = api.getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
 
             assertEquals(job.id, "0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
             assertEquals(job.status, "COMPLETED");
 
             RecordedRequest createRequest = server.takeRequest();
-            assertEquals(createRequest.getRequestLine(), format("POST /v1.0/123123/domains/%s/records HTTP/1.1", domainId));
+            assertEquals(createRequest.getRequestLine(),
+                    format("POST /v1.0/123123/domains/%s/records HTTP/1.1", domainId));
             assertEquals(new String(createRequest.getBody()), mxRecordCreateRequest);
 
             RecordedRequest runningRequest = server.takeRequest();
-            assertEquals(runningRequest.getRequestLine(), "GET /v1.0/123123/status/0ade2b3b-07e4-4e68-821a-fcce4f5406f3?showDetails=true HTTP/1.1");
+            assertEquals(runningRequest.getRequestLine(),
+                    "GET /v1.0/123123/status/0ade2b3b-07e4-4e68-821a-fcce4f5406f3?showDetails=true HTTP/1.1");
 
             RecordedRequest completedRequest = server.takeRequest();
-            assertEquals(completedRequest.getRequestLine(), "GET /v1.0/123123/status/0ade2b3b-07e4-4e68-821a-fcce4f5406f3?showDetails=true HTTP/1.1");
+            assertEquals(completedRequest.getRequestLine(),
+                    "GET /v1.0/123123/status/0ade2b3b-07e4-4e68-821a-fcce4f5406f3?showDetails=true HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -228,31 +236,35 @@ public class RackspaceApisTest {
         server.play();
 
         try {
-            JobIdAndStatus job = mockApi(server.getPort()).
-                    updateRecord(domainId, "MX-4582544", 600, "mail.denominator.io");
+            CloudDNS api = mockApi(server.getPort());
+            JobIdAndStatus job = api.updateRecord(domainId, "MX-4582544", 600,
+                    "mail.denominator.io");
 
             assertEquals(job.id, "e32eace1-c44f-49af-8f74-768fa34469f4");
             assertEquals(job.status, "RUNNING");
 
-            job = mockApi(server.getPort()).getStatus("e32eace1-c44f-49af-8f74-768fa34469f4");
+            job = api.getStatus("e32eace1-c44f-49af-8f74-768fa34469f4");
 
             assertEquals(job.id, "e32eace1-c44f-49af-8f74-768fa34469f4");
             assertEquals(job.status, "RUNNING");
 
-            job = mockApi(server.getPort()).getStatus("e32eace1-c44f-49af-8f74-768fa34469f4");
+            job = api.getStatus("e32eace1-c44f-49af-8f74-768fa34469f4");
 
             assertEquals(job.id, "e32eace1-c44f-49af-8f74-768fa34469f4");
             assertEquals(job.status, "COMPLETED");
 
             RecordedRequest updateRequest = server.takeRequest();
-            assertEquals(updateRequest.getRequestLine(), format("PUT /v1.0/123123/domains/%s/records/MX-4582544 HTTP/1.1", domainId));
+            assertEquals(updateRequest.getRequestLine(),
+                    format("PUT /v1.0/123123/domains/%s/records/MX-4582544 HTTP/1.1", domainId));
             assertEquals(new String(updateRequest.getBody()), mxRecordUpdateRequest);
 
             RecordedRequest runningRequest = server.takeRequest();
-            assertEquals(runningRequest.getRequestLine(), "GET /v1.0/123123/status/e32eace1-c44f-49af-8f74-768fa34469f4?showDetails=true HTTP/1.1");
+            assertEquals(runningRequest.getRequestLine(),
+                    "GET /v1.0/123123/status/e32eace1-c44f-49af-8f74-768fa34469f4?showDetails=true HTTP/1.1");
 
             RecordedRequest completedRequest = server.takeRequest();
-            assertEquals(completedRequest.getRequestLine(), "GET /v1.0/123123/status/e32eace1-c44f-49af-8f74-768fa34469f4?showDetails=true HTTP/1.1");
+            assertEquals(completedRequest.getRequestLine(),
+                    "GET /v1.0/123123/status/e32eace1-c44f-49af-8f74-768fa34469f4?showDetails=true HTTP/1.1");
         } finally {
             server.shutdown();
         }
@@ -271,29 +283,33 @@ public class RackspaceApisTest {
         server.play();
 
         try {
-            JobIdAndStatus job = mockApi(server.getPort()).deleteRecord(domainId, "MX-4582544");
+            CloudDNS api = mockApi(server.getPort());
+            JobIdAndStatus job = api.deleteRecord(domainId, "MX-4582544");
 
             assertEquals(job.id, "da520d24-dd5b-4387-92be-2020a7f2b176");
             assertEquals(job.status, "RUNNING");
 
-            job = mockApi(server.getPort()).getStatus("da520d24-dd5b-4387-92be-2020a7f2b176");
+            job = api.getStatus("da520d24-dd5b-4387-92be-2020a7f2b176");
 
             assertEquals(job.id, "da520d24-dd5b-4387-92be-2020a7f2b176");
             assertEquals(job.status, "RUNNING");
 
-            job = mockApi(server.getPort()).getStatus("da520d24-dd5b-4387-92be-2020a7f2b176");
+            job = api.getStatus("da520d24-dd5b-4387-92be-2020a7f2b176");
 
             assertEquals(job.id, "da520d24-dd5b-4387-92be-2020a7f2b176");
             assertEquals(job.status, "COMPLETED");
 
             RecordedRequest deleteRequest = server.takeRequest();
-            assertEquals(deleteRequest.getRequestLine(), format("DELETE /v1.0/123123/domains/%s/records/MX-4582544 HTTP/1.1", domainId));
+            assertEquals(deleteRequest.getRequestLine(),
+                    format("DELETE /v1.0/123123/domains/%s/records/MX-4582544 HTTP/1.1", domainId));
 
             RecordedRequest runningRequest = server.takeRequest();
-            assertEquals(runningRequest.getRequestLine(), "GET /v1.0/123123/status/da520d24-dd5b-4387-92be-2020a7f2b176?showDetails=true HTTP/1.1");
+            assertEquals(runningRequest.getRequestLine(),
+                    "GET /v1.0/123123/status/da520d24-dd5b-4387-92be-2020a7f2b176?showDetails=true HTTP/1.1");
 
             RecordedRequest completedRequest = server.takeRequest();
-            assertEquals(completedRequest.getRequestLine(), "GET /v1.0/123123/status/da520d24-dd5b-4387-92be-2020a7f2b176?showDetails=true HTTP/1.1");
+            assertEquals(completedRequest.getRequestLine(),
+                    "GET /v1.0/123123/status/da520d24-dd5b-4387-92be-2020a7f2b176?showDetails=true HTTP/1.1");
         } finally {
             server.shutdown();
         }
