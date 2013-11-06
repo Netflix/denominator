@@ -1,29 +1,6 @@
 package denominator.cli;
-import static com.google.common.base.Preconditions.checkArgument;
-import static denominator.CredentialsConfiguration.credentials;
-import static java.lang.String.format;
-import io.airlift.command.Cli;
-import io.airlift.command.Cli.CliBuilder;
-import io.airlift.command.Command;
-import io.airlift.command.Help;
-import io.airlift.command.Option;
-import io.airlift.command.OptionType;
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.inject.Singleton;
-
-import org.yaml.snakeyaml.Yaml;
-
+import com.google.common.base.CaseFormat;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -43,7 +20,6 @@ import com.google.gson.internal.bind.MapTypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
 import dagger.ObjectGraph;
 import dagger.Provides;
 import denominator.Credentials;
@@ -68,6 +44,29 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.model.Zone;
 import feign.Logger;
 import feign.Logger.Level;
+import io.airlift.command.Cli;
+import io.airlift.command.Cli.CliBuilder;
+import io.airlift.command.Command;
+import io.airlift.command.Help;
+import io.airlift.command.Option;
+import io.airlift.command.OptionType;
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import javax.inject.Singleton;
+import org.yaml.snakeyaml.Yaml;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static denominator.CredentialsConfiguration.credentials;
+import static java.lang.String.format;
 
 public class Denominator {
     public static void main(String[] args) {
@@ -113,7 +112,7 @@ public class Denominator {
             }
             System.err.println(";; error: "+ e.getMessage());
             System.exit(1);
-        } 
+        }
         System.exit(0);
     }
 
@@ -135,7 +134,7 @@ public class Denominator {
 
         public static String providerAndCredentialsTable() {
             StringBuilder builder = new StringBuilder();
-            
+
             builder.append(format(table, "provider", "url", "duplicateZones", "credentialType", "credentialArgs"));
             for (Provider provider : Providers.list()) {
                 if (provider.credentialTypeToParameterNames().isEmpty())
@@ -174,6 +173,7 @@ public class Denominator {
         public String providerConfigurationName;
 
         protected Credentials credentials = Credentials.AnonymousCredentials.INSTANCE;
+        private static final String ENV_PREFIX = "DENOMINATOR_";
 
         @SuppressWarnings("unchecked")
         public void run() {
@@ -187,11 +187,23 @@ public class Denominator {
                     if (configFromFile.containsKey("url"))
                         url = configFromFile.get("url").toString();
                 }
+            } else {
+                Map<String, ?> configMap = getConfigFromEnv();
+                if (configMap.containsKey("url")) {
+                    url = configMap.get("url").toString();
+                }
+                if (configMap.containsKey("provider")) {
+                    providerName = configMap.get("provider").toString();
+                }
+                if (configMap.containsKey("credentials")) {
+                    credentials = MapCredentials.from(Map.class.cast(configMap.get("credentials")));
+                }
             }
             Provider provider = Providers.getByName(providerName);
             if (url != null) {
                 provider = Providers.withUrl(provider, url);
             }
+
             Builder<Object> modulesForGraph = ImmutableList.builder() //
                     .add(Providers.provide(provider)) //
                     .add(Providers.instantiateModule(provider));
@@ -252,6 +264,35 @@ public class Denominator {
             return Files.toString(new File(path), Charsets.UTF_8);
         }
 
+        Map<String, ?> getConfigFromEnv() {
+            Map<String, Object> env = new HashMap<String, Object>();
+            String provider = getEnvValue("PROVIDER");
+            env.put("provider", provider);
+            env.put("url", getEnvValue("URL"));
+
+            Map<String, String> credentialMap = new HashMap<String, String>();
+            Provider providerLoaded = Providers.getByName(provider);
+            if (providerLoaded != null) {
+                // merge the list of possible credentials
+                for (Entry<String, Collection<String>> entry :
+                        providerLoaded.credentialTypeToParameterNames().entrySet()) {
+                    for (String paramName : entry.getValue()) {
+                        String upperParamName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, paramName);
+                        String value = getEnvValue(upperParamName);
+                        if (value != null) {
+                            credentialMap.put(paramName, value);
+                        }
+                    }
+                }
+            }
+            env.put("credentials", credentialMap);
+            return env;
+        }
+
+        String getEnvValue(String name) {
+            return System.getenv(ENV_PREFIX + name);
+        }
+
         /**
          * return a lazy iterator where possible to improve the perceived responsiveness of the cli
          */
@@ -283,7 +324,7 @@ public class Denominator {
         if (quiet) {
             return null;
         } else if (verbose) {
-            logLevel = Logger.Level.FULL;                
+            logLevel = Logger.Level.FULL;
         } else {
             logLevel = Logger.Level.BASIC;
         }
