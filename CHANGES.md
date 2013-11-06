@@ -1,3 +1,6 @@
+### Version 4.3.4
+* Add support environment variables for the cli. issue #253
+
 ### Version 4.3.3
 * update to feign 5.3
 

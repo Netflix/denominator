@@ -14,6 +14,7 @@ To build the cli, execute `./gradlew clean test install` from the root of your d
 
 ## Configuring
 
+### Configuration File
 You may optionally use a configuration file in YAML format to define named providers and credentials for each.  The default path to this file is `~/.denominatorconfig`.
 
 Here's an example of a configuration file:
@@ -40,6 +41,20 @@ For example, `./denominator -n route53-test zone`
 To use an alternate config file, specify the `-C` arg to its path.
 
 For example, `./denominator -C /path/to/config.yml -n route53-test zone`
+
+### Environment Variables
+You may also use environment variables for configuration.
+Configuration is similar to configuration file, except they are all prefixed: `DENOMINATOR_` and are upper-case and underscored.
+Credentials are provider specific and follow the same prefix and upper-case underscored pattern.
+
+For example:
+```
+export DENOMINATOR_PROVIDER=route53
+export DENOMINATOR_URL=https://alternative/rest/endpoint
+export DENOMINATOR_ACCESS_KEY=foo1
+export DENOMINATOR_SECRET_KEY=foo2
+```
+
 
 ## Running
 denominator will print out a help statement, but here's the gist.
