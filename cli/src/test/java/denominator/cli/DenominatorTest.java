@@ -1,21 +1,8 @@
 package denominator.cli;
-import static denominator.cli.Denominator.json;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-
-import java.io.IOException;
-import java.net.URL;
-import java.util.Iterator;
-import java.util.Map;
-
-import org.testng.annotations.Test;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterators;
-
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.Credentials;
 import denominator.DNSApiManager;
@@ -35,6 +22,17 @@ import denominator.model.ResourceRecordSet;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import denominator.route53.AliasTarget;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Iterator;
+import java.util.Map;
+import org.testng.annotations.Test;
+
+import static denominator.cli.Denominator.json;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @Test(singleThreaded = true)
 public class DenominatorTest {
@@ -113,6 +111,66 @@ public class DenominatorTest {
         assertEquals(contents, getTestYaml());
     }
 
+    @Test
+    public void testEnvConfig() {
+        ZoneList zoneList = new ZoneList() {
+            @Override
+            String getEnvValue(String name) {
+                if (name.equals("PROVIDER")) {
+                    return "route53";
+                } else if (name.equals("URL")) {
+                    return "mem:mock2";
+                } else if (name.equals("ACCESS_KEY")) {
+                    return "foo1";
+                } else if (name.equals("SECRET_KEY")) {
+                    return "foo2";
+                }
+                return null;
+            }
+        };
+        Map<String, ?> contents = zoneList.getConfigFromEnv();
+        assertEquals(3, contents.size());
+        assertEquals("route53", contents.get("provider").toString());
+        assertEquals("mem:mock2", contents.get("url").toString());
+        Map<?, ?> credentials = Map.class.cast(contents.get("credentials"));
+        assertEquals(2, credentials.size()); // only found accessKey & secretKey
+        assertEquals(credentials.get("accessKey"), "foo1");
+        assertEquals(credentials.get("secretKey"), "foo2");
+    }
+
+    @Test(description = "denominator zone list")
+    public void testConfigFromEnv() {
+        ZoneList zoneList = new ZoneList() {
+            @Override
+            String getEnvValue(String name) {
+                if (name.equals("PROVIDER")) {
+                    return "dynect";
+                } else if (name.equals("URL")) {
+                    return "mem:mock2";
+                } else if (name.equals("CUSTOMER")) {
+                    return "foo1";
+                } else if (name.equals("USERNAME")) {
+                    return "foo2";
+                } else if (name.equals("PASSWORD")) {
+                    return "foo3";
+                }
+                return null;
+            }
+
+            @Override
+            public Iterator<String> doRun(DNSApiManager mgr) {
+                assertEquals(providerName, "dynect");
+                assertEquals(url, "mem:mock2");
+                assertEquals(Map.class.cast(credentials).get("customer"), "foo1");
+                assertEquals(Map.class.cast(credentials).get("username"), "foo2");
+                assertEquals(Map.class.cast(credentials).get("password"), "foo3");
+                return Iterators.emptyIterator();
+            }
+        };
+        zoneList.run();
+    }
+
+
     @Test(description = "denominator -C test-config.yml -n blah2 zone list")
     public void testConfigArgMock() {
         ZoneList zoneList = new ZoneList() {
@@ -129,6 +187,7 @@ public class DenominatorTest {
                 return Iterators.emptyIterator();
             }
         };
+
         zoneList.providerConfigurationName = "blah2";
         zoneList.configPath = getTestConfigPath();
         zoneList.run();
@@ -259,7 +318,7 @@ public class DenominatorTest {
                 ";; in zone denominator.io. applying ttl 10000 to rrset www1.denominator.io. A",
                 ";; ok"));
         assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                .iterateByNameAndType(command.name, command.type).next().toString(),
                 ResourceRecordSet.<AData> builder()
                                  .name(command.name)
                                  .type(command.type)
@@ -279,7 +338,7 @@ public class DenominatorTest {
                 ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}]",
                 ";; ok"));
         assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                .iterateByNameAndType(command.name, command.type).next().toString(),
                 ResourceRecordSet.<AData> builder()
                                  .name(command.name)
                                  .type(command.type)
@@ -301,9 +360,9 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding to rrset www3.denominator.io. A values: [" + target + "]",
                 ";; ok"));
-        
+
         assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                .iterateByNameAndType(command.name, command.type).next().toString(),
                 ResourceRecordSet.<AliasTarget> builder()
                                  .name(command.name)
                                  .type(command.type)
@@ -323,9 +382,9 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. replacing rrset www4.denominator.io. A with values: [" + target + "]",
                 ";; ok"));
-        
+
         assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                .iterateByNameAndType(command.name, command.type).next().toString(),
                 ResourceRecordSet.<AliasTarget> builder()
                                  .name(command.name)
                                  .type(command.type)
@@ -338,7 +397,7 @@ public class DenominatorTest {
         command.zoneIdOrName = "denominator.io.";
         command.name = "cbp.nccp.us-east-1.dynprod.netflix.net.";
         command.type = "A";
-        command.aliasHostedZoneId = "Z3I0BTR7N27QRM"; 
+        command.aliasHostedZoneId = "Z3I0BTR7N27QRM";
         command.aliasDNSName = "cbp.nccp.us-west-2.dynprod.netflix.net.";
 
         AliasTarget target = AliasTarget.create(command.aliasHostedZoneId, command.aliasDNSName);
@@ -346,9 +405,9 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. replacing rrset cbp.nccp.us-east-1.dynprod.netflix.net. A with values: [" + target + "]",
                 ";; ok"));
-        
+
         assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                .iterateByNameAndType(command.name, command.type).next().toString(),
                 ResourceRecordSet.<AliasTarget> builder()
                                  .name(command.name)
                                  .type(command.type)
@@ -371,7 +430,7 @@ public class DenominatorTest {
         command.zoneIdOrName = "denominator.io.";
         command.name = "cbp.nccp.us-east-1.dynprod.netflix.net.";
         command.type = "A";
-        command.aliasHostedZoneId = "denominator.com."; 
+        command.aliasHostedZoneId = "denominator.com.";
         command.aliasDNSName = "cbp.nccp.us-west-2.dynprod.netflix.net.";
         command.doRun(mgr);
     }
@@ -388,7 +447,7 @@ public class DenominatorTest {
                 ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}] applying ttl 3600",
                 ";; ok"));
         assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                .iterateByNameAndType(command.name, command.type).next().toString(),
                 ResourceRecordSet.<AData> builder()
                                  .name(command.name)
                                  .type(command.type)
@@ -408,7 +467,7 @@ public class DenominatorTest {
                 ";; in zone denominator.io. replacing rrset www.denominator.io. CNAME with values: [{cname=www1.denominator.io.},{cname=www2.denominator.io.}]",
                 ";; ok"));
         assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                .iterateByNameAndType(command.name, command.type).next().toString(),
                 ResourceRecordSet.<CNAMEData> builder()
                                  .name(command.name)
                                  .type(command.type)
@@ -428,7 +487,7 @@ public class DenominatorTest {
                 ";; in zone denominator.io. replacing rrset www1.denominator.io. A with values: [{address=192.0.2.1},{address=192.0.2.2}] and ttl 3600",
                 ";; ok"));
         assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                .iterateByNameAndType(command.name, command.type).next().toString(), 
+                .iterateByNameAndType(command.name, command.type).next().toString(),
                 ResourceRecordSet.<AData> builder()
                                  .name(command.name)
                                  .type(command.type)
