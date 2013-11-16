@@ -38,13 +38,19 @@ import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
+import denominator.model.rdata.CERTData;
 import denominator.model.rdata.CNAMEData;
+import denominator.model.rdata.DSData;
+import denominator.model.rdata.LOCData;
 import denominator.model.rdata.MXData;
+import denominator.model.rdata.NAPTRData;
 import denominator.model.rdata.NSData;
 import denominator.model.rdata.PTRData;
 import denominator.model.rdata.SOAData;
 import denominator.model.rdata.SPFData;
 import denominator.model.rdata.SRVData;
+import denominator.model.rdata.SSHFPData;
+import denominator.model.rdata.TLSAData;
 import denominator.model.rdata.TXTData;
 import denominator.route53.AliasTarget;
 
@@ -460,6 +466,59 @@ class ResourceRecordSetCommands {
                     .port(Integer.valueOf(parts.get(2))).target(parts.get(3)).build();
         } else if ("TXT".equals(type)) {
             return TXTData.create(rdata);
+        } else if ("DS".equals(type)) {
+            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
+            return DSData.builder().keyTag(Integer.valueOf(parts.get(0)))
+                                   .algorithmId(Integer.valueOf(parts.get(1)))
+                                   .digestId(Integer.valueOf(parts.get(2)))
+                                   .digest(parts.get(3)).build();
+        } else if ("CERT".equals(type)) {
+            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
+            return CERTData.builder().certType(Integer.valueOf(parts.get(0)))
+                                     .keyTag(Integer.valueOf(parts.get(1)))
+                                     .algorithm(Integer.valueOf(parts.get(2)))
+                                     .cert(parts.get(3))
+                                     .build();
+        } else if ("NAPTR".equals(type)) {
+            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
+            return NAPTRData.builder().order(Integer.valueOf(parts.get(0)))
+                                      .preference(Integer.valueOf(parts.get(1)))
+                                      .flags(parts.get(2))
+                                      .services(parts.get(3))
+                                      .regexp(parts.get(4))
+                                      .replacement(parts.get(5))
+                                      .build();
+        } else if ("SSHFP".equals(type)) {
+            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
+            return SSHFPData.builder().algorithm(Integer.valueOf(parts.get(0)))
+                                      .fptype(Integer.valueOf(parts.get(1)))
+                                      .fingerprint(parts.get(2))
+                                      .build();
+        } else if ("LOC".equals(type)) {
+            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
+            int length = parts.size();
+            String latitude = Joiner.on(' ').join(parts.get(0), parts.get(1), parts.get(2), parts.get(3));
+            String longitude = Joiner.on(' ').join(parts.get(4), parts.get(5), parts.get(6), parts.get(7));
+            LOCData.Builder builder = LOCData.builder();
+            builder = builder.latitude(latitude);
+            builder = builder.longitude(longitude);
+            builder = builder.altitude(parts.get(8));
+            switch (length) {
+	            case 12:
+	            	builder = builder.vprecision(parts.get(11));
+	            case 11:
+	            	builder = builder.hprecision(parts.get(10));
+	            case 10:
+	            	builder = builder.diameter(parts.get(9));
+            }
+            return builder.build();
+        } else if ("TLSA".equals(type)) {
+            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
+            return TLSAData.builder().usage(Integer.valueOf(parts.get(0)))
+                                     .selector(Integer.valueOf(parts.get(1)))
+                                     .matchingType(Integer.valueOf(parts.get(2)))
+                                     .certificateAssociationData(parts.get(3))
+                                     .build();
         } else {
             throw new IllegalArgumentException("unsupported type: " + type);
         }

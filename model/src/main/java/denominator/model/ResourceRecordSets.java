@@ -1,5 +1,6 @@
 package denominator.model;
 
+import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 
 import java.util.Collection;
@@ -8,10 +9,18 @@ import java.util.Map;
 import denominator.common.Filter;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
+import denominator.model.rdata.CERTData;
 import denominator.model.rdata.CNAMEData;
+import denominator.model.rdata.DSData;
+import denominator.model.rdata.LOCData;
+import denominator.model.rdata.MXData;
+import denominator.model.rdata.NAPTRData;
 import denominator.model.rdata.NSData;
 import denominator.model.rdata.PTRData;
 import denominator.model.rdata.SPFData;
+import denominator.model.rdata.SRVData;
+import denominator.model.rdata.SSHFPData;
+import denominator.model.rdata.TLSAData;
 import denominator.model.rdata.TXTData;
 
 /**
@@ -647,6 +656,597 @@ public class ResourceRecordSets {
 
         public TXTData apply(String input) {
             return TXTData.create(input);
+        }
+    }
+
+    /**
+     * creates mx set of {@link denominator.model.rdata.MXData MX} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param mxdata
+     *            {@code 1 mx1.denominator.io.}
+     */
+    public static ResourceRecordSet<MXData> mx(String name, String mxdata) {
+        return new MXBuilder().name(name).add(mxdata).build();
+    }
+
+    /**
+     * creates mx set of {@link denominator.model.rdata.MXData MX} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param mxdata
+     *            {@code 1 mx1.denominator.io.}
+     */
+    public static ResourceRecordSet<MXData> mx(String name, int ttl, String mxdata) {
+        return new MXBuilder().name(name).ttl(ttl).add(mxdata).build();
+    }
+
+    /**
+     * creates mx set of {@link denominator.model.rdata.MXData MX} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param mxdata
+     *            mxdata values ex.
+     *            {@code [1 mx1.denominator.io., 2 mx2.denominator.io.]}
+     */
+    public static ResourceRecordSet<MXData> mx(String name, Collection<String> mxdata) {
+        return new MXBuilder().name(name).addAll(mxdata).build();
+    }
+
+    /**
+     * creates mx set of {@link denominator.model.rdata.MXData MX} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param mxdata
+     *            mxdata values ex.
+     *            {@code [1 mx1.denominator.io., 2 mx2.denominator.io.]}
+     */
+    public static ResourceRecordSet<MXData> mx(String name, int ttl, Collection<String> mxdata) {
+        return new MXBuilder().name(name).ttl(ttl).addAll(mxdata).build();
+    }
+
+    private static class MXBuilder extends StringRecordBuilder<MXData> {
+        private MXBuilder() {
+            type("MX");
+        }
+
+        public MXData apply(String input) {
+        	String[] parts = input.split(" ");
+        	checkArgument(parts.length == 2, "record must have exactly two parts");
+            return MXData.create(Integer.parseInt(parts[0]), parts[1]);
+        }
+    }
+
+    /**
+     * creates srv set of {@link denominator.model.rdata.SRVData SRV} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param srvdata
+     *            {@code 0 1 80 www.foo.com.}
+     */
+    public static ResourceRecordSet<SRVData> srv(String name, String srvdata) {
+        return new SRVBuilder().name(name).add(srvdata).build();
+    }
+
+    /**
+     * creates srv set of {@link denominator.model.rdata.SRVData SRV} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param srvdata
+     *            {@code 0 1 80 www.foo.com.}
+     */
+    public static ResourceRecordSet<SRVData> srv(String name, int ttl, String srvdata) {
+        return new SRVBuilder().name(name).ttl(ttl).add(srvdata).build();
+    }
+
+    /**
+     * creates srv set of {@link denominator.model.rdata.SRVData SRV} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param srvdata
+     *            srvdata values ex.
+     *            {@code [0 1 80 www.foo.com., 0 1 443 www.foo.com.]}
+     */
+    public static ResourceRecordSet<SRVData> srv(String name, Collection<String> srvdata) {
+        return new SRVBuilder().name(name).addAll(srvdata).build();
+    }
+
+    /**
+     * creates srv set of {@link denominator.model.rdata.SRVData SRV} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param srvdata
+     *            srvdata values ex.
+     *            {@code [0 1 80 www.foo.com., 0 1 443 www.foo.com.]}
+     */
+    public static ResourceRecordSet<SRVData> srv(String name, int ttl, Collection<String> srvdata) {
+        return new SRVBuilder().name(name).ttl(ttl).addAll(srvdata).build();
+    }
+
+    private static class SRVBuilder extends StringRecordBuilder<SRVData> {
+        private SRVBuilder() {
+            type("SRV");
+        }
+
+        public SRVData apply(String input) {
+        	String[] parts = input.split(" ");
+        	checkArgument(parts.length == 4, "record must have exactly four parts");
+        	return SRVData.builder().priority(Integer.parseInt(parts[0]))
+        	                        .weight(Integer.parseInt(parts[1]))
+        	                        .port(Integer.parseInt(parts[2]))
+        	                        .target(parts[3])
+        	                        .build();
+        }
+    }
+
+    /**
+     * creates ds set of {@link denominator.model.rdata.DSData DS} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param dsdata
+     *            {@code 12345 1 1 B33F}
+     */
+    public static ResourceRecordSet<DSData> ds(String name, String dsdata) {
+        return new DSBuilder().name(name).add(dsdata).build();
+    }
+
+    /**
+     * creates ds set of {@link denominator.model.rdata.DSData DS} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param dsdata
+     *            {@code 12345 1 1 B33F}
+     */
+    public static ResourceRecordSet<DSData> ds(String name, int ttl, String dsdata) {
+        return new DSBuilder().name(name).ttl(ttl).add(dsdata).build();
+    }
+
+    /**
+     * creates ds set of {@link denominator.model.rdata.DSData DS} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param dsdata
+     *            dsdata values ex.
+     *            {@code [12345 1 1 B33F, 6789 1 1 F00M00]}
+     */
+    public static ResourceRecordSet<DSData> ds(String name, Collection<String> dsdata) {
+        return new DSBuilder().name(name).addAll(dsdata).build();
+    }
+
+    /**
+     * creates ds set of {@link denominator.model.rdata.DSData DS} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param dsdata
+     *            dsdata values ex.
+     *            {@code [12345 1 1 B33F, 6789 1 1 F00M00]}
+     */
+    public static ResourceRecordSet<DSData> ds(String name, int ttl, Collection<String> dsdata) {
+        return new DSBuilder().name(name).ttl(ttl).addAll(dsdata).build();
+    }
+
+    private static class DSBuilder extends StringRecordBuilder<DSData> {
+        private DSBuilder() {
+            type("DS");
+        }
+
+        public DSData apply(String input) {
+        	String[] parts = input.split(" ");
+        	checkArgument(parts.length == 4, "record must have exactly four parts");
+        	return DSData.builder().keyTag(Integer.parseInt(parts[0]))
+        	                       .algorithmId(Integer.parseInt(parts[1]))
+        	                       .digestId(Integer.parseInt(parts[2]))
+        	                       .digest(parts[3])
+        	                       .build();
+        }
+    }
+
+    /**
+     * creates cert set of {@link denominator.model.rdata.CERTData CERT} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param certdata
+     *            {@code 12345 1 1 B33F}
+     */
+    public static ResourceRecordSet<CERTData> cert(String name, String certdata) {
+        return new CERTBuilder().name(name).add(certdata).build();
+    }
+
+    /**
+     * creates cert set of {@link denominator.model.rdata.CERTData CERT} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param certdata
+     *            {@code 12345 1 1 B33F}
+     */
+    public static ResourceRecordSet<CERTData> cert(String name, int ttl, String certdata) {
+        return new CERTBuilder().name(name).ttl(ttl).add(certdata).build();
+    }
+
+    /**
+     * creates cert set of {@link denominator.model.rdata.CERTData CERT} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param certdata
+     *            certdata values ex.
+     *            {@code [12345 1 1 B33F, 6789 1 1 F00M00]}
+     */
+    public static ResourceRecordSet<CERTData> cert(String name, Collection<String> certdata) {
+        return new CERTBuilder().name(name).addAll(certdata).build();
+    }
+
+    /**
+     * creates cert set of {@link denominator.model.rdata.CERTData CERT} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param certdata
+     *            certdata values ex.
+     *            {@code [12345 1 1 B33F, 6789 1 1 F00M00]}
+     */
+    public static ResourceRecordSet<CERTData> cert(String name, int ttl, Collection<String> certdata) {
+        return new CERTBuilder().name(name).ttl(ttl).addAll(certdata).build();
+    }
+
+    private static class CERTBuilder extends StringRecordBuilder<CERTData> {
+        private CERTBuilder() {
+            type("CERT");
+        }
+
+        public CERTData apply(String input) {
+        	String[] parts = input.split(" ");
+        	checkArgument(parts.length == 4, "record must have exactly four parts");
+        	return CERTData.builder().certType(Integer.parseInt(parts[0]))
+        	                         .keyTag(Integer.parseInt(parts[1]))
+        	                         .algorithm(Integer.parseInt(parts[2]))
+        	                         .cert(parts[3])
+        	                         .build();
+        }
+    }
+
+    /**
+     * creates naptr set of {@link denominator.model.rdata.NAPTRData NAPTR} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param naptrdata
+     *            naptrdata values ex.
+     *            {@code 1 1 U E2U+sip !^.*$!sip:customer-service@example.com! .}
+     */
+    public static ResourceRecordSet<NAPTRData> naptr(String name, String naptrdata) {
+        return new NAPTRBuilder().name(name).add(naptrdata).build();
+    }
+
+    /**
+     * creates naptr set of {@link denominator.model.rdata.NAPTRData NAPTR} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param naptrdata
+     *            naptrdata values ex.
+     *            {@code 1 1 U E2U+sip !^.*$!sip:customer-service@example.com! .}
+     */
+    public static ResourceRecordSet<NAPTRData> naptr(String name, int ttl, String naptrdata) {
+        return new NAPTRBuilder().name(name).ttl(ttl).add(naptrdata).build();
+    }
+
+    /**
+     * creates naptr set of {@link denominator.model.rdata.NAPTRData NAPTR} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param naptrdata
+     *            naptrdata values ex.
+     *            {@code [1 1 U E2U+sip !^.*$!sip:customer-service@example.com! ., 1 1 U E2U+email !^.*$!mailto:information@example.com! .]}
+     */
+    public static ResourceRecordSet<NAPTRData> naptr(String name, Collection<String> naptrdata) {
+        return new NAPTRBuilder().name(name).addAll(naptrdata).build();
+    }
+
+    /**
+     * creates naptr set of {@link denominator.model.rdata.NAPTRData NAPTR} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param naptrdata
+     *            naptrdata values ex.
+     *            {@code [1 1 U E2U+sip !^.*$!sip:customer-service@example.com! ., 1 1 U E2U+email !^.*$!mailto:information@example.com! .]}
+     */
+    public static ResourceRecordSet<NAPTRData> naptr(String name, int ttl, Collection<String> naptrdata) {
+        return new NAPTRBuilder().name(name).ttl(ttl).addAll(naptrdata).build();
+    }
+
+    private static class NAPTRBuilder extends StringRecordBuilder<NAPTRData> {
+        private NAPTRBuilder() {
+            type("NAPTR");
+        }
+
+        public NAPTRData apply(String input) {
+        	String[] parts = input.split(" ");
+        	checkArgument(parts.length == 6, "record must have exactly six parts");
+        	return NAPTRData.builder().order(Integer.parseInt(parts[0]))
+        	                          .preference(Integer.parseInt(parts[1]))
+        	                          .flags(parts[2])
+        	                          .services(parts[3])
+        	                          .regexp(parts[4])
+        	                          .replacement(parts[5])
+        	                          .build();
+        }
+    }
+
+    /**
+     * creates sshfp set of {@link denominator.model.rdata.SSHFPData SSHFP} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param sshfpdata
+     *            sshfpdata values ex.
+     *            {@code 1 1 B33F}
+     */
+    public static ResourceRecordSet<SSHFPData> sshfp(String name, String sshfpdata) {
+        return new SSHFPBuilder().name(name).add(sshfpdata).build();
+    }
+
+    /**
+     * creates sshfp set of {@link denominator.model.rdata.SSHFPData SSHFP} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param sshfpdata
+     *            sshfpdata values ex.
+     *            {@code 1 1 B33F}
+     */
+    public static ResourceRecordSet<SSHFPData> sshfp(String name, int ttl, String sshfpdata) {
+        return new SSHFPBuilder().name(name).ttl(ttl).add(sshfpdata).build();
+    }
+
+    /**
+     * creates sshfp set of {@link denominator.model.rdata.SSHFPData SSHFP} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param sshfpdata
+     *            sshfpdata values ex.
+     *            {@code [1 1 B33F, 2 1 F00M00]}
+     */
+    public static ResourceRecordSet<SSHFPData> sshfp(String name, Collection<String> sshfpdata) {
+        return new SSHFPBuilder().name(name).addAll(sshfpdata).build();
+    }
+
+    /**
+     * creates sshfp set of {@link denominator.model.rdata.SSHFPData SSHFP} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param sshfpdata
+     *            sshfpdata values ex.
+     *            {@code [1 1 B33F, 2 1 F00M00]}
+     */
+    public static ResourceRecordSet<SSHFPData> sshfp(String name, int ttl, Collection<String> sshfpdata) {
+        return new SSHFPBuilder().name(name).ttl(ttl).addAll(sshfpdata).build();
+    }
+
+    private static class SSHFPBuilder extends StringRecordBuilder<SSHFPData> {
+        private SSHFPBuilder() {
+            type("SSHFP");
+        }
+
+        public SSHFPData apply(String input) {
+        	String[] parts = input.split(" ");
+        	checkArgument(parts.length == 3, "record must have exactly three parts");
+        	return SSHFPData.builder().algorithm(Integer.parseInt(parts[0]))
+        	                          .fptype(Integer.parseInt(parts[1]))
+        	                          .fingerprint(parts[2])
+        	                          .build();
+        }
+    }
+
+    /**
+     * creates loc set of {@link denominator.model.rdata.LOCData LOC} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param locdata
+     *            locdata values ex.
+     *            {@code 37 48 48.892 S 144 57 57.502 E 26m 10m 100m 10m}
+     */
+    public static ResourceRecordSet<LOCData> loc(String name, String locdata) {
+        return new LOCBuilder().name(name).add(locdata).build();
+    }
+
+    /**
+     * creates loc set of {@link denominator.model.rdata.LOCData LOC} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param locdata
+     *            locdata values ex.
+     *            {@code 37 48 48.892 S 144 57 57.502 E 26m 10m 100m 10m}
+     */
+    public static ResourceRecordSet<LOCData> loc(String name, int ttl, String locdata) {
+        return new LOCBuilder().name(name).ttl(ttl).add(locdata).build();
+    }
+
+    /**
+     * creates loc set of {@link denominator.model.rdata.LOCData LOC} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param locdata
+     *            locdata values ex.
+     *            {@code [37 48 48.892 S 144 57 57.502 E 26m 10m 100m 10m, 48 12 27.879 N 16 22 18.08 E 172m 10m 100m 10m]}
+     */
+    public static ResourceRecordSet<LOCData> loc(String name, Collection<String> locdata) {
+        return new LOCBuilder().name(name).addAll(locdata).build();
+    }
+
+    /**
+     * creates loc set of {@link denominator.model.rdata.LOCData LOC} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param locdata
+     *            locdata values ex.
+     *            {@code [37 48 48.892 S 144 57 57.502 E 26m 10m 100m 10m, 48 12 27.879 N 16 22 18.08 E 172m 10m 100m 10m]}
+     */
+    public static ResourceRecordSet<LOCData> loc(String name, int ttl, Collection<String> locdata) {
+        return new LOCBuilder().name(name).ttl(ttl).addAll(locdata).build();
+    }
+
+    private static class LOCBuilder extends StringRecordBuilder<LOCData> {
+        private LOCBuilder() {
+            type("LOC");
+        }
+
+        public LOCData apply(String input) {
+        	return LOCData.create(input);
+        }
+    }
+
+    /**
+     * creates tlsa set of {@link denominator.model.rdata.TLSAData TLSA} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param tlsadata
+     *            tlsadata values ex.
+     *            {@code 1 1 1 B33F}
+     */
+    public static ResourceRecordSet<TLSAData> tlsa(String name, String tlsadata) {
+        return new TLSABuilder().name(name).add(tlsadata).build();
+    }
+
+    /**
+     * creates tlsa set of {@link denominator.model.rdata.TLSAData TLSA} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param tlsadata
+     *            tlsadata values ex.
+     *            {@code 1 1 1 B33F}
+     */
+    public static ResourceRecordSet<TLSAData> tlsa(String name, int ttl, String tlsadata) {
+        return new TLSABuilder().name(name).ttl(ttl).add(tlsadata).build();
+    }
+
+    /**
+     * creates tlsa set of {@link denominator.model.rdata.TLSAData TLSA} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param tlsadata
+     *            tlsadata values ex.
+     *            {@code [1 1 1 B33F, 1 1 1 F00M00]}
+     */
+    public static ResourceRecordSet<TLSAData> tlsa(String name, Collection<String> tlsadata) {
+        return new TLSABuilder().name(name).addAll(tlsadata).build();
+    }
+
+    /**
+     * creates tlsa set of {@link denominator.model.rdata.TLSAData TLSA} records
+     * for the specified name and ttl.
+     * 
+     * @param name
+     *            ex. {@code denominator.io.}
+     * @param ttl
+     *            see {@link ResourceRecordSet#ttl()}
+     * @param tlsadata
+     *            tlsadata values ex.
+     *            {@code [1 1 1 B33F, 1 1 1 F00M00]}
+     */
+    public static ResourceRecordSet<TLSAData> tlsa(String name, int ttl, Collection<String> tlsadata) {
+        return new TLSABuilder().name(name).ttl(ttl).addAll(tlsadata).build();
+    }
+
+    private static class TLSABuilder extends StringRecordBuilder<TLSAData> {
+        private TLSABuilder() {
+            type("TLSA");
+        }
+
+        public TLSAData apply(String input) {
+        	String[] parts = input.split(" ");
+        	checkArgument(parts.length == 4, "record must have exactly four parts");
+        	return TLSAData.builder().usage(Integer.parseInt(parts[0]))
+        	                         .selector(Integer.parseInt(parts[1]))
+        	                         .matchingType(Integer.parseInt(parts[2]))
+        	                         .certificateAssociationData(parts[3])
+        	                         .build();
         }
     }
 }
