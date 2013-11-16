@@ -50,9 +50,14 @@ import com.google.gson.stream.JsonWriter;
 import denominator.common.Filter;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
+import denominator.model.rdata.CERTData;
+import denominator.model.rdata.DSData;
+import denominator.model.rdata.LOCData;
 import denominator.model.rdata.MXData;
+import denominator.model.rdata.NAPTRData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.SSHFPData;
+import denominator.model.rdata.TLSAData;
 import denominator.profile.GeoResourceRecordSetApi;
 import denominator.profile.WeightedResourceRecordSetApi;
 
@@ -111,6 +116,30 @@ public abstract class BaseProviderLiveTest {
                         .add(SSHFPData.createDSA("390E37C5B5DB9A1C455E648A41AF3CC83F99F102")).build());
         builder.put("TXT",
                 txt("txt-" + recordSuffix, ImmutableList.of("made in norway", "made in sweden", "made in finland")));
+        builder.put("DS",
+                ResourceRecordSet.<DSData> builder().name("dnssec-" + recordSuffix).type("DS")
+                	.add(DSData.builder().keyTag(12345).algorithmId(1).digestId(1).digest("B33F").build())
+                	.build());
+        builder.put("CERT",
+                ResourceRecordSet.<CERTData> builder().name("cert-" + recordSuffix).type("CERT")
+                	.add(CERTData.builder().certType(12345).keyTag(1).algorithm(1).cert("B33F").build())
+                	.build());
+        builder.put("NAPTR",
+                ResourceRecordSet.<NAPTRData> builder().name("naptr-" + recordSuffix).type("NAPTR")
+                	.add(NAPTRData.builder().order(1).preference(1).flags("U").services("E2U+sip").regexp("!^.*$!sip:customer-service@example.com!").replacement(".").build())
+                	.build());
+        builder.put("LOC",
+                ResourceRecordSet.<LOCData> builder().name("loc-" + recordSuffix).type("LOC")
+                	.add(LOCData.builder().latitude("37 48 48.892 S").longitude("144 57 57.502 E").altitude("26m").diameter("10m").hprecision("100m").vprecision("10m").build())
+                	.build());
+        builder.put("LOC",
+                ResourceRecordSet.<LOCData> builder().name("loc-simple-" + recordSuffix).type("LOC")
+                	.add(LOCData.builder().latitude("37 48 48.892 S").longitude("144 57 57.502 E").altitude("26m").build())
+                	.build());
+        builder.put("TLSA",
+                ResourceRecordSet.<TLSAData> builder().name("tlsa-" + recordSuffix).type("TLSA")
+                	.add(TLSAData.builder().usage(1).selector(1).matchingType(1).certificateAssociationData("B33F").build())
+                	.build());
         return builder.build();
     }
 

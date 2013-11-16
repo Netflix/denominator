@@ -1,3 +1,6 @@
+### Version 4.3.5
+* Support for more exotic RRtypes added
+
 ### Version 4.3.4
 * Add support environment variables for the cli. issue #253
 
