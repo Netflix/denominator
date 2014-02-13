@@ -10,6 +10,14 @@ import static denominator.model.ResourceRecordSets.ns;
 import static denominator.model.ResourceRecordSets.ptr;
 import static denominator.model.ResourceRecordSets.spf;
 import static denominator.model.ResourceRecordSets.txt;
+import static denominator.model.ResourceRecordSets.mx;
+import static denominator.model.ResourceRecordSets.srv;
+import static denominator.model.ResourceRecordSets.ds;
+import static denominator.model.ResourceRecordSets.cert;
+import static denominator.model.ResourceRecordSets.naptr;
+import static denominator.model.ResourceRecordSets.sshfp;
+import static denominator.model.ResourceRecordSets.loc;
+import static denominator.model.ResourceRecordSets.tlsa;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
@@ -40,10 +48,18 @@ import com.google.gson.stream.JsonWriter;
 import denominator.model.profile.Geo;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
+import denominator.model.rdata.CERTData;
 import denominator.model.rdata.CNAMEData;
+import denominator.model.rdata.DSData;
+import denominator.model.rdata.LOCData;
+import denominator.model.rdata.MXData;
+import denominator.model.rdata.NAPTRData;
 import denominator.model.rdata.NSData;
 import denominator.model.rdata.PTRData;
 import denominator.model.rdata.SPFData;
+import denominator.model.rdata.SRVData;
+import denominator.model.rdata.SSHFPData;
+import denominator.model.rdata.TLSAData;
 import denominator.model.rdata.TXTData;
 
 @Test
@@ -123,7 +139,7 @@ public class ResourceRecordSetsTest {
 
     @DataProvider(name = "a")
     public Object[][] createData() {
-        Object[][] data = new Object[28][3];
+        Object[][] data = new Object[37][3];
         data[0][0] = a("www.denominator.io.", "192.0.2.1");
         data[0][1] = ResourceRecordSet.<AData> builder()
                                       .name("www.denominator.io.")
@@ -257,6 +273,69 @@ public class ResourceRecordSetsTest {
         data[27][0] = spf("denominator.io.", 3600, ImmutableSet.of("\"v=spf1 a mx -all\""));
         data[27][1] = data[25][1];        
         data[27][2] = data[25][2];        
+        data[28][0] = mx("denominator.io.", 3600, ImmutableSet.of("1 mx1.denominator.io."));
+        data[28][1] = ResourceRecordSet.<MXData> builder()
+                                       .name("denominator.io.")
+                                       .type("MX")
+                                       .ttl(3600)
+                                       .add(MXData.create(1, "mx1.denominator.io.")).build();
+        data[28][2] = "{\"name\":\"denominator.io.\",\"type\":\"MX\",\"ttl\":3600,\"records\":[{\"preference\":1,\"exchange\":\"mx1.denominator.io.\"}]}";
+        data[29][0] = srv("denominator.io.", 3600, ImmutableSet.of("0 1 80 srv.denominator.io."));
+        data[29][1] = ResourceRecordSet.<SRVData> builder()
+                                       .name("denominator.io.")
+                                       .type("SRV")
+                                       .ttl(3600)
+                                       .add(SRVData.builder().priority(0).weight(1).port(80).target("srv.denominator.io.").build()).build();
+        data[29][2] = "{\"name\":\"denominator.io.\",\"type\":\"SRV\",\"ttl\":3600,\"records\":[{\"priority\":0,\"weight\":1,\"port\":80,\"target\":\"srv.denominator.io.\"}]}";
+        data[30][0] = ds("ds.denominator.io.", 3600, ImmutableSet.of("12345 1 1 B33F"));
+        data[30][1] = ResourceRecordSet.<DSData> builder()
+                                       .name("ds.denominator.io.")
+                                       .type("DS")
+                                       .ttl(3600)
+                                       .add(DSData.builder().keyTag(12345).algorithmId(1).digestId(1).digest("B33F").build()).build();
+        data[30][2] = "{\"name\":\"ds.denominator.io.\",\"type\":\"DS\",\"ttl\":3600,\"records\":[{\"keyTag\":12345,\"algorithmId\":1,\"digestId\":1,\"digest\":\"B33F\"}]}";
+        data[31][0] = cert("www.denominator.io.", 3600, ImmutableSet.of("12345 1 1 B33F"));
+        data[31][1] = ResourceRecordSet.<CERTData> builder()
+                                       .name("www.denominator.io.")
+                                       .type("CERT")
+                                       .ttl(3600)
+                                       .add(CERTData.builder().certType(12345).keyTag(1).algorithm(1).cert("B33F").build()).build();
+        data[31][2] = "{\"name\":\"www.denominator.io.\",\"type\":\"CERT\",\"ttl\":3600,\"records\":[{\"certType\":12345,\"keyTag\":1,\"algorithm\":1,\"cert\":\"B33F\"}]}";
+        data[32][0] = naptr("phone.denominator.io.", 3600, ImmutableSet.of("1 1 U E2U+sip !^.*$!sip:customer-service@example.com! ."));
+        data[32][1] = ResourceRecordSet.<NAPTRData> builder()
+                                       .name("phone.denominator.io.")
+                                       .type("NAPTR")
+                                       .ttl(3600)
+                                       .add(NAPTRData.builder().order(1).preference(1).flags("U").services("E2U+sip").regexp("!^.*$!sip:customer-service@example.com!").replacement(".").build()).build();
+        data[32][2] = "{\"name\":\"phone.denominator.io.\",\"type\":\"NAPTR\",\"ttl\":3600,\"records\":[{\"order\":1,\"preference\":1,\"flags\":\"U\",\"services\":\"E2U+sip\",\"regexp\":\"!^.*$!sip:customer-service@example.com!\",\"replacement\":\".\"}]}";
+        data[33][0] = sshfp("server1.denominator.io.", 3600, ImmutableSet.of("2 1 123456789abcdef67890123456789abcdef67890"));
+        data[33][1] = ResourceRecordSet.<SSHFPData> builder()
+                                       .name("server1.denominator.io.")
+                                       .type("SSHFP")
+                                       .ttl(3600)
+                                       .add(SSHFPData.createDSA("123456789abcdef67890123456789abcdef67890")).build();
+        data[33][2] = "{\"name\":\"server1.denominator.io.\",\"type\":\"SSHFP\",\"ttl\":3600,\"records\":[{\"algorithm\":2,\"fptype\":1,\"fingerprint\":\"123456789abcdef67890123456789abcdef67890\"}]}";
+        data[34][0] = loc("server1.denominator.io.", 3600, ImmutableSet.of("37 48 48.892 S 144 57 57.502 E 26m 10m 100m 10m"));
+        data[34][1] = ResourceRecordSet.<LOCData> builder()
+                                       .name("server1.denominator.io.")
+                                       .type("LOC")
+                                       .ttl(3600)
+                                       .add(LOCData.builder().latitude("37 48 48.892 S").longitude("144 57 57.502 E").altitude("26m").diameter("10m").hprecision("100m").vprecision("10m").build()).build();
+        data[34][2] = "{\"name\":\"server1.denominator.io.\",\"type\":\"LOC\",\"ttl\":3600,\"records\":[{\"latitude\":\"37 48 48.892 S\",\"longitude\":\"144 57 57.502 E\",\"altitude\":\"26m\",\"diameter\":\"10m\",\"hprecision\":\"100m\",\"vprecision\":\"10m\"}]}";
+        data[35][0] = tlsa("server1.denominator.io.", 3600, ImmutableSet.of("1 1 1 B33F"));
+        data[35][1] = ResourceRecordSet.<TLSAData> builder()
+                                       .name("server1.denominator.io.")
+                                       .type("TLSA")
+                                       .ttl(3600)
+                                       .add(TLSAData.builder().usage(1).selector(1).matchingType(1).certificateAssociationData("B33F").build()).build();
+        data[35][2] = "{\"name\":\"server1.denominator.io.\",\"type\":\"TLSA\",\"ttl\":3600,\"records\":[{\"usage\":1,\"selector\":1,\"matchingType\":1,\"certificateAssociationData\":\"B33F\"}]}";
+        data[36][0] = loc("server1.denominator.io.", 3600, ImmutableSet.of("37 48 48.892 S 144 57 57.502 E"));
+        data[36][1] = ResourceRecordSet.<LOCData> builder()
+                                       .name("server1.denominator.io.")
+                                       .type("LOC")
+                                       .ttl(3600)
+                                       .add(LOCData.builder().latitude("37 48 48.892 S").longitude("144 57 57.502 E").build()).build();
+        data[36][2] = "{\"name\":\"server1.denominator.io.\",\"type\":\"LOC\",\"ttl\":3600,\"records\":[{\"latitude\":\"37 48 48.892 S\",\"longitude\":\"144 57 57.502 E\"}]}";
         return data;
     }
 
