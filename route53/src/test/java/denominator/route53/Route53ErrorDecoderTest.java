@@ -11,6 +11,7 @@ import denominator.route53.Route53Provider.XMLCodec;
 import feign.Response;
 import feign.RetryableException;
 import feign.codec.ErrorDecoder;
+import static feign.Util.UTF_8;
 
 @Test(singleThreaded = true)
 public class Route53ErrorDecoderTest {
@@ -97,6 +98,6 @@ public class Route53ErrorDecoderTest {
     }
 
     static Response responseWithContent(String content) {
-        return Response.create(500, "ServerError", ImmutableMap.<String, Collection<String>> of(), content);
+        return Response.create(500, "ServerError", ImmutableMap.<String, Collection<String>> of(), content, UTF_8);
     }
 }

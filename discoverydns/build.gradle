@@ -1,0 +1,26 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply from: rootProject.file('dagger.gradle')
+
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+
+eclipse {
+  classpath {
+    downloadSources = true
+    downloadJavadoc = true
+  }
+}
+test {
+  useTestNG()
+}
+
+dependencies {
+  compile project(':denominator-core')
+  compile 'com.netflix.feign:feign-core:6.1.2'
+  compile 'com.netflix.feign:feign-gson:6.1.2'
+
+  testCompile 'com.google.guava:guava:14.0.1'
+  testCompile 'org.testng:testng:6.8.5'
+  testCompile 'com.google.mockwebserver:mockwebserver:20130706'
+}
