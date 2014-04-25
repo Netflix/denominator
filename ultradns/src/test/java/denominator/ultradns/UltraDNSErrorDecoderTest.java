@@ -22,6 +22,7 @@ import feign.FeignException;
 import feign.Response;
 import feign.RetryableException;
 import feign.codec.ErrorDecoder;
+import static feign.Util.UTF_8;
 
 @Test(singleThreaded = true)
 public class UltraDNSErrorDecoderTest {
@@ -82,6 +83,6 @@ public class UltraDNSErrorDecoderTest {
     }
 
     static Response errorResponse(String body) {
-        return Response.create(500, "Server Error", ImmutableMap.<String, Collection<String>> of(), body);
+        return Response.create(500, "Server Error", ImmutableMap.<String, Collection<String>> of(), body, UTF_8);
     }
 }

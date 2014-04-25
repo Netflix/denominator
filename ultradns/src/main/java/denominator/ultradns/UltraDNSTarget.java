@@ -13,6 +13,7 @@ import denominator.Provider;
 import feign.Request;
 import feign.RequestTemplate;
 import feign.Target;
+import static feign.Util.UTF_8;
 
 class UltraDNSTarget implements Target<UltraDNS> {
 
@@ -44,7 +45,7 @@ class UltraDNSTarget implements Target<UltraDNS> {
     public Request apply(RequestTemplate in) {
         in.insert(0, url());
         List<Object> creds = ListCredentials.asList(credentials.get());
-        in.body(format(SOAP_TEMPLATE, creds.get(0).toString(), creds.get(1).toString(), in.body()));
+        in.body(format(SOAP_TEMPLATE, creds.get(0).toString(), creds.get(1).toString(), new String(in.body(), UTF_8)));
         in.header("Host", URI.create(in.url()).getHost());
         in.header("Content-Type", "application/xml");
         return in.request();
