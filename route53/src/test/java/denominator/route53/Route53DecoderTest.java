@@ -23,6 +23,7 @@ import denominator.route53.Route53.ZoneList;
 import denominator.route53.Route53Provider.XMLCodec;
 import feign.Response;
 import feign.codec.Decoder;
+import static feign.Util.UTF_8;
 
 public class Route53DecoderTest {
 
@@ -92,6 +93,6 @@ public class Route53DecoderTest {
 
     Response response(String resource) throws IOException {
         return Response.create(200, "OK", Collections.<String, Collection<String>> emptyMap(),
-                Util.slurp(new InputStreamReader(getClass().getResourceAsStream(resource))));
+                Util.slurp(new InputStreamReader(getClass().getResourceAsStream(resource))), UTF_8);
     }
 }

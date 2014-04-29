@@ -15,7 +15,6 @@ import io.airlift.command.Command;
 import io.airlift.command.Option;
 import io.airlift.command.OptionType;
 
-import java.net.InetAddress;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
@@ -25,7 +24,6 @@ import java.util.regex.Pattern;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -33,25 +31,10 @@ import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.cli.Denominator.DenominatorCommand;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetToString;
+import denominator.common.Util;
 import denominator.hook.InstanceMetadataHook;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
-import denominator.model.rdata.AAAAData;
-import denominator.model.rdata.AData;
-import denominator.model.rdata.CERTData;
-import denominator.model.rdata.CNAMEData;
-import denominator.model.rdata.DSData;
-import denominator.model.rdata.LOCData;
-import denominator.model.rdata.MXData;
-import denominator.model.rdata.NAPTRData;
-import denominator.model.rdata.NSData;
-import denominator.model.rdata.PTRData;
-import denominator.model.rdata.SOAData;
-import denominator.model.rdata.SPFData;
-import denominator.model.rdata.SRVData;
-import denominator.model.rdata.SSHFPData;
-import denominator.model.rdata.TLSAData;
-import denominator.model.rdata.TXTData;
 import denominator.route53.AliasTarget;
 
 class ResourceRecordSetCommands {
@@ -227,7 +210,7 @@ class ResourceRecordSetCommands {
                 builder.add(AliasTarget.create(hostedZoneId, elbDNSName));
             } else {
                 for (String value : values) {
-                    builder.add(toMap(type, value));
+                    builder.add(Util.toMap(type, value));
                 }
             }
             return builder;
@@ -424,103 +407,9 @@ class ResourceRecordSetCommands {
             ImmutableList.Builder<String> lines = ImmutableList.<String> builder();
             for (Map<String, Object> rdata : input.records()) {
                 lines.add(format("%-50s%-7s%-20s%-6s%s", input.name(), input.type(),
-                        input.qualifier() != null ? input.qualifier() : "", input.ttl(), flatten(rdata)));
+                        input.qualifier() != null ? input.qualifier() : "", input.ttl(), Util.flatten(rdata)));
             }
             return Joiner.on('\n').join(lines.build());
-        }
-    }
-
-    static String flatten(Map<String, Object> input) {
-        ImmutableList<Object> orderedRdataValues = ImmutableList.copyOf(input.values());
-        if (orderedRdataValues.size() == 1) {
-            Object rdata = orderedRdataValues.get(0);
-            return rdata instanceof InetAddress ? InetAddress.class.cast(rdata).getHostAddress() : rdata.toString();
-        }
-        return Joiner.on(' ').join(input.values());
-    }
-
-    static Map<String, Object> toMap(String type, String rdata) {
-        if ("A".equals(type)) {
-            return AData.create(rdata);
-        } else if ("AAAA".equals(type)) {
-            return AAAAData.create(rdata);
-        } else if ("CNAME".equals(type)) {
-            return CNAMEData.create(rdata);
-        } else if ("MX".equals(type)) {
-            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return MXData.create(Integer.valueOf(parts.get(0)), parts.get(1));
-        } else if ("NS".equals(type)) {
-            return NSData.create(rdata);
-        } else if ("PTR".equals(type)) {
-            return PTRData.create(rdata);
-        } else if ("SOA".equals(type)) {
-            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return SOAData.builder().mname(parts.get(0)).rname(parts.get(1)).serial(Integer.valueOf(parts.get(2)))
-                    .refresh(Integer.valueOf(parts.get(3))).retry(Integer.valueOf(parts.get(4)))
-                    .expire(Integer.valueOf(parts.get(5))).minimum(Integer.valueOf(parts.get(6))).build();
-        } else if ("SPF".equals(type)) {
-            return SPFData.create(rdata);
-        } else if ("SRV".equals(type)) {
-            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return SRVData.builder().priority(Integer.valueOf(parts.get(0))).weight(Integer.valueOf(parts.get(1)))
-                    .port(Integer.valueOf(parts.get(2))).target(parts.get(3)).build();
-        } else if ("TXT".equals(type)) {
-            return TXTData.create(rdata);
-        } else if ("DS".equals(type)) {
-            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return DSData.builder().keyTag(Integer.valueOf(parts.get(0)))
-                                   .algorithmId(Integer.valueOf(parts.get(1)))
-                                   .digestId(Integer.valueOf(parts.get(2)))
-                                   .digest(parts.get(3)).build();
-        } else if ("CERT".equals(type)) {
-            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return CERTData.builder().certType(Integer.valueOf(parts.get(0)))
-                                     .keyTag(Integer.valueOf(parts.get(1)))
-                                     .algorithm(Integer.valueOf(parts.get(2)))
-                                     .cert(parts.get(3))
-                                     .build();
-        } else if ("NAPTR".equals(type)) {
-            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return NAPTRData.builder().order(Integer.valueOf(parts.get(0)))
-                                      .preference(Integer.valueOf(parts.get(1)))
-                                      .flags(parts.get(2))
-                                      .services(parts.get(3))
-                                      .regexp(parts.get(4))
-                                      .replacement(parts.get(5))
-                                      .build();
-        } else if ("SSHFP".equals(type)) {
-            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return SSHFPData.builder().algorithm(Integer.valueOf(parts.get(0)))
-                                      .fptype(Integer.valueOf(parts.get(1)))
-                                      .fingerprint(parts.get(2))
-                                      .build();
-        } else if ("LOC".equals(type)) {
-            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            int length = parts.size();
-            String latitude = Joiner.on(' ').join(parts.get(0), parts.get(1), parts.get(2), parts.get(3));
-            String longitude = Joiner.on(' ').join(parts.get(4), parts.get(5), parts.get(6), parts.get(7));
-            LOCData.Builder builder = LOCData.builder();
-            builder = builder.latitude(latitude);
-            builder = builder.longitude(longitude);
-            builder = builder.altitude(parts.get(8));
-            switch (length) {
-	            case 12:
-	            	builder = builder.vprecision(parts.get(11));
-	            case 11:
-	            	builder = builder.hprecision(parts.get(10));
-	            case 10:
-	            	builder = builder.diameter(parts.get(9));
-            }
-            return builder.build();
-        } else if ("TLSA".equals(type)) {
-            ImmutableList<String> parts = ImmutableList.copyOf(Splitter.on(' ').split(rdata));
-            return TLSAData.builder().usage(Integer.valueOf(parts.get(0)))
-                                     .selector(Integer.valueOf(parts.get(1)))
-                                     .matchingType(Integer.valueOf(parts.get(2)))
-                                     .certificateAssociationData(parts.get(3))
-                                     .build();
-        } else {
-            throw new IllegalArgumentException("unsupported type: " + type);
         }
     }
 }

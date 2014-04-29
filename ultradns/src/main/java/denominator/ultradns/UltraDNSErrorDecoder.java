@@ -15,6 +15,7 @@ import feign.RetryableException;
 import feign.codec.Decoder;
 import feign.codec.ErrorDecoder;
 import feign.sax.SAXDecoder.ContentHandlerWithResult;
+import static feign.Util.UTF_8;
 
 class UltraDNSErrorDecoder implements ErrorDecoder {
 
@@ -85,6 +86,6 @@ class UltraDNSErrorDecoder implements ErrorDecoder {
         if (response.body() == null)
             return response;
         String body = slurp(response.body().asReader());
-        return Response.create(response.status(), response.reason(), response.headers(), body);
+        return Response.create(response.status(), response.reason(), response.headers(), body, UTF_8);
     }
 }

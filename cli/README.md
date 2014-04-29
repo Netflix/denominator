@@ -32,6 +32,18 @@ url: https://alternative/rest/endpoint
 credentials:
   username: your_username
   password: your_password
+---
+name: discoverydns-prod
+provider: discoverydns
+credentials:
+  certificatePem: |
+    -----BEGIN CERTIFICATE-----
+    [PEM CONTENT HERE]
+    -----END CERTIFICATE-----
+  keyPem: |
+    -----BEGIN PRIVATE KEY-----
+    [PEM CONTENT HERE]
+    -----END PRIVATE KEY-----
 ```
 
 Use the `-n` arg to select the named provider.
