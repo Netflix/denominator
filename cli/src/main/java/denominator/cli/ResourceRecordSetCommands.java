@@ -54,12 +54,10 @@ class ResourceRecordSetCommands {
 
         public Iterator<String> doRun(DNSApiManager mgr) {
             Iterator<ResourceRecordSet<?>> iterator;
-            if (name != null && type != null)
-                iterator = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByNameAndType(name, type);
             if (name != null)
                 iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByName(name);
             else
-                iterator = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName)).iterator();
+                iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterator();
             return transform(iterator, ResourceRecordSetToString.INSTANCE);
         }
     }
@@ -77,12 +75,7 @@ class ResourceRecordSetCommands {
 
         public Iterator<String> doRun(DNSApiManager mgr) {
             ResourceRecordSet<?> rrs;
-            if (qualifier != null) {
-                rrs = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName))
-                        .getByNameTypeAndQualifier(name, type, qualifier);
-            } else {
-                rrs = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).getByNameAndType(name, type);
-            }
+            rrs = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).getByNameAndType(name, type);
             return rrs != null ? singletonIterator(GeoResourceRecordSetToString.INSTANCE.apply(rrs))
                     : singletonIterator("");
         }
