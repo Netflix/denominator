@@ -41,6 +41,7 @@ class CloudDNSTarget implements Target<CloudDNS> {
         if (input.url().indexOf("http") != 0)
             input.insert(0, urlAndToken.publicURL);
         input.header("X-Auth-Token", urlAndToken.tokenId);
+        input.header("Accept", "application/json");
         return input.request();
     }
 }
