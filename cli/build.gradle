@@ -23,6 +23,8 @@ dependencies {
   compile      project(':denominator-clouddns')
   compile      project(':denominator-designate')
   compile      project(':denominator-discoverydns')
+  compile      project(':denominator-verisignmdns')
+  
   testCompile 'org.testng:testng:6.8.5'
   testCompile 'com.google.mockwebserver:mockwebserver:20130706'
 }
