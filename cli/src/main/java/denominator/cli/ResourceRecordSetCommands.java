@@ -56,7 +56,7 @@ class ResourceRecordSetCommands {
             Iterator<ResourceRecordSet<?>> iterator;
             if (name != null && type != null)
                 iterator = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByNameAndType(name, type);
-            if (name != null)
+            else if (name != null)
                 iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByName(name);
             else
                 iterator = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName)).iterator();
