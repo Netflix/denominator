@@ -48,7 +48,7 @@ public class VrsnMDNSTest {
 	public static final String VALID_RData_NAPTR = "100 50 \"a\" \"z3950+n2l+n2c\" \"\" cidserver.example.com.";
 
 	static final String TEMPLATE_HEAD = "<?xml version='1.0' encoding='UTF-8'?>"
-			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/S-envelope' xmlns:urn='urn:com:verisign:dnsa:messaging:schema:1' xmlns:urn1='urn:com:verisign:dnsa:auth:schema:1' xmlns:urn2='urn:com:verisign:dnsa:api:schema:1'>"
+			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/soap-envelope' xmlns:urn='urn:com:verisign:dnsa:messaging:schema:1' xmlns:urn1='urn:com:verisign:dnsa:auth:schema:1' xmlns:urn2='urn:com:verisign:dnsa:api:schema:1'>"
 			+ "<S:Header>"
 			+ "<urn1:authInfo>"
 			+ "<urn1:userToken>"
