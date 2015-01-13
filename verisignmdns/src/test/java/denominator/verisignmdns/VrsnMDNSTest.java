@@ -21,19 +21,13 @@ import denominator.Credentials.ListCredentials;
 import denominator.Denominator;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
-import denominator.verisignmdns.VrsnAllProfileResourceRecordSetApi;
-import denominator.verisignmdns.VrsnDNSProvider;
-import denominator.verisignmdns.VrsnDNSProvider.XMLCodec;
+import denominator.verisignmdns.VerisignMDNSAllProfileResourceRecordSetApi;
+import denominator.verisignmdns.VerisignMDNSProvider;
+import denominator.verisignmdns.VerisignMDNSProvider.XMLCodec;
 import denominator.verisignmdns.VrsnMdns.Record;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 
-/**
- * This class defines data required for tests
- * 
- * @author smahurpawar
- *
- */
 public class VrsnMDNSTest {
 	public static final String VALID_TTL1 = "86000";
 	public static final String VALID_RR_TYPE2 = "TXT";
@@ -52,71 +46,52 @@ public class VrsnMDNSTest {
 	public static final String VALID_OWNER2 = "test2." + VALID_ZONE_NAME2;
 	public static final String VALID_URL = "https://api.dns-tool.com/dnsa-ws/V2.0/dnsaapi";
 	public static final String VALID_RData_NAPTR = "100 50 \"a\" \"z3950+n2l+n2c\" \"\" cidserver.example.com.";
- 
-	public static final String  createRequestARecordTemplete = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
-		    + "<soap:Envelope xmlns:soap='http://www.w3.org/2003/05/soap-envelope' xmlns:urn='urn:com:verisign:dnsa:messaging:schema:1' xmlns:urn1='urn:com:verisign:dnsa:auth:schema:1' xmlns:urn2='urn:com:verisign:dnsa:api:schema:1'>"
-			+"<soap:Header>"
-			+"<urn1:authInfo>"
-			+"<urn1:userToken>"
-			+"<urn1:userName>"+TEST_USER_NAME+"</urn1:userName>"
-			+"<urn1:password>"+TEST_PASSWORD+"</urn1:password>"
-			+"</urn1:userToken>"
-			+"</urn1:authInfo>"
-			+"</soap:Header>"
-			+"<soap:Body>"
-			+"<urn2:createResourceRecords>"
-			+"<urn2:domainName>"+VALID_ZONE_NAME1+"</urn2:domainName>"
-			+"<urn2:resourceRecord allowanyIP='false'>"
-			+"<urn2:owner>"+VALID_OWNER1+"</urn2:owner>"
-			+"<urn2:type>"+VALID_RR_TYPE1+"</urn2:type>"
-			+"<urn2:ttl>"+VALID_TTL1+"</urn2:ttl>"
-			+"<urn2:rData>"+VALID_RDATA1+"</urn2:rData>"
-			+"</urn2:resourceRecord>"
-			+"</urn2:createResourceRecords>"
-			+"</soap:Body>"
-			+"</soap:Envelope>";
-	
-	public static final String createRequestARecordResponse = 
-		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-			+"<S:Envelope xmlns:S=\"http://www.w3.org/2003/05/soap-envelope\">"
-			+"<S:Body>"
-			+"<ns2:dnsaWSRes xmlns=\"urn:com:verisign:dnsa:api:schema:2\" xmlns:ns2=\"urn:com:verisign:dnsa:api:schema:1\" xmlns:ns3=\"urn:com:verisign:dnsa:auth:schema:1\" xmlns:ns4=\"urn:com:verisign:dnsa:messaging:schema:1\">"
-			+"<ns2:callSuccess>true</ns2:callSuccess>"
-			+"</ns2:dnsaWSRes>"
-			+"</S:Body>"
-			+"</S:Envelope>";
-	
-	public static final String rrDeleteTemplete = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
-		    + "<soap:Envelope xmlns:soap='http://www.w3.org/2003/05/soap-envelope' xmlns:urn='urn:com:verisign:dnsa:messaging:schema:1' xmlns:urn1='urn:com:verisign:dnsa:auth:schema:1' xmlns:urn2='urn:com:verisign:dnsa:api:schema:1'>"
-			+ "<soap:Header>"
+
+	static final String TEMPLATE_HEAD = "<?xml version='1.0' encoding='UTF-8'?>"
+			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/S-envelope' xmlns:urn='urn:com:verisign:dnsa:messaging:schema:1' xmlns:urn1='urn:com:verisign:dnsa:auth:schema:1' xmlns:urn2='urn:com:verisign:dnsa:api:schema:1'>"
+			+ "<S:Header>"
 			+ "<urn1:authInfo>"
 			+ "<urn1:userToken>"
-			+ "<urn1:userName>"+ TEST_USER_NAME+ "</urn1:userName>"
-			+ "<urn1:password>"+ TEST_PASSWORD+ "</urn1:password>"
+			+ "<urn1:userName>%s</urn1:userName>"
+			+ "<urn1:password>%s</urn1:password>"
 			+ "</urn1:userToken>"
-			+ "</urn1:authInfo>"
-			+ "</soap:Header>"
-			+ "<soap:Body>"
-			+ "<urn2:deleteResourceRecords>"
-			+ "<urn2:domainName>"+ VALID_ZONE_NAME1+ "</urn2:domainName>"
-			+ "<urn2:resourceRecordId>"+ RESOURCE_RECORD_ID	+ "</urn2:resourceRecordId>"
-			+ "</urn2:deleteResourceRecords>"
-			+ "</soap:Body>" + "</soap:Envelope>";
+			+ "</urn1:authInfo>" + "</S:Header>" + "<S:Body>";
+	static final String TEMPLATE_TAIL = "</S:Body>" + "</S:Envelope>";
 
-	public static final String rrDeleteResponse = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
+	public static final String createRequestARecordTemplete = TEMPLATE_HEAD
+			+ "<urn2:createResourceRecords>" + "<urn2:domainName>"
+			+ VALID_ZONE_NAME1 + "</urn2:domainName>"
+			+ "<urn2:resourceRecord allowanyIP='false'>" + "<urn2:owner>"
+			+ VALID_OWNER1 + "</urn2:owner>" + "<urn2:type>" + VALID_RR_TYPE1
+			+ "</urn2:type>" + "<urn2:ttl>" + VALID_TTL1 + "</urn2:ttl>"
+			+ "<urn2:rData>" + VALID_RDATA1 + "</urn2:rData>"
+			+ "</urn2:resourceRecord>" + "</urn2:createResourceRecords>"
+			+ TEMPLATE_TAIL;
+
+	public static final String createRequestARecordResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+			+ "<S:Envelope xmlns:S=\"http://www.w3.org/2003/05/soap-envelope\">"
+			+ "<S:Body>"
+			+ "<ns2:dnsaWSRes xmlns=\"urn:com:verisign:dnsa:api:schema:2\" xmlns:ns2=\"urn:com:verisign:dnsa:api:schema:1\" xmlns:ns3=\"urn:com:verisign:dnsa:auth:schema:1\" xmlns:ns4=\"urn:com:verisign:dnsa:messaging:schema:1\">"
+			+ "<ns2:callSuccess>true</ns2:callSuccess>"
+			+ "</ns2:dnsaWSRes>"
+			+ "</S:Body>" + "</S:Envelope>";
+
+	public static final String rrDeleteTemplete = TEMPLATE_HEAD
+			+ "<urn2:deleteResourceRecords>" + "<urn2:domainName>"
+			+ VALID_ZONE_NAME1 + "</urn2:domainName>"
+			+ "<urn2:resourceRecordId>" + RESOURCE_RECORD_ID
+			+ "</urn2:resourceRecordId>" + "</urn2:deleteResourceRecords>"
+			+ TEMPLATE_TAIL;
+
+	public static final String rrDeleteResponse = "<?xml version='1.0' encoding='UTF-8'?>"
 			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/soap-envelope'>"
 			+ "<S:Body>"
 			+ "<ns2:dnsaWSRes xmlns='urn:com:verisign:dnsa:api:schema:2' xmlns:ns2='urn:com:verisign:dnsa:api:schema:1' xmlns:ns3='urn:com:verisign:dnsa:auth:schema:1' xmlns:ns4='urn:com:verisign:dnsa:messaging:schema:1'>"
 			+ "<ns2:callSuccess>true</ns2:callSuccess>"
 			+ "</ns2:dnsaWSRes>"
-			+ "</S:Body>"
-			+ "</S:Envelope>";
+			+ "</S:Body>" + "</S:Envelope>";
 
-	public static final String rrListCNAMETypesResponse = 
-		"<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+	public static final String rrListCNAMETypesResponse = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
 			+ "<S:Envelope xmlns:S=\"http://www.w3.org/2003/05/soap-envelope\">"
 			+ "<S:Body>"
 			+ "<ns2:getResourceRecordListRes "
@@ -126,7 +101,9 @@ public class VrsnMDNSTest {
 			+ "<ns2:callSuccess>true</ns2:callSuccess>"
 			+ "<ns2:totalCount>2</ns2:totalCount>"
 			+ "<ns2:resourceRecord>"
-			+ "<ns2:resourceRecordId>"+ RESOURCE_RECORD_ID+ "</ns2:resourceRecordId>"
+			+ "<ns2:resourceRecordId>"
+			+ RESOURCE_RECORD_ID
+			+ "</ns2:resourceRecordId>"
 			+ "<ns2:owner>mbvdemo.mbv-demo.cc.</ns2:owner>"
 			+ "<ns2:type>CNAME</ns2:type>"
 			+ "<ns2:ttl>86400</ns2:ttl>"
@@ -135,46 +112,19 @@ public class VrsnMDNSTest {
 			+ "</ns2:getResourceRecordListRes>"
 			+ "</S:Body>" + "</S:Envelope>";
 
-	public static final String rrListCNAMETypesTemplete = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
-			+ "<soap:Envelope xmlns:soap='http://www.w3.org/2003/05/soap-envelope' xmlns:urn='urn:com:verisign:dnsa:messaging:schema:1' "
-			+ "xmlns:urn1='urn:com:verisign:dnsa:auth:schema:1' xmlns:urn2='urn:com:verisign:dnsa:api:schema:1'>"
-			+ "<soap:Header>"
-			+ "<urn1:authInfo>"
-			+ "<urn1:userToken>"
-			+ "<urn1:userName>"+ TEST_USER_NAME+ "</urn1:userName>"
-			+ "<urn1:password>"+ TEST_PASSWORD+ "</urn1:password>"
-			+ "</urn1:userToken>"
-			+ "</urn1:authInfo>"
-			+ "</soap:Header>"
-			+ "<soap:Body>"
-			+ "<urn2:getResourceRecord>"
-			+ "<urn2:resourceRecordId>"+ RESOURCE_RECORD_ID+ "</urn2:resourceRecordId>"
-			+ "</urn2:getResourceRecord>"
-			+ "</soap:Body>" 
-			+ "</soap:Envelope>";
+	public static final String rrListCNAMETypesTemplete = TEMPLATE_HEAD
+			+ "<urn2:getResourceRecord>" + "<urn2:resourceRecordId>"
+			+ RESOURCE_RECORD_ID + "</urn2:resourceRecordId>"
+			+ "</urn2:getResourceRecord>" + TEMPLATE_TAIL;
 
-	public static final String getrrListCNAMETypesTemplete =
-		"<?xml version='1.0' encoding='UTF-8'?>"
-			+"<S:Envelope xmlns:S=\"http://www.w3.org/2003/05/soap-envelope\">"
-			+"<S:Header>"
-			+"<ns2:authInfo xmlns=\"urn:com:verisign:dnsa:messaging:schema:1\" xmlns:ns2=\"urn:com:verisign:dnsa:auth:schema:1\" xmlns:ns3=\"urn:com:verisign:dnsa:api:schema:1\">"
-			+"<ns2:userToken>"
-			+"<ns2:userName>"+TEST_USER_NAME+"</ns2:userName>"
-			+"<ns2:password>"+TEST_PASSWORD+"</ns2:password>"
-			+"</ns2:userToken>"
-			+"</ns2:authInfo>"
-			+"</S:Header>"
-			+"<S:Body>"
-			+"<ns3:getResourceRecordList xmlns=\"urn:com:verisign:dnsa:auth:schema:1\" xmlns:ns2=\"urn:com:verisign:dnsa:messaging:schema:1\" xmlns:ns3=\"urn:com:verisign:dnsa:api:schema:1\">"
-			+"<ns3:domainName>"+VALID_ZONE_NAME1+"</ns3:domainName>"
-			+"<ns3:resourceRecordType>"+VALID_RR_TYPE1+"</ns3:resourceRecordType>"
-			+"</ns3:getResourceRecordList>"
-			+"</S:Body>"
-			+"</S:Envelope>";
-	
-	public static final String nAPTRDataResponse = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
+	public static final String getrrListCNAMETypesTemplete = TEMPLATE_HEAD
+			+ "<ns3:getResourceRecordList xmlns=\"urn:com:verisign:dnsa:auth:schema:1\" xmlns:ns2=\"urn:com:verisign:dnsa:messaging:schema:1\" xmlns:ns3=\"urn:com:verisign:dnsa:api:schema:1\">"
+			+ "<ns3:domainName>" + VALID_ZONE_NAME1 + "</ns3:domainName>"
+			+ "<ns3:resourceRecordType>" + VALID_RR_TYPE1
+			+ "</ns3:resourceRecordType>" + "</ns3:getResourceRecordList>"
+			+ TEMPLATE_TAIL;
+
+	public static final String nAPTRDataResponse = "<?xml version='1.0' encoding='UTF-8'?>"
 			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/soap-envelope'>"
 			+ "<S:Body>"
 			+ "<ns2:getResourceRecordListRes xmlns='urn:com:verisign:dnsa:api:schema:2' xmlns:ns2='urn:com:verisign:dnsa:api:schema:1' xmlns:ns3='urn:com:verisign:dnsa:auth:schema:1' xmlns:ns4='urn:com:verisign:dnsa:messaging:schema:1'>"
@@ -182,40 +132,43 @@ public class VrsnMDNSTest {
 			+ "<ns2:totalCount>2</ns2:totalCount>"
 			+ "<ns2:resourceRecord>"
 			+ "<ns2:resourceRecordId>19076156</ns2:resourceRecordId>"
-			+ "<ns2:owner>"+ VALID_OWNER1+ "</ns2:owner>"
-			+ "<ns2:type>"+ VALID_RR_TYPE3+ "</ns2:type>"
-			+ "<ns2:ttl>"+ VALID_TTL1+ "</ns2:ttl>"
-			+ "<ns2:rData>"+ VALID_RData_NAPTR+ "</ns2:rData>"
+			+ "<ns2:owner>"
+			+ VALID_OWNER1
+			+ "</ns2:owner>"
+			+ "<ns2:type>"
+			+ VALID_RR_TYPE3
+			+ "</ns2:type>"
+			+ "<ns2:ttl>"
+			+ VALID_TTL1
+			+ "</ns2:ttl>"
+			+ "<ns2:rData>"
+			+ VALID_RData_NAPTR
+			+ "</ns2:rData>"
 			+ "</ns2:resourceRecord>"
 			+ "<ns2:resourceRecord>"
 			+ "<ns2:resourceRecordId>19049261</ns2:resourceRecordId>"
-			+ "<ns2:owner>"+ VALID_OWNER2+ "</ns2:owner>"
-			+ "<ns2:type>"+ VALID_RR_TYPE3+ "</ns2:type>"
-			+ "<ns2:ttl>"+ VALID_TTL1+ "</ns2:ttl>"
-			+ "<ns2:rData>"+ VALID_RData_NAPTR+ "</ns2:rData>"
+			+ "<ns2:owner>"
+			+ VALID_OWNER2
+			+ "</ns2:owner>"
+			+ "<ns2:type>"
+			+ VALID_RR_TYPE3
+			+ "</ns2:type>"
+			+ "<ns2:ttl>"
+			+ VALID_TTL1
+			+ "</ns2:ttl>"
+			+ "<ns2:rData>"
+			+ VALID_RData_NAPTR
+			+ "</ns2:rData>"
 			+ "</ns2:resourceRecord>"
 			+ "</ns2:getResourceRecordListRes>"
 			+ "</S:Body>" + "</S:Envelope>";
 
-	public static final String zoneListRequestTemplate = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
-			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/soap-envelope'><S:Header><ns2:authInfo xmlns='urn:com:verisign:dnsa:messaging:schema:1' xmlns:ns2='urn:com:verisign:dnsa:auth:schema:1' xmlns:ns3='urn:com:verisign:dnsa:api:schema:1'>"
-			+ "<ns2:userToken>"
-			+ "<ns2:userName>"+ TEST_USER_NAME+ "</ns2:userName>"
-			+ "<ns2:password>"+ TEST_PASSWORD+ "</ns2:password>"
-			+ "</ns2:userToken>"
-			+ "</ns2:authInfo>"
-			+ "</S:Header>"
-			+ "<S:Body>"
+	public static final String zoneListRequestTemplate = TEMPLATE_HEAD
 			+ "<ns3:getZoneList xmlns='urn:com:verisign:dnsa:messaging:schema:1' xmlns:ns2='urn:com:verisign:dnsa:auth:schema:1' xmlns:ns3='urn:com:verisign:dnsa:api:schema:1'>"
-			+ "<ns3:listPagingInfo><ns3:pageNumber>1</ns3:pageNumber><ns3:pageSize>50</ns3:pageSize>"
-			+ "</ns3:listPagingInfo>"
-			+ "</ns3:getZoneList>"
-			+ "</S:Body>"
-			+ "</S:Envelope>";
+			+ "<ns3:listPagingInfo><ns3:pageNumber>1</ns3:pageNumber><ns3:pageSize>500</ns3:pageSize>"
+			+ "</ns3:listPagingInfo>" + "</ns3:getZoneList>" + TEMPLATE_TAIL;
 
-	public static final String zoneListResponse = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
+	public static final String zoneListResponse = "<?xml version='1.0' encoding='UTF-8'?>"
 			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/soap-envelope'>"
 			+ "<S:Header>"
 			+ "<ns2:reliableMessageRes xmlns:ns2='urn:com:verisign:dnsa:messaging:schema:1'>"
@@ -246,8 +199,7 @@ public class VrsnMDNSTest {
 			+ "</S:Body>"
 			+ "</S:Envelope>";
 
-	public static final String authFailureResponse = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
+	public static final String authFailureResponse = "<?xml version='1.0' encoding='UTF-8'?>"
 			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/soap-envelope'>"
 			+ "<S:Header>"
 			+ "<ns2:reliableMessageRes xmlns:ns2='urn:com:verisign:dnsa:messaging:schema:1'><ns2:MessageId>1111011</ns2:MessageId>"
@@ -264,47 +216,21 @@ public class VrsnMDNSTest {
 			+ "</ns2:dnsaWSRes>"
 			+ "</ns3:Detail>"
 			+ "</ns3:Fault>"
-			+ "</S:Body>" 
-			+ "</S:Envelope>";
+			+ "</S:Body>" + "</S:Envelope>";
 
-	public static final String rrListRequestTemplate = 
-		"<soap:Envelope xmlns:soap='http://www.w3.org/2003/05/soap-envelope' xmlns:urn='urn:com:verisign:dnsa:messaging:schema:1' xmlns:urn1='urn:com:verisign:dnsa:auth:schema:1' xmlns:urn2='urn:com:verisign:dnsa:api:schema:1'>"
-			+ "<soap:Header>"
-			+ "<urn1:authInfo>"
-			+ "<urn1:userToken>"
-			+ "<urn1:userName>%s</urn1:userName>"
-			+ "<urn1:password>%s</urn1:password>"
-			+ "</urn1:userToken>"
-			+ "</urn1:authInfo>"
-			+ "</soap:Header>"
-			+ "<soap:Body>"
+	public static final String rrListRequestTemplate = TEMPLATE_HEAD
 			+ "<urn2:getResourceRecordList>"
 			+ "<urn2:domainName>%s</urn2:domainName>"
-			+ "</urn2:getResourceRecordList>"
-			+ "</soap:Body>"
-			+ "</soap:Envelope>";
+			+ "</urn2:getResourceRecordList>" + TEMPLATE_TAIL;
 
-	public static final String rrByNameAndTypeTemplate = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
-			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/soap-envelope'>"
-			+ "<S:Header>"
-			+ "<ns2:authInfo xmlns='urn:com:verisign:dnsa:messaging:schema:1' xmlns:ns2='urn:com:verisign:dnsa:auth:schema:1' xmlns:ns3='urn:com:verisign:dnsa:api:schema:1'>"
-			+ "<ns2:userToken>"
-			+ "<ns2:userName>%s</ns2:userName>"
-			+ "<ns2:password>%s</ns2:password>"
-			+ "</ns2:userToken>"
-			+ "</ns2:authInfo>"
-			+ "</S:Header>"
-			+ "<S:Body>"
+	public static final String rrByNameAndTypeTemplate = TEMPLATE_HEAD
 			+ "<ns3:getResourceRecordList xmlns='urn:com:verisign:dnsa:auth:schema:1' xmlns:ns2='urn:com:verisign:dnsa:messaging:schema:1' xmlns:ns3='urn:com:verisign:dnsa:api:schema:1'>"
 			+ "<ns3:domainName>%s</ns3:domainName>"
 			+ "<ns3:resourceRecordType>%s</ns3:resourceRecordType>"
-			+ "<ns3:owner>%s</ns3:owner>"
-			+ "</ns3:getResourceRecordList>"
-			+ "</S:Body>" + "</S:Envelope>";
+			+ "<ns3:owner>%s</ns3:owner>" + "</ns3:getResourceRecordList>"
+			+ TEMPLATE_TAIL;
 
-	public static final String rrListValildResponse = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
+	public static final String rrListValildResponse = "<?xml version='1.0' encoding='UTF-8'?>"
 			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/soap-envelope'>"
 			+ "<S:Body>"
 			+ "<ns2:getResourceRecordListRes xmlns='urn:com:verisign:dnsa:api:schema:2' xmlns:ns2='urn:com:verisign:dnsa:api:schema:1' xmlns:ns3='urn:com:verisign:dnsa:auth:schema:1' xmlns:ns4='urn:com:verisign:dnsa:messaging:schema:1'>"
@@ -312,34 +238,46 @@ public class VrsnMDNSTest {
 			+ "<ns2:totalCount>2</ns2:totalCount>"
 			+ "<ns2:resourceRecord>"
 			+ "<ns2:resourceRecordId>19076156</ns2:resourceRecordId>"
-			+ "<ns2:owner>"+ VALID_OWNER1+ "</ns2:owner>"
-			+ "<ns2:type>"+ VALID_RR_TYPE1+ "</ns2:type>"
-			+ "<ns2:ttl>"+ VALID_TTL1+ "</ns2:ttl>"
-			+ "<ns2:rData>"+ VALID_RDATA1+ "</ns2:rData>"
+			+ "<ns2:owner>"
+			+ VALID_OWNER1
+			+ "</ns2:owner>"
+			+ "<ns2:type>"
+			+ VALID_RR_TYPE1
+			+ "</ns2:type>"
+			+ "<ns2:ttl>"
+			+ VALID_TTL1
+			+ "</ns2:ttl>"
+			+ "<ns2:rData>"
+			+ VALID_RDATA1
+			+ "</ns2:rData>"
 			+ "</ns2:resourceRecord>"
 			+ "<ns2:resourceRecord>"
 			+ "<ns2:resourceRecordId>19049261</ns2:resourceRecordId>"
-			+ "<ns2:owner>"+ VALID_OWNER2+ "</ns2:owner>"
-			+ "<ns2:type>"+ VALID_RR_TYPE2+ "</ns2:type>"
-			+ "<ns2:ttl>"+ VALID_TTL1+ "</ns2:ttl>"
-			+ "<ns2:rData>"+ VALID_RDATA2+ "</ns2:rData>"
+			+ "<ns2:owner>"
+			+ VALID_OWNER2
+			+ "</ns2:owner>"
+			+ "<ns2:type>"
+			+ VALID_RR_TYPE2
+			+ "</ns2:type>"
+			+ "<ns2:ttl>"
+			+ VALID_TTL1
+			+ "</ns2:ttl>"
+			+ "<ns2:rData>"
+			+ VALID_RDATA2
+			+ "</ns2:rData>"
 			+ "</ns2:resourceRecord>"
 			+ "</ns2:getResourceRecordListRes>"
 			+ "</S:Body>" + "</S:Envelope>";
 
-	public static final String rrListValidResponseNoRecords = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
+	public static final String rrListValidResponseNoRecords = "<?xml version='1.0' encoding='UTF-8'?>"
 			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/soap-envelope'>"
 			+ "<S:Body>"
 			+ "<ns2:getResourceRecordListRes xmlns='urn:com:verisign:dnsa:api:schema:2' xmlns:ns2='urn:com:verisign:dnsa:api:schema:1' xmlns:ns3='urn:com:verisign:dnsa:auth:schema:1' xmlns:ns4='urn:com:verisign:dnsa:messaging:schema:1'>"
 			+ "<ns2:callSuccess>true</ns2:callSuccess>"
 			+ "<ns2:totalCount>0</ns2:totalCount>"
-			+ "</ns2:getResourceRecordListRes>" 
-			+ "</S:Body>" 
-			+ "</S:Envelope>";
+			+ "</ns2:getResourceRecordListRes>" + "</S:Body>" + "</S:Envelope>";
 
-	public static final String rrListInvalidZoneResponse = 
-		"<?xml version='1.0' encoding='UTF-8'?>"
+	public static final String rrListInvalidZoneResponse = "<?xml version='1.0' encoding='UTF-8'?>"
 			+ "<S:Envelope xmlns:S='http://www.w3.org/2003/05/soap-envelope'>"
 			+ "<S:Body>"
 			+ "<S:Fault xmlns:ns4='http://schemas.xmlsoap.org/soap/envelope/'>"
@@ -360,7 +298,7 @@ public class VrsnMDNSTest {
 			+ "</S:Envelope>";
 
 	public static ZoneApi mockZoneApi(final int port) {
-		return Denominator.create(new VrsnDNSProvider() {
+		return Denominator.create(new VerisignMDNSProvider() {
 			@Override
 			public String url() {
 				return "http://localhost:" + port + "/";
@@ -369,7 +307,7 @@ public class VrsnMDNSTest {
 	}
 
 	public static ResourceRecordSetApi mockResourceRecordSetApi(final int port) {
-		return Denominator.create(new VrsnDNSProvider() {
+		return Denominator.create(new VerisignMDNSProvider() {
 			@Override
 			public String url() {
 				return "http://localhost:" + port + "/";
@@ -378,10 +316,10 @@ public class VrsnMDNSTest {
 				.basicRecordSetsInZone(VALID_ZONE_NAME1);
 	}
 
-	public static VrsnAllProfileResourceRecordSetApi mockAllProfileResourceRecordSetApi(
+	public static VerisignMDNSAllProfileResourceRecordSetApi mockAllProfileResourceRecordSetApi(
 			final int port) {
-		return (VrsnAllProfileResourceRecordSetApi) Denominator
-				.create(new VrsnDNSProvider() {
+		return (VerisignMDNSAllProfileResourceRecordSetApi) Denominator
+				.create(new VerisignMDNSProvider() {
 					@Override
 					public String url() {
 						return "http://localhost:" + port + "/";
@@ -441,7 +379,7 @@ public class VrsnMDNSTest {
 
 		return record;
 	}
-	
+
 	public static Record mockCNameRecord() {
 		List<String> rData = new ArrayList<String>();
 		rData.add(VALID_RDATA1);

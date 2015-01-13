@@ -9,17 +9,13 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
-import denominator.verisignmdns.VrsnDNSProvider;
+import denominator.verisignmdns.VerisignMDNSProvider;
 
-/**
- * @author sgavhane
- *
- */
 public class VrsnDNSProviderTest {
 
 	@Test
 	public void credentialTypeToParameterNames() {
-		VrsnDNSProvider vrsnDNSProvider = new VrsnDNSProvider();
+		VerisignMDNSProvider vrsnDNSProvider = new VerisignMDNSProvider();
 		Map<String, Collection<String>> actualResult = vrsnDNSProvider
 				.credentialTypeToParameterNames();
 		assertNotNull(actualResult);
@@ -33,7 +29,7 @@ public class VrsnDNSProviderTest {
 
 	@Test
 	public void profileToRecordTypes() {
-		VrsnDNSProvider vrsnDNSProvider = new VrsnDNSProvider();
+		VerisignMDNSProvider vrsnDNSProvider = new VerisignMDNSProvider();
 		Map<String, Collection<String>> actualResult = vrsnDNSProvider
 				.profileToRecordTypes();
 		assertNotNull(actualResult);
@@ -47,7 +43,7 @@ public class VrsnDNSProviderTest {
 
 	@Test
 	public void url() {
-		VrsnDNSProvider vrsnDNSProvider = new VrsnDNSProvider();
+		VerisignMDNSProvider vrsnDNSProvider = new VerisignMDNSProvider();
 		String actualResult = vrsnDNSProvider.url();
 		assertNotNull(actualResult);
 

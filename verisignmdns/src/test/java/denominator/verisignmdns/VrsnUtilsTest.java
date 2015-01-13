@@ -7,17 +7,10 @@ import static org.testng.Assert.assertTrue;
 import java.util.Map;
 
 import javax.inject.Provider;
-
 import org.testng.annotations.Test;
 
 import denominator.Credentials;
-import denominator.verisignmdns.VrsnConstants;
 import denominator.verisignmdns.VrsnUtils;
-
-/**
- * @author sgavhane
- *
- */
 
 public class VrsnUtilsTest {
 
@@ -29,13 +22,9 @@ public class VrsnUtilsTest {
 				.getMapOfCredentials(aCredentials);
 
 		assertNotNull(actualResult);
-		assertTrue(actualResult
-				.containsKey(VrsnConstants.CREDENITAL_USERNAME_KEY));
-		assertTrue(actualResult
-				.containsKey(VrsnConstants.CREDENTIAL_PASSWORD_KEY));
-		assertEquals(actualResult.get(VrsnConstants.CREDENITAL_USERNAME_KEY),
-				VrsnMDNSTest.TEST_USER_NAME);
-		assertEquals(actualResult.get(VrsnConstants.CREDENTIAL_PASSWORD_KEY),
-				VrsnMDNSTest.TEST_PASSWORD);
+		assertTrue(actualResult.containsKey("username"));
+		assertTrue(actualResult.containsKey("password"));
+		assertEquals(actualResult.get("username"), VrsnMDNSTest.TEST_USER_NAME);
+		assertEquals(actualResult.get("password"), VrsnMDNSTest.TEST_PASSWORD);
 	}
 }

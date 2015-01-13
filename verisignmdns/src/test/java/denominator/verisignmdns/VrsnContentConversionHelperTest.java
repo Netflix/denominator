@@ -19,17 +19,13 @@ import denominator.model.rdata.NAPTRData;
 import denominator.verisignmdns.VrsnContentConversionHelper;
 import denominator.verisignmdns.VrsnMdns.Record;
 
-/**
- * @author sgavhane
- *
- */
 public class VrsnContentConversionHelperTest {
 
 	@Test
 	public void convertMDNSRecordToDenominator() throws IOException {
 		Record aMDNSRecord = VrsnMDNSTest.mockRecord();
 		ResourceRecordSet<?> rrSet = VrsnContentConversionHelper
-				.convertMDNSRecordToDenominator(aMDNSRecord);
+				.convertMDNSRecordToResourceRecordSet(aMDNSRecord);
 
 		assertNotNull(rrSet);
 		assertEquals(rrSet.ttl(), new Integer(Integer.parseInt(VALID_TTL1)));

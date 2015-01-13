@@ -14,10 +14,10 @@ eclipse {
 
 test {
   useTestNG()
-  systemProperty 'vmdns.url', System.getProperty('vmdns.url', '')
-  systemProperty 'vmdns.username', System.getProperty('vmdns.username', '')
-  systemProperty 'vmdns.password', System.getProperty('vmdns.password', '')
-  systemProperty 'vmdns.zone', System.getProperty('vmdns.zone', '')
+  systemProperty 'verisignmdns.url', System.getProperty('verisignmdns.url', '')
+  systemProperty 'verisignmdns.username', System.getProperty('verisignmdns.username', '')
+  systemProperty 'verisignmdns.password', System.getProperty('verisignmdns.password', '')
+  systemProperty 'verisignmdns.zone', System.getProperty('verisignmdns.zone', '')
 }
 
 dependencies {

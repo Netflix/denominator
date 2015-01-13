@@ -1,98 +1,77 @@
-/**
- * 
- */
 package denominator.verisignmdns;
 
 import java.util.Map;
 
 import denominator.model.ResourceRecordSet;
 
-/**
- * @author smahurpawar
- *
- */
-public class VrsnMdnsRequestHelper {
-	private static final String NAPTR_KEY_ORDER = "order";
-    private static final String NAPTR_KEY_PREFERNCE = "preference";
-    private static final String NAPTR_KEY_FLAGS = "flags";
-    private static final String NAPTR_KEY_SERVICE = "services";
-    private static final String NAPTR_KEY_REGEXP = "regexp";
-    private static final String NAPTR_KEY_REPLACEMENT = "replacement";
-			
+class VrsnMdnsRequestHelper {
 
-			
 	/**
-	 * This method parses ResourceRecordSet.record data to construct 
-	 * rData string
-	 * @param aRRSet ResourceRecordSet
-	 * @return String
+	 * This method parses ResourceRecordSet.record data to construct rData
+	 * string
 	 */
-	public static String getNAPTRData(ResourceRecordSet aRRSet) {
+	static String getNAPTRData(ResourceRecordSet rRSet) {
 		StringBuilder sb = new StringBuilder();
-		if (aRRSet != null) {
-			for (Object obj : aRRSet.records()) {
-    			Map<String, ?> attributeMap = (Map<String, String>) obj;
+		if (rRSet != null) {
+			for (Object obj : rRSet.records()) {
+				Map<String, ?> attributeMap = (Map<String, String>) obj;
 				if (sb.length() > 0) {
-        			sb.append(VrsnConstants.STRING_COMMA);
-        		}
-    			sb.append(attributeMap.get(NAPTR_KEY_ORDER).toString()).append(VrsnConstants.STRING_SPACE);
-    			sb.append(attributeMap.get(NAPTR_KEY_PREFERNCE).toString()).append(VrsnConstants.STRING_SPACE);
-    			String tempStr = attributeMap.get(NAPTR_KEY_FLAGS).toString();
-    			sb.append(encloseInDoubleQuotes(tempStr)).append(VrsnConstants.STRING_SPACE);
-    			tempStr = attributeMap.get(NAPTR_KEY_SERVICE).toString();
-    			sb.append(encloseInDoubleQuotes(tempStr)).append(VrsnConstants.STRING_SPACE);
-    			tempStr = attributeMap.get(NAPTR_KEY_REGEXP).toString();
-    			sb.append(encloseInDoubleQuotes(tempStr)).append(VrsnConstants.STRING_SPACE);
-    			sb.append(attributeMap.get(NAPTR_KEY_REPLACEMENT).toString());
-			}	
+					sb.append(",");
+				}
+				sb.append(attributeMap.get("order").toString()).append(" ");
+				sb.append(attributeMap.get("preference").toString())
+						.append(" ");
+				String tempStr = attributeMap.get("flags").toString();
+				sb.append(encloseInDoubleQuotes(tempStr)).append(" ");
+				tempStr = attributeMap.get("services").toString();
+				sb.append(encloseInDoubleQuotes(tempStr)).append(" ");
+				tempStr = attributeMap.get("regexp").toString();
+				sb.append(encloseInDoubleQuotes(tempStr)).append(" ");
+				sb.append(attributeMap.get("replacement").toString());
+			}
 		}
 		return sb.toString();
 	}
-	
+
 	/**
 	 * Some of rData attribute required by MDNS to be enclosed in Double Quotes
-	 * This method wraps string in double quotes, also removes wrapping single quote if present
-	 * before applying double quotes.
-	 * (single quote might be present in case of denominator-cli request)
-	 * @param anInput String
-	 * @return String
+	 * This method wraps string in double quotes, also removes wrapping single
+	 * quote if present before applying double quotes. (single quote might be
+	 * present in case of denominator-cli request)
 	 */
-	private static String encloseInDoubleQuotes(String anInput) {
+	private static String encloseInDoubleQuotes(String input) {
 		StringBuilder sb = new StringBuilder();
-		if (anInput != null) {
-			String trimmed = anInput.trim();
+		if (input != null) {
+			String trimmed = input.trim();
 			trimmed = takeOutOfSingleQuote(trimmed);
 			if (trimmed.isEmpty()) {
-				sb.append(VrsnConstants.STRING_DOUBLE_QUOTE).append(VrsnConstants.STRING_DOUBLE_QUOTE);
+				sb.append("\"").append("\"");
 				return sb.toString();
-			} else if (!trimmed.startsWith(VrsnConstants.STRING_DOUBLE_QUOTE)){
-				sb.append(VrsnConstants.STRING_DOUBLE_QUOTE);
+			} else if (!trimmed.startsWith("\"")) {
+				sb.append("\"");
 				sb.append(trimmed);
-				sb.append(VrsnConstants.STRING_DOUBLE_QUOTE);
+				sb.append("\"");
 				return sb.toString();
 			}
 		}
-		return anInput;
+		return input;
 	}
-	
+
 	/**
-	 * if string is begins and ends with single quote character
-	 * these quotes will be removed in returned string.
-	 * @param anInput
-	 * @return String
+	 * if string is begins and ends with single quote character these quotes
+	 * will be removed in returned string.
 	 */
-	private static String takeOutOfSingleQuote(String anInput) {
+	private static String takeOutOfSingleQuote(String input) {
 		StringBuilder sb = new StringBuilder();
-		if (anInput != null) {
-			String trimmed = anInput.trim();
-			if(trimmed.startsWith(VrsnConstants.STRING_SINGLE_QUOTE)
-					&& trimmed.endsWith(VrsnConstants.STRING_SINGLE_QUOTE)) {
-			sb.append(trimmed.substring(1, trimmed.lastIndexOf(VrsnConstants.STRING_SINGLE_QUOTE)));
-		    } else {
-		    	sb.append(anInput);
-		    }
-			return sb.toString();	
+		if (input != null) {
+			String trimmed = input.trim();
+			if (trimmed.startsWith("\'") && trimmed.endsWith("\'")) {
+				sb.append(trimmed.substring(1, trimmed.lastIndexOf("\'")));
+			} else {
+				sb.append(input);
+			}
+			return sb.toString();
 		}
-		return anInput;
+		return input;
 	}
 }

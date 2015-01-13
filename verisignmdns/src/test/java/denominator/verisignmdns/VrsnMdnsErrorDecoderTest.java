@@ -10,10 +10,6 @@ import org.testng.annotations.Test;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 
-/**
- * @author sgavhane
- *
- */
 public class VrsnMdnsErrorDecoderTest {
 
 	@Test
