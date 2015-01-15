@@ -38,19 +38,19 @@ interface VrsnMdns {
 	@Body("<urn2:getResourceRecord>"
 			+ "<urn2:resourceRecordId>{id}</urn2:resourceRecordId>"
 			+ "</urn2:getResourceRecord>")
-	List<Record> getResourceRecordByQualifier(@Named("id") String aQualifier);
+	List<Record> getResourceRecordByQualifier(@Named("id") String id);
 
 	@RequestLine("POST")
 	@Body("<urn2:createResourceRecords>"
 			+ "<urn2:domainName>{zonename}</urn2:domainName>"
 			+ "<urn2:resourceRecord allowanyIP='false'>"
 			+ "<urn2:owner>{name}</urn2:owner>"
-			+ "<urn2:type>{type}</urn2:type>" + "<urn2:ttl>{aTtl}</urn2:ttl>"
-			+ "<urn2:rData>{aRdata}</urn2:rData>" + "</urn2:resourceRecord>"
+			+ "<urn2:type>{type}</urn2:type>" + "<urn2:ttl>{ttl}</urn2:ttl>"
+			+ "<urn2:rData>{rdata}</urn2:rData>" + "</urn2:resourceRecord>"
 			+ "</urn2:createResourceRecords>")
 	void createResourceRecord(@Named("zonename") String zonename,
 			@Named("type") String type, @Named("name") String name,
-			@Named("aTtl") String aTtl, @Named("aRdata") String aRdata);
+			@Named("ttl") String ttl, @Named("rdata") String rdata);
 
 	@RequestLine("POST")
 	@Body("<urn2:deleteResourceRecords>"

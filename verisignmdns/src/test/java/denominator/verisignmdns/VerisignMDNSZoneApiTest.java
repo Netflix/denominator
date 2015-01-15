@@ -5,7 +5,6 @@ import static denominator.verisignmdns.VrsnMDNSTest.TEST_USER_NAME;
 import static denominator.verisignmdns.VrsnMDNSTest.VALID_ZONE_NAME1;
 import static denominator.verisignmdns.VrsnMDNSTest.authFailureResponse;
 import static denominator.verisignmdns.VrsnMDNSTest.mockZoneApi;
-import static denominator.verisignmdns.VrsnMDNSTest.rrListRequestTemplate;
 import static denominator.verisignmdns.VrsnMDNSTest.zoneListRequestTemplate;
 import static denominator.verisignmdns.VrsnMDNSTest.zoneListResponse;
 import static java.lang.String.format;

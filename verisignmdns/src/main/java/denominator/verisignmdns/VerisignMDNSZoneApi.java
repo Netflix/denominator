@@ -1,7 +1,6 @@
 package denominator.verisignmdns;
 
 import java.util.Iterator;
-import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

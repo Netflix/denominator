@@ -48,9 +48,7 @@ public class VerisignMDNSAllProfileResourceRecordSetApiTest {
 
 			String expectedRequest = format(rrListCNAMETypesTemplete,
 					TEST_USER_NAME, TEST_PASSWORD, RESOURCE_RECORD_ID);
-			// System.out.println("Actual Request :\n" + new
-			// String(server.takeRequest().getBody()) +"\n\nExpected Request:\n"
-			// + expectedRequest);
+
 			assertEquals(new String(server.takeRequest().getBody()),
 					expectedRequest);
 		} finally {
