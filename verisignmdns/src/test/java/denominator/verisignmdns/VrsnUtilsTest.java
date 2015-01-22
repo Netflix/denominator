@@ -14,17 +14,15 @@ import denominator.verisignmdns.VrsnUtils;
 
 public class VrsnUtilsTest {
 
-	@Test
-	public void TestGetMapOfCredentials() {
-		Provider<Credentials> aCredentials = (Provider<Credentials>) VrsnMDNSTest
-				.mockProviderCredentials();
-		Map<String, String> actualResult = VrsnUtils
-				.getMapOfCredentials(aCredentials);
+    @Test
+    public void TestGetMapOfCredentials() {
+        Provider<Credentials> aCredentials = (Provider<Credentials>) VrsnMDNSTest.mockProviderCredentials();
+        Map<String, String> actualResult = VrsnUtils.getMapOfCredentials(aCredentials);
 
-		assertNotNull(actualResult);
-		assertTrue(actualResult.containsKey("username"));
-		assertTrue(actualResult.containsKey("password"));
-		assertEquals(actualResult.get("username"), VrsnMDNSTest.TEST_USER_NAME);
-		assertEquals(actualResult.get("password"), VrsnMDNSTest.TEST_PASSWORD);
-	}
+        assertNotNull(actualResult);
+        assertTrue(actualResult.containsKey("username"));
+        assertTrue(actualResult.containsKey("password"));
+        assertEquals(actualResult.get("username"), VrsnMDNSTest.TEST_USER_NAME);
+        assertEquals(actualResult.get("password"), VrsnMDNSTest.TEST_PASSWORD);
+    }
 }

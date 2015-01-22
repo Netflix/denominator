@@ -12,14 +12,14 @@ import feign.codec.ErrorDecoder;
 
 public class VrsnMdnsErrorDecoderTest {
 
-	@Test
-	public void decode() {
-		Response response = mockResponse(rrListInvalidZoneResponse);
-		ErrorDecoder errorDecoder = VrsnMDNSTest.mockErrorDecoder();
+    @Test
+    public void decode() {
+        Response response = mockResponse(rrListInvalidZoneResponse);
+        ErrorDecoder errorDecoder = VrsnMDNSTest.mockErrorDecoder();
 
-		Exception actualResult = errorDecoder.decode(METHODKEY, response);
+        Exception actualResult = errorDecoder.decode(METHODKEY, response);
 
-		assertNotNull(actualResult);
-	}
+        assertNotNull(actualResult);
+    }
 
 }

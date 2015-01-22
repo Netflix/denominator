@@ -30,93 +30,88 @@ import denominator.verisignmdns.VerisignMDNSAllProfileResourceRecordSetApi;
 
 public class VerisignMDNSAllProfileResourceRecordSetApiTest {
 
-	@Test
-	public void getByNameTypeAndQualifier() throws IOException,
-			InterruptedException {
-		MockWebServer server = new MockWebServer();
-		server.enqueue(new MockResponse().setBody(rrListCNAMETypesResponse));
-		server.play();
+    @Test
+    public void getByNameTypeAndQualifier() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(rrListCNAMETypesResponse));
+        server.play();
 
-		try {
-			VerisignMDNSAllProfileResourceRecordSetApi vrsnAllProfileResourceRecordSetApi = mockAllProfileResourceRecordSetApi(server
-					.getPort());
+        try {
+            VerisignMDNSAllProfileResourceRecordSetApi vrsnAllProfileResourceRecordSetApi = mockAllProfileResourceRecordSetApi(server
+                    .getPort());
 
-			ResourceRecordSet<?> actualResult = vrsnAllProfileResourceRecordSetApi
-					.getByNameTypeAndQualifier(TEST_USER_NAME, VALID_RR_TYPE1,
-							RESOURCE_RECORD_ID);
-			assertNotNull(actualResult);
+            ResourceRecordSet<?> actualResult = vrsnAllProfileResourceRecordSetApi.getByNameTypeAndQualifier(
+                    TEST_USER_NAME, VALID_RR_TYPE1, RESOURCE_RECORD_ID);
+            assertNotNull(actualResult);
 
-			String expectedRequest = format(rrListCNAMETypesTemplete,
-					TEST_USER_NAME, TEST_PASSWORD, RESOURCE_RECORD_ID);
+            String expectedRequest = format(rrListCNAMETypesTemplete, TEST_USER_NAME, TEST_PASSWORD, RESOURCE_RECORD_ID);
 
-			assertEquals(new String(server.takeRequest().getBody()),
-					expectedRequest);
-		} finally {
-			server.shutdown();
-		}
-	}
+            assertEquals(new String(server.takeRequest().getBody()), expectedRequest);
+        } finally {
+            server.shutdown();
+        }
+    }
 
-	@Test
-	public void iterateByNameAndType() throws IOException, InterruptedException {
-		MockWebServer server = new MockWebServer();
-		server.enqueue(new MockResponse().setBody(rrListValildResponse));
-		server.play();
+    @Test
+    public void iterateByNameAndType() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(rrListValildResponse));
+        server.play();
 
-		try {
-			VerisignMDNSAllProfileResourceRecordSetApi vrsnAllProfileResourceRecordSetApi = mockAllProfileResourceRecordSetApi(server
-					.getPort());
+        try {
+            VerisignMDNSAllProfileResourceRecordSetApi vrsnAllProfileResourceRecordSetApi = mockAllProfileResourceRecordSetApi(server
+                    .getPort());
 
-			Iterator<ResourceRecordSet<?>> actulResult = vrsnAllProfileResourceRecordSetApi
-					.iterateByNameAndType(VALID_OWNER1, VALID_RR_TYPE1);
-			assertNotNull(actulResult);
+            Iterator<ResourceRecordSet<?>> actulResult = vrsnAllProfileResourceRecordSetApi.iterateByNameAndType(
+                    VALID_OWNER1, VALID_RR_TYPE1);
+            assertNotNull(actulResult);
 
-			ResourceRecordSet<?> rrSet = actulResult.next();
-			assertNotNull(rrSet);
-			assertEquals(rrSet.ttl(), new Integer(Integer.parseInt(VALID_TTL1)));
-			assertEquals(rrSet.type(), VALID_RR_TYPE1);
-			assertEquals(rrSet.name(), VALID_OWNER1);
-			Object entry = rrSet.records().get(0);
+            ResourceRecordSet<?> rrSet = actulResult.next();
+            assertNotNull(rrSet);
+            assertEquals(rrSet.ttl(), new Integer(Integer.parseInt(VALID_TTL1)));
+            assertEquals(rrSet.type(), VALID_RR_TYPE1);
+            assertEquals(rrSet.name(), VALID_OWNER1);
+            Object entry = rrSet.records().get(0);
 
-			assertTrue(entry instanceof CNAMEData);
-			CNAMEData cnameData = (CNAMEData) entry;
-			assertEquals(cnameData.values().iterator().next(), VALID_RDATA1);
+            assertTrue(entry instanceof CNAMEData);
+            CNAMEData cnameData = (CNAMEData) entry;
+            assertEquals(cnameData.values().iterator().next(), VALID_RDATA1);
 
-			// verify we have 2 records as expected.
-			assertTrue(actulResult.hasNext());
-		} finally {
-			server.shutdown();
-		}
-	}
+            // verify we have 2 records as expected.
+            assertTrue(actulResult.hasNext());
+        } finally {
+            server.shutdown();
+        }
+    }
 
-	@Test
-	public void iterator() throws IOException, InterruptedException {
-		MockWebServer server = new MockWebServer();
-		server.enqueue(new MockResponse().setBody(rrListValildResponse));
-		server.play();
+    @Test
+    public void iterator() throws IOException, InterruptedException {
+        MockWebServer server = new MockWebServer();
+        server.enqueue(new MockResponse().setBody(rrListValildResponse));
+        server.play();
 
-		try {
-			VerisignMDNSAllProfileResourceRecordSetApi vrsnAllProfileResourceRecordSetApi = mockAllProfileResourceRecordSetApi(server
-					.getPort());
+        try {
+            VerisignMDNSAllProfileResourceRecordSetApi vrsnAllProfileResourceRecordSetApi = mockAllProfileResourceRecordSetApi(server
+                    .getPort());
 
-			Iterator<ResourceRecordSet<?>> actulResult = vrsnAllProfileResourceRecordSetApi
-					.iterator();
-			assertNotNull(actulResult);
+            Iterator<ResourceRecordSet<?>> actulResult = vrsnAllProfileResourceRecordSetApi.iterator();
+            assertNotNull(actulResult);
 
-			ResourceRecordSet<?> rrSet = actulResult.next();
-			assertNotNull(rrSet);
-			assertEquals(rrSet.ttl(), new Integer(Integer.parseInt(VALID_TTL1)));
-			assertEquals(rrSet.type(), VALID_RR_TYPE1);
-			assertEquals(rrSet.name(), VALID_OWNER1);
-			Object entry = rrSet.records().get(0);
+            ResourceRecordSet<?> rrSet = actulResult.next();
+            assertNotNull(rrSet);
+            assertEquals(rrSet.ttl(), new Integer(Integer.parseInt(VALID_TTL1)));
+            assertEquals(rrSet.type(), VALID_RR_TYPE1);
+            assertEquals(rrSet.name(), VALID_OWNER1);
+            Object entry = rrSet.records().get(0);
 
-			assertTrue(entry instanceof CNAMEData);
-			CNAMEData cnameData = (CNAMEData) entry;
-			assertEquals(cnameData.values().iterator().next(), VALID_RDATA1);
+            assertTrue(entry instanceof CNAMEData);
+            CNAMEData cnameData = (CNAMEData) entry;
+            assertEquals(cnameData.values().iterator().next(), VALID_RDATA1);
 
-			// verify we have 2 records as expected.
-			assertTrue(actulResult.hasNext());
-		} finally {
-			server.shutdown();
-		}
-	}
+            // verify we have 2 records as expected.
+            assertTrue(actulResult.hasNext());
+        } finally {
+            server.shutdown();
+        }
+    }
 }
