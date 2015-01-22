@@ -1,0 +1,32 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply from: rootProject.file('dagger.gradle')
+
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+
+eclipse {
+  classpath {
+    downloadSources = true
+    downloadJavadoc = true
+  }
+}
+
+test {
+  useTestNG()
+  systemProperty 'verisignmdns.url', System.getProperty('verisignmdns.url', '')
+  systemProperty 'verisignmdns.username', System.getProperty('verisignmdns.username', '')
+  systemProperty 'verisignmdns.password', System.getProperty('verisignmdns.password', '')
+  systemProperty 'verisignmdns.zone', System.getProperty('verisignmdns.zone', '')
+}
+
+dependencies {
+  compile      project(':denominator-core')
+  compile     'com.netflix.feign:feign-core:6.1.2'
+  compile     'com.netflix.feign:feign-sax:6.1.2'
+  testCompile  project(':denominator-core').sourceSets.test.output
+  testCompile 'com.google.guava:guava:14.0.1'
+  testCompile 'org.testng:testng:6.8.5'
+  testCompile 'com.google.code.gson:gson:2.2.4'
+  testCompile 'com.google.mockwebserver:mockwebserver:20130706'
+}
