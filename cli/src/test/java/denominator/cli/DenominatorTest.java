@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Map;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import static denominator.cli.Denominator.json;
@@ -41,17 +42,22 @@ public class DenominatorTest {
     public void listsAllProvidersWithCredentials() {
         assertEquals(ListProviders.providerAndCredentialsTable(), Joiner.on('\n').join(
                 "provider   url                                                 duplicateZones credentialType credentialArgs",
-                "mock       mem:mock                                            false          ",
                 "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           password       username password",
                 "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           apiKey         username apiKey",
                 "designate  http://localhost:5000/v2.0                          true           password       tenantId username password",
-                "dynect     https://api2.dynect.net/REST                        false          password       customer username password",
+                "discoverydns https://api.reseller.discoverydns.com               false          clientCertificate certificatePem keyPem",
+                "dynect     https://api2.dynect.net/REST                        false          password       customer username password", 
+                "mock       mem:mock                                            false          ",
                 "route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey",
                 "route53    https://route53.amazonaws.com                       true           session        accessKey secretKey sessionToken",
                 "ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 false          password       username password", ""));
     }
 
     DNSApiManager mgr = denominator.Denominator.create(new MockProvider());
+
+    @BeforeTest public void reset() {
+        mgr = denominator.Denominator.create(new MockProvider());
+    }
 
     @Test(description = "denominator -p mock zone list")
     public void testZoneList() {
@@ -83,13 +89,13 @@ public class DenominatorTest {
     }
 
     private String getTestYaml() {
-        return "providerConfigurationName: blah1\n" +
+        return "name: blah1\n" +
             "provider: route53\n" +
             "credentials:\n" +
             "  accessKey: foo1\n" +
             "  secretKey: foo2\n" +
             "---\n" +
-            "providerConfigurationName: blah2\n" +
+            "name: blah2\n" +
             "provider: mock\n" +
             "url: mem:mock2\n" +
             "credentials:\n" +
@@ -240,8 +246,20 @@ public class DenominatorTest {
         ResourceRecordSetList command = new ResourceRecordSetList();
         command.zoneIdOrName = "denominator.io.";
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+                "denominator.io.                                   MX                         86400 1 mx1.denominator.io.",
                 "denominator.io.                                   NS                         86400 ns1.denominator.io.",
                 "denominator.io.                                   SOA                        3600  ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 60",
+                "denominator.io.                                   SPF                        86400 v=spf1 a mx -all",
+                "denominator.io.                                   TXT                        86400 blah",
+                "phone.denominator.io.                             NAPTR                      3600  1 1 U E2U+sip !^.*$!sip:customer-service@example.com! .",
+                "ptr.denominator.io.                               PTR                        3600  www.denominator.io.",
+                "server1.denominator.io.                           CERT                       3600  12345 1 1 B33F",
+                "server1.denominator.io.                           LOC                        3600  37 48 48.892 S 144 57 57.502 E 26m",
+                "server1.denominator.io.                           SRV                        3600  0 1 80 www.denominator.io.",
+                "server1.denominator.io.                           SSHFP                      3600  1 1 B33F",
+                "server1.denominator.io.                           TLSA                       3600  1 1 1 B33F",
+                "subdomain.denominator.io.                         DS                         3600  12345 1 1 B33F",
+                "subdomain.denominator.io.                         NS                         3600  ns1.denominator.io.",
                 "www.denominator.io.                               CNAME                      3600  www1.denominator.io.",
                 "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io.",
                 "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io.",
@@ -424,7 +442,7 @@ public class DenominatorTest {
         command.doRun(mgr);
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "--alias-hosted-zone-id must be a hosted zone id, not a zone providerConfigurationName")
+    @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "--alias-hosted-zone-id must be a hosted zone id, not a zone name")
     public void testResourceRecordSetReplaceRoute53AliasZoneNameInsteadOfZoneId() {
         ResourceRecordSetReplace command = new ResourceRecordSetReplace();
         command.zoneIdOrName = "denominator.io.";
@@ -527,10 +545,22 @@ public class DenominatorTest {
     public void testGeoTypeList() {
         GeoTypeList command = new GeoTypeList();
         command.zoneIdOrName = "denominator.io.";
-        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-                "A",
-                "AAAA",
-                "CNAME"));
+        assertEquals(Joiner.on('\n').join(command.doRun(mgr)), ""
+            + "A\n"
+            + "AAAA\n"
+            + "CNAME\n"
+            + "NS\n"
+            + "PTR\n"
+            + "SPF\n"
+            + "TXT\n"
+            + "MX\n"
+            + "SRV\n"
+            + "DS\n"
+            + "CERT\n"
+            + "NAPTR\n"
+            + "SSHFP\n"
+            + "LOC\n"
+            + "TLSA");
     }
 
     @Test(description = "denominator -p mock geo -z denominator.io. regions")
@@ -647,8 +677,8 @@ public class DenominatorTest {
 
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"]} to rrset www2.geo.denominator.io. A alazona",
-                ";; current rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
-                ";; revised rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"]}}]}",
+                ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
+                ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"]}}}",
                 ";; ok"));
 
         assertEquals(
@@ -673,7 +703,7 @@ public class DenominatorTest {
 
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding regions {\"United States (US)\":[\"Arizona\"]} to rrset www2.geo.denominator.io. A alazona",
-                ";; current rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
+                ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
                 ";; ok"));
 
         assertEquals(
@@ -695,8 +725,8 @@ public class DenominatorTest {
 
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona",
-                ";; current rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
-                ";; revised rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}]}",
+                ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
+                ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}}",
                 ";; ok"));
 
         assertEquals(
@@ -724,8 +754,8 @@ public class DenominatorTest {
         assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
                 ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona",
                 ";; validated regions: {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}",
-                ";; current rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}]}",
-                ";; revised rrset: {\"providerConfigurationName\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"profiles\":[{\"type\":\"geo\",\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}]}",
+                ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
+                ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}}",
                 ";; ok"));
 
         assertEquals(
