@@ -1,16 +1,6 @@
 apply plugin: 'java'
-apply plugin: 'eclipse'
-apply from: rootProject.file('dagger.gradle')
 
-sourceCompatibility = JavaVersion.VERSION_1_6
-targetCompatibility = JavaVersion.VERSION_1_6
-
-eclipse {
-  classpath {
-    downloadSources = true
-    downloadJavadoc = true
-  }
-}
+sourceCompatibility = 1.6
 
 jar {
   manifest {
