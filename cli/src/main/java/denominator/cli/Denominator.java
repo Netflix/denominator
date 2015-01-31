@@ -8,7 +8,9 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterators;
+import com.google.common.collect.Ordering;
 import com.google.common.io.Files;
 import com.google.common.net.InternetDomainName;
 import com.google.gson.Gson;
@@ -56,7 +58,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -136,7 +138,7 @@ public class Denominator {
             StringBuilder builder = new StringBuilder();
 
             builder.append(format(table, "provider", "url", "duplicateZones", "credentialType", "credentialArgs"));
-            for (Provider provider : Providers.list()) {
+            for (Provider provider : ImmutableSortedSet.copyOf(Ordering.usingToString(), Providers.list())) {
                 if (provider.credentialTypeToParameterNames().isEmpty())
                     builder.append(format("%-10s %-51s %-14s %n", provider.name(), provider.url(),
                             provider.supportsDuplicateZoneNames()));
@@ -265,13 +267,14 @@ public class Denominator {
         }
 
         Map<String, ?> getConfigFromEnv() {
-            Map<String, Object> env = new HashMap<String, Object>();
-            String provider = getEnvValue("PROVIDER");
-            env.put("provider", provider);
-            env.put("url", getEnvValue("URL"));
+            Map<String, Object> env = new LinkedHashMap<String, Object>();
+            if (providerName == null) providerName = getEnvValue("PROVIDER");
+            env.put("provider", providerName);
+            if (url == null) url = getEnvValue("URL");
+            env.put("url", url);
 
-            Map<String, String> credentialMap = new HashMap<String, String>();
-            Provider providerLoaded = Providers.getByName(provider);
+            Map<String, String> credentialMap = new LinkedHashMap<String, String>();
+            Provider providerLoaded = Providers.getByName(providerName);
             if (providerLoaded != null) {
                 // merge the list of possible credentials
                 for (Entry<String, Collection<String>> entry :
