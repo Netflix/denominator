@@ -1,25 +1,17 @@
-ext.githubProjectName = rootProject.name
-
-buildscript {
-    repositories { mavenLocal()
-                   mavenCentral() }
-    apply from: file('gradle/buildscript.gradle'), to: buildscript 
+plugins {
+    id 'nebula.netflixoss' version '2.2.5'
 }
 
-allprojects {
-    repositories { mavenLocal()
-                   mavenCentral()
-                   maven { url 'https://oss.sonatype.org/content/repositories/releases/' }}
+ext {
+    githubProjectName = rootProject.name // Change if github project name is not the same as the root project's name
 }
-
-apply from: file('gradle/convention.gradle')
-apply from: file('gradle/maven.gradle')
-apply from: file('gradle/check.gradle')
-apply from: file('gradle/license.gradle')
-apply from: file('gradle/release.gradle')
-apply plugin: 'idea'
 
 subprojects {
+    apply plugin: 'nebula.netflixoss'
+
+    repositories { 
+        jcenter()
+    }
     apply from: rootProject.file('dagger.gradle')
     group = "com.netflix.${githubProjectName}" // TEMPLATE: Set to organization of project
 }
