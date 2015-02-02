@@ -13,17 +13,17 @@ import denominator.profile.GeoResourceRecordSetApi;
 @Module(injects = DNSApiManager.class, complete = false)
 public class GeoUnsupported {
 
-    @Provides
-    @Singleton
-    GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory() {
-        return new GeoResourceRecordSetApi.Factory() {
+  @Provides
+  @Singleton
+  GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory() {
+    return new GeoResourceRecordSetApi.Factory() {
 
-            @Override
-            public GeoResourceRecordSetApi create(String idOrName) {
-                return null;
-            }
+      @Override
+      public GeoResourceRecordSetApi create(String idOrName) {
+        return null;
+      }
 
-        };
-    }
+    };
+  }
 
 }

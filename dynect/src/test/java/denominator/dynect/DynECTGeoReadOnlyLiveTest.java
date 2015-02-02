@@ -7,8 +7,9 @@ import denominator.profile.BaseGeoReadOnlyLiveTest;
 
 @Test
 public class DynECTGeoReadOnlyLiveTest extends BaseGeoReadOnlyLiveTest {
-    @BeforeClass
-    private void setUp() {
-        manager = new DynECTConnection().manager;
-    }
+
+  @BeforeClass
+  private void setUp() {
+    manager = new DynECTConnection().manager;
+  }
 }

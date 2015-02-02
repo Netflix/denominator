@@ -1,56 +1,57 @@
 package denominator.clouddns;
 
+import java.util.Iterator;
+import java.util.Map;
+
 import denominator.clouddns.RackspaceApis.Record;
 import denominator.common.PeekingIterator;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
-
-import java.util.Iterator;
-import java.util.Map;
 
 import static denominator.clouddns.CloudDNSFunctions.toRDataMap;
 import static denominator.common.Util.peekingIterator;
 
 class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>> {
 
-    private final PeekingIterator<Record> peekingIterator;
+  private final PeekingIterator<Record> peekingIterator;
 
-    public GroupByRecordNameAndTypeIterator(Iterator<Record> sortedIterator) {
-        this.peekingIterator = peekingIterator(sortedIterator);
-    }
+  public GroupByRecordNameAndTypeIterator(Iterator<Record> sortedIterator) {
+    this.peekingIterator = peekingIterator(sortedIterator);
+  }
 
-    @Override
-    public boolean hasNext() {
-        return peekingIterator.hasNext();
-    }
+  private static boolean nameAndTypeEquals(Record actual, Record expected) {
+    return actual.name.equals(expected.name) && actual.type.equals(expected.type);
+  }
 
-    @Override
-    public ResourceRecordSet<?> next() {
-        Record recordDetail = peekingIterator.next();
-        Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
-                                                                .name(recordDetail.name)
-                                                                .type(recordDetail.type)
-                                                                .ttl(recordDetail.ttl)
-                                                                .add(toRDataMap(recordDetail));
-        while (hasNext()) {
-            Record next = peekingIterator.peek();
-            if (next == null)
-                continue;
-            if (nameAndTypeEquals(next, recordDetail)) {
-                builder.add(toRDataMap(peekingIterator.next()));
-            } else {
-                break;
-            }
-        }
-        return builder.build();
-    }
+  @Override
+  public boolean hasNext() {
+    return peekingIterator.hasNext();
+  }
 
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
+  @Override
+  public ResourceRecordSet<?> next() {
+    Record recordDetail = peekingIterator.next();
+    Builder<Map<String, Object>> builder = ResourceRecordSet.builder()
+        .name(recordDetail.name)
+        .type(recordDetail.type)
+        .ttl(recordDetail.ttl)
+        .add(toRDataMap(recordDetail));
+    while (hasNext()) {
+      Record next = peekingIterator.peek();
+      if (next == null) {
+        continue;
+      }
+      if (nameAndTypeEquals(next, recordDetail)) {
+        builder.add(toRDataMap(peekingIterator.next()));
+      } else {
+        break;
+      }
     }
+    return builder.build();
+  }
 
-    private static boolean nameAndTypeEquals(Record actual, Record expected) {
-        return actual.name.equals(expected.name) && actual.type.equals(expected.type);
-    }
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException();
+  }
 }

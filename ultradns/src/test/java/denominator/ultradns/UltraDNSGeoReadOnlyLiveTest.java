@@ -7,8 +7,9 @@ import denominator.profile.BaseGeoReadOnlyLiveTest;
 
 @Test
 public class UltraDNSGeoReadOnlyLiveTest extends BaseGeoReadOnlyLiveTest {
-    @BeforeClass
-    private void setUp() {
-        manager = new UltraDNSConnection().manager;
-    }
+
+  @BeforeClass
+  private void setUp() {
+    manager = new UltraDNSConnection().manager;
+  }
 }

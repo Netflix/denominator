@@ -4,19 +4,18 @@ import feign.FeignException;
 
 class Route53Exception extends FeignException {
 
-    private final String code;
+  private static final long serialVersionUID = 1L;
+  private final String code;
 
-    Route53Exception(String message, String code) {
-        super(message);
-        this.code = code;
-    }
+  Route53Exception(String message, String code) {
+    super(message);
+    this.code = code;
+  }
 
-    /**
-     * The error code. ex {@code InvalidInput}
-     */
-    public String code() {
-        return code;
-    }
-
-    private static final long serialVersionUID = 1L;
+  /**
+   * The error code. ex {@code InvalidInput}
+   */
+  public String code() {
+    return code;
+  }
 }

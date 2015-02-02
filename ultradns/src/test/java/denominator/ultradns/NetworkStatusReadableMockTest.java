@@ -1,5 +1,15 @@
 package denominator.ultradns;
 
+import com.google.mockwebserver.MockResponse;
+import com.google.mockwebserver.MockWebServer;
+
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+
+import denominator.DNSApiManager;
+import denominator.Denominator;
+
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.ultradns.UltraDNSTest.getNeustarNetworkStatus;
 import static denominator.ultradns.UltraDNSTest.getNeustarNetworkStatusResponse;
@@ -7,59 +17,49 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
-import java.io.IOException;
-
-import org.testng.annotations.Test;
-
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.MockWebServer;
-
-import denominator.DNSApiManager;
-import denominator.Denominator;
-
 @Test(singleThreaded = true)
 public class NetworkStatusReadableMockTest {
 
-    @Test
-    public void singleRequestOnSuccess() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
+  static DNSApiManager mockApi(final int port) {
+    return Denominator.create(new UltraDNSProvider() {
+      @Override
+      public String url() {
+        return "http://localhost:" + port;
+      }
+    }, credentials("joe", "letmein"));
+  }
 
-        server.enqueue(new MockResponse().setBody(getNeustarNetworkStatusResponse));
-        server.play();
+  @Test
+  public void singleRequestOnSuccess() throws IOException, InterruptedException {
+    MockWebServer server = new MockWebServer();
 
-        try {
-            assertTrue(mockApi(server.getPort()).checkConnection());
+    server.enqueue(new MockResponse().setBody(getNeustarNetworkStatusResponse));
+    server.play();
 
-            assertEquals(server.getRequestCount(), 1);
-            assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
-        } finally {
-            server.shutdown();
-        }
+    try {
+      assertTrue(mockApi(server.getPort()).checkConnection());
+
+      assertEquals(server.getRequestCount(), 1);
+      assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
+    } finally {
+      server.shutdown();
     }
+  }
 
-    @Test
-    public void singleRequestOnFailure() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
+  @Test
+  public void singleRequestOnFailure() throws IOException, InterruptedException {
+    MockWebServer server = new MockWebServer();
 
-        server.enqueue(new MockResponse().setResponseCode(500));
-        server.play();
+    server.enqueue(new MockResponse().setResponseCode(500));
+    server.play();
 
-        try {
-            assertFalse(mockApi(server.getPort()).checkConnection());
+    try {
+      assertFalse(mockApi(server.getPort()).checkConnection());
 
-            assertEquals(server.getRequestCount(), 1);
-            assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
-        } finally {
-            server.shutdown();
-        }
+      assertEquals(server.getRequestCount(), 1);
+      assertEquals(new String(server.takeRequest().getBody()), getNeustarNetworkStatus);
+    } finally {
+      server.shutdown();
     }
-
-    static DNSApiManager mockApi(final int port) {
-        return Denominator.create(new UltraDNSProvider() {
-            @Override
-            public String url() {
-                return "http://localhost:" + port;
-            }
-        }, credentials("joe", "letmein"));
-    }
+  }
 }

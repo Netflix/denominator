@@ -7,10 +7,11 @@ import denominator.BaseRecordSetLiveTest;
 
 @Test
 public class DesignateRecordSetLiveTest extends BaseRecordSetLiveTest {
-    @BeforeClass
-    private void setUp() {
-        DesignateConnection connection = new DesignateConnection();
-        manager = connection.manager;
-        setMutableZoneIfPresent(connection.mutableZone);
-    }
+
+  @BeforeClass
+  private void setUp() {
+    DesignateConnection connection = new DesignateConnection();
+    manager = connection.manager;
+    setMutableZoneIfPresent(connection.mutableZone);
+  }
 }

@@ -7,10 +7,11 @@ import denominator.BaseRecordSetLiveTest;
 
 @Test
 public class UltraDNSRecordSetLiveTest extends BaseRecordSetLiveTest {
-    @BeforeClass
-    private void setUp() {
-        UltraDNSConnection connection = new UltraDNSConnection();
-        manager = connection.manager;
-        setMutableZoneIfPresent(connection.mutableZone);
-    }
+
+  @BeforeClass
+  private void setUp() {
+    UltraDNSConnection connection = new UltraDNSConnection();
+    manager = connection.manager;
+    setMutableZoneIfPresent(connection.mutableZone);
+  }
 }

@@ -2,7 +2,7 @@
 
 If you would like to contribute code you can do so through GitHub by forking the repository and sending a pull request (on a branch other than `master` or `gh-pages`).
 
-When submitting code, please make every effort to follow existing conventions and style in order to keep the code as readable as possible.
+When submitting code, please ensure you follow the [Google Style Guide](http://google-styleguide.googlecode.com/svn/trunk/javaguide.html). For example, you can format code with Intellij using [this file](https://google-styleguide.googlecode.com/svn/trunk/intellij-java-google-style.xml).
 
 ## License
 

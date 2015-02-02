@@ -7,8 +7,9 @@ import denominator.profile.BaseWeightedReadOnlyLiveTest;
 
 @Test
 public class MockWeightedReadOnlyLiveTest extends BaseWeightedReadOnlyLiveTest {
-    @BeforeClass
-    private void setUp() {
-        manager = new MockConnection().manager;
-    }
+
+  @BeforeClass
+  private void setUp() {
+    manager = new MockConnection().manager;
+  }
 }

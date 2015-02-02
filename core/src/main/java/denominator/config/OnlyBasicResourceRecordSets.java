@@ -18,63 +18,66 @@ import denominator.model.ResourceRecordSet;
 @Module(injects = DNSApiManager.class, complete = false)
 public class OnlyBasicResourceRecordSets {
 
-    @Provides
-    @Singleton
-    AllProfileResourceRecordSetApi.Factory provideAllProfileResourceRecordSetApi(
-            final ResourceRecordSetApi.Factory factory) {
-        return new AllProfileResourceRecordSetApi.Factory() {
+  @Provides
+  @Singleton
+  AllProfileResourceRecordSetApi.Factory provideAllProfileResourceRecordSetApi(
+      final ResourceRecordSetApi.Factory factory) {
+    return new AllProfileResourceRecordSetApi.Factory() {
 
-            @Override
-            public AllProfileResourceRecordSetApi create(String idOrName) {
-                return new OnlyBasicResourceRecordSetApi(factory.create(idOrName));
-            }
+      @Override
+      public AllProfileResourceRecordSetApi create(String idOrName) {
+        return new OnlyBasicResourceRecordSetApi(factory.create(idOrName));
+      }
 
-        };
+    };
+  }
+
+  private static class OnlyBasicResourceRecordSetApi implements AllProfileResourceRecordSetApi {
+
+    private final ResourceRecordSetApi api;
+
+    private OnlyBasicResourceRecordSetApi(ResourceRecordSetApi api) {
+      this.api = api;
     }
 
-    private static class OnlyBasicResourceRecordSetApi implements AllProfileResourceRecordSetApi {
-        private final ResourceRecordSetApi api;
-
-        private OnlyBasicResourceRecordSetApi(ResourceRecordSetApi api) {
-            this.api = api;
-        }
-
-        @Override
-        public Iterator<ResourceRecordSet<?>> iterator() {
-            return api.iterator();
-        }
-
-        @Override
-        public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
-            return api.iterateByName(name);
-        }
-
-        @Override
-        public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
-            ResourceRecordSet<?> rrs = api.getByNameAndType(name, type);
-            if (rrs != null)
-                return Collections.<ResourceRecordSet<?>> singleton(rrs).iterator();
-            return Collections.<ResourceRecordSet<?>> emptySet().iterator();
-        }
-
-        @Override
-        public ResourceRecordSet<?> getByNameTypeAndQualifier(String name, String type, String qualifier) {
-            return null;
-        }
-
-        @Override
-        public void put(ResourceRecordSet<?> rrset) {
-            api.put(rrset);
-        }
-
-        @Override
-        public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
-            api.deleteByNameAndType(name, type);
-        }
-
-        @Override
-        public void deleteByNameAndType(String name, String type) {
-            api.deleteByNameAndType(name, type);
-        }
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterator() {
+      return api.iterator();
     }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
+      return api.iterateByName(name);
+    }
+
+    @Override
+    public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
+      ResourceRecordSet<?> rrs = api.getByNameAndType(name, type);
+      if (rrs != null) {
+        return Collections.<ResourceRecordSet<?>>singleton(rrs).iterator();
+      }
+      return Collections.<ResourceRecordSet<?>>emptySet().iterator();
+    }
+
+    @Override
+    public ResourceRecordSet<?> getByNameTypeAndQualifier(String name, String type,
+                                                          String qualifier) {
+      return null;
+    }
+
+    @Override
+    public void put(ResourceRecordSet<?> rrset) {
+      api.put(rrset);
+    }
+
+    @Override
+    public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
+      api.deleteByNameAndType(name, type);
+    }
+
+    @Override
+    public void deleteByNameAndType(String name, String type) {
+      api.deleteByNameAndType(name, type);
+    }
+  }
 }
