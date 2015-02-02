@@ -10,7 +10,7 @@ Here's how to get denominator-cli `4.3.3` from [bintray](https://bintray.com/pkg
 3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
 
 ## Building
-To build the cli, execute `./gradlew clean test install` from the root of your denominator clone.  The binary will end up at `cli/build/denominator`
+To build the cli, execute `./gradlew clean build install` from the root of your denominator clone.  The binary will end up at `cli/build/denominator`
 
 ## Configuring
 
