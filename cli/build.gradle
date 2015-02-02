@@ -66,6 +66,12 @@ task fatJar(dependsOn: classes, type: Jar) {
   }
 }
 
+configurations {
+  fat
+}
+
+nebula.plugin.publishing.component.CustomComponentPlugin.addArtifact(project, 'fat', fatJar)
+
 artifacts {
   archives fatJar
 }
