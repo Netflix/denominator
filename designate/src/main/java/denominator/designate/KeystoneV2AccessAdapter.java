@@ -1,12 +1,5 @@
 package denominator.designate;
 
-import static denominator.common.Preconditions.checkNotNull;
-
-import java.io.IOException;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonObject;
@@ -15,66 +8,76 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import java.io.IOException;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+
 import denominator.designate.KeystoneV2.TokenIdAndPublicURL;
 
+import static denominator.common.Preconditions.checkNotNull;
+
 class KeystoneV2AccessAdapter extends TypeAdapter<TokenIdAndPublicURL> {
-    private final String serviceTypeSuffix;
 
-    @Inject
-    KeystoneV2AccessAdapter(@Named("serviceTypeSuffix") String serviceTypeSuffix) {
-        this.serviceTypeSuffix = checkNotNull(serviceTypeSuffix, "serviceTypeSuffix was null");
+  private final String serviceTypeSuffix;
+
+  @Inject
+  KeystoneV2AccessAdapter(@Named("serviceTypeSuffix") String serviceTypeSuffix) {
+    this.serviceTypeSuffix = checkNotNull(serviceTypeSuffix, "serviceTypeSuffix was null");
+  }
+
+  static boolean isNull(JsonElement element) {
+    return element == null || element.isJsonNull();
+  }
+
+  @Override
+  public TokenIdAndPublicURL read(JsonReader in) throws IOException {
+    JsonObject access = null;
+    try {
+      access = new JsonParser().parse(in).getAsJsonObject().get("access").getAsJsonObject();
+    } catch (JsonIOException e) {
+      if (e.getCause() != null && e.getCause() instanceof IOException) {
+        throw IOException.class.cast(e.getCause());
+      }
+      throw e;
+    }
+    JsonElement tokenField = access.get("token");
+    if (isNull(tokenField)) {
+      return null;
+    }
+    JsonElement idField = tokenField.getAsJsonObject().get("id");
+    if (isNull(idField)) {
+      return null;
     }
 
-    @Override
-    public TokenIdAndPublicURL read(JsonReader in) throws IOException {
-        JsonObject access = null;
-        try {
-            access = new JsonParser().parse(in).getAsJsonObject().get("access").getAsJsonObject();
-        } catch (JsonIOException e) {
-            if (e.getCause() != null && e.getCause() instanceof IOException) {
-                throw IOException.class.cast(e.getCause());
-            }
-            throw e;
+    TokenIdAndPublicURL tokenUrl = new TokenIdAndPublicURL();
+    tokenUrl.tokenId = idField.getAsString();
+
+    for (JsonElement s : access.get("serviceCatalog").getAsJsonArray()) {
+      JsonObject service = s.getAsJsonObject();
+      JsonElement typeField = service.get("type");
+      JsonElement endpointsField = service.get("endpoints");
+      if (!isNull(typeField) && !isNull(endpointsField) && typeField.getAsString()
+          .endsWith(serviceTypeSuffix)) {
+        for (JsonElement e : endpointsField.getAsJsonArray()) {
+          JsonObject endpoint = e.getAsJsonObject();
+          tokenUrl.publicURL = endpoint.get("publicURL").getAsString();
+          if (tokenUrl.publicURL.endsWith("/")) {
+            tokenUrl.publicURL = tokenUrl.publicURL.substring(0, tokenUrl.publicURL.length() - 1);
+          }
         }
-        JsonElement tokenField = access.get("token");
-        if (isNull(tokenField)) {
-            return null;
-        }
-        JsonElement idField = tokenField.getAsJsonObject().get("id");
-        if (isNull(idField)) {
-            return null;
-        }
-
-        TokenIdAndPublicURL tokenUrl = new TokenIdAndPublicURL();
-        tokenUrl.tokenId = idField.getAsString();
-
-        for (JsonElement s : access.get("serviceCatalog").getAsJsonArray()) {
-            JsonObject service = s.getAsJsonObject();
-            JsonElement typeField = service.get("type");
-            JsonElement endpointsField = service.get("endpoints");
-            if (!isNull(typeField) && !isNull(endpointsField) && typeField.getAsString().endsWith(serviceTypeSuffix)) {
-                for (JsonElement e : endpointsField.getAsJsonArray()) {
-                    JsonObject endpoint = e.getAsJsonObject();
-                    tokenUrl.publicURL = endpoint.get("publicURL").getAsString();
-                    if (tokenUrl.publicURL.endsWith("/"))
-                        tokenUrl.publicURL = tokenUrl.publicURL.substring(0, tokenUrl.publicURL.length() - 1);
-                }
-            }
-        }
-        return tokenUrl;
+      }
     }
+    return tokenUrl;
+  }
 
-    @Override
-    public String toString() {
-        return "KeystoneV2AccessAdapter(" + serviceTypeSuffix + ")";
-    }
+  @Override
+  public String toString() {
+    return "KeystoneV2AccessAdapter(" + serviceTypeSuffix + ")";
+  }
 
-    static boolean isNull(JsonElement element) {
-        return element == null || element.isJsonNull();
-    }
-
-    @Override
-    public void write(JsonWriter out, TokenIdAndPublicURL value) throws IOException {
-        throw new UnsupportedOperationException();
-    }
+  @Override
+  public void write(JsonWriter out, TokenIdAndPublicURL value) throws IOException {
+    throw new UnsupportedOperationException();
+  }
 };

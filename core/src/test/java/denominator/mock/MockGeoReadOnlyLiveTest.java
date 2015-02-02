@@ -7,8 +7,9 @@ import denominator.profile.BaseGeoReadOnlyLiveTest;
 
 @Test
 public class MockGeoReadOnlyLiveTest extends BaseGeoReadOnlyLiveTest {
-    @BeforeClass
-    private void setUp() {
-        manager = new MockConnection().manager;
-    }
+
+  @BeforeClass
+  private void setUp() {
+    manager = new MockConnection().manager;
+  }
 }

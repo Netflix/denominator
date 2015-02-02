@@ -7,8 +7,9 @@ import denominator.BaseReadOnlyLiveTest;
 
 @Test
 public class DynECTReadOnlyLiveTest extends BaseReadOnlyLiveTest {
-    @BeforeClass
-    private void setUp() {
-        manager = new DynECTConnection().manager;
-    }
+
+  @BeforeClass
+  private void setUp() {
+    manager = new DynECTConnection().manager;
+  }
 }

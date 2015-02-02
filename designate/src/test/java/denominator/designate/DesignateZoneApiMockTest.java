@@ -1,5 +1,17 @@
 package denominator.designate;
 
+import com.google.mockwebserver.MockResponse;
+import com.google.mockwebserver.MockWebServer;
+
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+import java.util.Iterator;
+
+import denominator.Denominator;
+import denominator.ZoneApi;
+import denominator.model.Zone;
+
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.designate.DesignateTest.accessResponse;
 import static denominator.designate.DesignateTest.domainId;
@@ -12,79 +24,67 @@ import static denominator.designate.DesignateTest.username;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
-import java.io.IOException;
-import java.util.Iterator;
-
-import org.testng.annotations.Test;
-
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.MockWebServer;
-
-import denominator.Denominator;
-import denominator.ZoneApi;
-import denominator.model.Zone;
-
 @Test(singleThreaded = true)
 public class DesignateZoneApiMockTest {
 
-    @Test
-    public void iteratorWhenPresent() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.play();
+  private static ZoneApi mockApi(final int port) {
+    return Denominator.create(new DesignateProvider() {
+      @Override
+      public String url() {
+        return "http://localhost:" + port;
+      }
+    }, credentials(tenantId, username, password)).api().zones();
+  }
 
-        String url = "http://localhost:" + server.getPort();
-        server.setDispatcher(getURLReplacingQueueDispatcher(url));
+  @Test
+  public void iteratorWhenPresent() throws IOException, InterruptedException {
+    MockWebServer server = new MockWebServer();
+    server.play();
 
-        server.enqueue(new MockResponse().setBody(accessResponse));
-        server.enqueue(new MockResponse().setBody(domainsResponse));
+    String url = "http://localhost:" + server.getPort();
+    server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
-        try {
-            ZoneApi api = mockApi(server.getPort());
-            Iterator<Zone> domains = api.iterator();
+    server.enqueue(new MockResponse().setBody(accessResponse));
+    server.enqueue(new MockResponse().setBody(domainsResponse));
 
-            while (domains.hasNext()) {
-                Zone zone = domains.next();
-                assertEquals(zone.name(), "denominator.io.");
-                assertEquals(zone.id(), domainId);
-            }
+    try {
+      ZoneApi api = mockApi(server.getPort());
+      Iterator<Zone> domains = api.iterator();
 
-            assertEquals(server.getRequestCount(), 2);
-            takeAuthResponse(server);
-            assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
-        } finally {
-            server.shutdown();
-        }
+      while (domains.hasNext()) {
+        Zone zone = domains.next();
+        assertEquals(zone.name(), "denominator.io.");
+        assertEquals(zone.id(), domainId);
+      }
+
+      assertEquals(server.getRequestCount(), 2);
+      takeAuthResponse(server);
+      assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
+    } finally {
+      server.shutdown();
     }
+  }
 
-    @Test
-    public void iteratorWhenAbsent() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.play();
+  @Test
+  public void iteratorWhenAbsent() throws IOException, InterruptedException {
+    MockWebServer server = new MockWebServer();
+    server.play();
 
-        String url = "http://localhost:" + server.getPort();
-        server.setDispatcher(getURLReplacingQueueDispatcher(url));
+    String url = "http://localhost:" + server.getPort();
+    server.setDispatcher(getURLReplacingQueueDispatcher(url));
 
-        server.enqueue(new MockResponse().setBody(accessResponse));
-        server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
+    server.enqueue(new MockResponse().setBody(accessResponse));
+    server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
 
-        try {
-            ZoneApi api = mockApi(server.getPort());
+    try {
+      ZoneApi api = mockApi(server.getPort());
 
-            assertFalse(api.iterator().hasNext());
-            assertEquals(server.getRequestCount(), 2);
-            takeAuthResponse(server);
-            assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
-        } finally {
-            server.shutdown();
-        }
+      assertFalse(api.iterator().hasNext());
+      assertEquals(server.getRequestCount(), 2);
+      takeAuthResponse(server);
+      assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
+    } finally {
+      server.shutdown();
     }
-
-    private static ZoneApi mockApi(final int port) {
-        return Denominator.create(new DesignateProvider() {
-            @Override
-            public String url() {
-                return "http://localhost:" + port;
-            }
-        }, credentials(tenantId, username, password)).api().zones();
-    }
+  }
 }

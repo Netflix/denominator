@@ -7,10 +7,11 @@ import denominator.BaseRoundRobinLiveTest;
 
 @Test
 public class UltraDNSRoundRobinLiveTest extends BaseRoundRobinLiveTest {
-    @BeforeClass
-    private void setUp() {
-        UltraDNSConnection connection = new UltraDNSConnection();
-        manager = connection.manager;
-        setMutableZoneIfPresent(connection.mutableZone);
-    }
+
+  @BeforeClass
+  private void setUp() {
+    UltraDNSConnection connection = new UltraDNSConnection();
+    manager = connection.manager;
+    setMutableZoneIfPresent(connection.mutableZone);
+  }
 }

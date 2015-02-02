@@ -7,10 +7,11 @@ import denominator.BaseRoundRobinLiveTest;
 
 @Test
 public class DesignateRoundRobinLiveTest extends BaseRoundRobinLiveTest {
-    @BeforeClass
-    private void setUp() {
-        DesignateConnection connection = new DesignateConnection();
-        manager = connection.manager;
-        setMutableZoneIfPresent(connection.mutableZone);
-    }
+
+  @BeforeClass
+  private void setUp() {
+    DesignateConnection connection = new DesignateConnection();
+    manager = connection.manager;
+    setMutableZoneIfPresent(connection.mutableZone);
+  }
 }

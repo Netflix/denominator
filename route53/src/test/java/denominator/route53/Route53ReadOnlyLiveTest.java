@@ -7,8 +7,9 @@ import denominator.BaseReadOnlyLiveTest;
 
 @Test
 public class Route53ReadOnlyLiveTest extends BaseReadOnlyLiveTest {
-    @BeforeClass
-    private void setUp() {
-        manager = new Route53Connection().manager;
-    }
+
+  @BeforeClass
+  private void setUp() {
+    manager = new Route53Connection().manager;
+  }
 }

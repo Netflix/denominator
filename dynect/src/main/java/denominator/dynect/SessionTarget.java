@@ -10,33 +10,33 @@ import feign.Target;
 
 class SessionTarget implements Target<Session> {
 
-    private final Provider provider;
+  private final Provider provider;
 
-    @Inject
-    SessionTarget(Provider provider) {
-        this.provider = provider;
-    }
+  @Inject
+  SessionTarget(Provider provider) {
+    this.provider = provider;
+  }
 
-    @Override
-    public Class<Session> type() {
-        return Session.class;
-    }
+  @Override
+  public Class<Session> type() {
+    return Session.class;
+  }
 
-    @Override
-    public String name() {
-        return provider.name();
-    }
+  @Override
+  public String name() {
+    return provider.name();
+  }
 
-    @Override
-    public String url() {
-        return provider.url();
-    }
+  @Override
+  public String url() {
+    return provider.url();
+  }
 
-    @Override
-    public Request apply(RequestTemplate input) {
-        input.header("API-Version", "3.5.2");
-        input.header("Content-Type", "application/json");
-        input.insert(0, url());
-        return input.request();
-    }
+  @Override
+  public Request apply(RequestTemplate input) {
+    input.header("API-Version", "3.5.2");
+    input.header("Content-Type", "application/json");
+    input.insert(0, url());
+    return input.request();
+  }
 };

@@ -48,6 +48,7 @@ public class HomeActivity extends FragmentActivity {
         ZoneListFragment.class
     }, complete = false)
     class ActivityModule {
+
       @Provides
       @Singleton
       Activity provideActivityContext() {
@@ -113,7 +114,8 @@ public class HomeActivity extends FragmentActivity {
   }
 
   /**
-   * use this on {@link android.support.v4.app.Fragment#onActivityCreated} to restore injected fields.
+   * use this on {@link android.support.v4.app.Fragment#onActivityCreated} to restore injected
+   * fields.
    */
   public <T> T inject(T toInject) {
     return activityGraph.inject(toInject);

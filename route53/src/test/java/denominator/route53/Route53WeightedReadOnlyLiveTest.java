@@ -7,8 +7,9 @@ import denominator.profile.BaseWeightedReadOnlyLiveTest;
 
 @Test
 public class Route53WeightedReadOnlyLiveTest extends BaseWeightedReadOnlyLiveTest {
-    @BeforeClass
-    private void setUp() {
-        manager = new Route53Connection().manager;
-    }
+
+  @BeforeClass
+  private void setUp() {
+    manager = new Route53Connection().manager;
+  }
 }
