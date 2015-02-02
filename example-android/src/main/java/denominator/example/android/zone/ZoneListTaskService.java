@@ -4,7 +4,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.squareup.otto.Bus;
 import com.squareup.tape.TaskQueue;
@@ -17,12 +16,11 @@ import denominator.example.android.DenominatorApplication;
 import denominator.example.android.zone.ZoneList.Callback;
 import denominator.model.Zone;
 
-import static android.widget.Toast.LENGTH_LONG;
-
 /**
  * This service guarantees that zone lists happen in the background and only once at a time.
  */
 public class ZoneListTaskService extends Service implements Callback {
+
   private static final String TAG = "Denominator:ZoneListTaskService";
 
   @Inject

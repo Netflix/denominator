@@ -9,62 +9,72 @@ import denominator.model.ResourceRecordSet;
 import feign.RequestLine;
 
 public interface DiscoveryDNS {
-    @RequestLine("GET /users")
-    Users listUsers();
 
-    @RequestLine("GET /zones")
-    Zones listZones();
+  @RequestLine("GET /users")
+  Users listUsers();
 
-    @RequestLine("GET /zones/{id}?rdataFormat=raw")
-    Zone getZone(@Named("id") String id);
+  @RequestLine("GET /zones")
+  Zones listZones();
 
-    @RequestLine("GET /zones?searchName={zone}")
-    Zones findZone(@Named("zone") String zone);
+  @RequestLine("GET /zones/{id}?rdataFormat=raw")
+  Zone getZone(@Named("id") String id);
 
-    @RequestLine("PUT /zones/{id}/resourcerecords?rdataFormat=raw")
-    void updateZone(@Named("id") String id, Zone zone);
+  @RequestLine("GET /zones?searchName={zone}")
+  Zones findZone(@Named("zone") String zone);
 
-    public static final class ResourceRecords {
-        public Set<ResourceRecordSet<?>> records = new LinkedHashSet<ResourceRecordSet<?>>();
+  @RequestLine("PUT /zones/{id}/resourcerecords?rdataFormat=raw")
+  void updateZone(@Named("id") String id, Zone zone);
+
+  public static final class ResourceRecords {
+
+    public Set<ResourceRecordSet<?>> records = new LinkedHashSet<ResourceRecordSet<?>>();
+  }
+
+  public static final class Zones {
+
+    public ZoneList zones;
+
+    class ZoneList {
+
+      public Set<Zone> zoneList;
+
+      class Zone {
+
+        public String id;
+        public String name;
+      }
     }
+  }
 
-    public static final class Zones {
-        public ZoneList zones;
+  public static final class Zone {
 
-        class ZoneList {
-            public Set<Zone> zoneList;
+    public ZoneData zone;
 
-            class Zone {
-                public String id;
-                public String name;
-            }
-        }
+    public ZoneData zoneUpdateResourceRecords;
+
+    class ZoneData {
+
+      public String id;
+      public Long version;
+
+      public ResourceRecords resourceRecords;
     }
+  }
 
-    public static final class Zone {
-        public ZoneData zone;
+  public static final class Users {
 
-        public ZoneData zoneUpdateResourceRecords;
+    public UserList users;
 
-        class ZoneData {
-            public String id;
-            public Long version;
+    class UserList {
 
-            public ResourceRecords resourceRecords;
-        }
+      public Set<User> userList;
+
+      class User {
+
+        public String id;
+        public String username;
+        public String status;
+      }
     }
-
-    public static final class Users {
-        public UserList users;
-
-        class UserList {
-            public Set<User> userList;
-
-            class User {
-                public String id;
-                public String username;
-                public String status;
-            }
-        }
-    }
+  }
 }

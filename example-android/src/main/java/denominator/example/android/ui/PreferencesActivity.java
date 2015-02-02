@@ -11,6 +11,7 @@ import denominator.Provider;
 import denominator.example.android.DenominatorApplication;
 
 public class PreferencesActivity extends PreferenceActivity {
+
   @Inject
   Provider provider;
 

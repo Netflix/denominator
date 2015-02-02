@@ -7,8 +7,9 @@ import denominator.BaseReadOnlyLiveTest;
 
 @Test
 public class UltraDNSReadOnlyLiveTest extends BaseReadOnlyLiveTest {
-    @BeforeClass
-    private void setUp() {
-        manager = new UltraDNSConnection().manager;
-    }
+
+  @BeforeClass
+  private void setUp() {
+    manager = new UltraDNSConnection().manager;
+  }
 }

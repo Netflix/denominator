@@ -7,8 +7,9 @@ import denominator.BaseReadOnlyLiveTest;
 
 @Test
 public class CloudDNSReadOnlyLiveTest extends BaseReadOnlyLiveTest {
-    @BeforeClass
-    private void setUp() {
-        manager = new CloudDNSConnection().manager;
-    }
+
+  @BeforeClass
+  private void setUp() {
+    manager = new CloudDNSConnection().manager;
+  }
 }

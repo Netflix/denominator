@@ -1,5 +1,16 @@
 package denominator.ultradns;
 
+import com.google.mockwebserver.MockResponse;
+import com.google.mockwebserver.MockWebServer;
+
+import org.testng.annotations.Test;
+
+import java.io.IOException;
+
+import denominator.Denominator;
+import denominator.ZoneApi;
+import denominator.model.Zone;
+
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.ultradns.UltraDNSTest.getAccountsListOfUser;
 import static denominator.ultradns.UltraDNSTest.getAccountsListOfUserResponse;
@@ -10,66 +21,55 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
 
-import java.io.IOException;
-
-import org.testng.annotations.Test;
-
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.MockWebServer;
-
-import denominator.Denominator;
-import denominator.ZoneApi;
-import denominator.model.Zone;
-
 @Test(singleThreaded = true)
 public class UltraDNSZoneApiMockTest {
 
-    @Test
-    public void iteratorWhenPresent() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
-        server.enqueue(new MockResponse().setBody(getZonesOfAccountResponsePresent));
-        server.play();
+  private static ZoneApi mockApi(final int port) {
+    return Denominator.create(new UltraDNSProvider() {
+      @Override
+      public String url() {
+        return "http://localhost:" + port + "/";
+      }
+    }, credentials("joe", "letmein")).api().zones();
+  }
 
-        try {
-            ZoneApi api = mockApi(server.getPort());
-            Zone zone = api.iterator().next();
-            assertEquals(zone.name(), "denominator.io.");
-            assertNull(zone.id());
+  @Test
+  public void iteratorWhenPresent() throws IOException, InterruptedException {
+    MockWebServer server = new MockWebServer();
+    server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
+    server.enqueue(new MockResponse().setBody(getZonesOfAccountResponsePresent));
+    server.play();
 
-            assertEquals(server.getRequestCount(), 2);
-            assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);
-            assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
-        } finally {
-            server.shutdown();
-        }
+    try {
+      ZoneApi api = mockApi(server.getPort());
+      Zone zone = api.iterator().next();
+      assertEquals(zone.name(), "denominator.io.");
+      assertNull(zone.id());
+
+      assertEquals(server.getRequestCount(), 2);
+      assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);
+      assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
+    } finally {
+      server.shutdown();
     }
+  }
 
-    @Test
-    public void iteratorWhenAbsent() throws IOException, InterruptedException {
-        MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
-        server.enqueue(new MockResponse().setBody(getZonesOfAccountResponseAbsent));
-        server.play();
+  @Test
+  public void iteratorWhenAbsent() throws IOException, InterruptedException {
+    MockWebServer server = new MockWebServer();
+    server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
+    server.enqueue(new MockResponse().setBody(getZonesOfAccountResponseAbsent));
+    server.play();
 
-        try {
-            ZoneApi api = mockApi(server.getPort());
-            assertFalse(api.iterator().hasNext());
+    try {
+      ZoneApi api = mockApi(server.getPort());
+      assertFalse(api.iterator().hasNext());
 
-            assertEquals(server.getRequestCount(), 2);
-            assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);
-            assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
-        } finally {
-            server.shutdown();
-        }
+      assertEquals(server.getRequestCount(), 2);
+      assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);
+      assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
+    } finally {
+      server.shutdown();
     }
-
-    private static ZoneApi mockApi(final int port) {
-        return Denominator.create(new UltraDNSProvider() {
-            @Override
-            public String url() {
-                return "http://localhost:" + port + "/";
-            }
-        }, credentials("joe", "letmein")).api().zones();
-    }
+  }
 }

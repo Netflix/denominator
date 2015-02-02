@@ -14,25 +14,9 @@ import denominator.DNSApiManager;
 import denominator.model.Zone;
 
 public class ZoneList implements Task<ZoneList.Callback> {
+
   private static final String TAG = "Denominator:ZoneList";
   private static final Handler MAIN_THREAD = new Handler(Looper.getMainLooper());
-
-  public static class SuccessEvent {
-    public final Iterator<Zone> zones;
-    public final long duration;
-
-    SuccessEvent(Iterator<Zone> zones, long duration) {
-      this.zones = zones;
-      this.duration = duration;
-    }
-  }
-
-  public interface Callback {
-    void onSuccess(Iterator<Zone> zones, long duration);
-
-    void onFailure(Throwable t);
-  }
-
   private final DNSApiManager mgr;
 
   @Inject
@@ -68,5 +52,23 @@ public class ZoneList implements Task<ZoneList.Callback> {
         }
       }
     }).start();
+  }
+
+  public interface Callback {
+
+    void onSuccess(Iterator<Zone> zones, long duration);
+
+    void onFailure(Throwable t);
+  }
+
+  public static class SuccessEvent {
+
+    public final Iterator<Zone> zones;
+    public final long duration;
+
+    SuccessEvent(Iterator<Zone> zones, long duration) {
+      this.zones = zones;
+      this.duration = duration;
+    }
   }
 }

@@ -8,17 +8,19 @@ import denominator.ZoneApi;
 import denominator.model.Zone;
 
 public class DiscoveryDNSZoneApi implements ZoneApi {
-    private final DiscoveryDNS api;
 
-    DiscoveryDNSZoneApi(DiscoveryDNS api) {
-        this.api = api;
-    }
+  private final DiscoveryDNS api;
 
-    @Override
-    public Iterator<Zone> iterator() {
-        List<Zone> zones = new LinkedList<Zone>();
-        for (DiscoveryDNS.Zones.ZoneList.Zone zone : api.listZones().zones.zoneList)
-            zones.add(Zone.create(zone.name, zone.id));
-        return zones.iterator();
+  DiscoveryDNSZoneApi(DiscoveryDNS api) {
+    this.api = api;
+  }
+
+  @Override
+  public Iterator<Zone> iterator() {
+    List<Zone> zones = new LinkedList<Zone>();
+    for (DiscoveryDNS.Zones.ZoneList.Zone zone : api.listZones().zones.zoneList) {
+      zones.add(Zone.create(zone.name, zone.id));
     }
+    return zones.iterator();
+  }
 }

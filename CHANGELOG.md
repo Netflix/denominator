@@ -1,6 +1,7 @@
 ### Version 4.4
 * Add support for DiscoveryDNS (http://www.discoverydns.com)
 * update to feign 6.1.2
+* Reformats code according to [Google Java Style](https://google-styleguide.googlecode.com/svn/trunk/javaguide.html)
 
 ### Version 4.3.5
 * Support for more exotic RRtypes added

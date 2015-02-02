@@ -1,9 +1,5 @@
 package denominator.dynect;
 
-import static com.google.common.base.Strings.emptyToNull;
-import static denominator.CredentialsConfiguration.credentials;
-import static java.lang.System.getProperty;
-
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -12,40 +8,45 @@ import denominator.DNSApiManager;
 import denominator.Denominator;
 import feign.Logger;
 
+import static com.google.common.base.Strings.emptyToNull;
+import static denominator.CredentialsConfiguration.credentials;
+import static java.lang.System.getProperty;
+
 public class DynECTConnection {
 
-    final DNSApiManager manager;
-    final String mutableZone;
+  final DNSApiManager manager;
+  final String mutableZone;
 
-    DynECTConnection() {
-        String customer = emptyToNull(getProperty("dynect.customer"));
-        String username = emptyToNull(getProperty("dynect.username"));
-        String password = emptyToNull(getProperty("dynect.password"));
-        if (customer != null && username != null && password != null) {
-            manager = create(customer, username, password);
-        } else {
-            manager = null;
-        }
-        mutableZone = emptyToNull(getProperty("dynect.zone"));
+  DynECTConnection() {
+    String customer = emptyToNull(getProperty("dynect.customer"));
+    String username = emptyToNull(getProperty("dynect.username"));
+    String password = emptyToNull(getProperty("dynect.password"));
+    if (customer != null && username != null && password != null) {
+      manager = create(customer, username, password);
+    } else {
+      manager = null;
+    }
+    mutableZone = emptyToNull(getProperty("dynect.zone"));
+  }
+
+  static DNSApiManager create(String customer, String username, String password) {
+    DynECTProvider provider = new DynECTProvider(emptyToNull(getProperty("dynect.url")));
+    return Denominator.create(provider, credentials(customer, username, password), new Overrides());
+  }
+
+  @Module(overrides = true, library = true)
+  static class Overrides {
+
+    @Provides
+    @Singleton
+    Logger.Level provideLevel() {
+      return Logger.Level.FULL;
     }
 
-    @Module(overrides = true, library = true)
-    static class Overrides {
-        @Provides
-        @Singleton
-        Logger.Level provideLevel() {
-            return Logger.Level.FULL;
-        }
-
-        @Provides
-        @Singleton
-        Logger provideLogger() {
-            return new Logger.JavaLogger().appendToFile("build/http-wire.log");
-        }
+    @Provides
+    @Singleton
+    Logger provideLogger() {
+      return new Logger.JavaLogger().appendToFile("build/http-wire.log");
     }
-
-    static DNSApiManager create(String customer, String username, String password) {
-        DynECTProvider provider = new DynECTProvider(emptyToNull(getProperty("dynect.url")));
-        return Denominator.create(provider, credentials(customer, username, password), new Overrides());
-    }
+  }
 }

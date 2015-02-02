@@ -14,6 +14,7 @@ import dagger.Provides;
     complete = false // application
 )
 public class ZoneListModule {
+
   @Provides
   @Singleton
   ObjectQueue<ZoneList> objectQueue() {

@@ -13,14 +13,14 @@ import denominator.profile.WeightedResourceRecordSetApi;
 @Module(injects = DNSApiManager.class, complete = false)
 public class WeightedUnsupported {
 
-    @Provides
-    @Singleton
-    WeightedResourceRecordSetApi.Factory provideWeightedResourceRecordSetApiFactory() {
-        return new WeightedResourceRecordSetApi.Factory() {
-            @Override
-            public WeightedResourceRecordSetApi create(String idOrName) {
-                return null;
-            }
-        };
-    }
+  @Provides
+  @Singleton
+  WeightedResourceRecordSetApi.Factory provideWeightedResourceRecordSetApiFactory() {
+    return new WeightedResourceRecordSetApi.Factory() {
+      @Override
+      public WeightedResourceRecordSetApi create(String idOrName) {
+        return null;
+      }
+    };
+  }
 }
