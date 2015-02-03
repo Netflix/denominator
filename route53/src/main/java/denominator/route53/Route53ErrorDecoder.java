@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import javax.inject.Inject;
-
 import feign.FeignException;
 import feign.Response;
 import feign.RetryableException;
@@ -27,7 +25,6 @@ class Route53ErrorDecoder implements ErrorDecoder {
       resolveLastTypeParameter(Messages.class, ContentHandlerWithResult.class);
   private final Decoder decoder;
 
-  @Inject
   Route53ErrorDecoder(Decoder decoder) {
     this.decoder = decoder;
   }

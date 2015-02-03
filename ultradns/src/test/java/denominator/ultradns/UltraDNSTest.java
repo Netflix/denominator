@@ -59,97 +59,77 @@ public class UltraDNSTest {
   /**
    * param 1 is the code, 2 is the description
    */
-  static String FAULT_TEMPLATE = ""//
+  static String FAULT_TEMPLATE = ""
                                  + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                 + "    <soap:Body>\n"//
-                                 + "            <soap:Fault>\n"//
-                                 + "                    <faultcode>soap:Server</faultcode>\n"//
+                                 + "    <soap:Body>\n"
+                                 + "            <soap:Fault>\n"
+                                 + "                    <faultcode>soap:Server</faultcode>\n"
                                  + "                    <faultstring>Fault occurred while processing.</faultstring>\n"
-//
-                                 + "                    <detail>\n"//
+                                 + "                    <detail>\n"
                                  + "                            <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                  + "                                    <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">%s</errorCode>\n"
-//
                                  + "                                    <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">%s</errorDescription>\n"
-//
-                                 + "                            </ns1:UltraWSException>\n"//
-                                 + "                    </detail>\n"//
-                                 + "            </soap:Fault>\n"//
-                                 + "    </soap:Body>\n"//
+                                 + "                            </ns1:UltraWSException>\n"
+                                 + "                    </detail>\n"
+                                 + "            </soap:Fault>\n"
+                                 + "    </soap:Body>\n"
                                  + "</soap:Envelope>";
   static String getNeustarNetworkStatus = format(SOAP_TEMPLATE, "<v01:getNeustarNetworkStatus/>");
-  static String getNeustarNetworkStatusResponse = ""//
+  static String getNeustarNetworkStatusResponse = ""
                                                   + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                                  + "  <soap:Body>\n"//
+                                                  + "  <soap:Body>\n"
                                                   + "    <ns1:getNeustarNetworkStatusResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                   + "      <NeustarNetworkStatus xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Good</NeustarNetworkStatus>\n"
-//
-                                                  + "    </ns1:getNeustarNetworkStatusResponse>\n"//
-                                                  + "  </soap:Body>\n"//
+                                                  + "    </ns1:getNeustarNetworkStatusResponse>\n"
+                                                  + "  </soap:Body>\n"
                                                   + "</soap:Envelope>";
-  static String getNeustarNetworkStatusFailedResponse = ""//
+  static String getNeustarNetworkStatusFailedResponse = ""
                                                         + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                                        + "  <soap:Body>\n"//
+                                                        + "  <soap:Body>\n"
                                                         + "    <ns1:getNeustarNetworkStatusResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                         + "      <NeustarNetworkStatus xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Failed</NeustarNetworkStatus>\n"
-//
                                                         + "    </ns1:getNeustarNetworkStatusResponse>\n"
-//
-                                                        + "  </soap:Body>\n"//
+                                                        + "  </soap:Body>\n"
                                                         + "</soap:Envelope>";
   static String systemError = format(FAULT_TEMPLATE, SYSTEM_ERROR, "System Error");
-  static String invalidUser = ""//
+  static String invalidUser = ""
                               + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                              + "    <soap:Body>\n"//
-                              + "            <soap:Fault>\n"//
-                              + "                    <faultcode>soap:Client</faultcode>\n"//
-                              + "                    <faultstring>Invalid User</faultstring>\n"//
-                              + "            </soap:Fault>\n"//
-                              + "    </soap:Body>\n"//
+                              + "    <soap:Body>\n"
+                              + "            <soap:Fault>\n"
+                              + "                    <faultcode>soap:Client</faultcode>\n"
+                              + "                    <faultstring>Invalid User</faultstring>\n"
+                              + "            </soap:Fault>\n"
+                              + "    </soap:Body>\n"
                               + "</soap:Envelope>";
   static String getAccountsListOfUser = format(SOAP_TEMPLATE, "<v01:getAccountsListOfUser/>");
-  static String getAccountsListOfUserResponse = ""//
+  static String getAccountsListOfUserResponse = ""
                                                 + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                                + "  <soap:Body>\n"//
+                                                + "  <soap:Body>\n"
                                                 + "    <ns1:getAccountsListOfUserResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                 + "      <AccountsList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">\n"
-//
                                                 + "        <ns2:AccountDetailsData accountID=\"AAAAAAAAAAAAAAAA\" accountName=\"denominator\" />\n"
-//
-                                                + "      </AccountsList>\n"//
-                                                + "    </ns1:getAccountsListOfUserResponse>\n"//
-                                                + "  </soap:Body>\n"//
+                                                + "      </AccountsList>\n"
+                                                + "    </ns1:getAccountsListOfUserResponse>\n"
+                                                + "  </soap:Body>\n"
                                                 + "</soap:Envelope>";
   static String getZonesOfAccount = format(SOAP_TEMPLATE,
                                            "<v01:getZonesOfAccount><accountId>AAAAAAAAAAAAAAAA</accountId><zoneType>all</zoneType></v01:getZonesOfAccount>");
   static String
       getZonesOfAccountResponseHeader =
-      ""//
-      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-      + "  <soap:Body>\n"//
+      ""
+      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
+      + "  <soap:Body>\n"
       + "    <ns1:getZonesOfAccountResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
       + "      <ZoneList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">\n";
-  static String getZonesOfAccountResponseFooter = ""//
-                                                  + "      </ZoneList>\n"//
-                                                  + "    </ns1:getZonesOfAccountResponse>\n"//
-                                                  + "  </soap:Body>\n" //
+  static String getZonesOfAccountResponseFooter = ""
+                                                  + "      </ZoneList>\n"
+                                                  + "    </ns1:getZonesOfAccountResponse>\n"
+                                                  + "  </soap:Body>\n"
                                                   + "</soap:Envelope>";
-  static String getZonesOfAccountResponsePresent = ""//
-                                                   + getZonesOfAccountResponseHeader //
+  static String getZonesOfAccountResponsePresent = ""
+                                                   + getZonesOfAccountResponseHeader
                                                    + "        <ns2:UltraZone zoneName=\"denominator.io.\" zoneType=\"1\" accountId=\"AAAAAAAAAAAAAAAA\" owner=\"EEEEEEEEEEEEEEE\" zoneId=\"0000000000000001\" dnssecStatus=\"UNSIGNED\"/>\n"
-//
                                                    + "        <ns2:UltraZone zoneName=\"0.1.2.3.4.5.6.7.ip6.arpa.\" zoneType=\"1\" accountId=\"AAAAAAAAAAAAAAAA\" owner=\"EEEEEEEEEEEEEEEE\" zoneId=\"0000000000000002\" dnssecStatus=\"UNSIGNED\"/>\n"
-//
                                                    + getZonesOfAccountResponseFooter;
   static String
       getZonesOfAccountResponseAbsent =
@@ -158,18 +138,15 @@ public class UltraDNSTest {
                                                   "<v01:getResourceRecordsOfZone><zoneName>denominator.io.</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone>");
   static String
       getResourceRecordsOfZoneResponseHeader =
-      ""//
-      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-      + "  <soap:Body>\n"//
+      ""
+      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
+      + "  <soap:Body>\n"
       + "    <ns1:getResourceRecordsOfZoneResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
       + "      <ResourceRecordList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">\n";
-//
-  static String getResourceRecordsOfZoneResponseFooter = ""//
-                                                         + "      </ResourceRecordList>\n"//
+  static String getResourceRecordsOfZoneResponseFooter = ""
+                                                         + "      </ResourceRecordList>\n"
                                                          + "    </ns1:getResourceRecordsOfZoneResponse>\n"
-//
-                                                         + "  </soap:Body>\n" //
+                                                         + "  </soap:Body>\n"
                                                          + "</soap:Envelope>";
   static String getResourceRecordsOfZoneResponseAbsent = getResourceRecordsOfZoneResponseHeader
                                                          + getResourceRecordsOfZoneResponseFooter;
@@ -178,112 +155,91 @@ public class UltraDNSTest {
       "<v01:getResourceRecordsOfDNameByType><zoneName>denominator.io.</zoneName><hostName>denominator.io.</hostName><rrType>6</rrType></v01:getResourceRecordsOfDNameByType>");
   static String
       getResourceRecordsOfDNameByTypeResponseHeader =
-      ""//
-      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-      + "  <soap:Body>\n"//
+      ""
+      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
+      + "  <soap:Body>\n"
       + "    <ns1:getResourceRecordsOfDNameByTypeResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
       + "      <ResourceRecordList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">\n";
-  static String getResourceRecordsOfDNameByTypeResponseFooter = ""//
-                                                                + "      </ResourceRecordList>\n"//
+  static String getResourceRecordsOfDNameByTypeResponseFooter = ""
+                                                                + "      </ResourceRecordList>\n"
                                                                 + "    </ns1:getResourceRecordsOfDNameByTypeResponse>\n"
-//
-                                                                + "  </soap:Body>\n" //
+                                                                + "  </soap:Body>\n"
                                                                 + "</soap:Envelope>";
-  static String getResourceRecordsOfDNameByTypeResponsePresent = ""//
+  static String getResourceRecordsOfDNameByTypeResponsePresent = ""
                                                                  + getResourceRecordsOfDNameByTypeResponseHeader
-//
                                                                  + "        <ns2:ResourceRecord ZoneName=\"denominator.io.\" Type=\"6\" DName=\"denominator.io.\" TTL=\"86400\" Guid=\"04053D8E57C7A22F\" ZoneId=\"03053D8E57C7A22A\" LName=\"denominator.io.\" Created=\"2013-02-22T08:22:48.000Z\" Modified=\"2013-02-22T08:22:49.000Z\">\n"
-//
                                                                  + "          <ns2:InfoValues Info1Value=\"pdns75.ultradns.com.\" Info2Value=\"adrianc.netflix.com.\" Info3Value=\"2013022200\" Info4Value=\"86400\" Info5Value=\"86400\" Info6Value=\"86400\" Info7Value=\"86400\" />\n"
-//
                                                                  + "        </ns2:ResourceRecord>\n"
-//
                                                                  + getResourceRecordsOfDNameByTypeResponseFooter;
   static String
       getResourceRecordsOfDNameByTypeResponseAbsent =
       getResourceRecordsOfDNameByTypeResponseHeader
       + getResourceRecordsOfDNameByTypeResponseFooter;
-//
   static String createResourceRecord = format(
       SOAP_TEMPLATE,
       "<v01:createResourceRecord><transactionID /><resourceRecord ZoneName=\"denominator.io.\" Type=\"15\" DName=\"mail.denominator.io.\" TTL=\"1800\"><InfoValues Info1Value=\"10\" Info2Value=\"maileast.denominator.io.\" /></resourceRecord></v01:createResourceRecord>");
-  static String createResourceRecordResponse = ""//
+  static String createResourceRecordResponse = ""
                                                + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                               + "  <soap:Body>\n"//
+                                               + "  <soap:Body>\n"
                                                + "    <ns1:createResourceRecordResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                + "      <guid xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">04063D9D54C6A01F</guid>\n"
-//
-                                               + "    </ns1:createResourceRecordResponse>\n"//
-                                               + "  </soap:Body>\n"//
+                                               + "    </ns1:createResourceRecordResponse>\n"
+                                               + "  </soap:Body>\n"
                                                + "</soap:Envelope>";
   static String updateResourceRecord = format(
       SOAP_TEMPLATE,
       "<v01:updateResourceRecord><transactionID /><resourceRecord Guid=\"ABCDEF\" ZoneName=\"denominator.io.\" Type=\"1\" DName=\"www.denominator.io.\" TTL=\"3600\"><InfoValues Info1Value=\"1.1.1.1\" /></resourceRecord></v01:updateResourceRecord>");
-  static String updateResourceRecordResponse = ""//
+  static String updateResourceRecordResponse = ""
                                                + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                               + "  <soap:Body>\n"//
+                                               + "  <soap:Body>\n"
                                                + "    <ns1:updateResourceRecordResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                + "      <result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result>\n"
-//
-                                               + "    </ns1:updateResourceRecordResponse>\n"//
-                                               + "  </soap:Body>\n"//
+                                               + "    </ns1:updateResourceRecordResponse>\n"
+                                               + "  </soap:Body>\n"
                                                + "</soap:Envelope>";
   static String rrAlreadyExists = format(FAULT_TEMPLATE, RESOURCE_RECORD_ALREADY_EXISTS,
                                          "Resource Record of type 1 with these attributes already exists in the system.");
   static String deleteResourceRecord = format(SOAP_TEMPLATE,
                                               "<v01:deleteResourceRecord><transactionID /><guid>ABCDEF</guid></v01:deleteResourceRecord>");
-  static String deleteResourceRecordResponse = ""//
+  static String deleteResourceRecordResponse = ""
                                                + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                               + "  <soap:Body>\n"//
+                                               + "  <soap:Body>\n"
                                                + "    <ns1:deleteResourceRecordResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                + "      <result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result>\n"
-//
-                                               + "    </ns1:deleteResourceRecordResponse>\n"//
-                                               + "  </soap:Body>\n"//
+                                               + "    </ns1:deleteResourceRecordResponse>\n"
+                                               + "  </soap:Body>\n"
                                                + "</soap:Envelope>";
-//
   static String getLoadBalancingPoolsByZone = format(
       SOAP_TEMPLATE,
       "<v01:getLoadBalancingPoolsByZone><zoneName>denominator.io.</zoneName><lbPoolType>RR</lbPoolType></v01:getLoadBalancingPoolsByZone>");
   static String
       getLoadBalancingPoolsByZoneResponseHeader =
-      ""//
-      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-      + "  <soap:Body>\n"//
+      ""
+      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
+      + "  <soap:Body>\n"
       + "    <ns1:getLoadBalancingPoolsByZoneResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
       + "      <LBPoolList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">\n";
-  static String getLoadBalancingPoolsByZoneResponseFooter = ""//
-                                                            + "      </LBPoolList>\n"//
+  static String getLoadBalancingPoolsByZoneResponseFooter = ""
+                                                            + "      </LBPoolList>\n"
                                                             + "    </ns1:getLoadBalancingPoolsByZoneResponse>\n"
-//
-                                                            + "  </soap:Body>\n" //
+                                                            + "  </soap:Body>\n"
                                                             + "</soap:Envelope>";
-  static String getLoadBalancingPoolsByZoneResponseAbsent = ""//
+  static String getLoadBalancingPoolsByZoneResponseAbsent = ""
                                                             + getLoadBalancingPoolsByZoneResponseHeader
-//
                                                             + getLoadBalancingPoolsByZoneResponseFooter;
   static String getRRPoolRecords = format(SOAP_TEMPLATE,
                                           "<v01:getRRPoolRecords><lbPoolId>000000000000002</lbPoolId></v01:getRRPoolRecords>");
   static String
       getRRPoolRecordsResponseHeader =
-      ""//
-      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-      + "  <soap:Body>\n"//
+      ""
+      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
+      + "  <soap:Body>\n"
       + "    <ns1:getRRPoolRecordsResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
       + "      <ResourceRecordList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">\n";
-  static String getRRPoolRecordsResponseFooter = ""//
-                                                 + "      </ResourceRecordList>\n"//
-                                                 + "    </ns1:getRRPoolRecordsResponse>\n"//
-                                                 + "  </soap:Body>\n" //
+  static String getRRPoolRecordsResponseFooter = ""
+                                                 + "      </ResourceRecordList>\n"
+                                                 + "    </ns1:getRRPoolRecordsResponse>\n"
+                                                 + "  </soap:Body>\n"
                                                  + "</soap:Envelope>";
   static String
       getRRPoolRecordsResponseAbsent =
@@ -291,44 +247,37 @@ public class UltraDNSTest {
   static String addRRLBPool = format(
       SOAP_TEMPLATE,
       "<v01:addRRLBPool><transactionID /><zoneName>denominator.io.</zoneName><hostName>www.denominator.io.</hostName><description>1</description><poolRecordType>1</poolRecordType><rrGUID /></v01:addRRLBPool>");
-  static String addRRLBPoolResponse = ""//
+  static String addRRLBPoolResponse = ""
                                       + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                      + "  <soap:Body>\n"//
+                                      + "  <soap:Body>\n"
                                       + "    <ns1:addRRLBPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
-                                      + "      <RRPoolID>AAAAAAAAAAAAAAAA</RRPoolID>\n"//
-                                      + "    </ns1:addRRLBPoolResponse>\n"//
-                                      + "  </soap:Body>\n"//
+                                      + "      <RRPoolID>AAAAAAAAAAAAAAAA</RRPoolID>\n"
+                                      + "    </ns1:addRRLBPoolResponse>\n"
+                                      + "  </soap:Body>\n"
                                       + "</soap:Envelope>";
   static String poolAlreadyExists = format(FAULT_TEMPLATE, POOL_ALREADY_EXISTS,
                                            "Pool already created for this host name : www.denominator.io.");
   static String addRecordToRRPool = format(
       SOAP_TEMPLATE,
       "<v01:addRecordToRRPool><transactionID /><roundRobinRecord lbPoolID=\"AAAAAAAAAAAAAAAA\" info1Value=\"www1.denominator.io.\" ZoneName=\"denominator.io.\" Type=\"1\" TTL=\"300\"/></v01:addRecordToRRPool>");
-  static String addRecordToRRPoolResponse = ""//
+  static String addRecordToRRPoolResponse = ""
                                             + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                            + "  <soap:Body>\n"//
+                                            + "  <soap:Body>\n"
                                             + "    <ns1:addRecordToRRPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
-                                            + "      <guid>012345</guid>\n"//
-                                            + "    </ns1:addRecordToRRPoolResponse>\n"//
-                                            + "  </soap:Body>\n"//
+                                            + "      <guid>012345</guid>\n"
+                                            + "    </ns1:addRecordToRRPoolResponse>\n"
+                                            + "  </soap:Body>\n"
                                             + "</soap:Envelope>";
   static String deleteLBPool = format(
       SOAP_TEMPLATE,
       "<v01:deleteLBPool><transactionID /><lbPoolID>AAAAAAAAAAAAAAAA</lbPoolID><DeleteAll>Yes</DeleteAll><retainRecordId /></v01:deleteLBPool>");
-  static String deleteLBPoolResponse = ""//
+  static String deleteLBPoolResponse = ""
                                        + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                       + "  <soap:Body>\n"//
+                                       + "  <soap:Body>\n"
                                        + "    <ns1:deleteLBPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                        + "      <result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result>\n"
-//
-                                       + "    </ns1:deleteLBPoolResponse>\n"//
-                                       + "  </soap:Body>\n"//
+                                       + "    </ns1:deleteLBPoolResponse>\n"
+                                       + "  </soap:Body>\n"
                                        + "</soap:Envelope>";
   static String
       poolNotFound =
@@ -337,32 +286,26 @@ public class UltraDNSTest {
                                         "No resource record with GUID found in the system AAAAAAAAAAAAAAAA");
   static String getDirectionalPoolsOfZone = format(SOAP_TEMPLATE,
                                                    "<v01:getDirectionalPoolsOfZone><zoneName>denominator.io.</zoneName></v01:getDirectionalPoolsOfZone>");
-//
   static String
       getDirectionalPoolsOfZoneResponseHeader =
-      ""//
-      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"//
-      + "  <soap:Body>\n"//
+      ""
+      + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
+      + "  <soap:Body>\n"
       + "    <ns1:getDirectionalPoolsOfZoneResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
       + "      <DirectionalPoolList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">\n";
-  static String getDirectionalPoolsOfZoneResponseFooter = ""//
-                                                          + "      </DirectionalPoolList>\n"//
+  static String getDirectionalPoolsOfZoneResponseFooter = ""
+                                                          + "      </DirectionalPoolList>\n"
                                                           + "    </ns1:getDirectionalPoolsOfZoneResponse>\n"
-//
-                                                          + "  </soap:Body>\n" //
+                                                          + "  </soap:Body>\n"
                                                           + "</soap:Envelope>";
-  static String getDirectionalPoolsOfZoneResponsePresent = ""//
+  static String getDirectionalPoolsOfZoneResponsePresent = ""
                                                            + getDirectionalPoolsOfZoneResponseHeader
-                                                           //
+
                                                            + "      <ns2:DirectionalPoolData dirpoolid=\"D000000000000001\" Zoneid=\"Z000000000000001\" Pooldname=\"www.denominator.io.\" DirPoolType=\"GEOLOCATION\" Description=\"test with ips and cnames\" />\n"
-//
                                                            + "      <ns2:DirectionalPoolData dirpoolid=\"D000000000000002\" Zoneid=\"Z000000000000001\" Pooldname=\"www2.denominator.io.\" DirPoolType=\"SOURCEIP\" Description=\"should filter out as not geo\" />\n"
-//
                                                            + getDirectionalPoolsOfZoneResponseFooter;
-  static String getDirectionalPoolsOfZoneResponseAbsent = ""//
+  static String getDirectionalPoolsOfZoneResponseAbsent = ""
                                                           + getDirectionalPoolsOfZoneResponseHeader
-//
                                                           + getDirectionalPoolsOfZoneResponseFooter;
   static String getDirectionalDNSRecordsForHostTemplate = format(
       SOAP_TEMPLATE,
@@ -375,58 +318,37 @@ public class UltraDNSTest {
       getDirectionalDNSRecordsForHostIPV4 =
       format(getDirectionalDNSRecordsForHostTemplate,
              "denominator.io.", "www.denominator.io.", 1);
-//
   static String
       getDirectionalDNSRecordsForHostIPV6 =
       format(getDirectionalDNSRecordsForHostTemplate,
              "denominator.io.", "www.denominator.io.", 28);
-  static String getDirectionalDNSRecordsForHostResponseHeader = ""//
+  static String getDirectionalDNSRecordsForHostResponseHeader = ""
                                                                 + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                                                + "  <soap:Body>\n"//
+                                                                + "  <soap:Body>\n"
                                                                 + "    <ns1:getDirectionalDNSRecordsForHostResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n";
-  static String getDirectionalDNSRecordsForHostResponseFooter = ""//
+  static String getDirectionalDNSRecordsForHostResponseFooter = ""
                                                                 + "    </ns1:getDirectionalDNSRecordsForHostResponse>\n"
-//
-                                                                + "  </soap:Body>\n" //
+                                                                + "  </soap:Body>\n"
                                                                 + "</soap:Envelope>";
-  static String getDirectionalDNSRecordsForHostResponsePresent = ""//
+  static String getDirectionalDNSRecordsForHostResponsePresent = ""
                                                                  + getDirectionalDNSRecordsForHostResponseHeader
-//
                                                                  + "    <DirectionalDNSRecordDetailList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" ZoneName=\"denominator.io.\" DName=\"www.denominator.io.\">\n"
-//
                                                                  + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"Europe\" GeolocationGroupId=\"C000000000000001\" TerritoriesCount=\"54\" DirPoolRecordId=\"A000000000000001\">\n"
-//
                                                                  + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"
-//
                                                                  + "          <ns2:InfoValues Info1Value=\"www-000000001.eu-west-1.elb.amazonaws.com.\" />\n"
-//
                                                                  + "        </ns2:DirectionalDNSRecord>\n"
-//
                                                                  + "      </ns2:DirectionalDNSRecordDetail>\n"
-//
                                                                  + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"US\" GeolocationGroupId=\"C000000000000002\" TerritoriesCount=\"3\" DirPoolRecordId=\"A000000000000002\">\n"
-//
                                                                  + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"
-//
                                                                  + "          <ns2:InfoValues Info1Value=\"www-000000001.us-east-1.elb.amazonaws.com.\" />\n"
-//
                                                                  + "        </ns2:DirectionalDNSRecord>\n"
-//
                                                                  + "      </ns2:DirectionalDNSRecordDetail>\n"
-//
                                                                  + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"Everywhere Else\" GeolocationGroupId=\"C000000000000003\" TerritoriesCount=\"323\" DirPoolRecordId=\"A000000000000003\">\n"
-//
                                                                  + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"60\" noResponseRecord=\"false\">\n"
-//
                                                                  + "          <ns2:InfoValues Info1Value=\"www-000000002.us-east-1.elb.amazonaws.com.\" />\n"
-//
                                                                  + "        </ns2:DirectionalDNSRecord>\n"
-//
                                                                  + "      </ns2:DirectionalDNSRecordDetail>\n"
-//
                                                                  + "    </DirectionalDNSRecordDetailList>\n"
-//
                                                                  + getDirectionalDNSRecordsForHostResponseFooter;
   static String
       getDirectionalDNSRecordsForHostResponseAbsent =
@@ -445,33 +367,23 @@ public class UltraDNSTest {
       getDirectionalDNSRecordsForGroupEuropeIPV6 =
       format(getDirectionalDNSRecordsForGroupTemplate,
              "Europe", "www.denominator.io.", "denominator.io.", 28);
-  static String getDirectionalDNSRecordsForGroupResponseHeader = ""//
+  static String getDirectionalDNSRecordsForGroupResponseHeader = ""
                                                                  + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                                                 + "  <soap:Body>\n"//
+                                                                 + "  <soap:Body>\n"
                                                                  + "    <ns1:getDirectionalDNSRecordsForGroupResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n";
-  static String getDirectionalDNSRecordsForGroupResponseFooter = ""//
+  static String getDirectionalDNSRecordsForGroupResponseFooter = ""
                                                                  + "    </ns1:getDirectionalDNSRecordsForGroupResponse>\n"
-//
-                                                                 + "  </soap:Body>\n" //
+                                                                 + "  </soap:Body>\n"
                                                                  + "</soap:Envelope>";
-  static String getDirectionalDNSRecordsForGroupResponsePresent = ""//
+  static String getDirectionalDNSRecordsForGroupResponsePresent = ""
                                                                   + getDirectionalDNSRecordsForGroupResponseHeader
-//
                                                                   + "    <DirectionalDNSRecordDetailList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" ZoneName=\"denominator.io.\" DName=\"www.denominator.io.\">\n"
-//
                                                                   + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"Europe\" GeolocationGroupId=\"C000000000000001\" TerritoriesCount=\"54\" DirPoolRecordId=\"A000000000000001\">\n"
-//
                                                                   + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"
-//
                                                                   + "          <ns2:InfoValues Info1Value=\"www-000000001.eu-west-1.elb.amazonaws.com.\" />\n"
-//
                                                                   + "        </ns2:DirectionalDNSRecord>\n"
-//
                                                                   + "      </ns2:DirectionalDNSRecordDetail>\n"
-//
                                                                   + "    </DirectionalDNSRecordDetailList>\n"
-//
                                                                   + getDirectionalDNSRecordsForGroupResponseFooter;
   static String
       getDirectionalDNSRecordsForGroupResponseAbsent =
@@ -481,73 +393,59 @@ public class UltraDNSTest {
   static String addDirectionalPool = format(
       SOAP_TEMPLATE,
       "<v01:addDirectionalPool><transactionID /><AddDirectionalPoolData dirPoolType=\"GEOLOCATION\" poolRecordType=\"A\" zoneName=\"denominator.io.\" hostName=\"www.denominator.io.\" description=\"A\"/></v01:addDirectionalPool>");
-  static String addDirectionalPoolResponse = ""//
+  static String addDirectionalPoolResponse = ""
                                              + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                             + "  <soap:Body>\n"//
+                                             + "  <soap:Body>\n"
                                              + "    <ns1:addDirectionalPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
-                                             + "      <DirPoolID>AAAAAAAAAAAAAAAA</DirPoolID>\n"//
-                                             + "    </ns1:addDirectionalPoolResponse>\n"//
-                                             + "  </soap:Body>\n"//
+                                             + "      <DirPoolID>AAAAAAAAAAAAAAAA</DirPoolID>\n"
+                                             + "    </ns1:addDirectionalPoolResponse>\n"
+                                             + "  </soap:Body>\n"
                                              + "</soap:Envelope>";
   static String deleteDirectionalPool = format(
       SOAP_TEMPLATE,
       "<v01:deleteDirectionalPool><transactionID /><dirPoolID>AAAAAAAAAAAAAAAA</dirPoolID><retainRecordID /></v01:deleteDirectionalPool>");
-  static String deleteDirectionalPoolResponse = ""//
+  static String deleteDirectionalPoolResponse = ""
                                                 + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                                + "  <soap:Body>\n"//
+                                                + "  <soap:Body>\n"
                                                 + "    <ns1:deleteDirectionalPoolResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                 + "      <result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result>\n"
-//
-                                                + "    </ns1:deleteDirectionalPoolResponse>\n"//
-                                                + "  </soap:Body>\n"//
+                                                + "    </ns1:deleteDirectionalPoolResponse>\n"
+                                                + "  </soap:Body>\n"
                                                 + "</soap:Envelope>";
   static String deleteDirectionalPoolRecord = format(
       SOAP_TEMPLATE,
       "<v01:deleteDirectionalPoolRecord><transactionID /><dirPoolRecordId>00000000000</dirPoolRecordId></v01:deleteDirectionalPoolRecord>");
-  static String deleteDirectionalPoolRecordResponse = ""//
+  static String deleteDirectionalPoolRecordResponse = ""
                                                       + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                                      + "  <soap:Body>\n"//
+                                                      + "  <soap:Body>\n"
                                                       + "    <ns1:deleteDirectionalPoolRecordResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                       + "      <result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result>\n"
-//
                                                       + "    </ns1:deleteDirectionalPoolRecordResponse>\n"
-//
-                                                      + "  </soap:Body>\n"//
+                                                      + "  </soap:Body>\n"
                                                       + "</soap:Envelope>";
   static String dirRecordNotFound = format(FAULT_TEMPLATE, DIRECTIONALPOOL_RECORD_NOT_FOUND,
                                            "Directional Pool Record does not exist in the system");
   static String addDirectionalPoolRecord = format(
       SOAP_TEMPLATE,
-      ""//
-      + "<v01:addDirectionalPoolRecord><transactionID />"//
-      + "<AddDirectionalRecordData directionalPoolId=\"AAAAAAAAAAAAAAAA\">"//
-      + "<DirectionalRecordConfiguration recordType=\"MX\" TTL=\"1800\" >"//
-      + "<InfoValues Info1Value=\"10\" Info2Value=\"maileast.denominator.io.\" />" //
-      + "</DirectionalRecordConfiguration>"//
-      + "<GeolocationGroupData><GroupData groupingType=\"DEFINE_NEW_GROUP\" />" //
-      + "<GeolocationGroupDetails groupName=\"Mexas\">" //
+      ""
+      + "<v01:addDirectionalPoolRecord><transactionID />"
+      + "<AddDirectionalRecordData directionalPoolId=\"AAAAAAAAAAAAAAAA\">"
+      + "<DirectionalRecordConfiguration recordType=\"MX\" TTL=\"1800\" >"
+      + "<InfoValues Info1Value=\"10\" Info2Value=\"maileast.denominator.io.\" />"
+      + "</DirectionalRecordConfiguration>"
+      + "<GeolocationGroupData><GroupData groupingType=\"DEFINE_NEW_GROUP\" />"
+      + "<GeolocationGroupDetails groupName=\"Mexas\">"
       + "<GeolocationGroupDefinitionData regionName=\"United States (US)\" territoryNames=\"Maryland;Texas\" />"
-      //
-      + "</GeolocationGroupDetails></GeolocationGroupData>"//
+
+      + "</GeolocationGroupDetails></GeolocationGroupData>"
       + "<forceOverlapTransfer>true</forceOverlapTransfer></AddDirectionalRecordData></v01:addDirectionalPoolRecord>");
-//
-  static String addDirectionalPoolRecordResponse = ""//
+  static String addDirectionalPoolRecordResponse = ""
                                                    + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                                   + "  <soap:Body>\n"//
+                                                   + "  <soap:Body>\n"
                                                    + "    <ns1:addDirectionalPoolRecordResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                    + "      <DirectionalPoolRecordID xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">06063DC355058294</DirectionalPoolRecordID>\n"
-//
                                                    + "    </ns1:addDirectionalPoolRecordResponse>\n"
-//
-                                                   + "  </soap:Body>\n"//
+                                                   + "  </soap:Body>\n"
                                                    + "</soap:Envelope>";
   static String poolRecordAlreadyExists = format(FAULT_TEMPLATE, POOL_RECORD_ALREADY_EXISTS,
                                                  "Resource Record already exists.");
@@ -560,130 +458,86 @@ public class UltraDNSTest {
       300,
       "www-000000001.eu-west-1.elb.amazonaws.com.",
       "<GeolocationGroupDetails groupName=\"Europe\"><GeolocationGroupDefinitionData regionName=\"Europe\" territoryNames=\"Aland Islands\" /></GeolocationGroupDetails><forceOverlapTransfer>true</forceOverlapTransfer>");
-  static String updateDirectionalPoolRecordResponse = ""//
+  static String updateDirectionalPoolRecordResponse = ""
                                                       + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                                      + "  <soap:Body>\n"//
+                                                      + "  <soap:Body>\n"
                                                       + "    <ns1:updateDirectionalPoolRecordResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                       + "      <result xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">Successful</result>\n"
-//
                                                       + "    </ns1:updateDirectionalPoolRecordResponse>\n"
-//
-                                                      + "  </soap:Body>\n"//
+                                                      + "  </soap:Body>\n"
                                                       + "</soap:Envelope>";
   static String existsWithSameAttributes = format(FAULT_TEMPLATE, RESOURCE_RECORD_ALREADY_EXISTS,
                                                   "Resource Record of type CNAME with these attributes already exists in the system.");
   static String getDirectionalDNSGroupDetails = format(SOAP_TEMPLATE,
                                                        "<v01:getDirectionalDNSGroupDetails><GroupId>AAAAAAAAAAAAAAAA</GroupId></v01:getDirectionalDNSGroupDetails>");
-  static String getDirectionalDNSGroupDetailsResponseEurope = "" //
-                                                              + "<?xml version=\"1.0\"?>\n"//
+  static String getDirectionalDNSGroupDetailsResponseEurope = ""
+                                                              + "<?xml version=\"1.0\"?>\n"
                                                               + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                                              + " <soap:Body>\n"//
+                                                              + " <soap:Body>\n"
                                                               + "         <ns1:getDirectionalDNSGroupDetailsResponseEurope xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                                               + "                 <DirectionalDNSGroupDetail xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" GroupName=\"Europe\">\n"
-//
                                                               + "                         <ns2:DirectionalDNSRegion>\n"
-//
                                                               + "                                 <ns2:RegionForNewGroups RegionName=\"Europe\"\n"
-//
                                                               + "                                         TerritoryName=\"Aland Islands;Albania;Andorra;Armenia;Austria;Azerbaijan;Belarus;Belgium;Bosnia-Herzegovina;Bulgaria;Croatia;Czech Republic;Denmark;Estonia;Faroe Islands;Finland;France;Georgia;Germany;Gibraltar;Greece;Guernsey;Hungary;Iceland;Ireland;Isle of Man;Italy;Jersey;Latvia;Liechtenstein;Lithuania;Luxembourg;Macedonia, the former Yugoslav Republic of;Malta;Moldova, Republic of;Monaco;Montenegro;Netherlands;Norway;Poland;Portugal;Romania;San Marino;Serbia;Slovakia;Slovenia;Spain;Svalbard and Jan Mayen;Sweden;Switzerland;Ukraine;Undefined Europe;United Kingdom - England, Northern Ireland, Scotland, Wales;Vatican City\" />\n"
-//
                                                               + "                         </ns2:DirectionalDNSRegion>\n"
-//
                                                               + "                 </DirectionalDNSGroupDetail>\n"
-//
                                                               + "         </ns1:getDirectionalDNSGroupDetailsResponseEurope>\n"
-//
-                                                              + " </soap:Body>\n"//
+                                                              + " </soap:Body>\n"
                                                               + "</soap:Envelope>";
   static String getAvailableRegions = format(SOAP_TEMPLATE, "<v01:getAvailableRegions />");
-  static String getAvailableRegionsResponse = ""//
+  static String getAvailableRegionsResponse = ""
                                               + "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-//
-                                              + "<soap:Body>\n"//
+                                              + "<soap:Body>\n"
                                               + "      <ns1:getAvailableRegionsResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
                                               + "          <DirectionalDNSAvailableRegionList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">\n"
-//
                                               + "              <ns2:Region TerritoryName=\"Anonymous Proxy\" RegionName=\"Anonymous Proxy (A1)\" RegionID=\"14\" />\n"
-//
                                               + "              <ns2:Region TerritoryName=\"Antarctica;Bouvet Island;French Southern Territories\" RegionName=\"Antarctica\" RegionID=\"3\" />\n"
-//
-                                              + "          </DirectionalDNSAvailableRegionList>\n"//
-                                              + "      </ns1:getAvailableRegionsResponse>\n"//
-                                              + "  </soap:Body>\n"//
+                                              + "          </DirectionalDNSAvailableRegionList>\n"
+                                              + "      </ns1:getAvailableRegionsResponse>\n"
+                                              + "  </soap:Body>\n"
                                               + "</soap:Envelope>";
-  private String getResourceRecordsOfZoneResponsePresent = ""//
+  private String getResourceRecordsOfZoneResponsePresent = ""
                                                            + getResourceRecordsOfZoneResponseHeader
-                                                           //
+
                                                            + "        <ns2:ResourceRecord ZoneName=\"denominator.io.\" Type=\"1\" DName=\"www.denominator.io.\" TTL=\"3600\" Guid=\"04023A2507B6468F\" ZoneId=\"0000000000000001\" LName=\"www.denominator.io.\" Created=\"2010-10-02T16:57:16.000Z\" Modified=\"2011-09-27T23:49:21.000Z\">\n"
-//
                                                            + "          <ns2:InfoValues Info1Value=\"1.2.3.4\"/>\n"
-//
-                                                           + "        </ns2:ResourceRecord>\n"//
+                                                           + "        </ns2:ResourceRecord>\n"
                                                            + "        <ns2:ResourceRecord ZoneName=\"denominator.io.\" Type=\"2\" DName=\"denominator.io.\" TTL=\"86400\" Guid=\"0B0338C2023F7969\" ZoneId=\"0000000000000001\" LName=\"denominator.io.\" Created=\"2009-10-12T12:02:23.000Z\" Modified=\"2009-10-12T12:02:23.000Z\">\n"
-//
                                                            + "          <ns2:InfoValues Info1Value=\"pdns2.ultradns.net.\"/>\n"
-//
-                                                           + "        </ns2:ResourceRecord>\n"//
+                                                           + "        </ns2:ResourceRecord>\n"
                                                            + getResourceRecordsOfZoneResponseFooter;
-  private String getLoadBalancingPoolsByZoneResponsePresent = ""//
+  private String getLoadBalancingPoolsByZoneResponsePresent = ""
                                                               + getLoadBalancingPoolsByZoneResponseHeader
-                                                              //
                                                               + "      <ns2:LBPoolData zoneid=\"0000000000000001\">\n"
-//
                                                               + "        <ns2:PoolData description=\"uswest1\" PoolId=\"000000000000002\" PoolType=\"RD\" PoolRecordType=\"A\" PoolDName=\"app-uswest1.denominator.io.\" ResponseMethod=\"RR\" />\n"
-//
-                                                              + "      </ns2:LBPoolData>\n"//
+                                                              + "      </ns2:LBPoolData>\n"
                                                               + "      <ns2:LBPoolData zoneid=\"0000000000000001\">\n"
-//
                                                               + "        <ns2:PoolData description=\"uswest2\" PoolId=\"000000000000003\" PoolType=\"RD\" PoolRecordType=\"A\" PoolDName=\"app-uswest2.denominator.io.\" ResponseMethod=\"RR\" />\n"
-//
-                                                              + "      </ns2:LBPoolData>\n"//
+                                                              + "      </ns2:LBPoolData>\n"
                                                               + getLoadBalancingPoolsByZoneResponseFooter;
-  private String getRRPoolRecordsResponsePresent = ""//
-                                                   + getRRPoolRecordsResponseHeader //
+  private String getRRPoolRecordsResponsePresent = ""
+                                                   + getRRPoolRecordsResponseHeader
                                                    + "        <ns2:ResourceRecord ZoneName=\"denominator.io.\" Type=\"1\" DName=\"www.denominator.io.\" TTL=\"3600\" Guid=\"04023A2507B6468F\" ZoneId=\"0000000000000001\" LName=\"www.denominator.io.\" Created=\"2010-10-02T16:57:16.000Z\" Modified=\"2011-09-27T23:49:21.000Z\">\n"
-//
                                                    + "          <ns2:InfoValues Info1Value=\"1.2.3.4\"/>\n"
-//
-                                                   + "        </ns2:ResourceRecord>\n"//
+                                                   + "        </ns2:ResourceRecord>\n"
                                                    + "        <ns2:ResourceRecord ZoneName=\"denominator.io.\" Type=\"2\" DName=\"denominator.io.\" TTL=\"86400\" Guid=\"0B0338C2023F7969\" ZoneId=\"0000000000000001\" LName=\"denominator.io.\" Created=\"2009-10-12T12:02:23.000Z\" Modified=\"2009-10-12T12:02:23.000Z\">\n"
-//
                                                    + "          <ns2:InfoValues Info1Value=\"pdns2.ultradns.net.\"/>\n"
-//
-                                                   + "        </ns2:ResourceRecord>\n"//
+                                                   + "        </ns2:ResourceRecord>\n"
                                                    + getRRPoolRecordsResponseFooter;
-  private String getDirectionalDNSRecordsForHostResponseFiltersOutSourceIP = ""//
+  private String getDirectionalDNSRecordsForHostResponseFiltersOutSourceIP = ""
                                                                              + getDirectionalDNSRecordsForHostResponseHeader
-//
                                                                              + "    <DirectionalDNSRecordDetailList xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" ZoneName=\"denominator.io.\" DName=\"www.denominator.io.\">\n"
-//
                                                                              + "      <ns2:DirectionalDNSRecordDetail SourceIPGroupName=\"172.16.1.0/24\" SourceIPGroupId=\"C000000000000001\" TerritoriesCount=\"54\" DirPoolRecordId=\"A000000000000001\">\n"
-//
                                                                              + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"
-//
                                                                              + "          <ns2:InfoValues Info1Value=\"www-000000001.eu-west-1.elb.amazonaws.com.\" />\n"
-//
                                                                              + "        </ns2:DirectionalDNSRecord>\n"
-//
                                                                              + "      </ns2:DirectionalDNSRecordDetail>\n"
-//
                                                                              + "      <ns2:DirectionalDNSRecordDetail GeolocationGroupName=\"US\" GeolocationGroupId=\"C000000000000002\" TerritoriesCount=\"3\" DirPoolRecordId=\"A000000000000002\">\n"
-//
                                                                              + "        <ns2:DirectionalDNSRecord recordType=\"CNAME\" TTL=\"300\" noResponseRecord=\"false\">\n"
-//
                                                                              + "          <ns2:InfoValues Info1Value=\"www-000000001.us-east-1.elb.amazonaws.com.\" />\n"
-//
                                                                              + "        </ns2:DirectionalDNSRecord>\n"
-//
                                                                              + "      </ns2:DirectionalDNSRecordDetail>\n"
-//
                                                                              + "    </DirectionalDNSRecordDetailList>\n"
-//
                                                                              + getDirectionalDNSRecordsForHostResponseFooter;
 
   static UltraDNS mockApi(final int port) {
@@ -851,7 +705,6 @@ public class UltraDNSTest {
 
       assertEquals(records.size(), 2);
 
-      // sorted
       assertEquals(records.get(1).id, "04023A2507B6468F");
       assertEquals(records.get(1).created,
                    iso8601SimpleDateFormat.parse("2010-10-02T16:57:16.000Z"));
@@ -1063,7 +916,6 @@ public class UltraDNSTest {
 
       assertEquals(records.size(), 2);
 
-      // sorted
       assertEquals(records.get(1).id, "04023A2507B6468F");
       assertEquals(records.get(1).created,
                    iso8601SimpleDateFormat.parse("2010-10-02T16:57:16.000Z"));
@@ -1248,7 +1100,6 @@ public class UltraDNSTest {
       assertEquals(records.get(0).ttl, 300);
       assertEquals(records.get(0).rdata.get(0), "www-000000001.eu-west-1.elb.amazonaws.com.");
 
-      // sorted
       assertEquals(records.get(2).geoGroupId, "C000000000000002");
       assertEquals(records.get(2).geoGroupName, "US");
       assertFalse(records.get(2).noResponseRecord);
@@ -1492,8 +1343,8 @@ public class UltraDNSTest {
 
       DirectionalGroup group = new DirectionalGroup();
       group.name = "Mexas";
-      group.regionToTerritories = ImmutableMultimap.<String, String>builder()//
-          .putAll("United States (US)", "Maryland", "Texas")//
+      group.regionToTerritories = ImmutableMultimap.<String, String>builder()
+          .putAll("United States (US)", "Maryland", "Texas")
           .build().asMap();
 
       assertEquals(
@@ -1523,8 +1374,8 @@ public class UltraDNSTest {
 
       DirectionalGroup group = new DirectionalGroup();
       group.name = "Mexas";
-      group.regionToTerritories = ImmutableMultimap.<String, String>builder()//
-          .putAll("United States (US)", "Maryland", "Texas")//
+      group.regionToTerritories = ImmutableMultimap.<String, String>builder()
+          .putAll("United States (US)", "Maryland", "Texas")
           .build().asMap();
 
       assertEquals(
@@ -1553,8 +1404,8 @@ public class UltraDNSTest {
 
       DirectionalGroup group = new DirectionalGroup();
       group.name = "Europe";
-      group.regionToTerritories = ImmutableMultimap.<String, String>builder()//
-          .putAll("Europe", "Aland Islands")//
+      group.regionToTerritories = ImmutableMultimap.<String, String>builder()
+          .putAll("Europe", "Aland Islands")
           .build().asMap();
 
       mockApi(server.getPort()).updateDirectionalPoolRecord(record, group);
@@ -1583,8 +1434,8 @@ public class UltraDNSTest {
 
       DirectionalGroup group = new DirectionalGroup();
       group.name = "Mexas";
-      group.regionToTerritories = ImmutableMultimap.<String, String>builder()//
-          .putAll("United States (US)", "Maryland", "Texas")//
+      group.regionToTerritories = ImmutableMultimap.<String, String>builder()
+          .putAll("United States (US)", "Maryland", "Texas")
           .build().asMap();
 
       mockApi(server.getPort()).updateDirectionalPoolRecord(record, group);

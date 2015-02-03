@@ -3,8 +3,6 @@ package denominator.route53;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Inject;
-
 import denominator.model.ResourceRecordSet;
 import denominator.route53.Route53.ActionOnResourceRecordSet;
 import feign.RequestTemplate;
@@ -16,10 +14,6 @@ import static denominator.common.Util.join;
 import static java.lang.String.format;
 
 class EncodeChanges implements Encoder {
-
-  @Inject
-  EncodeChanges() {
-  }
 
   static String apply(ResourceRecordSet<?> rrs) {
     StringBuilder builder = new StringBuilder().append("<ResourceRecordSet>");

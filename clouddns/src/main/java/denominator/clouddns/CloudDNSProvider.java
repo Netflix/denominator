@@ -1,7 +1,5 @@
 package denominator.clouddns;
 
-import com.google.gson.TypeAdapter;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -28,11 +26,9 @@ import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
 import feign.Feign;
-import feign.Target.HardCodedTarget;
-import feign.gson.DoubleToIntMapTypeAdapter;
-import feign.gson.GsonModule;
-
-import static dagger.Provides.Type.SET;
+import feign.Target.EmptyTarget;
+import feign.gson.GsonDecoder;
+import feign.gson.GsonEncoder;
 
 public class CloudDNSProvider extends BasicProvider {
 
@@ -115,8 +111,8 @@ public class CloudDNSProvider extends BasicProvider {
   @dagger.Module(//
       injects = CloudDNSResourceRecordSetApi.Factory.class, //
       complete = false, // doesn't bind Provider used by CloudDNSTarget
-      includes = {Feign.Defaults.class, GsonModule.class})
-  @SuppressWarnings("rawtypes")
+      overrides = true, // builds Feign directly
+      includes = Feign.Defaults.class)
   public static final class FeignModule {
 
     @Provides
@@ -128,40 +124,26 @@ public class CloudDNSProvider extends BasicProvider {
     @Provides
     @Singleton
     CloudIdentity cloudIdentity(Feign feign) {
-      return feign
-          .newInstance(new HardCodedTarget<CloudIdentity>(CloudIdentity.class, "cloudidentity",
-                                                          "http://invalid"));
-    }
-
-    // deals with scenario where gson Object type treats numbers as doubles
-    @Provides(type = SET)
-    TypeAdapter doubleToInt() {
-      return new DoubleToIntMapTypeAdapter();
-    }
-
-    @Provides(type = SET)
-    TypeAdapter tokenIdAndPublicURLAdapter() {
-      return new KeystoneAccessAdapter("rax:dns");
-    }
-
-    @Provides(type = SET)
-    TypeAdapter jobIdAndStatusAdapter(JobIdAndStatusAdapter adapter) {
-      return adapter;
-    }
-
-    @Provides(type = SET)
-    TypeAdapter domainListAdapter(DomainListAdapter adapter) {
-      return adapter;
-    }
-
-    @Provides(type = SET)
-    TypeAdapter recordListAdapter(RecordListAdapter adapter) {
-      return adapter;
+      return feign.newInstance(EmptyTarget.create(CloudIdentity.class, "cloudidentity"));
     }
 
     @Provides
-    public TokenIdAndPublicURL urlAndToken(InvalidatableAuthProvider supplier) {
-      return supplier.get();
+    public TokenIdAndPublicURL urlAndToken(InvalidatableAuthProvider provider) {
+      return provider.get();
+    }
+
+    @Provides
+    @Singleton
+    Feign feign(Feign.Builder feignBuilder) {
+      return feignBuilder
+          .encoder(new GsonEncoder())
+          .decoder(new GsonDecoder(Arrays.asList(
+                       new KeystoneAccessAdapter("rax:dns"),
+                       new JobIdAndStatusAdapter(),
+                       new DomainListAdapter(),
+                       new RecordListAdapter()))
+          )
+          .build();
     }
   }
 }

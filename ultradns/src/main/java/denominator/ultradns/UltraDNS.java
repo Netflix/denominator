@@ -7,10 +7,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.inject.Named;
-
 import denominator.model.Zone;
 import feign.Body;
+import feign.Param;
 import feign.RequestLine;
 
 interface UltraDNS {
@@ -25,51 +24,51 @@ interface UltraDNS {
 
   @RequestLine("POST")
   @Body("<v01:getZonesOfAccount><accountId>{accountId}</accountId><zoneType>all</zoneType></v01:getZonesOfAccount>")
-  List<Zone> getZonesOfAccount(@Named("accountId") String accountId);
+  List<Zone> getZonesOfAccount(@Param("accountId") String accountId);
 
   @RequestLine("POST")
   @Body("<v01:getResourceRecordsOfZone><zoneName>{zoneName}</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone>")
-  List<Record> getResourceRecordsOfZone(@Named("zoneName") String zoneName);
+  List<Record> getResourceRecordsOfZone(@Param("zoneName") String zoneName);
 
   @RequestLine("POST")
   @Body("<v01:getResourceRecordsOfDNameByType><zoneName>{zoneName}</zoneName><hostName>{hostName}</hostName><rrType>{rrType}</rrType></v01:getResourceRecordsOfDNameByType>")
-  List<Record> getResourceRecordsOfDNameByType(@Named("zoneName") String zoneName,
-                                               @Named("hostName") String hostName,
-                                               @Named("rrType") int rrType);
+  List<Record> getResourceRecordsOfDNameByType(@Param("zoneName") String zoneName,
+                                               @Param("hostName") String hostName,
+                                               @Param("rrType") int rrType);
 
   @RequestLine("POST")
-  void createResourceRecord(@Named("resourceRecord") Record create,
-                            @Named("zoneName") String zoneName);
+  void createResourceRecord(@Param("resourceRecord") Record create,
+                            @Param("zoneName") String zoneName);
 
   @RequestLine("POST")
-  void updateResourceRecord(@Named("resourceRecord") Record update,
-                            @Named("zoneName") String zoneName);
+  void updateResourceRecord(@Param("resourceRecord") Record update,
+                            @Param("zoneName") String zoneName);
 
   /**
    * @throws UltraDNSException with code {@link UltraDNSException#RESOURCE_RECORD_NOT_FOUND} .
    */
   @RequestLine("POST")
   @Body("<v01:deleteResourceRecord><transactionID /><guid>{guid}</guid></v01:deleteResourceRecord>")
-  void deleteResourceRecord(@Named("guid") String guid);
+  void deleteResourceRecord(@Param("guid") String guid);
 
   @RequestLine("POST")
   @Body("<v01:getLoadBalancingPoolsByZone><zoneName>{zoneName}</zoneName><lbPoolType>RR</lbPoolType></v01:getLoadBalancingPoolsByZone>")
-  Map<NameAndType, String> getLoadBalancingPoolsByZone(@Named("zoneName") String zoneName);
+  Map<NameAndType, String> getLoadBalancingPoolsByZone(@Param("zoneName") String zoneName);
 
   @RequestLine("POST")
   @Body("<v01:getRRPoolRecords><lbPoolId>{poolId}</lbPoolId></v01:getRRPoolRecords>")
-  List<Record> getRRPoolRecords(@Named("poolId") String poolId);
+  List<Record> getRRPoolRecords(@Param("poolId") String poolId);
 
   @RequestLine("POST")
   @Body("<v01:addRRLBPool><transactionID /><zoneName>{zoneName}</zoneName><hostName>{hostName}</hostName><description>{poolRecordType}</description><poolRecordType>{poolRecordType}</poolRecordType><rrGUID /></v01:addRRLBPool>")
-  String addRRLBPool(@Named("zoneName") String zoneName, @Named("hostName") String name,
-                     @Named("poolRecordType") int typeCode);
+  String addRRLBPool(@Param("zoneName") String zoneName, @Param("hostName") String name,
+                     @Param("poolRecordType") int typeCode);
 
   @RequestLine("POST")
   @Body("<v01:addRecordToRRPool><transactionID /><roundRobinRecord lbPoolID=\"{lbPoolID}\" info1Value=\"{address}\" ZoneName=\"{zoneName}\" Type=\"{type}\" TTL=\"{ttl}\"/></v01:addRecordToRRPool>")
-  void addRecordToRRPool(@Named("type") int type, @Named("ttl") int ttl,
-                         @Named("address") String rdata,
-                         @Named("lbPoolID") String lbPoolID, @Named("zoneName") String zoneName);
+  void addRecordToRRPool(@Param("type") int type, @Param("ttl") int ttl,
+                         @Param("address") String rdata,
+                         @Param("lbPoolID") String lbPoolID, @Param("zoneName") String zoneName);
 
   /**
    * @throws UltraDNSException with code {@link UltraDNSException#POOL_NOT_FOUND} and {@link
@@ -77,7 +76,7 @@ interface UltraDNS {
    */
   @RequestLine("POST")
   @Body("<v01:deleteLBPool><transactionID /><lbPoolID>{lbPoolID}</lbPoolID><DeleteAll>Yes</DeleteAll><retainRecordId /></v01:deleteLBPool>")
-  void deleteLBPool(@Named("lbPoolID") String id);
+  void deleteLBPool(@Param("lbPoolID") String id);
 
   @RequestLine("POST")
   @Body("<v01:getAvailableRegions />")
@@ -85,52 +84,52 @@ interface UltraDNS {
 
   @RequestLine("POST")
   @Body("<v01:getDirectionalDNSGroupDetails><GroupId>{GroupId}</GroupId></v01:getDirectionalDNSGroupDetails>")
-  DirectionalGroup getDirectionalDNSGroupDetails(@Named("GroupId") String groupId);
+  DirectionalGroup getDirectionalDNSGroupDetails(@Param("GroupId") String groupId);
 
   @RequestLine("POST")
   @Body("<v01:getDirectionalDNSRecordsForGroup><groupName>{groupName}</groupName><hostName>{hostName}</hostName><zoneName>{zoneName}</zoneName><poolRecordType>{poolRecordType}</poolRecordType></v01:getDirectionalDNSRecordsForGroup>")
-  List<DirectionalRecord> getDirectionalDNSRecordsForGroup(@Named("zoneName") String zoneName,
-                                                           @Named("groupName") String groupName,
-                                                           @Named("hostName") String name,
-                                                           @Named("poolRecordType") int type);
+  List<DirectionalRecord> getDirectionalDNSRecordsForGroup(@Param("zoneName") String zoneName,
+                                                           @Param("groupName") String groupName,
+                                                           @Param("hostName") String name,
+                                                           @Param("poolRecordType") int type);
 
   /**
    * @throws UltraDNSException with code {@link UltraDNSException#POOL_RECORD_ALREADY_EXISTS}.
    */
   @RequestLine("POST")
-  String addDirectionalPoolRecord(@Named("record") DirectionalRecord toCreate,
-                                  @Named("group") DirectionalGroup group,
-                                  @Named("poolId") String poolId);
+  String addDirectionalPoolRecord(@Param("record") DirectionalRecord toCreate,
+                                  @Param("group") DirectionalGroup group,
+                                  @Param("poolId") String poolId);
 
   /**
    * @throws UltraDNSException with code {@link UltraDNSException#RESOURCE_RECORD_ALREADY_EXISTS}.
    */
   @RequestLine("POST")
-  void updateDirectionalPoolRecord(@Named("record") DirectionalRecord update,
-                                   @Named("group") DirectionalGroup group);
+  void updateDirectionalPoolRecord(@Param("record") DirectionalRecord update,
+                                   @Param("group") DirectionalGroup group);
 
   @RequestLine("POST")
   @Body("<v01:getDirectionalPoolsOfZone><zoneName>{zoneName}</zoneName></v01:getDirectionalPoolsOfZone>")
-  Map<String, String> getDirectionalPoolsOfZone(@Named("zoneName") String zoneName);
+  Map<String, String> getDirectionalPoolsOfZone(@Param("zoneName") String zoneName);
 
   @RequestLine("POST")
   @Body("<v01:getDirectionalDNSRecordsForHost><zoneName>{zoneName}</zoneName><hostName>{hostName}</hostName><poolRecordType>{poolRecordType}</poolRecordType></v01:getDirectionalDNSRecordsForHost>")
-  List<DirectionalRecord> getDirectionalDNSRecordsForHost(@Named("zoneName") String zoneName,
-                                                          @Named("hostName") String name,
-                                                          @Named("poolRecordType") int rrType);
+  List<DirectionalRecord> getDirectionalDNSRecordsForHost(@Param("zoneName") String zoneName,
+                                                          @Param("hostName") String name,
+                                                          @Param("poolRecordType") int rrType);
 
   @RequestLine("POST")
   @Body("<v01:addDirectionalPool><transactionID /><AddDirectionalPoolData dirPoolType=\"GEOLOCATION\" poolRecordType=\"{poolRecordType}\" zoneName=\"{zoneName}\" hostName=\"{hostName}\" description=\"{poolRecordType}\"/></v01:addDirectionalPool>")
-  String addDirectionalPool(@Named("zoneName") String zoneName, @Named("hostName") String name,
-                            @Named("poolRecordType") String type);
+  String addDirectionalPool(@Param("zoneName") String zoneName, @Param("hostName") String name,
+                            @Param("poolRecordType") String type);
 
   @RequestLine("POST")
   @Body("<v01:deleteDirectionalPoolRecord><transactionID /><dirPoolRecordId>{dirPoolRecordId}</dirPoolRecordId></v01:deleteDirectionalPoolRecord>")
-  void deleteDirectionalPoolRecord(@Named("dirPoolRecordId") String id);
+  void deleteDirectionalPoolRecord(@Param("dirPoolRecordId") String id);
 
   @RequestLine("POST")
   @Body("<v01:deleteDirectionalPool><transactionID /><dirPoolID>{dirPoolID}</dirPoolID><retainRecordID /></v01:deleteDirectionalPool>")
-  void deleteDirectionalPool(@Named("dirPoolID") String dirPoolID);
+  void deleteDirectionalPool(@Param("dirPoolID") String dirPoolID);
 
   static enum NetworkStatus {
     GOOD, FAILED;

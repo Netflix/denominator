@@ -36,8 +36,6 @@ import denominator.ultradns.UltraDNSErrorDecoder.UltraDNSError;
 import feign.Feign;
 import feign.Request.Options;
 import feign.codec.Decoder;
-import feign.codec.Encoder;
-import feign.codec.ErrorDecoder;
 import feign.sax.SAXDecoder;
 
 import static dagger.Provides.Type.SET;
@@ -146,45 +144,22 @@ public class UltraDNSProvider extends BasicProvider {
     }
   }
 
-  @dagger.Module(//
-      injects = UltraDNSResourceRecordSetApi.Factory.class, //
+  @dagger.Module(
+      injects = UltraDNSResourceRecordSetApi.Factory.class,
       complete = false, // doesn't bind Provider used by UltraDNSTarget
-      overrides = true, // Options
-      includes = {Feign.Defaults.class, XMLCodec.class})
+      overrides = true, // builds Feign directly
+      includes = Feign.Defaults.class)
   public static final class FeignModule {
-
-    /**
-     * {@link UltraDNS#updateDirectionalPoolRecord(DirectionalRecord, DirectionalGroup)} and {@link
-     * UltraDNS#addDirectionalPoolRecord(DirectionalRecord, DirectionalGroup, String)} can take up
-     * to 10 minutes to complete.
-     */
-    @Provides
-    Options options() {
-      return new Options(10 * 1000, 10 * 60 * 1000);
-    }
 
     @Provides
     @Singleton
     UltraDNS ultraDNS(Feign feign, UltraDNSTarget target) {
       return feign.newInstance(target);
     }
-  }
-
-  @dagger.Module(//
-      injects = {Encoder.class, Decoder.class, ErrorDecoder.class},//
-      overrides = true, // ErrorDecoder
-      addsTo = Feign.Defaults.class //
-  )
-  static final class XMLCodec {
 
     @Provides
-    Encoder formEncoder() {
-      return new UltraDNSFormEncoder();
-    }
-
-    @Provides
-    Decoder saxDecoder() {
-      return SAXDecoder.builder()//
+    Decoder decoder() {
+      return SAXDecoder.builder()
           .registerContentHandler(NetworkStatusHandler.class)//
           .registerContentHandler(IDHandler.class)//
           .registerContentHandler(ZoneListHandler.class)//
@@ -199,8 +174,20 @@ public class UltraDNSProvider extends BasicProvider {
     }
 
     @Provides
-    ErrorDecoder errorDecoders(UltraDNSErrorDecoder errorDecoder) {
-      return errorDecoder;
+    @Singleton
+    Feign feign(Feign.Builder feignBuilder, Decoder decoder) {
+      /**
+       * {@link UltraDNS#updateDirectionalPoolRecord(DirectionalRecord, DirectionalGroup)} and {@link
+       * UltraDNS#addDirectionalPoolRecord(DirectionalRecord, DirectionalGroup, String)} can take up
+       * to 10 minutes to complete.
+       */
+      Options options = new Options(10 * 1000, 10 * 60 * 1000);
+      return feignBuilder
+          .options(options)
+          .encoder(new UltraDNSFormEncoder())
+          .decoder(decoder)
+          .errorDecoder(new UltraDNSErrorDecoder(decoder))
+          .build();
     }
   }
 }

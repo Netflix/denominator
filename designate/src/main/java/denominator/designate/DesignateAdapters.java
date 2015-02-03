@@ -10,8 +10,6 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 
-import javax.inject.Inject;
-
 import denominator.designate.Designate.Record;
 import denominator.model.Zone;
 
@@ -56,22 +54,18 @@ class DesignateAdapters {
 
   static class RecordAdapter extends TypeAdapter<Record> {
 
-    @Inject
-    RecordAdapter() {
-    }
-
     @Override
     public void write(JsonWriter out, Record record) throws IOException {
       out.beginObject();
       out.name("name").value(record.name);
       out.name("type").value(record.type);
-        if (record.ttl != null) {
-            out.name("ttl").value(record.ttl);
-        }
+      if (record.ttl != null) {
+        out.name("ttl").value(record.ttl);
+      }
       out.name("data").value(record.data);
-        if (record.priority != null) {
-            out.name("priority").value(record.priority);
-        }
+      if (record.priority != null) {
+        out.name("priority").value(record.priority);
+      }
       out.endObject();
     }
 
@@ -85,10 +79,6 @@ class DesignateAdapters {
   }
 
   static class DomainListAdapter extends ListAdapter<Zone> {
-
-    @Inject
-    DomainListAdapter() {
-    }
 
     @Override
     protected String jsonKey() {
@@ -113,10 +103,6 @@ class DesignateAdapters {
   }
 
   static class RecordListAdapter extends ListAdapter<Record> {
-
-    @Inject
-    RecordListAdapter() {
-    }
 
     @Override
     protected String jsonKey() {
