@@ -1,17 +1,9 @@
 package denominator.discoverydns;
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
-import com.google.gson.JsonSerializer;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -20,10 +12,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.inject.Provider;
@@ -40,23 +30,18 @@ import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
-import denominator.common.Util;
 import denominator.config.GeoUnsupported;
 import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
-import denominator.discoverydns.crypto.Pems;
-import denominator.model.ResourceRecordSet;
+import denominator.discoverydns.DiscoveryDNS.ResourceRecords;
+import denominator.discoverydns.DiscoveryDNSAdapters.ResourceRecordsAdapter;
 import feign.Feign;
-import feign.codec.Decoder;
-import feign.codec.Encoder;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
 
 public class DiscoveryDNSProvider extends BasicProvider {
 
-  private static final String DEFAULT_TTL = "3600";
-  private static final String DEFAULT_CLASS = "IN";
   private final String url;
 
   public DiscoveryDNSProvider() {
@@ -121,16 +106,16 @@ public class DiscoveryDNSProvider extends BasicProvider {
     @Provides
     @Singleton
     ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(DiscoveryDNS api) {
-      return new DiscoveryDNSResourceRecordSetApi.ResourceRecordSetApiFactory(api);
+      return new DiscoveryDNSResourceRecordSetApi.Factory(api);
     }
   }
 
-  @dagger.Module(injects = {DiscoveryDNSResourceRecordSetApi.ResourceRecordSetApiFactory.class,
-                            DiscoveryDNSZoneApi.class},
-      complete = false,
-      overrides = true,
-      includes = {Feign.Defaults.class,
-                  GsonCodec.class})
+
+  @dagger.Module(//
+      injects = DiscoveryDNS.class, //
+      complete = false, // doesn't bind Provider used by DiscoveryDNSTarget
+      overrides = true, // builds Feign directly + SSLSocketFactory
+      includes = Feign.Defaults.class)
   public static final class FeignModule {
 
     @Provides
@@ -139,6 +124,18 @@ public class DiscoveryDNSProvider extends BasicProvider {
       return feign.newInstance(target);
     }
 
+    @Provides
+    @Singleton
+    Feign feign(Feign.Builder feignBuilder) {
+      Gson gson = new GsonBuilder().setPrettyPrinting()
+          .registerTypeAdapter(ResourceRecords.class, new ResourceRecordsAdapter()).create();
+      return feignBuilder
+          .encoder(new GsonEncoder(gson))
+          .decoder(new GsonDecoder(gson))
+          .build();
+    }
+
+    // TODO: this doesn't allow for dynamic credential changes.
     @Provides
     SSLSocketFactory sslSocketFactory(Provider<Credentials> credentials) {
       List<Object> creds = ListCredentials.asList(credentials.get());
@@ -165,131 +162,6 @@ public class DiscoveryDNSProvider extends BasicProvider {
       } catch (GeneralSecurityException e) {
         throw new IllegalArgumentException("Key or certificate could not be initialised");
       }
-    }
-  }
-
-  @dagger.Module(injects = {Encoder.class,
-                            Decoder.class},
-      overrides = true,
-      addsTo = Feign.Defaults.class)
-  static final class GsonCodec {
-
-    @Provides
-    @Singleton
-    Encoder encoder() {
-      GsonBuilder gsonBuilder = new GsonBuilder();
-      gsonBuilder.setPrettyPrinting();
-      gsonBuilder.registerTypeAdapter(DiscoveryDNS.ResourceRecords.class,
-                                      new JsonSerializer<DiscoveryDNS.ResourceRecords>() {
-                                        @Override
-                                        public JsonElement serialize(
-                                            DiscoveryDNS.ResourceRecords records, Type typeOfSrc,
-                                            JsonSerializationContext context) {
-                                          JsonArray array = new JsonArray();
-                                          for (ResourceRecordSet<?> rrset : records.records) {
-                                            for (Map<String, Object> rdata : rrset.records()) {
-                                              JsonObject obj = new JsonObject();
-                                              obj.addProperty("name", rrset.name());
-                                              obj.addProperty("class", DEFAULT_CLASS);
-                                              Integer ttl = rrset.ttl();
-                                              obj.addProperty("ttl", ttl == null ? DEFAULT_TTL
-                                                                                 : ttl.toString());
-                                              obj.addProperty("type", rrset.type());
-                                              obj.addProperty("rdata", Util.flatten(rdata));
-                                              array.add(obj);
-                                            }
-                                          }
-                                          return array;
-                                        }
-                                      });
-      return new GsonEncoder(gsonBuilder.create());
-    }
-
-    @Provides
-    @Singleton
-    Decoder decoder() {
-      GsonBuilder gsonBuilder = new GsonBuilder();
-      gsonBuilder.registerTypeAdapter(DiscoveryDNS.ResourceRecords.class,
-                                      new JsonDeserializer<DiscoveryDNS.ResourceRecords>() {
-                                        @Override
-                                        public DiscoveryDNS.ResourceRecords deserialize(
-                                            JsonElement json, Type typeOfT,
-                                            JsonDeserializationContext context)
-                                            throws JsonParseException {
-                                          Map<RecordIdentifier, Collection<String>>
-                                              rrsets =
-                                              new LinkedHashMap<RecordIdentifier, Collection<String>>();
-                                          for (JsonElement element : json.getAsJsonArray()) {
-                                            JsonObject obj = element.getAsJsonObject();
-                                            String name = obj.get("name").getAsString();
-                                            String type = obj.get("type").getAsString();
-                                            Integer ttl = obj.get("ttl").getAsInt();
-                                            String rdata = obj.get("rdata").getAsString();
-                                            RecordIdentifier
-                                                recordIdentifier =
-                                                new RecordIdentifier(name, type, ttl);
-                                            if (!rrsets.containsKey(recordIdentifier)) {
-                                              rrsets
-                                                  .put(recordIdentifier, new LinkedList<String>());
-                                            }
-                                            rrsets.get(recordIdentifier).add(rdata);
-                                          }
-
-                                          DiscoveryDNS.ResourceRecords
-                                              ddnsRecords =
-                                              new DiscoveryDNS.ResourceRecords();
-                                          for (Entry<RecordIdentifier, Collection<String>> entry : rrsets
-                                              .entrySet()) {
-                                            RecordIdentifier id = entry.getKey();
-                                            ResourceRecordSet.Builder<Map<String, Object>>
-                                                builder =
-                                                ResourceRecordSet.builder()
-                                                    .name(id.name)
-                                                    .type(id.type)
-                                                    .ttl(id.ttl);
-                                            for (String rdata : entry.getValue()) {
-                                              builder.add(Util.toMap(id.type, rdata));
-                                            }
-                                            ddnsRecords.records.add(builder.build());
-                                          }
-                                          return ddnsRecords;
-                                        }
-
-                                        class RecordIdentifier {
-
-                                          String name;
-                                          String type;
-                                          Integer ttl;
-
-                                          RecordIdentifier(String name, String type, Integer ttl) {
-                                            this.name = name;
-                                            this.type = type;
-                                            this.ttl = ttl;
-                                          }
-
-                                          @Override
-                                          public int hashCode() {
-                                            final int prime = 31;
-                                            int result = 1;
-                                            result =
-                                                prime * result + ((name == null) ? 0
-                                                                                 : name.hashCode());
-                                            result =
-                                                prime * result + ((ttl == null) ? 0
-                                                                                : ttl.hashCode());
-                                            result =
-                                                prime * result + ((type == null) ? 0
-                                                                                 : type.hashCode());
-                                            return result;
-                                          }
-
-                                          @Override
-                                          public boolean equals(Object obj) {
-                                            return hashCode() == obj.hashCode();
-                                          }
-                                        }
-                                      });
-      return new GsonDecoder(gsonBuilder.create());
     }
   }
 }

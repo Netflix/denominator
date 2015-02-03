@@ -21,7 +21,6 @@ class UltraDNSErrorDecoder implements ErrorDecoder {
 
   private final Decoder decoder;
 
-  @Inject
   UltraDNSErrorDecoder(Decoder decoder) {
     this.decoder = decoder;
   }

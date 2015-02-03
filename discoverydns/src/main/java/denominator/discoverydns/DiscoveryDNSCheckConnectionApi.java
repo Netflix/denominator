@@ -2,11 +2,11 @@ package denominator.discoverydns;
 
 import denominator.CheckConnection;
 
-public class DiscoveryDNSCheckConnectionApi implements CheckConnection {
+class DiscoveryDNSCheckConnectionApi implements CheckConnection {
 
   private DiscoveryDNS api;
 
-  public DiscoveryDNSCheckConnectionApi(DiscoveryDNS api) {
+  DiscoveryDNSCheckConnectionApi(DiscoveryDNS api) {
     this.api = api;
   }
 

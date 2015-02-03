@@ -4,6 +4,7 @@ import com.google.gson.TypeAdapter;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -27,11 +28,9 @@ import denominator.designate.DesignateAdapters.RecordAdapter;
 import denominator.designate.DesignateAdapters.RecordListAdapter;
 import denominator.designate.KeystoneV2.TokenIdAndPublicURL;
 import feign.Feign;
-import feign.Target.HardCodedTarget;
-import feign.gson.DoubleToIntMapTypeAdapter;
-import feign.gson.GsonModule;
-
-import static dagger.Provides.Type.SET;
+import feign.Target.EmptyTarget;
+import feign.gson.GsonDecoder;
+import feign.gson.GsonEncoder;
 
 public class DesignateProvider extends BasicProvider {
 
@@ -110,13 +109,13 @@ public class DesignateProvider extends BasicProvider {
   @dagger.Module(//
       injects = DesignateResourceRecordSetApi.Factory.class, //
       complete = false, // doesn't bind Provider used by DesignateTarget
-      includes = {Feign.Defaults.class, GsonModule.class})
-  @SuppressWarnings("rawtypes")
+      overrides = true, // builds Feign directly
+      includes = Feign.Defaults.class)
   public static final class FeignModule {
 
     @Provides
     @Singleton
-    Designate cloudDNS(Feign feign, DesignateTarget target) {
+    Designate designate(Feign feign, DesignateTarget target) {
       return feign.newInstance(target);
     }
 
@@ -130,39 +129,27 @@ public class DesignateProvider extends BasicProvider {
     @Provides
     @Singleton
     KeystoneV2 cloudIdentity(Feign feign) {
-      return feign.newInstance(
-          new HardCodedTarget<KeystoneV2>(KeystoneV2.class, "keystone", "http://invalid"));
-    }
-
-    // deals with scenario where gson Object type treats numbers as doubles
-    @Provides(type = SET)
-    TypeAdapter doubleToInt() {
-      return new DoubleToIntMapTypeAdapter();
-    }
-
-    @Provides(type = SET)
-    TypeAdapter tokenIdAndPublicURLAdapter(KeystoneV2AccessAdapter adapter) {
-      return adapter;
-    }
-
-    @Provides(type = SET)
-    TypeAdapter domainListAdapter(DomainListAdapter adapter) {
-      return adapter;
-    }
-
-    @Provides(type = SET)
-    TypeAdapter recordListAdapter(RecordListAdapter adapter) {
-      return adapter;
-    }
-
-    @Provides(type = SET)
-    TypeAdapter recordAdapter(RecordAdapter adapter) {
-      return adapter;
+      return feign.newInstance(EmptyTarget.create(KeystoneV2.class, "keystone"));
     }
 
     @Provides
-    TokenIdAndPublicURL urlAndToken(InvalidatableAuthProvider supplier) {
-      return supplier.get();
+    TokenIdAndPublicURL urlAndToken(InvalidatableAuthProvider provider) {
+      return provider.get();
+    }
+
+    @Provides
+    @Singleton
+    Feign feign(Feign.Builder feignBuilder, KeystoneV2AccessAdapter keystoneDecoder) {
+      RecordAdapter recordAdapter = new RecordAdapter();
+      return feignBuilder
+          .encoder(new GsonEncoder(Collections.<TypeAdapter<?>>singleton(recordAdapter)))
+          .decoder(new GsonDecoder(Arrays.asList(
+                       keystoneDecoder,
+                       recordAdapter,
+                       new DomainListAdapter(),
+                       new RecordListAdapter()))
+          )
+          .build();
     }
   }
 }

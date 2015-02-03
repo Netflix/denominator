@@ -3,11 +3,10 @@ package denominator.route53;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Named;
-
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import feign.Headers;
+import feign.Param;
 import feign.RequestLine;
 
 interface Route53 {
@@ -16,29 +15,29 @@ interface Route53 {
   ZoneList listHostedZones();
 
   @RequestLine("GET /2012-12-12/hostedzone?marker={marker}")
-  ZoneList listHostedZones(@Named("marker") String marker);
+  ZoneList listHostedZones(@Param("marker") String marker);
 
   @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset")
-  ResourceRecordSetList listResourceRecordSets(@Named("zoneId") String zoneId);
+  ResourceRecordSetList listResourceRecordSets(@Param("zoneId") String zoneId);
 
   @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset?name={name}")
-  ResourceRecordSetList listResourceRecordSets(@Named("zoneId") String zoneId,
-                                               @Named("name") String name);
+  ResourceRecordSetList listResourceRecordSets(@Param("zoneId") String zoneId,
+                                               @Param("name") String name);
 
   @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset?name={name}&type={type}")
-  ResourceRecordSetList listResourceRecordSets(@Named("zoneId") String zoneId,
-                                               @Named("name") String name,
-                                               @Named("type") String type);
+  ResourceRecordSetList listResourceRecordSets(@Param("zoneId") String zoneId,
+                                               @Param("name") String name,
+                                               @Param("type") String type);
 
   @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset?name={name}&type={type}&identifier={identifier}")
-  ResourceRecordSetList listResourceRecordSets(@Named("zoneId") String zoneId,
-                                               @Named("name") String name,
-                                               @Named("type") String type,
-                                               @Named("identifier") String identifier);
+  ResourceRecordSetList listResourceRecordSets(@Param("zoneId") String zoneId,
+                                               @Param("name") String name,
+                                               @Param("type") String type,
+                                               @Param("identifier") String identifier);
 
   @RequestLine("POST /2012-12-12/hostedzone/{zoneId}/rrset")
   @Headers("Content-Type: application/xml")
-  void changeResourceRecordSets(@Named("zoneId") String zoneId,
+  void changeResourceRecordSets(@Param("zoneId") String zoneId,
                                 List<ActionOnResourceRecordSet> changes)
       throws InvalidChangeBatchException;
 

@@ -1,4 +1,4 @@
-package denominator.discoverydns.crypto;
+package denominator.discoverydns;
 
 import sun.misc.BASE64Decoder;
 
@@ -20,12 +20,12 @@ import java.security.spec.RSAPrivateCrtKeySpec;
 /**
  * Based on: https://github.com/bcgit/bc-java/blob/master/core/src/main/java/org/bouncycastle/util/io/pem/PemReader.java
  */
-public class Pems {
+class Pems {
 
   private static final String BEGIN = "-----BEGIN ";
   private static final String END = "-----END ";
 
-  public static Certificate readCertificate(String pem) throws IOException {
+  static Certificate readCertificate(String pem) throws IOException {
     try {
       CertificateFactory certFactory = CertificateFactory.getInstance("X509");
       String type = getType(pem);
@@ -40,7 +40,7 @@ public class Pems {
     }
   }
 
-  public static PrivateKey readPrivateKey(String pem) throws IOException {
+  static PrivateKey readPrivateKey(String pem) throws IOException {
     try {
       KeyFactory keyFactory = KeyFactory.getInstance("RSA");
       String type = getType(pem);
@@ -58,7 +58,7 @@ public class Pems {
     }
   }
 
-  public static byte[] getBytes(String pem) throws IOException {
+  static byte[] getBytes(String pem) throws IOException {
     BufferedReader reader = new BufferedReader(new StringReader(pem));
     try {
       String line = reader.readLine();
@@ -104,7 +104,7 @@ public class Pems {
     }
   }
 
-  public static String getType(String pem) throws IOException {
+  static String getType(String pem) throws IOException {
     if (pem.contains("ENCRYPTED")) {
       throw new IOException("Encrypted content is not currently supported");
     }
@@ -145,7 +145,7 @@ public class Pems {
 
     parser.read(); // Skip version
     BigInteger modulus = parser.read().getInteger();
-    BigInteger publicExp = parser.read().getInteger();
+    BigInteger Exp = parser.read().getInteger();
     BigInteger privateExp = parser.read().getInteger();
     BigInteger prime1 = parser.read().getInteger();
     BigInteger prime2 = parser.read().getInteger();
@@ -155,7 +155,7 @@ public class Pems {
 
     RSAPrivateCrtKeySpec
         keySpec =
-        new RSAPrivateCrtKeySpec(modulus, publicExp, privateExp, prime1, prime2, exp1, exp2,
+        new RSAPrivateCrtKeySpec(modulus, Exp, privateExp, prime1, prime2, exp1, exp2,
                                  crtCoef);
 
     return keySpec;
@@ -167,11 +167,11 @@ public class Pems {
   private static class DerParser {
 
     // Constructed Flag
-    public final static int CONSTRUCTED = 0x20;
+    final static int CONSTRUCTED = 0x20;
 
     // Tag and data types
-    public final static int INTEGER = 0x02;
-    public final static int SEQUENCE = 0x10;
+    final static int INTEGER = 0x02;
+    final static int SEQUENCE = 0x10;
 
     protected InputStream in;
 
@@ -180,7 +180,7 @@ public class Pems {
      *
      * @param in The DER encoded stream
      */
-    public DerParser(InputStream in) throws IOException {
+    DerParser(InputStream in) throws IOException {
       this.in = in;
     }
 
@@ -189,7 +189,7 @@ public class Pems {
      *
      * @param The encoded bytes
      */
-    public DerParser(byte[] bytes) throws IOException {
+    DerParser(byte[] bytes) throws IOException {
       this(new ByteArrayInputStream(bytes));
     }
 
@@ -199,7 +199,7 @@ public class Pems {
      *
      * @return A object
      */
-    public Asn1Object read() throws IOException {
+    Asn1Object read() throws IOException {
       int tag = in.read();
 
       if (tag == -1) {
@@ -289,17 +289,17 @@ public class Pems {
      * @param length Length of the field
      * @param value  Encoded octet string for the field.
      */
-    public Asn1Object(int tag, byte[] value) {
+    Asn1Object(int tag, byte[] value) {
       this.tag = tag;
       this.type = tag & 0x1F;
       this.value = value;
     }
 
-    public int getType() {
+    int getType() {
       return type;
     }
 
-    public boolean isConstructed() {
+    boolean isConstructed() {
       return (tag & DerParser.CONSTRUCTED) == DerParser.CONSTRUCTED;
     }
 
@@ -308,7 +308,7 @@ public class Pems {
      *
      * @return A parser for the construct.
      */
-    public DerParser getParser() throws IOException {
+    DerParser getParser() throws IOException {
       if (!isConstructed()) {
         throw new IOException("Invalid DER: can't parse primitive entity");
       }

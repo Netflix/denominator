@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.Collections;
 
-import dagger.ObjectGraph;
 import denominator.common.Util;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
@@ -17,7 +16,6 @@ import denominator.model.rdata.NSData;
 import denominator.model.rdata.SOAData;
 import denominator.route53.Route53.ResourceRecordSetList;
 import denominator.route53.Route53.ZoneList;
-import denominator.route53.Route53Provider.XMLCodec;
 import feign.Response;
 import feign.codec.Decoder;
 
@@ -27,7 +25,7 @@ import static org.testng.Assert.assertNull;
 
 public class Route53DecoderTest {
 
-  Decoder decoder = ObjectGraph.create(new XMLCodec()).get(Decoder.class);
+  Decoder decoder = new Route53Provider.FeignModule().decoder();
 
   @Test
   public void decodeZoneListWithNext() throws Exception {
@@ -49,26 +47,26 @@ public class Route53DecoderTest {
                                                         ResourceRecordSetList.class));
 
     assertEquals(result.size(), 2);
-    assertEquals(result.get(0), ResourceRecordSet.<SOAData>builder()//
-        .name("example.com.")//
-        .type("SOA")//
-        .ttl(900)//
-        .add(SOAData.builder()//
-                 .mname("ns-2048.awsdns-64.net.")//
-                 .rname("hostmaster.awsdns.com.")//
-                 .serial(1)//
-                 .refresh(7200)//
-                 .retry(900)//
-                 .expire(1209600)//
-                 .minimum(86400)//
+    assertEquals(result.get(0), ResourceRecordSet.<SOAData>builder()
+        .name("example.com.")
+        .type("SOA")
+        .ttl(900)
+        .add(SOAData.builder()
+                 .mname("ns-2048.awsdns-64.net.")
+                 .rname("hostmaster.awsdns.com.")
+                 .serial(1)
+                 .refresh(7200)
+                 .retry(900)
+                 .expire(1209600)
+                 .minimum(86400)
                  .build()).build());
-    assertEquals(result.get(1), ResourceRecordSet.<NSData>builder()//
-        .name("example.com.")//
-        .type("NS")//
-        .ttl(172800)//
-        .add(NSData.create("ns-2048.awsdns-64.com."))//
-        .add(NSData.create("ns-2049.awsdns-65.net."))//
-        .add(NSData.create("ns-2050.awsdns-66.org."))//
+    assertEquals(result.get(1), ResourceRecordSet.<NSData>builder()
+        .name("example.com.")
+        .type("NS")
+        .ttl(172800)
+        .add(NSData.create("ns-2048.awsdns-64.com."))
+        .add(NSData.create("ns-2049.awsdns-65.net."))
+        .add(NSData.create("ns-2050.awsdns-66.org."))
         .add(NSData.create("ns-2051.awsdns-67.co.uk.")).build());
     assertEquals(result.next.name, "testdoc2.example.com");
     assertEquals(result.next.type, "NS");
@@ -83,17 +81,17 @@ public class Route53DecoderTest {
                                                         ResourceRecordSetList.class));
 
     assertEquals(result.size(), 2);
-    assertEquals(result.get(0), ResourceRecordSet.<AData>builder()//
-        .name("apple.myzone.com.")//
-        .type("A")//
-        .qualifier("foobar").ttl(300)//
+    assertEquals(result.get(0), ResourceRecordSet.<AData>builder()
+        .name("apple.myzone.com.")
+        .type("A")
+        .qualifier("foobar").ttl(300)
         .weighted(Weighted.create(1)).add(AData.create("1.2.3.4")).build());
 
-    assertEquals(result.get(1), ResourceRecordSet.<AliasTarget>builder()//
-        .name("fooo.myzone.com.")//
-        .type("A")//
+    assertEquals(result.get(1), ResourceRecordSet.<AliasTarget>builder()
+        .name("fooo.myzone.com.")
+        .type("A")
         .add(AliasTarget.create("Z3I0BTR7N27QRM",
-                                "ipv4-route53recordsetlivetest.adrianc.myzone.com."))//
+                                "ipv4-route53recordsetlivetest.adrianc.myzone.com."))
         .build());
     assertNull(result.next);
   }
