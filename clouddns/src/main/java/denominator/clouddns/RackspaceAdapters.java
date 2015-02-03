@@ -9,8 +9,6 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.Comparator;
 
-import javax.inject.Inject;
-
 import denominator.clouddns.RackspaceApis.JobIdAndStatus;
 import denominator.clouddns.RackspaceApis.ListWithNext;
 import denominator.clouddns.RackspaceApis.Record;
@@ -31,10 +29,6 @@ class RackspaceAdapters {
   }
 
   static class JobIdAndStatusAdapter extends TypeAdapter<JobIdAndStatus> {
-
-    @Inject
-    JobIdAndStatusAdapter() {
-    }
 
     @Override
     public void write(JsonWriter out, JobIdAndStatus value) throws IOException {
@@ -66,10 +60,6 @@ class RackspaceAdapters {
 
   static class DomainListAdapter extends ListWithNextAdapter<Zone> {
 
-    @Inject
-    DomainListAdapter() {
-    }
-
     @Override
     protected String jsonKey() {
       return "domains";
@@ -93,10 +83,6 @@ class RackspaceAdapters {
   }
 
   static class RecordListAdapter extends ListWithNextAdapter<Record> {
-
-    @Inject
-    RecordListAdapter() {
-    }
 
     @Override
     protected String jsonKey() {

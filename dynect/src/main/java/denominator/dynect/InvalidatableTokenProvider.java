@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
@@ -14,6 +13,7 @@ import denominator.Credentials.ListCredentials;
 import denominator.dynect.DynECT.Data;
 import feign.Body;
 import feign.Headers;
+import feign.Param;
 import feign.RequestLine;
 
 /**
@@ -97,11 +97,11 @@ class InvalidatableTokenProvider implements Provider<String>, CheckConnection {
 
     @RequestLine("POST /Session")
     @Body("%7B\"customer_name\":\"{customer_name}\",\"user_name\":\"{user_name}\",\"password\":\"{password}\"%7D")
-    Data<String> login(@Named("customer_name") String customer, @Named("user_name") String user,
-                       @Named("password") String password);
+    Data<String> login(@Param("customer_name") String customer, @Param("user_name") String user,
+                       @Param("password") String password);
 
     @RequestLine("GET /Session")
     @Headers("Auth-Token: {Auth-Token}")
-    void check(@Named("Auth-Token") String token);
+    void check(@Param("Auth-Token") String token);
   }
 }

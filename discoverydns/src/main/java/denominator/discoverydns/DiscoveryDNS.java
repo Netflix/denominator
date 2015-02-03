@@ -3,12 +3,11 @@ package denominator.discoverydns;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import javax.inject.Named;
-
 import denominator.model.ResourceRecordSet;
+import feign.Param;
 import feign.RequestLine;
 
-public interface DiscoveryDNS {
+interface DiscoveryDNS {
 
   @RequestLine("GET /users")
   Users listUsers();
@@ -17,63 +16,63 @@ public interface DiscoveryDNS {
   Zones listZones();
 
   @RequestLine("GET /zones/{id}?rdataFormat=raw")
-  Zone getZone(@Named("id") String id);
+  Zone getZone(@Param("id") String id);
 
   @RequestLine("GET /zones?searchName={zone}")
-  Zones findZone(@Named("zone") String zone);
+  Zones findZone(@Param("zone") String zone);
 
   @RequestLine("PUT /zones/{id}/resourcerecords?rdataFormat=raw")
-  void updateZone(@Named("id") String id, Zone zone);
+  void updateZone(@Param("id") String id, Zone zone);
 
-  public static final class ResourceRecords {
+  static final class ResourceRecords {
 
-    public Set<ResourceRecordSet<?>> records = new LinkedHashSet<ResourceRecordSet<?>>();
+    Set<ResourceRecordSet<?>> records = new LinkedHashSet<ResourceRecordSet<?>>();
   }
 
-  public static final class Zones {
+  static final class Zones {
 
-    public ZoneList zones;
+    ZoneList zones;
 
     class ZoneList {
 
-      public Set<Zone> zoneList;
+      Set<Zone> zoneList;
 
       class Zone {
 
-        public String id;
-        public String name;
+        String id;
+        String name;
       }
     }
   }
 
-  public static final class Zone {
+  static final class Zone {
 
-    public ZoneData zone;
+    ZoneData zone;
 
-    public ZoneData zoneUpdateResourceRecords;
+    ZoneData zoneUpdateResourceRecords;
 
     class ZoneData {
 
-      public String id;
-      public Long version;
+      String id;
+      Long version;
 
-      public ResourceRecords resourceRecords;
+      ResourceRecords resourceRecords;
     }
   }
 
-  public static final class Users {
+  static final class Users {
 
-    public UserList users;
+    UserList users;
 
     class UserList {
 
-      public Set<User> userList;
+      Set<User> userList;
 
       class User {
 
-        public String id;
-        public String username;
-        public String status;
+        String id;
+        String username;
+        String status;
       }
     }
   }

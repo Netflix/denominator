@@ -68,7 +68,7 @@ public final class Denominator {
     } catch (IllegalStateException e) {
       // much simpler to special-case when a credential module is needed,
       // but not supplied, than do too much magic.
-      if (e.getMessage().contains("No binding for denominator.Credentials")
+      if (e.getMessage().contains("denominator.Credentials could not be bound")
           && !in.credentialTypeToParameterNames().isEmpty()) {
         throw new IllegalArgumentException(CredentialsConfiguration.exceptionMessage(null, in));
       }

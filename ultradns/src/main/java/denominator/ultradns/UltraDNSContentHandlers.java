@@ -15,8 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.inject.Inject;
-
 import denominator.model.Zone;
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
@@ -92,10 +90,6 @@ class UltraDNSContentHandlers {
     private StringBuilder currentText = new StringBuilder();
     private String id;
 
-    @Inject
-    IDHandler() {
-    }
-
     @Override
     public String result() {
       return id;
@@ -129,10 +123,6 @@ class UltraDNSContentHandlers {
     private StringBuilder currentText = new StringBuilder();
     private NetworkStatus status;
 
-    @Inject
-    NetworkStatusHandler() {
-    }
-
     @Override
     public NetworkStatus result() {
       return status;
@@ -157,10 +147,6 @@ class UltraDNSContentHandlers {
 
     private final List<Zone> zones = new ArrayList<Zone>();
 
-    @Inject
-    ZoneListHandler() {
-    }
-
     @Override
     public List<Zone> result() {
       return zones;
@@ -179,9 +165,6 @@ class UltraDNSContentHandlers {
 
     private final List<Record> rrs = new ArrayList<Record>();
     private Record rr = new Record();
-    @Inject
-    RecordListHandler() {
-    }
 
     @Override
     public List<Record> result() {
@@ -219,9 +202,6 @@ class UltraDNSContentHandlers {
     private final Map<NameAndType, String> pools = new LinkedHashMap<NameAndType, String>();
     private NameAndType nameAndType = new NameAndType();
     private String id;
-    @Inject
-    RRPoolListHandler() {
-    }
 
     @Override
     public Map<NameAndType, String> result() {
@@ -253,9 +233,6 @@ class UltraDNSContentHandlers {
     private final Map<String, String> pools = new LinkedHashMap<String, String>();
     private String name;
     private String id;
-    @Inject
-    DirectionalPoolListHandler() {
-    }
 
     @Override
     public Map<String, String> result() {
@@ -287,10 +264,6 @@ class UltraDNSContentHandlers {
         regions =
         new TreeMap<String, Collection<String>>();
 
-    @Inject
-    RegionTableHandler() {
-    }
-
     @Override
     public Map<String, Collection<String>> result() {
       return regions;
@@ -310,10 +283,6 @@ class UltraDNSContentHandlers {
       implements ContentHandlerWithResult<DirectionalGroup> {
 
     private final DirectionalGroup group = new DirectionalGroup();
-
-    @Inject
-    DirectionalGroupHandler() {
-    }
 
     @Override
     public DirectionalGroup result() {
@@ -339,10 +308,6 @@ class UltraDNSContentHandlers {
     private final List<DirectionalRecord> rrs = new ArrayList<DirectionalRecord>();
     private DirectionalRecord rr = new DirectionalRecord();
     private String currentName;
-
-    @Inject
-    DirectionalRecordListHandler() {
-    }
 
     @Override
     public List<DirectionalRecord> result() {

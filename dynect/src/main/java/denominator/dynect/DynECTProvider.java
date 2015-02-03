@@ -31,9 +31,8 @@ import denominator.dynect.DynECTAdapters.ZonesAdapter;
 import denominator.dynect.InvalidatableTokenProvider.Session;
 import denominator.profile.GeoResourceRecordSetApi;
 import feign.Feign;
-import feign.codec.ErrorDecoder;
-import feign.gson.DoubleToIntMapTypeAdapter;
-import feign.gson.GsonModule;
+import feign.gson.GsonDecoder;
+import feign.gson.GsonEncoder;
 
 import static dagger.Provides.Type.SET;
 
@@ -92,7 +91,7 @@ public class DynECTProvider extends BasicProvider {
     return options;
   }
 
-  @dagger.Module(injects = DNSApiManager.class, complete = false, overrides = true, includes = {
+  @dagger.Module(injects = DNSApiManager.class, complete = false, includes = {
       NothingToClose.class, WeightedUnsupported.class,
       ConcatBasicAndQualifiedResourceRecordSets.class,
       CountryToRegions.class, FeignModule.class})
@@ -135,12 +134,11 @@ public class DynECTProvider extends BasicProvider {
     }
   }
 
-  @dagger.Module(//
-      injects = DynECTResourceRecordSetApi.Factory.class, //
+  @dagger.Module(
+      injects = DynECTResourceRecordSetApi.Factory.class,
       complete = false, // doesn't bind Provider used by SessionTarget
-      overrides = true, // ErrorDecoder
-      includes = {Feign.Defaults.class, GsonModule.class})
-  @SuppressWarnings("rawtypes")
+      overrides = true, // builds Feign directly
+      includes = Feign.Defaults.class)
   public static final class FeignModule {
 
     @Provides
@@ -167,45 +165,21 @@ public class DynECTProvider extends BasicProvider {
       return new AtomicReference<Boolean>(false);
     }
 
-    // deals with scenario where gson Object type treats numbers as doubles
-    @Provides(type = SET)
-    TypeAdapter doubleToInt() {
-      return new DoubleToIntMapTypeAdapter();
-    }
-
-    @Provides(type = SET)
-    TypeAdapter loginAdapter() {
-      return new TokenAdapter();
-    }
-
-    @Provides(type = SET)
-    TypeAdapter hasAllGeoPermissionsAdapter() {
-      return new NothingForbiddenAdapter();
-    }
-
-    @Provides(type = SET)
-    TypeAdapter resourceRecordSetsAdapter() {
-      return new ResourceRecordSetsAdapter();
-    }
-
-    @Provides(type = SET)
-    TypeAdapter zonesAdapter() {
-      return new ZonesAdapter();
-    }
-
-    @Provides(type = SET)
-    TypeAdapter recordIdsAdapter() {
-      return new RecordIdsAdapter();
-    }
-
-    @Provides(type = SET)
-    TypeAdapter recordsAdapter() {
-      return new RecordsByNameAndTypeAdapter();
-    }
-
     @Provides
-    ErrorDecoder errorDecoder(DynECTErrorDecoder errorDecoder) {
-      return errorDecoder;
+    @Singleton
+    Feign feign(Feign.Builder feignBuilder, DynECTErrorDecoder errorDecoder) {
+      return feignBuilder
+          .encoder(new GsonEncoder())
+          .decoder(new GsonDecoder(Arrays.<TypeAdapter<?>>asList(
+                       new TokenAdapter(),
+                       new NothingForbiddenAdapter(),
+                       new ResourceRecordSetsAdapter(),
+                       new ZonesAdapter(),
+                       new RecordIdsAdapter(),
+                       new RecordsByNameAndTypeAdapter()))
+          )
+          .errorDecoder(errorDecoder)
+          .build();
     }
   }
 }

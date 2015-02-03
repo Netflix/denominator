@@ -1,4 +1,4 @@
-package denominator.discoverydns.crypto;
+package denominator.discoverydns;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;

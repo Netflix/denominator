@@ -4,8 +4,6 @@ import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import javax.inject.Inject;
-
 import denominator.ResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 
@@ -14,7 +12,7 @@ import static denominator.common.Util.nextOrNull;
 import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.nameEqualTo;
 
-public class DiscoveryDNSResourceRecordSetApi implements ResourceRecordSetApi {
+class DiscoveryDNSResourceRecordSetApi implements ResourceRecordSetApi {
 
   private String zone;
   private DiscoveryDNS api;
@@ -83,13 +81,11 @@ public class DiscoveryDNSResourceRecordSetApi implements ResourceRecordSetApi {
     updateResourceRecords(zone, name, type);
   }
 
-  static final class ResourceRecordSetApiFactory
-      implements denominator.ResourceRecordSetApi.Factory {
+  static final class Factory implements denominator.ResourceRecordSetApi.Factory {
 
     private final DiscoveryDNS api;
 
-    @Inject
-    ResourceRecordSetApiFactory(DiscoveryDNS api) {
+    Factory(DiscoveryDNS api) {
       this.api = api;
     }
 

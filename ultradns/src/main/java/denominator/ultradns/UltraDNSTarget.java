@@ -17,23 +17,20 @@ import static java.lang.String.format;
 
 class UltraDNSTarget implements Target<UltraDNS> {
 
-  static final String SOAP_TEMPLATE = "" //
-                                      + "<?xml version=\"1.0\"?>\n"//
-                                      + "<soapenv:Envelope xmlns:soapenv=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-//
-                                      + "  <soapenv:Header>\n"//
-                                      + "    <wsse:Security xmlns:wsse=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\" soapenv:mustUnderstand=\"1\">\n"
-//
-                                      + "      <wsse:UsernameToken>\n"//
-                                      + "        <wsse:Username>%s</wsse:Username>\n"//
-                                      + "        <wsse:Password Type=\"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">%s</wsse:Password>\n"
-//
-                                      + "      </wsse:UsernameToken>\n"//
-                                      + "    </wsse:Security>\n"//
-                                      + "  </soapenv:Header>\n"//
-                                      + "  <soapenv:Body>\n"//
-                                      + "    %s\n"//
-                                      + "  </soapenv:Body>\n"//
+  static final String SOAP_TEMPLATE = ""
+                                      + "<?xml version=\"1.0\"?>\n"
+                                      + "<soapenv:Envelope xmlns:soapenv=\"http:schemas.xmlsoap.org/soap/envelope/\" xmlns:v01=\"http:webservice.api.ultra.neustar.com/v01/\">\n"
+                                      + "  <soapenv:Header>\n"
+                                      + "    <wsse:Security xmlns:wsse=\"http:docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd\" soapenv:mustUnderstand=\"1\">\n"
+                                      + "      <wsse:UsernameToken>\n"
+                                      + "        <wsse:Username>%s</wsse:Username>\n"
+                                      + "        <wsse:Password Type=\"http:docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText\">%s</wsse:Password>\n"
+                                      + "      </wsse:UsernameToken>\n"
+                                      + "    </wsse:Security>\n"
+                                      + "  </soapenv:Header>\n"
+                                      + "  <soapenv:Body>\n"
+                                      + "    %s\n"
+                                      + "  </soapenv:Body>\n"
                                       + "</soapenv:Envelope>";
   private final Provider provider;
   private final javax.inject.Provider<Credentials> credentials;
