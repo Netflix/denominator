@@ -1,6 +1,6 @@
 ### Version 4.4
 * Add support for DiscoveryDNS (http://www.discoverydns.com)
-* Updates to feign 7.2.0 and dagger 1.2.2
+* Updates to feign 7.2.1 and dagger 1.2.2
 * Reformats code according to [Google Java Style](https://google-styleguide.googlecode.com/svn/trunk/javaguide.html)
 
 ### Version 4.3.5
