@@ -8,8 +8,8 @@ test {
 
 dependencies {
   compile project(':denominator-core')
-  compile 'com.netflix.feign:feign-core:7.2.0'
-  compile 'com.netflix.feign:feign-gson:7.2.0'
+  compile 'com.netflix.feign:feign-core:7.2.1'
+  compile 'com.netflix.feign:feign-gson:7.2.1'
 
   testCompile 'com.google.guava:guava:14.0.1'
   testCompile 'org.testng:testng:6.8.5'
