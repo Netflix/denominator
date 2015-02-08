@@ -2,9 +2,10 @@ package denominator.discoverydns;
 
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.Iterables;
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.MockWebServer;
-import com.google.mockwebserver.RecordedRequest;
+
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
 import org.testng.annotations.Test;
 

@@ -18,7 +18,7 @@ dependencies {
   compile      project(':denominator-designate')
   compile      project(':denominator-discoverydns')
   testCompile 'org.testng:testng:6.8.5'
-  testCompile 'com.google.mockwebserver:mockwebserver:20130706'
+  testCompile 'com.squareup.okhttp:mockwebserver:2.2.0'
 }
 
 // create a self-contained jar that is executable

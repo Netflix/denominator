@@ -1,9 +1,9 @@
 package denominator.clouddns;
 
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.MockWebServer;
-import com.google.mockwebserver.QueueDispatcher;
-import com.google.mockwebserver.RecordedRequest;
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.QueueDispatcher;
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
 import org.testng.annotations.Test;
 
@@ -125,8 +125,7 @@ public class CloudDNSProviderDynamicUpdateMockTest {
         MockResponse response = responseQueue.take();
         if (response.getBody() != null) {
           String
-              newBody =
-              new String(response.getBody()).replace(":\"URL", ":\"" + dynamicUrl.get());
+              newBody = response.getBody().readUtf8().replace(":\"URL", ":\"" + dynamicUrl.get());
           response = response.setBody(newBody);
         }
         return response;

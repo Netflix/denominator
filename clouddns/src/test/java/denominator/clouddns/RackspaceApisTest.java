@@ -1,10 +1,11 @@
 package denominator.clouddns;
 
 import com.google.common.collect.ImmutableList;
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.MockWebServer;
-import com.google.mockwebserver.QueueDispatcher;
-import com.google.mockwebserver.RecordedRequest;
+
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.QueueDispatcher;
+import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
 import org.testng.annotations.Test;
 
@@ -132,7 +133,7 @@ public class RackspaceApisTest {
       public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
         MockResponse response = responseQueue.take();
         if (response.getBody() != null) {
-          String newBody = new String(response.getBody()).replace(": \"URL", ": \"" + url);
+          String newBody = response.getBody().readUtf8().replace(": \"URL", ": \"" + url);
           response = response.setBody(newBody);
         }
         return response;

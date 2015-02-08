@@ -3,8 +3,9 @@ package denominator.dynect;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.io.Resources;
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.MockWebServer;
+
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 
 import org.testng.annotations.Test;
 

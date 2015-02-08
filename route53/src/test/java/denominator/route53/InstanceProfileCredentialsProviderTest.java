@@ -1,19 +1,20 @@
 package denominator.route53;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-
-import org.testng.annotations.Test;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.MockWebServer;
+
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
+
+import org.testng.annotations.Test;
 
 import denominator.Credentials;
 import denominator.Credentials.MapCredentials;
 import denominator.hook.InstanceMetadataHook;
 import denominator.route53.InstanceProfileCredentialsProvider.ReadFirstInstanceProfileCredentialsOrNull;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 @Test
 public class InstanceProfileCredentialsProviderTest {
