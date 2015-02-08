@@ -64,8 +64,8 @@ public interface Provider {
    * { "geo" : ["A", "AAAA", "CNAME", "HINFO", "MX", "PTR", "RP", "SRV", "TXT", "NAPTR"],
    *   "weighted" : ["A", "AAAA", "CNAME"] }
    * </pre>
-   * 
-   * @see denominator.model.profile 
+   *
+   * @see denominator.model.profile
    */
   Map<String, Collection<String>> profileToRecordTypes();
 
