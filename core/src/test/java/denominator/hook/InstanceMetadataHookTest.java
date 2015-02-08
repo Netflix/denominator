@@ -1,14 +1,15 @@
 package denominator.hook;
 
 import com.google.common.collect.ImmutableList;
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.MockWebServer;
+
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 
 import org.testng.annotations.Test;
 
 import java.net.URI;
 
-import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -28,7 +29,7 @@ public class InstanceMetadataHookTest {
   @Test(timeOut = 3000)
   public void whenMetadataServiceIsntRunningWeDontHangMoreThan3Seconds() throws Exception {
     MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
+    server.enqueue(new MockResponse().setSocketPolicy(SHUTDOWN_INPUT_AT_END));
     server.play();
     try {
       assertNull(InstanceMetadataHook

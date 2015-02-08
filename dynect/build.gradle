@@ -18,5 +18,5 @@ dependencies {
   testCompile  project(':denominator-core').sourceSets.test.output
   testCompile 'com.google.guava:guava:14.0.1'
   testCompile 'org.testng:testng:6.8.5'
-  testCompile 'com.google.mockwebserver:mockwebserver:20130706'
+  testCompile 'com.squareup.okhttp:mockwebserver:2.2.0'
 }

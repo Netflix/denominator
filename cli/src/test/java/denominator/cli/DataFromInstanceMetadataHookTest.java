@@ -1,19 +1,20 @@
 package denominator.cli;
 
-import static com.google.mockwebserver.SocketPolicy.DISCONNECT_AT_START;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
+import com.google.common.base.Joiner;
+
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 
 import org.testng.annotations.Test;
-
-import com.google.common.base.Joiner;
-import com.google.mockwebserver.MockResponse;
-import com.google.mockwebserver.MockWebServer;
 
 import denominator.DNSApiManager;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
 import denominator.hook.InstanceMetadataHook;
 import denominator.mock.MockProvider;
+
+import static com.squareup.okhttp.mockwebserver.SocketPolicy.SHUTDOWN_INPUT_AT_END;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 @Test
 public class DataFromInstanceMetadataHookTest {
@@ -23,7 +24,7 @@ public class DataFromInstanceMetadataHookTest {
     @Test(timeOut = 3000, expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "could not retrieve public-hostname from http://.*/latest/meta-data/")
     public void testInstanceMetadataHookDoesntHangMoreThan3Seconds() throws Exception {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
+        server.enqueue(new MockResponse().setSocketPolicy(SHUTDOWN_INPUT_AT_END));
         server.play();
         try {
 
@@ -99,7 +100,7 @@ public class DataFromInstanceMetadataHookTest {
             expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "could not retrieve public-ipv4 from http://.*/latest/meta-data/")
     public void testEC2PublicIpv4FlagWhenFailsDoesntHangMoreThan3Seconds() throws Exception {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
+        server.enqueue(new MockResponse().setSocketPolicy(SHUTDOWN_INPUT_AT_END));
         server.play();
         try {
 
@@ -177,7 +178,7 @@ public class DataFromInstanceMetadataHookTest {
             expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "could not retrieve local-ipv4 from http://.*/latest/meta-data/")
     public void testEC2LocalIpv4FlagWhenFailsDoesntHangMoreThan3Seconds() throws Exception {
         MockWebServer server = new MockWebServer();
-        server.enqueue(new MockResponse().setSocketPolicy(DISCONNECT_AT_START));
+        server.enqueue(new MockResponse().setSocketPolicy(SHUTDOWN_INPUT_AT_END));
         server.play();
         try {
 
