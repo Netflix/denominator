@@ -1,15 +1,17 @@
 package denominator.model;
 
-import org.testng.annotations.Test;
-
-import java.io.IOException;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import denominator.model.rdata.AData;
 
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Test
 public class ResourceRecordSetTest {
+
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   ResourceRecordSet<AData> record = ResourceRecordSet.<AData>builder()
       .name("www.denominator.io.")
@@ -17,32 +19,28 @@ public class ResourceRecordSetTest {
       .ttl(3600)
       .add(AData.create("192.0.2.1")).build();
 
-  String
-      asJson =
-      "{\"name\":\"www.denominator.io.\",\"type\":\"A\",\"ttl\":3600,\"records\":[{\"address\":\"192.0.2.1\"}]}";
-
+  @Test
   public void canBuildARecordSetInLongForm() {
-    assertEquals(record.name(), "www.denominator.io.");
-    assertEquals(record.type(), "A");
-    assertEquals(record.ttl(), Integer.valueOf(3600));
-    assertEquals(record.records().get(0), AData.create("192.0.2.1"));
+    assertThat(record.name()).isEqualTo("www.denominator.io.");
+    assertThat(record.type()).isEqualTo("A");
+    assertThat(record.ttl()).isEqualTo(3600);
+    assertThat(record.records().get(0)).isEqualTo(AData.create("192.0.2.1"));
   }
 
-  public void serializeNaturallyAsJson() {
-    assertEquals(ResourceRecordSetsTest.gson.toJson(record), asJson);
-  }
-
-  public void deserializesNaturallyFromJson() throws IOException {
-    assertEquals(ResourceRecordSetsTest.gson.fromJson(asJson, ResourceRecordSet.class), record);
-  }
-
-  @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "record")
+  @Test
   public void testNullRdataNPE() {
+    thrown.expect(NullPointerException.class);
+    thrown.expectMessage("record");
+
     ResourceRecordSet.<AData>builder().add(null);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "Invalid ttl.*")
+  @Test
+
   public void testInvalidTTL() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("Invalid ttl");
+
     ResourceRecordSet.<AData>builder()//
         .name("www.denominator.io.")//
         .type("A")//

@@ -1,40 +1,43 @@
 package denominator.common;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.NoSuchElementException;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Test
 public class PeekingIteratorTest {
 
-  @Test(expectedExceptions = UnsupportedOperationException.class)
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
+
+  @Test
   public void unmodifiable() {
+    thrown.expect(UnsupportedOperationException.class);
+
     PeekingIterator<Boolean> it = TrueThenDone.INSTANCE.iterator();
-    assertTrue(it.next());
+    assertThat(it).containsExactly(true);
     it.remove();
   }
 
-  ;
-
-  @Test(expectedExceptions = NoSuchElementException.class)
+  @Test
   public void next() {
+    thrown.expect(NoSuchElementException.class);
+
     PeekingIterator<Boolean> it = TrueThenDone.INSTANCE.iterator();
-    assertTrue(it.hasNext());
-    assertTrue(it.next());
-    assertFalse(it.hasNext());
+    assertThat(it).containsExactly(true);
     it.next();
   }
 
-  @Test(expectedExceptions = NoSuchElementException.class)
+  @Test
   public void peek() {
+    thrown.expect(NoSuchElementException.class);
+
     PeekingIterator<Boolean> it = TrueThenDone.INSTANCE.iterator();
-    assertTrue(it.hasNext());
-    assertTrue(it.peek());
-    assertTrue(it.next());
-    assertFalse(it.hasNext());
+    assertThat(it.peek()).isTrue();
+    assertThat(it).containsExactly(true);
     it.peek();
   }
 
@@ -56,6 +59,5 @@ public class PeekingIteratorTest {
         }
       };
     }
-
   }
 }

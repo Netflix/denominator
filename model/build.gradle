@@ -2,12 +2,7 @@ apply plugin: 'java'
 
 sourceCompatibility = 1.6
 
-test {
-  useTestNG()
-}
-
 dependencies {
-  testCompile 'com.google.guava:guava:14.0.1'
-  testCompile 'org.testng:testng:6.8.5'
-  testCompile 'com.google.code.gson:gson:2.2.4'
+  testCompile 'junit:junit:4.12'
+  testCompile 'org.assertj:assertj-core:1.7.1'
 }

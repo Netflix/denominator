@@ -1,17 +1,24 @@
 package denominator.common;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Preconditions.checkState;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Test
 public class PreconditionsTest {
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "should be foo")
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
+
+  @Test
   public void checkArgumentFormatted() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("should be foo");
+
     checkArgument(false, "should be %s", "foo");
   }
 
@@ -20,8 +27,11 @@ public class PreconditionsTest {
     checkArgument(true, "should be %s", "foo");
   }
 
-  @Test(expectedExceptions = IllegalStateException.class, expectedExceptionsMessageRegExp = "should be foo")
+  @Test
   public void checkStateFormatted() {
+    thrown.expect(IllegalStateException.class);
+    thrown.expectMessage("should be foo");
+
     checkState(false, "should be %s", "foo");
   }
 
@@ -30,13 +40,16 @@ public class PreconditionsTest {
     checkState(true, "should be %s", "foo");
   }
 
-  @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "should be foo")
+  @Test
   public void checkNotNullFormatted() {
+    thrown.expect(NullPointerException.class);
+    thrown.expectMessage("should be foo");
+
     checkNotNull(null, "should be %s", "foo");
   }
 
   @Test
   public void checkNotNullPass() {
-    assertEquals(checkNotNull("foo", "should be %s", "foo"), "foo");
+    assertThat(checkNotNull("foo", "should be %s", "foo")).isEqualTo("foo");
   }
 }

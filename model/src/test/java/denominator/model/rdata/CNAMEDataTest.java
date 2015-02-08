@@ -1,15 +1,21 @@
 package denominator.model.rdata;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static denominator.model.ResourceRecordSets.cname;
 
-@Test
 public class CNAMEDataTest {
 
-  @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "record")
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
+
+  @Test
   public void testNullTarget() {
+    thrown.expect(NullPointerException.class);
+    thrown.expectMessage("record");
+
     cname("www.denominator.io.", (String) null);
   }
-
 }

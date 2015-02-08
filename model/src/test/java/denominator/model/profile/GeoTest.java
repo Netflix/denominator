@@ -1,30 +1,28 @@
 package denominator.model.profile;
 
-import com.google.common.collect.ImmutableMultimap;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-import org.testng.annotations.Test;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import java.io.IOException;
-
-import denominator.model.ResourceRecordSetsTest;
-
-import static org.testng.Assert.assertEquals;
-
-@Test
 public class GeoTest {
 
-  static Geo geo = Geo.create(ImmutableMultimap.<String, String>builder()//
-                                  .put("US", "US-VA")//
-                                  .put("US", "US-CA")//
-                                  .put("IM", "IM").build().asMap());
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
-  String asJson = "{\"regions\":{\"US\":[\"US-VA\",\"US-CA\"],\"IM\":[\"IM\"]}}";
+  @Test
+  public void immutableRegions() {
+    thrown.expect(UnsupportedOperationException.class);
 
-  public void serializeNaturallyAsJson() {
-    assertEquals(ResourceRecordSetsTest.gson.toJson(geo), asJson);
-  }
+    Map<String, Collection<String>> regions = new LinkedHashMap<String, Collection<String>>();
+    regions.put("US", Arrays.asList("US-VA", "US-CA"));
 
-  public void deserializesNaturallyFromJson() throws IOException {
-    assertEquals(ResourceRecordSetsTest.gson.fromJson(asJson, Geo.class), geo);
+    Geo geo = Geo.create(regions);
+
+    geo.regions().remove("US");
   }
 }
