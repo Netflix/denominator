@@ -13,21 +13,21 @@ import java.util.Map;
 import denominator.model.ResourceRecordSet;
 import denominator.model.rdata.AData;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static denominator.assertj.ModelAssertions.assertThat;
 
 public class GeosTest {
 
   @Rule
   public final ExpectedException thrown = ExpectedException.none();
 
-  static Geo geo = Geo.create(new LinkedHashMap<String, Collection<String>>() {
+  Geo geo = Geo.create(new LinkedHashMap<String, Collection<String>>() {
     {
       put("US", Arrays.asList("US-VA", "US-CA"));
       put("IM", Arrays.asList("IM"));
     }
   });
 
-  static ResourceRecordSet<AData> geoRRS = ResourceRecordSet.<AData>builder()//
+  ResourceRecordSet<AData> geoRRS = ResourceRecordSet.<AData>builder()//
       .name("www.denominator.io.")//
       .type("A")//
       .qualifier("US-East")//
@@ -35,9 +35,9 @@ public class GeosTest {
       .add(AData.create("1.1.1.1"))//
       .geo(geo).build();
 
-  static Weighted weighted = Weighted.create(2);
+  Weighted weighted = Weighted.create(2);
 
-  static ResourceRecordSet<AData> weightedRRS = ResourceRecordSet.<AData>builder()//
+  ResourceRecordSet<AData> weightedRRS = ResourceRecordSet.<AData>builder()//
       .name("www.denominator.io.")//
       .type("A")//
       .qualifier("US-East")//
@@ -57,9 +57,9 @@ public class GeosTest {
 
     ResourceRecordSet<?> withOregon = Geos.withAdditionalRegions(geoRRS, oregon);
 
-    assertThat(withOregon.geo().regions())
-        .containsEntry("US", Arrays.asList("US-VA", "US-CA", "US-OR"))
-        .containsEntry("IM", Arrays.asList("IM"));
+    assertThat(withOregon)
+        .containsRegion("US", "US-VA", "US-CA", "US-OR")
+        .containsRegion("IM", "IM");
   }
 
   @Test
@@ -69,10 +69,10 @@ public class GeosTest {
 
     ResourceRecordSet<?> withGB = Geos.withAdditionalRegions(geoRRS, gb);
 
-    assertThat(withGB.geo().regions())
-        .containsEntry("US", Arrays.asList("US-VA", "US-CA"))
-        .containsEntry("IM", Arrays.asList("IM"))
-        .containsEntry("GB", Arrays.asList("GB-SLG", "GB-LAN"));
+    assertThat(withGB)
+        .containsRegion("US", "US-VA", "US-CA")
+        .containsRegion("IM", "IM")
+        .containsRegion("GB", "GB-SLG", "GB-LAN");
   }
 
   @Test
@@ -91,9 +91,9 @@ public class GeosTest {
 
     ResourceRecordSet<?> withOregon = Geos.withAdditionalRegions(geoRRS, oregon);
 
-    assertThat(withOregon.geo().regions())
-        .containsEntry("US", Arrays.asList("US-VA", "US-CA", "US-OR"))
-        .containsEntry("IM", Arrays.asList("IM"));
+    assertThat(withOregon)
+        .containsRegion("US", "US-VA", "US-CA", "US-OR")
+        .containsRegion("IM", "IM");
 
     assertThat(withOregon.weighted()).isEqualTo(weighted);
   }
