@@ -4,7 +4,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static denominator.assertj.ModelAssertions.assertThat;
 
 public class ZoneTest {
 
@@ -15,22 +15,27 @@ public class ZoneTest {
   public void factoryMethodsWork() {
     Zone name = Zone.create("denominator.io.");
 
-    assertThat(name.name()).isEqualTo("denominator.io.");
-    assertThat(name.id()).isNull();
-    assertThat(name).isEqualTo(new Zone("denominator.io.", null));
+    assertThat(name)
+        .hasName("denominator.io.")
+        .hasNullId()
+        .isEqualTo(new Zone("denominator.io.", null));
+
     assertThat(name.hashCode()).isEqualTo(new Zone("denominator.io.", null).hashCode());
     assertThat(name.toString()).isEqualTo("Zone [name=denominator.io.]");
 
     Zone id = Zone.create("denominator.io.", "ABCD");
 
-    assertThat(id.name()).isEqualTo("denominator.io.");
-    assertThat(id.id()).isEqualTo("ABCD");
-    assertThat(id).isEqualTo(new Zone("denominator.io.", "ABCD"));
-    assertThat(id.hashCode()).isEqualTo(new Zone("denominator.io.", "ABCD").hashCode());
-    assertThat(id.toString()).isEqualTo("Zone [name=denominator.io., id=ABCD]");
+    assertThat(id)
+        .hasName("denominator.io.")
+        .hasId("ABCD")
+        .isEqualTo(new Zone("denominator.io.", "ABCD"))
+        .isNotEqualTo(name);
 
-    assertThat(name).isNotEqualTo(id);
-    assertThat(name.hashCode()).isNotEqualTo(id.hashCode());
+    assertThat(id.hashCode())
+        .isEqualTo(new Zone("denominator.io.", "ABCD").hashCode())
+        .isNotEqualTo(name.hashCode());
+
+    assertThat(id.toString()).isEqualTo("Zone [name=denominator.io., id=ABCD]");
   }
 
   @Test

@@ -7,6 +7,7 @@ import org.junit.rules.ExpectedException;
 import java.util.NoSuchElementException;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class PeekingIteratorTest {
 
@@ -36,7 +37,7 @@ public class PeekingIteratorTest {
     thrown.expect(NoSuchElementException.class);
 
     PeekingIterator<Boolean> it = TrueThenDone.INSTANCE.iterator();
-    assertThat(it.peek()).isTrue();
+    assertTrue(it.peek());
     assertThat(it).containsExactly(true);
     it.peek();
   }

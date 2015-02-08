@@ -28,6 +28,7 @@ import denominator.model.rdata.SSHFPData;
 import denominator.model.rdata.TLSAData;
 import denominator.model.rdata.TXTData;
 
+import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.aaaa;
 import static denominator.model.ResourceRecordSets.cert;
@@ -46,7 +47,8 @@ import static denominator.model.ResourceRecordSets.srv;
 import static denominator.model.ResourceRecordSets.sshfp;
 import static denominator.model.ResourceRecordSets.tlsa;
 import static denominator.model.ResourceRecordSets.txt;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(Enclosed.class)
 public class ResourceRecordSetsTest {
@@ -56,81 +58,76 @@ public class ResourceRecordSetsTest {
       .type("A")
       .ttl(3600)
       .add(AData.create("192.0.2.1")).build();
-  Geo geo = Geo.create(new LinkedHashMap<String, Collection<String>>() {
-    {
-      put("US", Arrays.asList("US-VA"));
-    }
-  });
   ResourceRecordSet<AData> geoRRS = ResourceRecordSet.<AData>builder()
       .name("www.denominator.io.")
       .type("A")
       .qualifier("US-East")
       .ttl(3600)
       .add(AData.create("1.1.1.1"))
-      .geo(geo).build();
+      .geo(Geo.create(new LinkedHashMap<String, Collection<String>>() {
+        {
+          put("US", Arrays.asList("US-VA"));
+        }
+      })).build();
 
   public void nameEqualToReturnsFalseOnNull() {
-    assertThat(nameEqualTo(aRRS.name()).apply(null)).isFalse();
+    assertFalse(nameEqualTo(aRRS.name()).apply(null));
   }
 
   public void nameEqualToReturnsFalseOnDifferentName() {
-    assertThat(nameEqualTo("www.foo.com").apply(aRRS)).isFalse();
+    assertFalse(nameEqualTo("www.foo.com").apply(aRRS));
   }
 
   public void nameEqualToReturnsTrueOnSameName() {
-    assertThat(nameEqualTo(aRRS.name()).apply(aRRS)).isTrue();
+    assertTrue(nameEqualTo(aRRS.name()).apply(aRRS));
   }
 
   public void typeEqualToReturnsFalseOnNull() {
-    assertThat(nameAndTypeEqualTo(aRRS.name(), aRRS.type()).apply(null)).isFalse();
+    assertFalse(nameAndTypeEqualTo(aRRS.name(), aRRS.type()).apply(null));
   }
 
   public void typeEqualToReturnsFalseOnDifferentType() {
-    assertThat(nameAndTypeEqualTo(aRRS.name(), "TXT").apply(aRRS)).isFalse();
+    assertFalse(nameAndTypeEqualTo(aRRS.name(), "TXT").apply(aRRS));
   }
 
   public void typeEqualToReturnsTrueOnSameType() {
-    assertThat(nameAndTypeEqualTo(aRRS.name(), aRRS.type()).apply(aRRS)).isTrue();
+    assertTrue(nameAndTypeEqualTo(aRRS.name(), aRRS.type()).apply(aRRS));
   }
 
   public void containsRecordReturnsFalseOnNull() {
-    assertThat(ResourceRecordSets.containsRecord(aRRS.records().get(0)).apply(null)).isFalse();
+    assertFalse(ResourceRecordSets.containsRecord(aRRS.records().get(0)).apply(null));
   }
 
   public void containsRecordReturnsFalseWhenRDataDifferent() {
-    assertThat(ResourceRecordSets.containsRecord(AData.create("198.51.100.1")).apply(aRRS))
-        .isFalse();
+    assertFalse(ResourceRecordSets.containsRecord(AData.create("198.51.100.1")).apply(aRRS));
   }
 
   public void containsRecordReturnsTrueWhenRDataEqual() {
-    assertThat(ResourceRecordSets.containsRecord(AData.create("192.0.2.1")).apply(aRRS)).isTrue();
+    assertTrue(ResourceRecordSets.containsRecord(AData.create("192.0.2.1")).apply(aRRS));
   }
 
   public void containsRecordReturnsTrueWhenRDataEqualButDifferentType() {
     Map<String, String> record = new LinkedHashMap<String, String>();
     record.put("address", "192.0.2.1");
-    assertThat(ResourceRecordSets.containsRecord(record).apply(aRRS)).isTrue();
+    assertTrue(ResourceRecordSets.containsRecord(record).apply(aRRS));
   }
 
   public void qualifierEqualToReturnsFalseOnNull() {
-    assertThat(
-        nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), geoRRS.qualifier()).apply(null))
-        .isFalse();
+    assertFalse(
+        nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), geoRRS.qualifier()).apply(null));
   }
 
   public void qualifierEqualToReturnsFalseOnDifferentQualifier() {
-    assertThat(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), "TXT").apply(geoRRS))
-        .isFalse();
+    assertFalse(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), "TXT").apply(geoRRS));
   }
 
   public void qualifierEqualToReturnsFalseOnAbsentQualifier() {
-    assertThat(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), "TXT").apply(aRRS))
-        .isFalse();
+    assertFalse(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), "TXT").apply(aRRS));
   }
 
   public void qualifierEqualToReturnsTrueOnSameQualifier() {
-    assertThat(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), geoRRS.qualifier())
-                   .apply(geoRRS)).isTrue();
+    assertTrue(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), geoRRS.qualifier())
+                   .apply(geoRRS));
   }
 
   @RunWith(Parameterized.class)
@@ -322,18 +319,20 @@ public class ResourceRecordSetsTest {
           .name("server1.denominator.io.")
           .type("LOC")
           .ttl(3600)
-          .add(LOCData.builder().latitude("37 48 48.892 S").longitude("144 57 57.502 E").altitude("0m").build())
+          .add(LOCData.builder().latitude("37 48 48.892 S").longitude("144 57 57.502 E")
+                   .altitude("0m").build())
           .build();
       return Arrays.asList(data);
     }
 
     @Test
     public void shortFormEqualsLongForm() throws IOException {
-      assertThat(shortForm).isEqualTo(longForm);
-      assertThat(shortForm.name()).isEqualTo(longForm.name());
-      assertThat(shortForm.type()).isEqualTo(longForm.type());
-      assertThat(shortForm.ttl()).isEqualTo(longForm.ttl());
-      assertThat(shortForm.records()).containsExactlyElementsOf(longForm.records());
+      assertThat(shortForm)
+          .isEqualTo(longForm)
+          .hasName(longForm.name())
+          .hasType(longForm.type())
+          .hasTtl(longForm.ttl())
+          .containsOnlyRecords(longForm.records());
     }
   }
 }

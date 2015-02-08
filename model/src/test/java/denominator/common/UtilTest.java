@@ -20,7 +20,9 @@ import static denominator.common.Util.nextOrNull;
 import static denominator.common.Util.peekingIterator;
 import static denominator.common.Util.slurp;
 import static denominator.common.Util.split;
+import static junit.framework.Assert.assertFalse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class UtilTest {
 
@@ -50,11 +52,11 @@ public class UtilTest {
 
   @Test
   public void equalTest() {
-    assertThat(equal(null, null)).isTrue();
-    assertThat(equal("1", "1")).isTrue();
-    assertThat(equal(null, "1")).isFalse();
-    assertThat(equal("1", null)).isFalse();
-    assertThat(equal("1", "2")).isFalse();
+    assertTrue(equal(null, null));
+    assertTrue(equal("1", "1"));
+    assertFalse(equal(null, "1"));
+    assertFalse(equal("1", null));
+    assertFalse(equal("1", "2"));
   }
 
   @Test
@@ -89,14 +91,14 @@ public class UtilTest {
   @Test
   public void testNextOrNull() {
     PeekingIterator<Boolean> it = TrueThenDone.INSTANCE.iterator();
-    assertThat(it.next()).isTrue();
+    assertTrue(it.next());
     assertThat(nextOrNull(it)).isNull();
   }
 
   @Test
   public void peekingIteratorWhenPresent() {
     PeekingIterator<Boolean> it = peekingIterator(Arrays.asList(true).iterator());
-    assertThat(it.peek()).isTrue();
+    assertTrue(it.peek());
     assertThat(it).containsExactly(true);
   }
 
@@ -185,7 +187,7 @@ public class UtilTest {
       }
 
     };
-    assertThat(and(startsWithP, notPoo).apply("pancakes")).isTrue();
-    assertThat(and(startsWithP, notPoo).apply("poo")).isFalse();
+    assertTrue(and(startsWithP, notPoo).apply("pancakes"));
+    assertFalse(and(startsWithP, notPoo).apply("poo"));
   }
 }
