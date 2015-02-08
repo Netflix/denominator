@@ -37,7 +37,7 @@ public final class Providers {
    *
    * @param providerName corresponds to {@link Provider#name()}. ex {@code ultradns}
    * @throws IllegalArgumentException if the providerName is not configured
-   * @see {@link #list()}
+   * @see #list()
    */
   public static Provider getByName(String providerName) {
     checkNotNull(providerName, "providerName");

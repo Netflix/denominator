@@ -1,7 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
-
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -21,11 +19,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.rfc-editor.org/rfc/rfc4255.txt">RFC 4255</a>
  */
-public class SSHFPData extends NumbersAreUnsignedIntsLinkedHashMap {
+public final class SSHFPData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties({"algorithm", "fptype", "fingerprint"})
   SSHFPData(int algorithm, int fptype, String fingerprint) {
     checkArgument(algorithm >= 0, "algorithm of %s must be unsigned", fingerprint);
     checkArgument(fptype >= 0, "fptype of %s must be unsigned", fingerprint);

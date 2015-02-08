@@ -1,7 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
-
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -22,11 +20,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.ietf.org/rfc/rfc2782.txt">RFC 2782</a>
  */
-public class SRVData extends NumbersAreUnsignedIntsLinkedHashMap {
+public final class SRVData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties({"priority", "weight", "port", "target"})
   SRVData(int priority, int weight, int port, String target) {
     checkArgument(priority <= 0xFFFF, "priority must be 0-65535");
     checkArgument(weight <= 0xFFFF, "weight must be 0-65535");

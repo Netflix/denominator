@@ -1,6 +1,5 @@
 package denominator.route53;
 
-import java.beans.ConstructorProperties;
 import java.util.LinkedHashMap;
 
 import denominator.model.ResourceRecordSet;
@@ -24,11 +23,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * @since 4.2
  */
-public class AliasTarget extends LinkedHashMap<String, Object> {
+public final class AliasTarget extends LinkedHashMap<String, Object> {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties({"HostedZoneId", "DNSName"})
   AliasTarget(String hostedZoneId, String dnsName) {
     put("HostedZoneId", checkNotNull(hostedZoneId, "HostedZoneId"));
     put("DNSName", checkNotNull(dnsName, "DNSName"));

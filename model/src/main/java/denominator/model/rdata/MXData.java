@@ -1,7 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
-
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -18,11 +16,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class MXData extends NumbersAreUnsignedIntsLinkedHashMap {
+public final class MXData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties({"preference", "exchange"})
   MXData(int preference, String exchange) {
     checkArgument(preference <= 0xFFFF, "preference must be 65535 or less");
     checkNotNull(exchange, "exchange");

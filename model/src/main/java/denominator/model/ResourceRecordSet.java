@@ -1,6 +1,5 @@
 package denominator.model;
 
-import java.beans.ConstructorProperties;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +34,6 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
   private final Geo geo;
   private final Weighted weighted;
 
-  @ConstructorProperties({"name", "type", "qualifier", "ttl", "records", "geo", "weighted"})
   ResourceRecordSet(String name, String type, String qualifier, Integer ttl, List<D> records,
                     Geo geo, Weighted weighted) {
     checkArgument(checkNotNull(name, "name").length() <= 255, "Name must be <= 255 characters");

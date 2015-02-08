@@ -1,7 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
-
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -24,12 +22,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.ietf.org/rfc/rfc1876.txt">RFC 1876</a>
  */
-public class LOCData extends NumbersAreUnsignedIntsLinkedHashMap {
+public final class LOCData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties({"latitude", "longitude", "altitude", "diameter", "hprecision",
-                          "vprecision"})
   LOCData(String latitude, String longitude, String altitude, String diameter, String hprecision,
           String vprecision) {
     checkNotNull(latitude, "latitude");

@@ -1,7 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
-
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -24,11 +22,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.ietf.org/rfc/rfc3403.txt">RFC 3403</a>
  */
-public class NAPTRData extends NumbersAreUnsignedIntsLinkedHashMap {
+public final class NAPTRData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties({"order", "preference", "flags", "services", "regexp", "replacement"})
   NAPTRData(int order, int preference, String flags, String services, String regexp,
             String replacement) {
     checkArgument(order <= 0xFFFF, "order must be 0-65535");

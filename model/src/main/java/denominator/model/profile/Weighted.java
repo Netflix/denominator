@@ -1,7 +1,5 @@
 package denominator.model.profile;
 
-import java.beans.ConstructorProperties;
-
 import static denominator.common.Preconditions.checkArgument;
 
 /**
@@ -19,7 +17,6 @@ public class Weighted {
 
   private final int weight;
 
-  @ConstructorProperties({"weight"})
   private Weighted(int weight) {
     checkArgument(weight >= 0, "weight must be positive");
     this.weight = weight;

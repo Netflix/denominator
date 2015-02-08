@@ -55,14 +55,17 @@ public interface Provider {
   Set<String> basicRecordTypes();
 
   /**
-   * Maps a {@link ResourceRecordSet#profiles() profile} {@code type} value to a collection of
-   * supported record types. If empty, the provider does not support advanced records. <br> For
-   * example:
+   * Maps a profile value to a collection of supported record types. If empty, the provider does not
+   * support advanced records.
+   *
+   * <p/> For example:
    *
    * <pre>
    * { "geo" : ["A", "AAAA", "CNAME", "HINFO", "MX", "PTR", "RP", "SRV", "TXT", "NAPTR"],
    *   "weighted" : ["A", "AAAA", "CNAME"] }
    * </pre>
+   * 
+   * @see denominator.model.profile 
    */
   Map<String, Collection<String>> profileToRecordTypes();
 
