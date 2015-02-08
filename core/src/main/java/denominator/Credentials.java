@@ -1,11 +1,6 @@
 package denominator;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static denominator.common.Preconditions.checkNotNull;
 
@@ -112,18 +107,41 @@ public interface Credentials {
      * @throws IllegalArgumentException if input is not a {@code Map} or {@code List}, or it is
      *                                  empty.
      */
-    public static List<Object> asList(Credentials in) throws IllegalArgumentException {
+    public static List<Object> asList(Credentials in, Provider provider) throws IllegalArgumentException {
       checkNotNull(in, "credentials");
-      if (in instanceof ListCredentials) {
+      if (in instanceof ListCredentials){
         return ListCredentials.class.cast(in);
-      } else if (in instanceof Map || in instanceof List) {
-        Collection<?>
-            values =
-            (in instanceof Map) ? Map.class.cast(in).values() : List.class.cast(in);
+      } else if (in instanceof List) {
+        Collection<?> values = List.class.cast(in);
         if (values.isEmpty()) {
           throw new IllegalArgumentException("cannot convert empty credentials to List<Object>");
         }
         return new ArrayList<Object>(values);
+      } else if (in instanceof Map) {
+        Map<?, ?> map = Map.class.cast(in);
+        Map<String, Collection<String>> stringCollectionMap = provider.credentialTypeToParameterNames();
+        ArrayList<Collection<String>> paramLists = new ArrayList<Collection<String>>(stringCollectionMap.values());
+        Collections.sort(paramLists, new Comparator<Collection<String>>(){
+          @Override
+          public int compare(Collection<String> o1, Collection<String> o2){
+            return o1.size() - o2.size();
+          }
+        });
+        for(Collection<String> c: paramLists){
+          List<Object> list = new ArrayList<Object>();
+          for(String param: c){
+            Object value = map.get(param);
+            if(value==null)
+              break;
+            list.add(value);
+          }
+          if(c.size()==list.size())
+            return list;
+        }
+        if (map.isEmpty()) {
+          throw new IllegalArgumentException("cannot convert empty credentials to List<Object>");
+        }
+        return new ArrayList<Object>(map.values());
       }
       throw new IllegalArgumentException("cannot convert " + in.getClass() + " to ListCredentials");
     }

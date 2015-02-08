@@ -66,7 +66,7 @@ public class InvalidatableAuthenticationHeadersProvider {
     }
 
     Map<String, String> auth(Credentials currentCreds) {
-        List<Object> creds = ListCredentials.asList(currentCreds);
+        List<Object> creds = ListCredentials.asList(currentCreds, new Route53Provider());
         String accessKey = creds.get(0).toString();
         String secretKey = creds.get(1).toString();
         String token = null;

@@ -59,7 +59,7 @@ class UltraDNSTarget implements Target<UltraDNS> {
   @Override
   public Request apply(RequestTemplate in) {
     in.insert(0, url());
-    List<Object> creds = ListCredentials.asList(credentials.get());
+    List<Object> creds = ListCredentials.asList(credentials.get(), provider);
     in.body(format(SOAP_TEMPLATE, creds.get(0).toString(), creds.get(1).toString(),
                    new String(in.body(), UTF_8)));
     in.header("Host", URI.create(in.url()).getHost());

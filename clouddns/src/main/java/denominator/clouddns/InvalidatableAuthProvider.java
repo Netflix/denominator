@@ -81,7 +81,7 @@ class InvalidatableAuthProvider implements Provider<TokenIdAndPublicURL> {
       }
       return identityService.passwordAuth(url, username, mapCreds.get("password"));
     }
-    List<Object> listCreds = ListCredentials.asList(currentCreds);
+    List<Object> listCreds = ListCredentials.asList(currentCreds, provider);
     return identityService
         .apiKeyAuth(url, listCreds.get(0).toString(), listCreds.get(1).toString());
   }

@@ -70,7 +70,7 @@ class InvalidatableAuthProvider implements Provider<TokenIdAndPublicURL> {
 
   private TokenIdAndPublicURL auth(Credentials currentCreds) {
     URI url = URI.create(lastKeystoneUrl);
-    List<Object> listCreds = ListCredentials.asList(currentCreds);
+    List<Object> listCreds = ListCredentials.asList(currentCreds, provider);
     return identityService
         .passwordAuth(url, listCreds.get(0).toString(), listCreds.get(1).toString(), listCreds
             .get(2).toString());
