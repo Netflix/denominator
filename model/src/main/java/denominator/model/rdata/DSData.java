@@ -1,7 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
-
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -22,11 +20,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.ietf.org/rfc/rfc3658.txt">RFC 3658</a>
  */
-public class DSData extends NumbersAreUnsignedIntsLinkedHashMap {
+public final class DSData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties({"keyTag", "algorithmId", "digestId", "digest"})
   DSData(int keyTag, int algorithmId, int digestId, String digest) {
     checkArgument(keyTag <= 0xFFFF, "keyTag must be 0-65535");
     checkArgument(algorithmId <= 0xFF, "algorithmId must be 0-255");

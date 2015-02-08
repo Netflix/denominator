@@ -1,7 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
-
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -23,11 +21,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.ietf.org/rfc/rfc6698.txt">RFC 6698</a>
  */
-public class TLSAData extends NumbersAreUnsignedIntsLinkedHashMap {
+public final class TLSAData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties({"usage", "selector", "matchingType", "certificateAssociationData"})
   TLSAData(int usage, int selector, int matchingType, String certificateAssociationData) {
     checkArgument(usage <= 0xFF, "usage must be 0-255");
     checkArgument(selector <= 0xFF, "selector must be 0-255");

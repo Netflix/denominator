@@ -1,6 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
 import java.util.LinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -17,11 +16,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.ietf.org/rfc/rfc3596.txt">RFC 3596</a>
  */
-public class AAAAData extends LinkedHashMap<String, Object> {
+public final class AAAAData extends LinkedHashMap<String, Object> {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties("address")
   AAAAData(String address) {
     checkNotNull(address, "address");
     checkArgument(address.indexOf(':') != -1, "%s should be a ipv6 address", address);

@@ -1,6 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
 import java.util.LinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -19,11 +18,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://tools.ietf.org/html/rfc4408#section-3.1.1">RFC 4408</a>
  */
-public class SPFData extends LinkedHashMap<String, Object> {
+public final class SPFData extends LinkedHashMap<String, Object> {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties("txtdata")
   SPFData(String txtdata) {
     checkArgument(checkNotNull(txtdata, "txtdata").length() <= 65535,
                   "txt data is limited to 65535");

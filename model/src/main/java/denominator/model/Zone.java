@@ -1,7 +1,5 @@
 package denominator.model;
 
-import java.beans.ConstructorProperties;
-
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.equal;
 
@@ -16,7 +14,6 @@ public class Zone {
   private final String name;
   private final String id;
 
-  @ConstructorProperties({"name", "id"})
   Zone(String name, String id) {
     this.name = checkNotNull(name, "name");
     this.id = id;
