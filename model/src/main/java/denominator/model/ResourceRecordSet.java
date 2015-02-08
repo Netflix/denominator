@@ -37,10 +37,8 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
 
   @ConstructorProperties({"name", "type", "qualifier", "ttl", "records", "geo", "weighted"})
   ResourceRecordSet(String name, String type, String qualifier, Integer ttl, List<D> records,
-                    Geo geo,
-                    Weighted weighted) {
-    checkArgument(checkNotNull(name, "name").length() <= 255,
-                  "Name must be limited to 255 characters");
+                    Geo geo, Weighted weighted) {
+    checkArgument(checkNotNull(name, "name").length() <= 255, "Name must be <= 255 characters");
     this.name = name;
     this.type = checkNotNull(type, "type of %s", name);
     this.qualifier = qualifier;

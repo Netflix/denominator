@@ -1,8 +1,8 @@
 package denominator.common;
 
-import com.google.common.collect.ImmutableList;
-
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -20,17 +20,16 @@ import static denominator.common.Util.nextOrNull;
 import static denominator.common.Util.peekingIterator;
 import static denominator.common.Util.slurp;
 import static denominator.common.Util.split;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Test
 public class UtilTest {
+
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void slurpDoesntScrewWithWhitespance() throws IOException {
-    assertEquals(slurp(new StringReader(" foo\n")), " foo\n");
+    assertThat(slurp(new StringReader(" foo\n"))).isEqualTo(" foo\n");
   }
 
   @Test
@@ -40,71 +39,71 @@ public class UtilTest {
       builder.append('a');
     }
     String twoK1 = builder.toString();
-    assertEquals(slurp(new StringReader(twoK1)), twoK1);
+    assertThat(slurp(new StringReader(twoK1))).isEqualTo(twoK1);
   }
 
   @Test
   public void joinNadaReturnsEmpty() {
-    assertEquals(join(';', (Object[]) null), "");
-    assertEquals(join(';', new Object[]{}), "");
+    assertThat(join(';', (Object[]) null)).isEmpty();
+    assertThat(join(';', new Object[]{})).isEmpty();
   }
 
   @Test
   public void equalTest() {
-    assertTrue(equal(null, null));
-    assertTrue(equal("1", "1"));
-    assertFalse(equal(null, "1"));
-    assertFalse(equal("1", null));
-    assertFalse(equal("1", "2"));
+    assertThat(equal(null, null)).isTrue();
+    assertThat(equal("1", "1")).isTrue();
+    assertThat(equal(null, "1")).isFalse();
+    assertThat(equal("1", null)).isFalse();
+    assertThat(equal("1", "2")).isFalse();
   }
 
   @Test
   public void joinMultiple() {
-    assertEquals(join(';', "one", 2), "one;2");
+    assertThat(join(';', "one", 2)).isEqualTo("one;2");
   }
 
-  @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "toSplit")
+  @Test
   public void splitNull() {
+    thrown.expect(NullPointerException.class);
+    thrown.expectMessage("toSplit");
+
     split(';', null);
   }
 
   @Test
   public void splitMiss() {
-    assertEquals(split(';', "one,2"), Arrays.asList("one,2"));
+    assertThat(split(';', "one,2")).containsOnly("one,2");
   }
 
   @Test
   public void splitWin() {
-    assertEquals(split(';', "one;2;2"), Arrays.asList("one", "2", "2"));
+    assertThat(split(';', "one;2;2")).containsOnly("one", "2", "2");
   }
 
   @Test
   public void splitEmpty() {
-    assertEquals(split(';', "one;;2"), Arrays.asList("one", null, "2"));
-    assertEquals(split(';', ";;"), Arrays.asList(null, null, null));
+    assertThat(split(';', "one;;2")).containsOnly("one", null, "2");
+    assertThat(split(';', ";;")).containsOnly(null, null, null);
   }
 
   @Test
   public void testNextOrNull() {
     PeekingIterator<Boolean> it = TrueThenDone.INSTANCE.iterator();
-    assertTrue(it.next());
-    assertNull(nextOrNull(it));
+    assertThat(it.next()).isTrue();
+    assertThat(nextOrNull(it)).isNull();
   }
 
   @Test
   public void peekingIteratorWhenPresent() {
-    PeekingIterator<Boolean> it = peekingIterator(ImmutableList.of(true).iterator());
-    assertTrue(it.hasNext());
-    assertTrue(it.peek());
-    assertTrue(it.hasNext());
-    assertTrue(it.next());
-    assertFalse(it.hasNext());
+    PeekingIterator<Boolean> it = peekingIterator(Arrays.asList(true).iterator());
+    assertThat(it.peek()).isTrue();
+    assertThat(it).containsExactly(true);
   }
 
   @Test
   public void peekingIteratorWhenAbsent() {
-    PeekingIterator<Object> it = peekingIterator(ImmutableList.of().iterator());
-    assertFalse(it.hasNext());
+    PeekingIterator<Object> it = peekingIterator(Arrays.asList().iterator());
+    assertThat(it).isEmpty();
   }
 
   @Test
@@ -112,11 +111,7 @@ public class UtilTest {
     Iterator<Boolean>
         it =
         concat(TrueThenDone.INSTANCE.iterator(), TrueThenDone.INSTANCE.iterator());
-    assertTrue(it.hasNext());
-    assertTrue(it.next());
-    assertTrue(it.hasNext());
-    assertTrue(it.next());
-    assertFalse(it.hasNext());
+    assertThat(it).containsExactly(true, true);
   }
 
   @Test
@@ -126,7 +121,7 @@ public class UtilTest {
     Iterator<Boolean> second = TrueThenDone.INSTANCE.iterator();
     second.next();
     Iterator<Boolean> it = concat(first, second);
-    assertFalse(it.hasNext());
+    assertThat(it).isEmpty();
   }
 
   @Test
@@ -134,40 +129,32 @@ public class UtilTest {
     Iterator<Boolean> first = TrueThenDone.INSTANCE.iterator();
     first.next();
     Iterator<Boolean> it = concat(first, TrueThenDone.INSTANCE.iterator());
-    assertTrue(it.hasNext());
-    assertTrue(it.next());
-    assertFalse(it.hasNext());
+    assertThat(it).containsExactly(true);
   }
 
   @Test
   public void concatIterablesWhenPresent() {
-    Iterator<Boolean> it = concat(ImmutableList.of(ImmutableList.of(true), ImmutableList.of(true)));
-    assertTrue(it.hasNext());
-    assertTrue(it.next());
-    assertTrue(it.hasNext());
-    assertTrue(it.next());
-    assertFalse(it.hasNext());
+    Iterator<Boolean> it = concat(Arrays.asList(Arrays.asList(true), Arrays.asList(true)));
+    assertThat(it).containsExactly(true, true);
   }
 
   @Test
   public void concatIterablesWhenAbsent() {
-    Iterator<Object> it = concat(ImmutableList.of(ImmutableList.of(), ImmutableList.of()));
-    assertFalse(it.hasNext());
+    Iterator<Object> it = concat(Arrays.asList(Arrays.asList(), Arrays.asList()));
+    assertThat(it).isEmpty();
   }
 
   @Test
   public void concatIterablesWhenFirstIsEmpty() {
     Iterator<Boolean>
         it =
-        concat(ImmutableList.of(ImmutableList.<Boolean>of(), ImmutableList.of(true)));
-    assertTrue(it.hasNext());
-    assertTrue(it.next());
-    assertFalse(it.hasNext());
+        concat(Arrays.asList(Arrays.<Boolean>asList(), Arrays.asList(true)));
+    assertThat(it).containsExactly(true);
   }
 
   @Test
   public void filterRetains() {
-    Iterator<String> it = filter(ImmutableList.of("waffles", "poo", "pancakes", "eggs").iterator(),
+    Iterator<String> it = filter(Arrays.asList("waffles", "poo", "pancakes", "eggs").iterator(),
                                  new Filter<String>() {
 
                                    @Override
@@ -176,9 +163,7 @@ public class UtilTest {
                                    }
 
                                  });
-    assertTrue(it.hasNext());
-    assertEquals(it.next(), "pancakes");
-    assertFalse(it.hasNext());
+    assertThat(it).containsExactly("pancakes");
   }
 
   @Test
@@ -200,7 +185,7 @@ public class UtilTest {
       }
 
     };
-    assertTrue(and(startsWithP, notPoo).apply("pancakes"));
-    assertFalse(and(startsWithP, notPoo).apply("poo"));
+    assertThat(and(startsWithP, notPoo).apply("pancakes")).isTrue();
+    assertThat(and(startsWithP, notPoo).apply("poo")).isFalse();
   }
 }
