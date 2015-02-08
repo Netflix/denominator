@@ -7,8 +7,8 @@ import denominator.model.ResourceRecordSet;
 public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
 
   /**
-   * Iterates across all basic record sets in the zone (those with no {@link
-   * ResourceRecordSet#profiles() profile}). Implementations are lazy when possible.
+   * Iterates across all basic record sets in the zone (those with no profile). Implementations are
+   * lazy when possible.
    *
    * @return iterator which is lazy where possible
    * @throws IllegalArgumentException if the zone {@code idOrName} is not found.

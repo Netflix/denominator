@@ -1,7 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
-
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -22,11 +20,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.ietf.org/rfc/rfc4398.txt">RFC 4398</a>
  */
-public class CERTData extends NumbersAreUnsignedIntsLinkedHashMap {
+public final class CERTData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties({"certType", "keyTag", "algorithm", "cert"})
   CERTData(int certType, int keyTag, int algorithm, String cert) {
     checkArgument(certType <= 0xFFFF, "certType must be 0-65535");
     checkArgument(keyTag <= 0xFFFF, "keyTag must be 0-65535");

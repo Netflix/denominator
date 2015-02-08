@@ -1,6 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
 import java.util.LinkedHashMap;
 
 import static denominator.common.Preconditions.checkNotNull;
@@ -16,11 +15,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class PTRData extends LinkedHashMap<String, Object> {
+public final class PTRData extends LinkedHashMap<String, Object> {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties("ptrdname")
   PTRData(String ptrdname) {
     put("ptrdname", checkNotNull(ptrdname, "ptrdname"));
   }

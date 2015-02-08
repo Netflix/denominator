@@ -1,7 +1,5 @@
 package denominator.model.rdata;
 
-import java.beans.ConstructorProperties;
-
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
 
 import static denominator.common.Preconditions.checkArgument;
@@ -25,11 +23,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
-public class SOAData extends NumbersAreUnsignedIntsLinkedHashMap {
+public final class SOAData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   private static final long serialVersionUID = 1L;
 
-  @ConstructorProperties({"mname", "rname", "serial", "refresh", "retry", "expire", "minimum"})
   SOAData(String mname, String rname, int serial, int refresh, int retry, int expire, int minimum) {
     checkNotNull(mname, "mname");
     checkNotNull(rname, "rname of %s", mname);

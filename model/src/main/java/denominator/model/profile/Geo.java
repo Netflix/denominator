@@ -1,6 +1,5 @@
 package denominator.model.profile;
 
-import java.beans.ConstructorProperties;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -20,7 +19,6 @@ public class Geo {
 
   private final Map<String, Collection<String>> regions;
 
-  @ConstructorProperties({"regions"})
   private Geo(Map<String, Collection<String>> regions) {
     this.regions = Collections.unmodifiableMap(checkNotNull(regions, "regions"));
   }
