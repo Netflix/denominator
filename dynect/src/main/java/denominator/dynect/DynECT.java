@@ -8,11 +8,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.inject.Named;
-
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import feign.Body;
+import feign.Param;
 import feign.RequestLine;
 
 public interface DynECT {
@@ -22,10 +21,10 @@ public interface DynECT {
 
   @RequestLine("PUT /Zone/{zone}")
   @Body("{\"publish\":true}")
-  void publish(@Named("zone") String zone);
+  void publish(@Param("zone") String zone);
 
   @RequestLine("GET /AllRecord/{zone}?detail=Y")
-  Data<Iterator<ResourceRecordSet<?>>> rrsets(@Named("zone") String zone);
+  Data<Iterator<ResourceRecordSet<?>>> rrsets(@Param("zone") String zone);
 
   @RequestLine("POST /CheckPermissionReport")
   @Body("{\"permission\":[\"GeoUpdate\",\"GeoDelete\",\"GeoGet\",\"GeoActivate\",\"GeoDeactivate\"]}")
@@ -35,31 +34,31 @@ public interface DynECT {
   Data<List<GeoService>> geoServices();
 
   @RequestLine("GET /AllRecord/{zone}/{fqdn}?detail=Y")
-  Data<Iterator<ResourceRecordSet<?>>> rrsetsInZoneByName(@Named("zone") String zone,
-                                                          @Named("fqdn") String fqdn);
+  Data<Iterator<ResourceRecordSet<?>>> rrsetsInZoneByName(@Param("zone") String zone,
+                                                          @Param("fqdn") String fqdn);
 
   @RequestLine("GET /{type}Record/{zone}/{fqdn}?detail=Y")
-  Data<Iterator<ResourceRecordSet<?>>> rrsetsInZoneByNameAndType(@Named("zone") String zone,
-                                                                 @Named("fqdn") String fqdn,
-                                                                 @Named("type") String type);
+  Data<Iterator<ResourceRecordSet<?>>> rrsetsInZoneByNameAndType(@Param("zone") String zone,
+                                                                 @Param("fqdn") String fqdn,
+                                                                 @Param("type") String type);
 
   @RequestLine("GET /{type}Record/{zone}/{fqdn}")
-  Data<List<String>> recordIdsInZoneByNameAndType(@Named("zone") String zone,
-                                                  @Named("fqdn") String fqdn,
-                                                  @Named("type") String type);
+  Data<List<String>> recordIdsInZoneByNameAndType(@Param("zone") String zone,
+                                                  @Param("fqdn") String fqdn,
+                                                  @Param("type") String type);
 
   @RequestLine("GET /{type}Record/{zone}/{fqdn}?detail=Y")
-  Data<Iterator<Record>> recordsInZoneByNameAndType(@Named("zone") String zone,
-                                                    @Named("fqdn") String fqdn,
-                                                    @Named("type") String type);
+  Data<Iterator<Record>> recordsInZoneByNameAndType(@Param("zone") String zone,
+                                                    @Param("fqdn") String fqdn,
+                                                    @Param("type") String type);
 
   @RequestLine("POST /{type}Record/{zone}/{fqdn}")
-  void scheduleCreateRecord(@Named("zone") String zone, @Named("fqdn") String fqdn,
-                            @Named("type") String type,
-                            @Named("ttl") int ttl, @Named("rdata") Map<String, Object> rdata);
+  void scheduleCreateRecord(@Param("zone") String zone, @Param("fqdn") String fqdn,
+                            @Param("type") String type,
+                            @Param("ttl") int ttl, @Param("rdata") Map<String, Object> rdata);
 
   @RequestLine("DELETE /{recordId}")
-  void scheduleDeleteRecord(@Named("recordId") String recordId);
+  void scheduleDeleteRecord(@Param("recordId") String recordId);
 
   /**
    * DynECT json includes an envelope called "data", which makes it difficult.
