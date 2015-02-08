@@ -66,6 +66,7 @@ class UltraDNSErrorDecoder implements ErrorDecoder {
     private StringBuilder currentText = new StringBuilder();
     private int code = -1;
     private String description;
+
     @Inject
     UltraDNSError() {
     }

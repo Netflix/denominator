@@ -44,6 +44,7 @@ class UltraDNSException extends FeignException {
   static final int POOL_RECORD_ALREADY_EXISTS = 4009;
   private static final long serialVersionUID = 1L;
   private final int code;
+
   UltraDNSException(String message, int code) {
     super(message);
     this.code = code;
