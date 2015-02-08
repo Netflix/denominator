@@ -83,7 +83,7 @@ class InvalidatableTokenProvider implements Provider<String>, CheckConnection {
   }
 
   private String auth(Credentials currentCreds) {
-    List<Object> listCreds = ListCredentials.asList(currentCreds);
+    List<Object> listCreds = ListCredentials.asList(currentCreds, provider);
     return session.login(listCreds.get(0).toString(), listCreds.get(1).toString(),
                          listCreds.get(2).toString()).data;
   }

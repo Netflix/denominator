@@ -138,7 +138,7 @@ public class DiscoveryDNSProvider extends BasicProvider {
     // TODO: this doesn't allow for dynamic credential changes.
     @Provides
     SSLSocketFactory sslSocketFactory(Provider<Credentials> credentials) {
-      List<Object> creds = ListCredentials.asList(credentials.get());
+      List<Object> creds = ListCredentials.asList(credentials.get(), new DiscoveryDNSProvider());
       String cert = creds.get(0).toString();
       String key = creds.get(1).toString();
 
