@@ -26,6 +26,7 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
   private final Map<String, Geo> cache = new LinkedHashMap<String, Geo>();
   private final UltraDNS api;
   private final PeekingIterator<DirectionalRecord> peekingIterator;
+
   private GroupGeoRecordByNameTypeIterator(UltraDNS api,
                                            Iterator<DirectionalRecord> sortedIterator) {
     this.api = api;
