@@ -1,11 +1,11 @@
 package denominator.model.profile;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import denominator.model.ResourceRecordSet;
 
@@ -39,7 +39,7 @@ public class Geos {
       regionsToApply.put(entry.getKey(), entry.getValue());
     }
     for (Entry<String, Collection<String>> entry : regionsToAdd.entrySet()) {
-      Set<String> updates = new LinkedHashSet<String>();
+      List<String> updates = new ArrayList<String>();
       if (regionsToApply.containsKey(entry.getKey())) {
         updates.addAll(regionsToApply.get(entry.getKey()));
       }

@@ -1,55 +1,59 @@
 package denominator.model.rdata;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import static denominator.model.ResourceRecordSets.loc;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Test
 public class LOCDataTest {
 
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
+
+  @Test
   public void testGoodRecord() {
     loc("www.denominator.io.", "37 48 48.892 S 144 57 57.502 E 26m 10m 100m 10m");
   }
 
+  @Test
   public void testSimpleRecord() {
     loc("www.denominator.io.", "37 48 48.892 S 144 57 57.502 E 0m");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*could not find longitude.*")
+  @Test
   public void testMissingParts() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("could not find longitude");
+
     loc("www.denominator.io.", "37 48 48.892 S");
   }
 
+  @Test
   public void testSimple() {
     LOCData data = LOCData.create("37 48 48.892 S 144 57 57.502 E 0m");
-    assertEquals(data.latitude(), "37 48 48.892 S");
-    assertEquals(data.longitude(), "144 57 57.502 E");
-    assertEquals(data.altitude(), "0m");
-    assertNull(data.diameter());
-    assertNull(data.hprecision());
-    assertNull(data.vprecision());
+    assertThat(data.latitude()).isEqualTo("37 48 48.892 S");
+    assertThat(data.longitude()).isEqualTo("144 57 57.502 E");
+    assertThat(data.altitude()).isEqualTo("0m");
   }
 
+  @Test
   public void testMinimal() {
     LOCData data = LOCData.create("37 S 144 E 0m");
-    assertEquals(data.latitude(), "37 S");
-    assertEquals(data.longitude(), "144 E");
-    assertEquals(data.altitude(), "0m");
-    assertNull(data.diameter());
-    assertNull(data.hprecision());
-    assertNull(data.vprecision());
+    assertThat(data.latitude()).isEqualTo("37 S");
+    assertThat(data.longitude()).isEqualTo("144 E");
+    assertThat(data.altitude()).isEqualTo("0m");
   }
 
+  @Test
   public void testFull() {
     LOCData data = LOCData.create("37 48 48.892 S 144 57 57.502 E 26m 1m 2m 3m");
-    assertEquals(data.latitude(), "37 48 48.892 S");
-    assertEquals(data.longitude(), "144 57 57.502 E");
-    assertEquals(data.altitude(), "26m");
-    assertEquals(data.diameter(), "1m");
-    assertEquals(data.hprecision(), "2m");
-    assertEquals(data.vprecision(), "3m");
+    assertThat(data.latitude()).isEqualTo("37 48 48.892 S");
+    assertThat(data.longitude()).isEqualTo("144 57 57.502 E");
+    assertThat(data.altitude()).isEqualTo("26m");
+    assertThat(data.diameter()).isEqualTo("1m");
+    assertThat(data.hprecision()).isEqualTo("2m");
+    assertThat(data.vprecision()).isEqualTo("3m");
   }
-
 }
