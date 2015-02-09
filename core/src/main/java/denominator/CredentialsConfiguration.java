@@ -56,8 +56,6 @@ public class CredentialsConfiguration {
     return credentials(AnonymousCredentials.INSTANCE);
   }
 
-  ;
-
   /**
    * @param firstPart  first part of credentials, such as a username or accessKey
    * @param secondPart second part of credentials, such as a password or secretKey
