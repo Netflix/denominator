@@ -1,90 +1,62 @@
 package denominator.designate;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.util.Iterator;
 
-import denominator.Denominator;
 import denominator.ZoneApi;
 import denominator.model.Zone;
 
-import static denominator.CredentialsConfiguration.credentials;
-import static denominator.designate.DesignateTest.accessResponse;
+import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.designate.DesignateTest.domainId;
 import static denominator.designate.DesignateTest.domainsResponse;
-import static denominator.designate.DesignateTest.getURLReplacingQueueDispatcher;
-import static denominator.designate.DesignateTest.password;
-import static denominator.designate.DesignateTest.takeAuthResponse;
-import static denominator.designate.DesignateTest.tenantId;
-import static denominator.designate.DesignateTest.username;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 
 @Test(singleThreaded = true)
 public class DesignateZoneApiMockTest {
 
-  private static ZoneApi mockApi(final int port) {
-    return Denominator.create(new DesignateProvider() {
-      @Override
-      public String url() {
-        return "http://localhost:" + port;
-      }
-    }, credentials(tenantId, username, password)).api().zones();
-  }
+  MockDesignateServer server;
 
   @Test
-  public void iteratorWhenPresent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.play();
-
-    String url = "http://localhost:" + server.getPort();
-    server.setDispatcher(getURLReplacingQueueDispatcher(url));
-
-    server.enqueue(new MockResponse().setBody(accessResponse));
+  public void iteratorWhenPresent() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
-    try {
-      ZoneApi api = mockApi(server.getPort());
-      Iterator<Zone> domains = api.iterator();
+    ZoneApi api = server.connect().api().zones();
+    Iterator<Zone> domains = api.iterator();
 
-      while (domains.hasNext()) {
-        Zone zone = domains.next();
-        assertEquals(zone.name(), "denominator.io.");
-        assertEquals(zone.id(), domainId);
-      }
+    assertThat(domains.next())
+        .hasName("denominator.io.")
+        .hasId(domainId);
 
-      assertEquals(server.getRequestCount(), 2);
-      takeAuthResponse(server);
-      assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertAuthRequest();
+    server.assertRequest().hasPath("/v1/domains");
   }
 
   @Test
-  public void iteratorWhenAbsent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.play();
-
-    String url = "http://localhost:" + server.getPort();
-    server.setDispatcher(getURLReplacingQueueDispatcher(url));
-
-    server.enqueue(new MockResponse().setBody(accessResponse));
+  public void iteratorWhenAbsent() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
 
-    try {
-      ZoneApi api = mockApi(server.getPort());
+    ZoneApi api = server.connect().api().zones();
+    assertFalse(api.iterator().hasNext());
 
-      assertFalse(api.iterator().hasNext());
-      assertEquals(server.getRequestCount(), 2);
-      takeAuthResponse(server);
-      assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertAuthRequest();
+    server.assertRequest().hasPath("/v1/domains");
+  }
+
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockDesignateServer();
+  }
+
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 }

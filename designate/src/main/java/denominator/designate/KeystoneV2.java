@@ -17,7 +17,6 @@ interface KeystoneV2 {
                                    @Param("password") String password);
 
   static class TokenIdAndPublicURL {
-
     String tokenId;
     String publicURL;
   }

@@ -1,8 +1,9 @@
 package denominator.designate;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -16,92 +17,69 @@ import denominator.DNSApi;
 import denominator.Denominator;
 
 import static denominator.CredentialsConfiguration.credentials;
-import static denominator.designate.DesignateTest.accessResponse;
-import static denominator.designate.DesignateTest.auth;
-import static denominator.designate.DesignateTest.getURLReplacingQueueDispatcher;
-import static denominator.designate.DesignateTest.password;
-import static denominator.designate.DesignateTest.tenantId;
-import static denominator.designate.DesignateTest.username;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
 
 @Test(singleThreaded = true)
 public class DesignateProviderDynamicUpdateMockTest {
 
+  MockDesignateServer server;
+
   @Test
-  public void dynamicEndpointUpdates() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.play();
-
-    String updatedPath = "alt";
-    String mockUrl = "http://localhost:" + server.getPort();
-    final AtomicReference<String> dynamicUrl = new AtomicReference<String>(mockUrl);
-    server.setDispatcher(getURLReplacingQueueDispatcher(dynamicUrl));
-
-    server.enqueue(new MockResponse().setBody(accessResponse));
-    server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
-    server.enqueue(new MockResponse().setBody(accessResponse));
+  public void dynamicEndpointUpdates() throws Exception {
+    final AtomicReference<String> url = new AtomicReference<String>(server.url());
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
 
-    try {
-      DNSApi api = Denominator.create(new DesignateProvider() {
-        @Override
-        public String url() {
-          return dynamicUrl.get().toString();
-        }
-      }, credentials(tenantId, username, password)).api();
+    DNSApi api = Denominator.create(new DesignateProvider() {
+      @Override
+      public String url() {
+        return url.get();
+      }
+    }, credentials(server.credentials())).api();
 
-      assertFalse(api.zones().iterator().hasNext());
-      dynamicUrl.set(dynamicUrl.get() + "/" + updatedPath);
-      assertFalse(api.zones().iterator().hasNext());
+    api.zones().iterator();
+    server.assertAuthRequest();
+    server.assertRequest();
 
-      assertEquals(server.getRequestCount(), 4);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /tokens HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /alt/tokens HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /alt/v1/domains HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    MockDesignateServer server2 = new MockDesignateServer();
+    url.set(server2.url());
+    server2.enqueueAuthResponse();
+    server2.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
+
+    api.zones().iterator();
+
+    server2.assertAuthRequest();
+    server2.assertRequest();
+    server2.shutdown();
   }
 
   @Test
-  public void dynamicCredentialUpdates() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.play();
-
-    final String mockUrl = "http://localhost:" + server.getPort();
-    server.setDispatcher(getURLReplacingQueueDispatcher(new AtomicReference<String>(mockUrl)));
-
-    server.enqueue(new MockResponse().setBody(accessResponse));
-    server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
-    server.enqueue(new MockResponse().setBody(accessResponse));
+  public void dynamicCredentialUpdates() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
 
-    try {
-      AtomicReference<Credentials> dynamicCredentials = new AtomicReference<Credentials>(
-          ListCredentials.from(tenantId, username, password));
+    AtomicReference<Credentials>
+        dynamicCredentials =
+        new AtomicReference<Credentials>(server.credentials());
 
-      DNSApi api = Denominator.create(new DesignateProvider() {
-        @Override
-        public String url() {
-          return mockUrl;
-        }
-      }, new OverrideCredentials(dynamicCredentials)).api();
+    DNSApi
+        api =
+        Denominator.create(server, new OverrideCredentials(dynamicCredentials)).api();
 
-      assertFalse(api.zones().iterator().hasNext());
-      dynamicCredentials.set(ListCredentials.from(tenantId, "jclouds-bob", "comeon"));
-      assertFalse(api.zones().iterator().hasNext());
+    api.zones().iterator();
 
-      assertEquals(server.getRequestCount(), 4);
-      assertEquals(new String(server.takeRequest().getBody()), auth);
-      assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
-      assertEquals(new String(server.takeRequest().getBody()),
-                   auth.replace(username, "jclouds-bob").replace(password, "comeon"));
-      assertEquals(server.takeRequest().getRequestLine(), "GET /v1/domains HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertAuthRequest();
+    server.assertRequest();
+
+    dynamicCredentials.set(ListCredentials.from("tim", "jclouds-bob", "comeon"));
+
+    server.credentials("tim", "jclouds-bob", "comeon");
+    server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
+
+    api.zones().iterator();
+
+    server.assertAuthRequest();
+    server.assertRequest();
   }
 
   @Module(complete = false, library = true, overrides = true)
@@ -117,5 +95,15 @@ public class DesignateProviderDynamicUpdateMockTest {
     public Credentials get() {
       return dynamicCredentials.get();
     }
+  }
+
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockDesignateServer();
+  }
+
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 }

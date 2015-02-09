@@ -1,12 +1,10 @@
 package denominator.designate;
 
-import com.google.common.collect.ImmutableMap;
-
 import org.testng.annotations.Test;
 
 import denominator.designate.Designate.Record;
 
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Test
 public class DesignateFunctionsTest {
@@ -18,8 +16,8 @@ public class DesignateFunctionsTest {
     input.ttl = 3600;
     input.data = "dns1.stabletransit.com";
 
-    assertEquals(DesignateFunctions.toRDataMap(input), ImmutableMap.<String, String>of(
-        "nsdname", "dns1.stabletransit.com"));
+    assertThat(DesignateFunctions.toRDataMap(input))
+        .containsEntry("nsdname", "dns1.stabletransit.com");
   }
 
   public void transformsTXTRecordSet() {
@@ -29,7 +27,7 @@ public class DesignateFunctionsTest {
     input.ttl = 3600;
     input.data = "Hello DNS";
 
-    assertEquals(DesignateFunctions.toRDataMap(input), ImmutableMap.<String, String>of(
-        "txtdata", "Hello DNS"));
+    assertThat(DesignateFunctions.toRDataMap(input))
+        .containsEntry("txtdata", "Hello DNS");
   }
 }
