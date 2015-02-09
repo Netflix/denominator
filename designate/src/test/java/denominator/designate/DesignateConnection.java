@@ -8,7 +8,7 @@ import denominator.DNSApiManager;
 import denominator.Denominator;
 import feign.Logger;
 
-import static com.google.common.base.Strings.emptyToNull;
+import static feign.Util.emptyToNull;
 import static denominator.CredentialsConfiguration.credentials;
 import static java.lang.System.getProperty;
 

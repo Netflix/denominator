@@ -23,31 +23,28 @@ import static org.testng.Assert.assertNull;
 @Test
 public class KeystoneV2AccessAdapterTest {
 
-  static final String TOKEN = ""//
-                              + "        \"token\": {\n" //
-                              + "            \"id\": \"1bcd122d87494f5ab39a185b9ec5ff73\",\n" //
-                              + "            \"expires\": \"2013-07-01T10:13:55.109-05:00\",\n" //
-                              + "            \"tenant\": {\n" //
-                              + "                \"id\": \"1234\",\n" //
-                              + "                \"name\": \"1234\"\n" //
-                              + "            }\n" //
+  static final String TOKEN = "        \"token\": {\n"
+                              + "            \"id\": \"1bcd122d87494f5ab39a185b9ec5ff73\",\n"
+                              + "            \"expires\": \"2013-07-01T10:13:55.109-05:00\",\n"
+                              + "            \"tenant\": {\n"
+                              + "                \"id\": \"1234\",\n"
+                              + "                \"name\": \"1234\"\n"
+                              + "            }\n"
                               + "        },\n";
-  static final String ACCESS_HEADER = "{\n" //
-                                      + "    \"access\": {\n" //
-                                      + TOKEN //
+  static final String ACCESS_HEADER = "{\n"
+                                      + "    \"access\": {\n"
+                                      + TOKEN
                                       + "        \"serviceCatalog\": [{\n";
-  static final String SERVICE = ""//
-                                + "        }, {\n" //
-                                + "            \"name\": \"cloudMonitoring\",\n" //
-                                + "            \"endpoints\": [{\n" //
-                                + "                \"tenantId\": \"1234\",\n" //
+  static final String SERVICE = "        }, {\n"
+                                + "            \"name\": \"cloudMonitoring\",\n"
+                                + "            \"endpoints\": [{\n"
+                                + "                \"tenantId\": \"1234\",\n"
                                 + "                \"publicURL\": \"https:\\/\\/monitoring.api.rackspacecloud.com\\/v1.0\\/1234\"\n"
-                                //
-                                + "            }],\n" //
+
+                                + "            }],\n"
                                 + "            \"type\": \"rax:monitor\"\n";
-  static final String ACCESS_FOOTER = ""//
-                                      + "        }]\n"//
-                                      + "    }\n" //
+  static final String ACCESS_FOOTER = "        }]\n"
+                                      + "    }\n"
                                       + "}";
   @Inject
   Gson gson;
@@ -58,14 +55,12 @@ public class KeystoneV2AccessAdapterTest {
   }
 
   @Test
-  public void publicURLFound() throws Throwable {
-    String nameThenType = ""//
-                          + "            \"name\": \"DNS\",\n" //
-                          + "            \"endpoints\": [{\n" //
-                          + "                \"tenantId\": \"1234\",\n" //
+  public void publicURLFound() throws Exception {
+    String nameThenType = "            \"name\": \"DNS\",\n"
+                          + "            \"endpoints\": [{\n"
+                          + "                \"tenantId\": \"1234\",\n"
                           + "                \"publicURL\": \"https:\\/\\/dns.api.rackspacecloud.com\\/v1.0\\/1234\"\n"
-                          //
-                          + "            }],\n" //
+                          + "            }],\n"
                           + "            \"type\": \"hpext:dns\"\n";
 
     TokenIdAndPublicURL
@@ -78,9 +73,8 @@ public class KeystoneV2AccessAdapterTest {
   }
 
   @Test
-  public void noEndpoints() throws Throwable {
-    String noEndpoints = ""//
-                         + "            \"name\": \"DNS\",\n" //
+  public void noEndpoints() throws Exception {
+    String noEndpoints = "            \"name\": \"DNS\",\n"
                          + "            \"type\": \"hpext:dns\"\n";
 
     TokenIdAndPublicURL
@@ -93,7 +87,7 @@ public class KeystoneV2AccessAdapterTest {
   }
 
   @Test
-  public void serviceNotFound() throws Throwable {
+  public void serviceNotFound() throws Exception {
     TokenIdAndPublicURL tokenIdAndPublicUrl = gson.fromJson(new StringReader(ACCESS_HEADER + SERVICE
                                                                              + ACCESS_FOOTER),
                                                             TokenIdAndPublicURL.class);
@@ -103,7 +97,7 @@ public class KeystoneV2AccessAdapterTest {
   }
 
   @Test
-  public void noServices() throws Throwable {
+  public void noServices() throws Exception {
     TokenIdAndPublicURL
         tokenIdAndPublicUrl =
         gson.fromJson(new StringReader(ACCESS_HEADER + ACCESS_FOOTER),
@@ -114,12 +108,10 @@ public class KeystoneV2AccessAdapterTest {
   }
 
   @Test
-  public void noToken() throws Throwable {
-    TokenIdAndPublicURL tokenIdAndPublicUrl = gson.fromJson(new StringReader("{\n" //
+  public void noToken() throws Exception {
+    TokenIdAndPublicURL tokenIdAndPublicUrl = gson.fromJson(new StringReader("{\n"
                                                                              + "    \"access\": {\n"
-                                                                             //
                                                                              + "        \"serviceCatalog\": [{\n"
-//
                                                                              + ACCESS_FOOTER),
                                                             TokenIdAndPublicURL.class);
 
@@ -135,5 +127,4 @@ public class KeystoneV2AccessAdapterTest {
       return new KeystoneV2AccessAdapter("hpext:dns");
     }
   }
-
 }
