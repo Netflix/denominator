@@ -1,13 +1,13 @@
 package denominator.discoverydns;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.ByteStreams;
-
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
+
+import denominator.common.Util;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
@@ -58,7 +58,7 @@ public class PemsTest {
   }
 
   private String readPemtoString(String file) throws IOException {
-    return new String(ByteStreams.toByteArray(PemsTest.class.getResourceAsStream("/" + file)),
-                      Charsets.US_ASCII);
+    return new String(
+        Util.slurp(new InputStreamReader(PemsTest.class.getResourceAsStream("/" + file))));
   }
 }

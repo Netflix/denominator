@@ -1,52 +1,58 @@
 package denominator.discoverydns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import denominator.ZoneApi;
 import denominator.model.Zone;
 
-import static org.testng.Assert.assertEquals;
+import static denominator.assertj.ModelAssertions.assertThat;
 import static org.testng.Assert.assertFalse;
 
 @Test(singleThreaded = true)
 public class DiscoveryDNSZoneApiMockTest {
 
-  @Test
-  public void iteratorWhenPresent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(DiscoveryDNSTest.zones));
-    server.play();
+  MockDiscoveryDNSServer server;
 
-    try {
-      ZoneApi api = DiscoveryDNSTest.mockApi(server.getPort()).api().zones();
-      Zone zone = api.iterator().next();
-      assertEquals(server.getRequestCount(), 1);
-      assertEquals(server.takeRequest().getRequestLine(), "GET /zones HTTP/1.1");
-      assertEquals(zone.name(), "denominator.io.");
-      assertEquals(zone.id(), "123-123-123-123-123");
-    } finally {
-      server.shutdown();
-    }
+  @Test
+  public void iteratorWhenPresent() throws Exception {
+    server.enqueue(new MockResponse().setBody(
+        "{ \"zones\": { \"@uri\": \"https://api.discoverydns.com/zones\", \"zoneList\": [ { \"@uri\": \"https://api.discoverydns.com/zones/123-123-123-123-123\", \"id\": \"123-123-123-123-123\", \"name\": \"denominator.io.\" } ] } }"));
+
+    ZoneApi api = server.connect().api().zones();
+    Iterator<Zone> domains = api.iterator();
+
+    assertThat(domains.next())
+        .hasName("denominator.io.")
+        .hasId("123-123-123-123-123");
+
+    server.assertRequest().hasMethod("GET").hasPath("/zones");
   }
 
   @Test
-  public void iteratorWhenAbsent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(DiscoveryDNSTest.noZones));
-    server.play();
+  public void iteratorWhenAbsent() throws Exception {
+    server.enqueue(new MockResponse().setBody(
+        "{ \"zones\": { \"@uri\": \"https://api.discoverydns.com/zones\", \"zoneList\": [ ] } }"));
 
-    try {
-      ZoneApi api = DiscoveryDNSTest.mockApi(server.getPort()).api().zones();
-      assertFalse(api.iterator().hasNext());
-      assertEquals(server.getRequestCount(), 1);
-      assertEquals(server.takeRequest().getRequestLine(), "GET /zones HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    ZoneApi api = server.connect().api().zones();
+    assertFalse(api.iterator().hasNext());
+
+    server.assertRequest().hasMethod("GET").hasPath("/zones");
+  }
+
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockDiscoveryDNSServer();
+  }
+
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 }

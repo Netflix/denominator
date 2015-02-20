@@ -7,7 +7,7 @@ import java.util.List;
 import denominator.ZoneApi;
 import denominator.model.Zone;
 
-class DiscoveryDNSZoneApi implements ZoneApi {
+final class DiscoveryDNSZoneApi implements ZoneApi {
 
   private final DiscoveryDNS api;
 
