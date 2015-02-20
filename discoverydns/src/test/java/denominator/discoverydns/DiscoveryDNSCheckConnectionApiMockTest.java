@@ -1,50 +1,52 @@
 package denominator.discoverydns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 
 import denominator.DNSApiManager;
 
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 @Test(singleThreaded = true)
 public class DiscoveryDNSCheckConnectionApiMockTest {
 
-  @Test
-  public void success() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(DiscoveryDNSTest.users));
-    server.play();
+  MockDiscoveryDNSServer server;
 
-    try {
-      DNSApiManager api = DiscoveryDNSTest.mockApi(server.getPort());
-      assertTrue(api.checkConnection());
-      assertEquals(server.getRequestCount(), 1);
-      assertEquals(server.takeRequest().getRequestLine(), "GET /users HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+  @Test
+  public void success() throws Exception {
+    server.enqueue(new MockResponse().setBody(
+        "{ \"users\": { \"@uri\": \"https://api.discoverydns.com/users\", \"userList\": [ { \"id\": \"123-123-123-123-123\" } ] } }"));
+
+    DNSApiManager api = server.connect();
+    assertTrue(api.checkConnection());
+
+    server.assertRequest().hasMethod("GET").hasPath("/users");
   }
 
   @Test
-  public void unsuccessful() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(DiscoveryDNSTest.noUsers));
-    server.play();
+  public void unsuccessful() throws Exception {
+    server.enqueue(new MockResponse().setBody(
+        "{ \"users\": { \"@uri\": \"https://api.discoverydns.com/users\", \"userList\": [ ] } }"));
 
-    try {
-      DNSApiManager api = DiscoveryDNSTest.mockApi(server.getPort());
-      assertFalse(api.checkConnection());
-      assertEquals(server.getRequestCount(), 1);
-      assertEquals(server.takeRequest().getRequestLine(), "GET /users HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    DNSApiManager api = server.connect();
+    assertFalse(api.checkConnection());
+
+    server.assertRequest().hasMethod("GET").hasPath("/users");
+  }
+
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockDiscoveryDNSServer();
+  }
+
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 }

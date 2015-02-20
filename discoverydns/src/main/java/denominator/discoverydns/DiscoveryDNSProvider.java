@@ -151,6 +151,7 @@ public class DiscoveryDNSProvider extends BasicProvider {
             KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
         keyStore.load(null, null);
+        // TODO: document why we are saying dummy alias or use a better name!
         keyStore.setKeyEntry("dummy alias", keyObj, null, new Certificate[]{certObj});
         kmf.init(keyStore, null);
 
