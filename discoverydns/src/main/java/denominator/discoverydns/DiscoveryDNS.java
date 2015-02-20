@@ -1,7 +1,7 @@
 package denominator.discoverydns;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
 
 import denominator.model.ResourceRecordSet;
 import feign.Param;
@@ -18,15 +18,12 @@ interface DiscoveryDNS {
   @RequestLine("GET /zones/{id}?rdataFormat=raw")
   Zone getZone(@Param("id") String id);
 
-  @RequestLine("GET /zones?searchName={zone}")
-  Zones findZone(@Param("zone") String zone);
-
   @RequestLine("PUT /zones/{id}/resourcerecords?rdataFormat=raw")
   void updateZone(@Param("id") String id, Zone zone);
 
   static final class ResourceRecords {
 
-    Set<ResourceRecordSet<?>> records = new LinkedHashSet<ResourceRecordSet<?>>();
+    List<ResourceRecordSet<?>> records = new ArrayList<ResourceRecordSet<?>>();
   }
 
   static final class Zones {
@@ -35,7 +32,7 @@ interface DiscoveryDNS {
 
     class ZoneList {
 
-      Set<Zone> zoneList;
+      List<Zone> zoneList;
 
       class Zone {
 
@@ -66,13 +63,10 @@ interface DiscoveryDNS {
 
     class UserList {
 
-      Set<User> userList;
+      List<User> userList;
 
       class User {
-
         String id;
-        String username;
-        String status;
       }
     }
   }

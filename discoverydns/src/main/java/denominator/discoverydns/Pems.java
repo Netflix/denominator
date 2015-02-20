@@ -20,7 +20,7 @@ import java.security.spec.RSAPrivateCrtKeySpec;
 /**
  * Based on: https://github.com/bcgit/bc-java/blob/master/core/src/main/java/org/bouncycastle/util/io/pem/PemReader.java
  */
-class Pems {
+final class Pems {
 
   private static final String BEGIN = "-----BEGIN ";
   private static final String END = "-----END ";
@@ -173,7 +173,7 @@ class Pems {
     final static int INTEGER = 0x02;
     final static int SEQUENCE = 0x10;
 
-    protected InputStream in;
+    private InputStream in;
 
     /**
      * Create a new DER decoder from an input stream.
@@ -184,13 +184,9 @@ class Pems {
       this.in = in;
     }
 
-    /**
-     * Create a new DER decoder from a byte array.
-     *
-     * @param The encoded bytes
-     */
-    DerParser(byte[] bytes) throws IOException {
-      this(new ByteArrayInputStream(bytes));
+    /** Creates a new DER decoder from a byte array. */
+    DerParser(byte[] encodedBytes) throws IOException {
+      this(new ByteArrayInputStream(encodedBytes));
     }
 
     /**
@@ -264,9 +260,9 @@ class Pems {
    */
   private static class Asn1Object {
 
-    protected final int type;
-    protected final byte[] value;
-    protected final int tag;
+    private final int type;
+    private final byte[] value;
+    private final int tag;
 
     /**
      * Construct a ASN.1 TLV. The TLV could be either a constructed or primitive entity.
@@ -286,7 +282,6 @@ class Pems {
      * type (Integer, String) or a construct (sequence, choice, set). </ul>
      *
      * @param tag    Tag or Identifier
-     * @param length Length of the field
      * @param value  Encoded octet string for the field.
      */
     Asn1Object(int tag, byte[] value) {

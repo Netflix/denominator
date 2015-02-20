@@ -8,7 +8,7 @@ import feign.Request;
 import feign.RequestTemplate;
 import feign.Target;
 
-class DiscoveryDNSTarget implements Target<DiscoveryDNS> {
+final class DiscoveryDNSTarget implements Target<DiscoveryDNS> {
 
   private static final String CLIENT_ID = "Denominator " + Version.INSTANCE;
   private static final String CONTENT_TYPE = "application/json";
