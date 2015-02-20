@@ -1,143 +1,134 @@
 package denominator.route53;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.io.ByteStreams;
-
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import denominator.Credentials;
+import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import denominator.Credentials.MapCredentials;
 import denominator.hook.InstanceMetadataHook;
 import denominator.route53.InstanceProfileCredentialsProvider.ReadFirstInstanceProfileCredentialsOrNull;
 
+import static denominator.assertj.MockWebServerAssertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
 @Test
 public class InstanceProfileCredentialsProviderTest {
 
-  Credentials
-      sessionCredentials =
-      MapCredentials.from(ImmutableMap.of("accessKey", "AAAAA", "secretKey", "SSSSSSS",
-                                          "sessionToken", "TTTTTTT"));
+  MockWebServer server;
+
+  String securityCredentials = "{\n"
+                               + "  \"Code\" : \"Success\",\n"
+                               + "  \"LastUpdated\" : \"2013-02-26T02:03:57Z\",\n"
+                               + "  \"Type\" : \"AWS-HMAC\",\n"
+                               + "  \"AccessKeyId\" : \"AAAAA\",\n"
+                               + "  \"SecretAccessKey\" : \"SSSSSSS\",\n"
+                               + "  \"Token\" : \"TTTTTTT\",\n"
+                               + "  \"Expiration\" : \"2013-02-26T08:12:23Z\"\n"
+                               + "}";
 
   public void whenInstanceProfileCredentialsInMetadataServiceReturnMapCredentials()
       throws Exception {
-    String
-        securityCredentialsJson =
-        new String(ByteStreams.toByteArray(getClass().getResourceAsStream(
-            "/security-credentials.json")));
-    MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse().setBody("route53-readonly"));
-    server.enqueue(new MockResponse().setBody(securityCredentialsJson));
-    server.play();
+    server.enqueue(new MockResponse().setBody(securityCredentials));
 
-    try {
-      assertEquals(new InstanceProfileCredentialsProvider(
-                       new ReadFirstInstanceProfileCredentialsOrNull(server
-                                                                         .getUrl(
-                                                                             InstanceMetadataHook.DEFAULT_URI
-                                                                                 .getPath())
-                                                                         .toURI())).get(
-                       new Route53Provider()),
-                   sessionCredentials);
-    } finally {
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /latest/meta-data/iam/security-credentials/ HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /latest/meta-data/iam/security-credentials/route53-readonly HTTP/1.1");
-      server.shutdown();
-    }
+    Map<String, String> sessionCredentials = new LinkedHashMap<String, String>();
+    sessionCredentials.put("accessKey", "AAAAA");
+    sessionCredentials.put("secretKey", "SSSSSSS");
+    sessionCredentials.put("sessionToken", "TTTTTTT");
+
+    assertThat(new InstanceProfileCredentialsProvider(
+        new ReadFirstInstanceProfileCredentialsOrNull(server
+                                                          .getUrl(
+                                                              InstanceMetadataHook.DEFAULT_URI
+                                                                  .getPath())
+                                                          .toURI())).get(
+        new Route53Provider()))
+        .isEqualTo(MapCredentials.from(sessionCredentials));
+
+    assertThat(server.takeRequest()).hasPath("/latest/meta-data/iam/security-credentials/");
+    assertThat(server.takeRequest())
+        .hasPath("/latest/meta-data/iam/security-credentials/route53-readonly");
   }
 
   public void whenNoInstanceProfileCredentialsInMetadataServiceReturnNull() throws Exception {
-    MockWebServer server = new MockWebServer();
-    try {
+    server.enqueue(new MockResponse().setBody(""));
 
-      server.enqueue(new MockResponse().setBody(""));
-      server.play();
+    assertNull(new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
+        InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get());
 
-      assertNull(new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
-          InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get());
-
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /latest/meta-data/iam/security-credentials/ HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    assertThat(server.takeRequest()).hasPath("/latest/meta-data/iam/security-credentials/");
   }
 
   public void whenInstanceProfileCredentialsInMetadataServiceReturnJson() throws Exception {
-    String
-        securityCredentialsJson =
-        new String(ByteStreams.toByteArray(getClass().getResourceAsStream(
-            "/security-credentials.json")));
-    MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse().setBody("route53-readonly"));
-    server.enqueue(new MockResponse().setBody(securityCredentialsJson));
-    server.play();
+    server.enqueue(new MockResponse().setBody(securityCredentials));
 
-    try {
-      assertEquals(
-          new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
-              InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get(), securityCredentialsJson);
-    } finally {
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /latest/meta-data/iam/security-credentials/ HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /latest/meta-data/iam/security-credentials/route53-readonly HTTP/1.1");
-      server.shutdown();
-    }
+    assertEquals(
+        new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
+            InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get(), securityCredentials);
+
+    assertThat(server.takeRequest()).hasPath("/latest/meta-data/iam/security-credentials/");
+    assertThat(server.takeRequest()).hasPath(
+        "/latest/meta-data/iam/security-credentials/route53-readonly");
   }
 
   public void whenMultipleInstanceProfileCredentialsInMetadataServiceReturnJsonFromFirst()
       throws Exception {
-    String
-        securityCredentialsJson =
-        new String(ByteStreams.toByteArray(getClass().getResourceAsStream(
-            "/security-credentials.json")));
-    MockWebServer server = new MockWebServer();
     server.enqueue(new MockResponse().setBody("route53-readonly\nbooberry"));
-    server.enqueue(new MockResponse().setBody(securityCredentialsJson));
-    server.play();
-    try {
-      assertEquals(
-          new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
-              InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get(), securityCredentialsJson);
-    } finally {
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /latest/meta-data/iam/security-credentials/ HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /latest/meta-data/iam/security-credentials/route53-readonly HTTP/1.1");
-      server.shutdown();
-    }
+    server.enqueue(new MockResponse().setBody(securityCredentials));
+
+    assertEquals(
+        new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
+            InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get(), securityCredentials);
+
+    assertThat(server.takeRequest()).hasPath("/latest/meta-data/iam/security-credentials/");
+    assertThat(server.takeRequest()).hasPath(
+        "/latest/meta-data/iam/security-credentials/route53-readonly");
   }
 
   public void testParseInstanceProfileCredentialsFromJsonWhenNull() {
-    assertEquals(InstanceProfileCredentialsProvider.parseJson(null), ImmutableMap.of());
+    assertThat(InstanceProfileCredentialsProvider.parseJson(null)).isEmpty();
   }
 
   public void testParseInstanceProfileCredentialsFromJsonWhenWrongKeys() {
-    assertEquals(InstanceProfileCredentialsProvider.parseJson("{\"Code\" : \"Failure\"}"),
-                 ImmutableMap.of());
+    assertThat(InstanceProfileCredentialsProvider.parseJson("{\"Code\" : \"Failure\"}")).isEmpty();
   }
 
   public void testParseInstanceProfileCredentialsFromJsonWhenAccessAndSecretPresent() {
-    assertEquals(
+    assertThat(
         InstanceProfileCredentialsProvider
             .parseJson(
-                "{\"AccessKeyId\" : \"AAAAA\",\"SecretAccessKey\" : \"SSSSSSS\"}"),
-        ImmutableMap.of("accessKey", "AAAAA", "secretKey", "SSSSSSS"));
+                "{\"AccessKeyId\" : \"AAAAA\",\"SecretAccessKey\" : \"SSSSSSS\"}"))
+        .containsEntry("accessKey", "AAAAA")
+        .containsEntry("secretKey", "SSSSSSS");
   }
 
   public void testParseInstanceProfileCredentialsFromJsonWhenAccessSecretAndTokenPresent() {
-    assertEquals(
+    assertThat(
         InstanceProfileCredentialsProvider
             .parseJson(
-                "{\"AccessKeyId\" : \"AAAAA\",\"SecretAccessKey\" : \"SSSSSSS\", \"Token\" : \"TTTTTTT\"}"),
-        ImmutableMap.of("accessKey", "AAAAA", "secretKey", "SSSSSSS", "sessionToken", "TTTTTTT"));
+                "{\"AccessKeyId\" : \"AAAAA\",\"SecretAccessKey\" : \"SSSSSSS\", \"Token\" : \"TTTTTTT\"}"))
+        .containsEntry("accessKey", "AAAAA")
+        .containsEntry("secretKey", "SSSSSSS")
+        .containsEntry("sessionToken", "TTTTTTT");
+  }
+
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockWebServer();
+    server.play();
+  }
+
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 }

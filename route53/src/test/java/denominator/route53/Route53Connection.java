@@ -8,8 +8,8 @@ import denominator.DNSApiManager;
 import denominator.Denominator;
 import feign.Logger;
 
-import static com.google.common.base.Strings.emptyToNull;
 import static denominator.CredentialsConfiguration.credentials;
+import static feign.Util.emptyToNull;
 import static java.lang.System.getProperty;
 
 public class Route53Connection {
