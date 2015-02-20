@@ -1,11 +1,10 @@
 package denominator.route53;
 
-import com.google.common.collect.ImmutableList;
-
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import denominator.BaseRecordSetLiveTest;
@@ -34,12 +33,12 @@ public class Route53RecordSetLiveTest extends BaseRecordSetLiveTest {
     Object[][] data = new Object[2][1];
     data[0][0] =
         a("target-ipv4-" + recordSuffix,
-          ImmutableList.of("192.0.2.1", "198.51.100.1", "203.0.113.1"));
+          Arrays.asList("192.0.2.1", "198.51.100.1", "203.0.113.1"));
     data[1][0] =
         aaaa("target-ipv6-" + recordSuffix,
-             ImmutableList.of("2001:0DB8:85A3:0000:0000:8A2E:0370:7334",
-                              "2001:0DB8:85A3:0000:0000:8A2E:0370:7335",
-                              "2001:0DB8:85A3:0000:0000:8A2E:0370:7336"));
+             Arrays.asList("2001:0DB8:85A3:0000:0000:8A2E:0370:7334",
+                           "2001:0DB8:85A3:0000:0000:8A2E:0370:7335",
+                           "2001:0DB8:85A3:0000:0000:8A2E:0370:7336"));
     return data;
   }
 
