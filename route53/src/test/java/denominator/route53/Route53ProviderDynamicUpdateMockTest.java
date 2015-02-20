@@ -1,12 +1,12 @@
 package denominator.route53;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.concurrent.atomic.AtomicReference;
 
 import dagger.Module;
@@ -17,80 +17,73 @@ import denominator.DNSApi;
 import denominator.Denominator;
 
 import static denominator.CredentialsConfiguration.credentials;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 @Test(singleThreaded = true)
 public class Route53ProviderDynamicUpdateMockTest {
 
+  MockRoute53Server server;
+
   String hostedZones = "<ListHostedZonesResponse><HostedZones /></ListHostedZonesResponse>";
 
   @Test
-  public void dynamicEndpointUpdates() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
+  public void dynamicEndpointUpdates() throws Exception {
+    final AtomicReference<String> url = new AtomicReference<String>(server.url());
     server.enqueue(new MockResponse().setBody(hostedZones));
-    server.enqueue(new MockResponse().setBody(hostedZones));
-    server.play();
 
-    String initialPath = "";
-    String updatedPath = "/alt";
-    URL mockUrl = server.getUrl(initialPath);
-    final AtomicReference<URL> dynamicUrl = new AtomicReference<URL>(mockUrl);
+    DNSApi api = Denominator.create(new Route53Provider() {
+      @Override
+      public String url() {
+        return url.get();
+      }
+    }, credentials(server.credentials())).api();
 
-    try {
-      DNSApi api = Denominator.create(new Route53Provider() {
-        @Override
-        public String url() {
-          return dynamicUrl.get().toString();
-        }
-      }, credentials("accessKey", "secretKey")).api();
+    api.zones().iterator();
+    server.assertRequest();
 
-      assertFalse(api.zones().iterator().hasNext());
-      dynamicUrl.set(new URL(mockUrl, updatedPath));
-      assertFalse(api.zones().iterator().hasNext());
+    MockRoute53Server server2 = new MockRoute53Server();
+    url.set(server2.url());
+    server2.enqueue(new MockResponse().setBody(hostedZones));
 
-      assertEquals(server.getRequestCount(), 2);
-      assertEquals(server.takeRequest().getRequestLine(), "GET /2012-12-12/hostedzone HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /alt/2012-12-12/hostedzone HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    api.zones().iterator();
+
+    server2.assertRequest();
+    server2.shutdown();
   }
 
   @Test
-  public void dynamicCredentialUpdates() throws IOException, InterruptedException {
-    final MockWebServer server = new MockWebServer();
+  public void dynamicCredentialUpdates() throws Exception {
     server.enqueue(new MockResponse().setBody(hostedZones));
+
+    AtomicReference<Credentials>
+        dynamicCredentials =
+        new AtomicReference<Credentials>(server.credentials());
+
+    DNSApi
+        api =
+        Denominator.create(server, new OverrideCredentials(dynamicCredentials)).api();
+
+    api.zones().iterator();
+
+    server.assertRequest().hasHeaderContaining("X-Amzn-Authorization", "accessKey");
+
+    dynamicCredentials.set(ListCredentials.from("accessKey2", "secretKey2", "token"));
+
+    server.credentials("accessKey2", "secretKey2", "token");
     server.enqueue(new MockResponse().setBody(hostedZones));
-    server.play();
 
-    try {
+    api.zones().iterator();
 
-      AtomicReference<Credentials>
-          dynamicCredentials =
-          new AtomicReference<Credentials>(ListCredentials.from("accessKey", "secretKey"));
+    server.assertRequest().hasHeaderContaining("X-Amzn-Authorization", "accessKey2");
+  }
 
-      DNSApi api = Denominator.create(new Route53Provider() {
-        @Override
-        public String url() {
-          return server.getUrl("/").toString();
-        }
-      }, new OverrideCredentials(dynamicCredentials)).api();
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockRoute53Server();
+  }
 
-      assertFalse(api.zones().iterator().hasNext());
-      dynamicCredentials.set(ListCredentials.from("accessKey2", "secretKey2"));
-      assertFalse(api.zones().iterator().hasNext());
-
-      assertEquals(server.getRequestCount(), 2);
-      assertTrue(server.takeRequest().getHeader("X-Amzn-Authorization").startsWith(
-          "AWS3-HTTPS AWSAccessKeyId=accessKey,Algorithm=HmacSHA256,Signature="));
-      assertTrue(server.takeRequest().getHeader("X-Amzn-Authorization").startsWith(
-          "AWS3-HTTPS AWSAccessKeyId=accessKey2,Algorithm=HmacSHA256,Signature="));
-    } finally {
-      server.shutdown();
-    }
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 
   @Module(complete = false, library = true, overrides = true)

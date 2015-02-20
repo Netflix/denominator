@@ -36,6 +36,12 @@ public class ResourceRecordSetAssert
     return this;
   }
 
+  public ResourceRecordSetAssert hasQualifier(String expected) {
+    isNotNull();
+    objects.assertEqual(info, actual.qualifier(), expected);
+    return this;
+  }
+
   public ResourceRecordSetAssert hasTtl(Integer expected) {
     isNotNull();
     objects.assertEqual(info, actual.ttl(), expected);
@@ -55,6 +61,13 @@ public class ResourceRecordSetAssert
     isNotNull();
     maps.assertContains(info, actual.geo().regions(),
                         array(entry(region, java.util.Arrays.asList(territories))));
+    return this;
+  }
+
+  public ResourceRecordSetAssert hasWeight(int expected) {
+    isNotNull();
+    objects.assertNotNull(info, actual.weighted());
+    objects.assertEqual(info, actual.weighted().weight(), expected);
     return this;
   }
 }

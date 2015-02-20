@@ -1,10 +1,9 @@
 package denominator.route53;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-
 import org.testng.annotations.Test;
 
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import denominator.model.ResourceRecordSet;
@@ -13,7 +12,7 @@ import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 
 import static denominator.model.ResourceRecordSets.a;
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class EncodeChangesTest {
 
@@ -21,10 +20,22 @@ public class EncodeChangesTest {
   public void defaultsTTLTo300() {
     ResourceRecordSet<AData>
         rrs =
-        a("www.denominator.io.", ImmutableSet.of("192.0.2.1", "192.0.2.2"));
-    assertEquals(
-        EncodeChanges.apply(rrs),
-        "<ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>300</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>192.0.2.2</Value></ResourceRecord></ResourceRecords></ResourceRecordSet>");
+        a("www.denominator.io.", Arrays.asList("192.0.2.1", "192.0.2.2"));
+
+    assertThat(EncodeChanges.apply(rrs))
+        .isXmlEqualTo("<ResourceRecordSet>\n"
+                      + "  <Name>www.denominator.io.</Name>\n"
+                      + "  <Type>A</Type>\n"
+                      + "  <TTL>300</TTL>\n"
+                      + "  <ResourceRecords>\n"
+                      + "    <ResourceRecord>\n"
+                      + "      <Value>192.0.2.1</Value>\n"
+                      + "    </ResourceRecord>\n"
+                      + "    <ResourceRecord>\n"
+                      + "      <Value>192.0.2.2</Value>\n"
+                      + "    </ResourceRecord>\n"
+                      + "  </ResourceRecords>\n"
+                      + "</ResourceRecordSet>");
   }
 
   @Test
@@ -36,9 +47,16 @@ public class EncodeChangesTest {
             .add(AliasTarget.create("Z3I0BTR7N27QRM",
                                     "ipv4-route53recordsetlivetest.adrianc.myzone.com.")).build();
 
-    assertEquals(
-        EncodeChanges.apply(rrs),
-        "<ResourceRecordSet><Name>fooo.myzone.com.</Name><Type>A</Type><AliasTarget><HostedZoneId>Z3I0BTR7N27QRM</HostedZoneId><DNSName>ipv4-route53recordsetlivetest.adrianc.myzone.com.</DNSName><EvaluateTargetHealth>false</EvaluateTargetHealth></AliasTarget></ResourceRecordSet>");
+    assertThat(EncodeChanges.apply(rrs))
+        .isXmlEqualTo("<ResourceRecordSet>\n"
+                      + "  <Name>fooo.myzone.com.</Name>\n"
+                      + "  <Type>A</Type>\n"
+                      + "  <AliasTarget>\n"
+                      + "    <HostedZoneId>Z3I0BTR7N27QRM</HostedZoneId>\n"
+                      + "    <DNSName>ipv4-route53recordsetlivetest.adrianc.myzone.com.</DNSName>\n"
+                      + "    <EvaluateTargetHealth>false</EvaluateTargetHealth>\n"
+                      + "  </AliasTarget>\n"
+                      + "</ResourceRecordSet>");
   }
 
   @Test
@@ -50,30 +68,51 @@ public class EncodeChangesTest {
             .add(AliasTarget.create("Z3I0BTR7N27QRM",
                                     "ipv4-route53recordsetlivetest.adrianc.myzone.com.")).build();
 
-    assertEquals(
-        EncodeChanges.apply(rrs),
-        "<ResourceRecordSet><Name>fooo.myzone.com.</Name><Type>A</Type><AliasTarget><HostedZoneId>Z3I0BTR7N27QRM</HostedZoneId><DNSName>ipv4-route53recordsetlivetest.adrianc.myzone.com.</DNSName><EvaluateTargetHealth>false</EvaluateTargetHealth></AliasTarget></ResourceRecordSet>");
+    assertThat(EncodeChanges.apply(rrs))
+        .isXmlEqualTo("<ResourceRecordSet>\n"
+                      + "  <Name>fooo.myzone.com.</Name>\n"
+                      + "  <Type>A</Type>\n"
+                      + "  <AliasTarget>\n"
+                      + "    <HostedZoneId>Z3I0BTR7N27QRM</HostedZoneId>\n"
+                      + "    <DNSName>ipv4-route53recordsetlivetest.adrianc.myzone.com.</DNSName>\n"
+                      + "    <EvaluateTargetHealth>false</EvaluateTargetHealth>\n"
+                      + "  </AliasTarget>\n"
+                      + "</ResourceRecordSet>");
   }
 
   @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "missing DNSName in alias target ResourceRecordSet .*")
   public void aliasRRSetMissingDNSName() {
+    Map<String, Object> missingDNSName = new LinkedHashMap<String, Object>();
+    missingDNSName.put("HostedZoneId", "Z3I0BTR7N27QRM");
+
     ResourceRecordSet<Map<String, Object>> rrs = ResourceRecordSet.<Map<String, Object>>builder()
         .name("fooo.myzone.com.").type("A")
-        .add(ImmutableMap.<String, Object>of("HostedZoneId", "Z3I0BTR7N27QRM")).build();
+        .add(missingDNSName).build();
 
     EncodeChanges.apply(rrs);
   }
 
   @Test
   public void identifierAndWeightedElements() {
-    ResourceRecordSet<CNAMEData> rrs = ResourceRecordSet.<CNAMEData>builder()//
-        .name("www.denominator.io.")//
-        .type("CNAME")//
-        .qualifier("foobar")//
-        .add(CNAMEData.create("dom1.foo.com."))//
+    ResourceRecordSet<CNAMEData> rrs = ResourceRecordSet.<CNAMEData>builder()
+        .name("www.denominator.io.")
+        .type("CNAME")
+        .qualifier("foobar")
+        .add(CNAMEData.create("dom1.foo.com."))
         .weighted(Weighted.create(1)).build();
-    assertEquals(
-        EncodeChanges.apply(rrs),
-        "<ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>foobar</SetIdentifier><Weight>1</Weight><TTL>300</TTL><ResourceRecords><ResourceRecord><Value>dom1.foo.com.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet>");
+
+    assertThat(EncodeChanges.apply(rrs))
+        .isXmlEqualTo("<ResourceRecordSet>\n"
+                      + "  <Name>www.denominator.io.</Name>\n"
+                      + "  <Type>CNAME</Type>\n"
+                      + "  <SetIdentifier>foobar</SetIdentifier>\n"
+                      + "  <Weight>1</Weight>\n"
+                      + "  <TTL>300</TTL>\n"
+                      + "  <ResourceRecords>\n"
+                      + "    <ResourceRecord>\n"
+                      + "      <Value>dom1.foo.com.</Value>\n"
+                      + "    </ResourceRecord>\n"
+                      + "  </ResourceRecords>\n"
+                      + "</ResourceRecordSet>");
   }
 }

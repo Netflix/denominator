@@ -4,10 +4,12 @@ import com.squareup.okhttp.mockwebserver.RecordedRequest;
 
 import org.assertj.core.api.AbstractAssert;
 import org.assertj.core.internal.Objects;
+import org.assertj.core.internal.Strings;
 
 public final class RecordedRequestAssert
     extends AbstractAssert<RecordedRequestAssert, RecordedRequest> {
 
+  Strings strings = Strings.instance();
   Objects objects = Objects.instance();
 
   public RecordedRequestAssert(RecordedRequest actual) {
@@ -29,6 +31,22 @@ public final class RecordedRequestAssert
   public RecordedRequestAssert hasBody(String utf8Expected) {
     isNotNull();
     objects.assertEqual(info, actual.getUtf8Body(), utf8Expected);
+    return this;
+  }
+
+  public RecordedRequestAssert hasXMLBody(String utf8Expected) {
+    isNotNull();
+    hasHeaderContaining("Content-Type", "application/xml");
+    strings.assertXmlEqualsTo(info, actual.getUtf8Body(), utf8Expected);
+    return this;
+  }
+
+  public RecordedRequestAssert hasHeaderContaining(String name, String value) {
+    isNotNull();
+    if (actual.getHeader(name) == null) {
+      failWithMessage("\nExpecting request to have header:<%s>", name);
+    }
+    strings.assertContains(info, actual.getHeader(name), value);
     return this;
   }
 }

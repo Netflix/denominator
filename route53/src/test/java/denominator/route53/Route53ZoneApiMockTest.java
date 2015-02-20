@@ -1,67 +1,74 @@
 package denominator.route53;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Iterator;
 
-import denominator.Denominator;
 import denominator.ZoneApi;
 import denominator.model.Zone;
 
-import static denominator.CredentialsConfiguration.credentials;
-import static denominator.route53.Route53Test.hostedZones;
-import static denominator.route53.Route53Test.noHostedZones;
-import static org.testng.Assert.assertEquals;
+import static denominator.assertj.ModelAssertions.assertThat;
 import static org.testng.Assert.assertFalse;
 
 @Test(singleThreaded = true)
 public class Route53ZoneApiMockTest {
 
-  static ZoneApi mockApi(final int port) {
-    return Denominator.create(new Route53Provider() {
-      @Override
-      public String url() {
-        return "http://localhost:" + port;
-      }
-    }, credentials("accessKey", "secretKey")).api().zones();
+  MockRoute53Server server;
+
+  @Test
+  public void iteratorWhenPresent() throws Exception {
+    server.enqueue(new MockResponse().setBody(
+        "<ListHostedZonesResponse>\n"
+        + "  <HostedZones>\n"
+        + "    <HostedZone>\n"
+        + "      <Id>/hostedzone/Z1PA6795UKMFR9</Id>\n"
+        + "      <Name>denominator.io.</Name>\n"
+        + "      <CallerReference>denomination</CallerReference>\n"
+        + "      <Config>\n"
+        + "        <Comment>no comment</Comment>\n"
+        + "      </Config>\n"
+        + "      <ResourceRecordSetCount>17</ResourceRecordSetCount>\n"
+        + "    </HostedZone>\n"
+        + "  </HostedZones>\n"
+        + "</ListHostedZonesResponse>"));
+
+    ZoneApi api = server.connect().api().zones();
+    Iterator<Zone> domains = api.iterator();
+
+    assertThat(domains.next())
+        .hasName("denominator.io.")
+        .hasId("Z1PA6795UKMFR9");
+
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/2012-12-12/hostedzone");
   }
 
   @Test
-  public void iteratorWhenPresent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(hostedZones));
-    server.play();
+  public void iteratorWhenAbsent() throws Exception {
+    server.enqueue(new MockResponse().setBody(
+        "<ListHostedZonesResponse><HostedZones /></ListHostedZonesResponse>"));
 
-    try {
-      ZoneApi api = mockApi(server.getPort());
-      Zone zone = api.iterator().next();
-      assertEquals(zone.name(), "denominator.io.");
-      assertEquals(zone.id(), "Z1PA6795UKMFR9");
+    ZoneApi api = server.connect().api().zones();
+    assertFalse(api.iterator().hasNext());
 
-      assertEquals(server.getRequestCount(), 1);
-      assertEquals(server.takeRequest().getRequestLine(), "GET /2012-12-12/hostedzone HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/2012-12-12/hostedzone");
   }
 
-  @Test
-  public void iteratorWhenAbsent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(noHostedZones));
-    server.play();
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockRoute53Server();
+  }
 
-    try {
-      ZoneApi api = mockApi(server.getPort());
-      assertFalse(api.iterator().hasNext());
-
-      assertEquals(server.getRequestCount(), 1);
-      assertEquals(server.takeRequest().getRequestLine(), "GET /2012-12-12/hostedzone HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 }

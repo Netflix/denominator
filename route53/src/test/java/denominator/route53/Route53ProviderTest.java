@@ -1,12 +1,10 @@
 package denominator.route53;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-
 import org.testng.annotations.Test;
 
-import java.util.Set;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import dagger.ObjectGraph;
 import denominator.Credentials.MapCredentials;
@@ -18,8 +16,8 @@ import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
 import static denominator.Providers.list;
 import static denominator.Providers.provide;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 public class Route53ProviderTest {
 
@@ -29,16 +27,14 @@ public class Route53ProviderTest {
   public void testMockMetadata() {
     assertEquals(PROVIDER.name(), "route53");
     assertEquals(PROVIDER.supportsDuplicateZoneNames(), true);
-    assertEquals(PROVIDER.credentialTypeToParameterNames(),
-                 ImmutableMultimap.<String, String>builder()
-                     .putAll("accessKey", "accessKey", "secretKey")
-                     .putAll("session", "accessKey", "secretKey", "sessionToken").build().asMap());
+    assertThat(PROVIDER.credentialTypeToParameterNames())
+        .containsEntry("accessKey", Arrays.asList("accessKey", "secretKey"))
+        .containsEntry("session", Arrays.asList("accessKey", "secretKey", "sessionToken"));
   }
 
   @Test
   public void testRoute53Registered() {
-    Set<Provider> allProviders = ImmutableSet.copyOf(list());
-    assertTrue(allProviders.contains(PROVIDER));
+    assertThat(list()).contains(PROVIDER);
   }
 
   @Test
@@ -47,10 +43,11 @@ public class Route53ProviderTest {
     assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
     manager = create("route53", credentials("accesskey", "secretkey"));
     assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
-    manager =
-        create("route53", credentials(MapCredentials.from(ImmutableMap.<String, String>builder()
-                                                              .put("accesskey", "A")
-                                                              .put("secretkey", "S").build())));
+
+    Map<String, String> map = new LinkedHashMap<String, String>();
+    map.put("accesskey", "A");
+    map.put("secretkey", "S");
+    manager = create("route53", credentials(MapCredentials.from(map)));
     assertEquals(manager.api().zones().getClass(), Route53ZoneApi.class);
   }
 
