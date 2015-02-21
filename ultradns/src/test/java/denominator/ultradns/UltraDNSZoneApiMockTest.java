@@ -1,75 +1,61 @@
 package denominator.ultradns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
 
-import denominator.Denominator;
 import denominator.ZoneApi;
-import denominator.model.Zone;
 
-import static denominator.CredentialsConfiguration.credentials;
+import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.ultradns.UltraDNSTest.getAccountsListOfUser;
 import static denominator.ultradns.UltraDNSTest.getAccountsListOfUserResponse;
 import static denominator.ultradns.UltraDNSTest.getZonesOfAccount;
 import static denominator.ultradns.UltraDNSTest.getZonesOfAccountResponseAbsent;
 import static denominator.ultradns.UltraDNSTest.getZonesOfAccountResponsePresent;
-import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
 
 @Test(singleThreaded = true)
 public class UltraDNSZoneApiMockTest {
 
-  private static ZoneApi mockApi(final int port) {
-    return Denominator.create(new UltraDNSProvider() {
-      @Override
-      public String url() {
-        return "http://localhost:" + port + "/";
-      }
-    }, credentials("joe", "letmein")).api().zones();
-  }
+  MockUltraDNSServer server;
 
   @Test
-  public void iteratorWhenPresent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
+  public void iteratorWhenPresent() throws Exception {
     server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
     server.enqueue(new MockResponse().setBody(getZonesOfAccountResponsePresent));
-    server.play();
 
-    try {
-      ZoneApi api = mockApi(server.getPort());
-      Zone zone = api.iterator().next();
-      assertEquals(zone.name(), "denominator.io.");
-      assertNull(zone.id());
+    ZoneApi api = server.connect().api().zones();
 
-      assertEquals(server.getRequestCount(), 2);
-      assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);
-      assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
-    } finally {
-      server.shutdown();
-    }
+    assertThat(api.iterator().next()).hasName("denominator.io.");
+
+    server.assertRequestHasBody(getAccountsListOfUser);
+    server.assertRequestHasBody(getZonesOfAccount);
   }
 
   @Test
-  public void iteratorWhenAbsent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
+  public void iteratorWhenAbsent() throws Exception {
     server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
     server.enqueue(new MockResponse().setBody(getZonesOfAccountResponseAbsent));
-    server.play();
 
-    try {
-      ZoneApi api = mockApi(server.getPort());
-      assertFalse(api.iterator().hasNext());
+    ZoneApi api = server.connect().api().zones();
 
-      assertEquals(server.getRequestCount(), 2);
-      assertEquals(new String(server.takeRequest().getBody()), getAccountsListOfUser);
-      assertEquals(new String(server.takeRequest().getBody()), getZonesOfAccount);
-    } finally {
-      server.shutdown();
-    }
+    assertFalse(api.iterator().hasNext());
+
+    server.assertRequestHasBody(getAccountsListOfUser);
+    server.assertRequestHasBody(getZonesOfAccount);
+  }
+
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockUltraDNSServer();
+  }
+
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 }
