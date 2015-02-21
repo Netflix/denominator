@@ -1,12 +1,10 @@
 package denominator.ultradns;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-
 import org.testng.annotations.Test;
 
-import java.util.Set;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import dagger.ObjectGraph;
 import denominator.Credentials.MapCredentials;
@@ -17,8 +15,8 @@ import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
 import static denominator.Providers.list;
 import static denominator.Providers.provide;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 public class UltraDNSProviderTest {
 
@@ -28,15 +26,13 @@ public class UltraDNSProviderTest {
   public void testMockMetadata() {
     assertEquals(PROVIDER.name(), "ultradns");
     assertEquals(PROVIDER.supportsDuplicateZoneNames(), false);
-    assertEquals(PROVIDER.credentialTypeToParameterNames(),
-                 ImmutableMultimap.<String, String>builder()
-                     .putAll("password", "username", "password").build().asMap());
+    assertThat(PROVIDER.credentialTypeToParameterNames())
+        .containsEntry("password", Arrays.asList("username", "password"));
   }
 
   @Test
   public void testUltraDNSRegistered() {
-    Set<Provider> allProviders = ImmutableSet.copyOf(list());
-    assertTrue(allProviders.contains(PROVIDER));
+    assertThat(list()).contains(PROVIDER);
   }
 
   @Test
@@ -45,10 +41,11 @@ public class UltraDNSProviderTest {
     assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
     manager = create("ultradns", credentials("username", "password"));
     assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
-    manager =
-        create("ultradns", credentials(MapCredentials.from(ImmutableMap.<String, String>builder()
-                                                               .put("username", "U")
-                                                               .put("password", "P").build())));
+
+    Map<String, String> map = new LinkedHashMap<String, String>();
+    map.put("username", "U");
+    map.put("password", "P");
+    manager = create("ultradns", credentials(MapCredentials.from(map)));
     assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
   }
 
