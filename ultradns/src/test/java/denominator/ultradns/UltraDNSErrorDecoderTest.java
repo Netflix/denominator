@@ -1,10 +1,9 @@
 package denominator.ultradns;
 
-import com.google.common.collect.ImmutableMap;
-
 import org.testng.annotations.Test;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import feign.FeignException;
 import feign.Response;
@@ -28,8 +27,8 @@ public class UltraDNSErrorDecoderTest {
   ErrorDecoder errors = new UltraDNSErrorDecoder(new UltraDNSProvider.FeignModule().decoder());
 
   static Response errorResponse(String body) {
-    return Response
-        .create(500, "Server Error", ImmutableMap.<String, Collection<String>>of(), body, UTF_8);
+    return Response.create(500, "Server Error", Collections.<String, Collection<String>>emptyMap(),
+                           body, UTF_8);
   }
 
   @Test(expectedExceptions = FeignException.class, expectedExceptionsMessageRegExp = "status 500 reading UltraDNS.accountId\\(\\)")

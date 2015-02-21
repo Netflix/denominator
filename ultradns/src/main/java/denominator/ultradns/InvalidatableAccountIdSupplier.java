@@ -19,9 +19,7 @@ class InvalidatableAccountIdSupplier {
   transient volatile String lastUrl;
   transient volatile int lastCredentialsHashCode;
   transient volatile boolean initialized;
-  // "value" does not need to be volatile; visibility piggy-backs
-  // on above
-  transient String value;
+  transient String value; // "value" does not need to be volatile; visibility piggy-backs on above
 
   @Inject
   InvalidatableAccountIdSupplier(denominator.Provider provider, UltraDNS api,
@@ -29,8 +27,7 @@ class InvalidatableAccountIdSupplier {
     this.provider = provider;
     this.api = api;
     this.credentials = credentials;
-    // for toString
-    this.lastUrl = provider.url();
+    this.lastUrl = provider.url(); // for toString
   }
 
   public void invalidate() {
