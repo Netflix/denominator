@@ -1,7 +1,5 @@
 package denominator.discoverydns;
 
-import sun.misc.BASE64Decoder;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -16,6 +14,8 @@ import java.security.cert.CertificateFactory;
 import java.security.spec.KeySpec;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPrivateCrtKeySpec;
+
+import javax.xml.bind.DatatypeConverter;
 
 /**
  * Based on: https://github.com/bcgit/bc-java/blob/master/core/src/main/java/org/bouncycastle/util/io/pem/PemReader.java
@@ -95,7 +95,7 @@ final class Pems {
           throw new IOException(END + " not found");
         }
 
-        return new BASE64Decoder().decodeBuffer(buf.toString());
+        return DatatypeConverter.parseBase64Binary(buf.toString());
       }
 
       return null;
