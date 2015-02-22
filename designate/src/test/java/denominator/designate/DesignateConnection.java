@@ -8,8 +8,8 @@ import denominator.DNSApiManager;
 import denominator.Denominator;
 import feign.Logger;
 
-import static feign.Util.emptyToNull;
 import static denominator.CredentialsConfiguration.credentials;
+import static feign.Util.emptyToNull;
 import static java.lang.System.getProperty;
 
 public class DesignateConnection {

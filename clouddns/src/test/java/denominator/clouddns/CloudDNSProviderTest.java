@@ -1,12 +1,10 @@
 package denominator.clouddns;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-
 import org.testng.annotations.Test;
 
-import java.util.Set;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import dagger.ObjectGraph;
 import denominator.Credentials.MapCredentials;
@@ -17,8 +15,8 @@ import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
 import static denominator.Providers.list;
 import static denominator.Providers.provide;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 public class CloudDNSProviderTest {
 
@@ -28,16 +26,14 @@ public class CloudDNSProviderTest {
   public void testMockMetadata() {
     assertEquals(PROVIDER.name(), "clouddns");
     assertEquals(PROVIDER.supportsDuplicateZoneNames(), true);
-    assertEquals(PROVIDER.credentialTypeToParameterNames(),
-                 ImmutableMultimap.<String, String>builder()
-                     .putAll("password", "username", "password")
-                     .putAll("apiKey", "username", "apiKey").build().asMap());
+    assertThat(PROVIDER.credentialTypeToParameterNames())
+        .containsEntry("password", Arrays.asList("username", "password"))
+        .containsEntry("apiKey", Arrays.asList("username", "apiKey"));
   }
 
   @Test
   public void testCloudDNSRegistered() {
-    Set<Provider> allProviders = ImmutableSet.copyOf(list());
-    assertTrue(allProviders.contains(PROVIDER));
+    assertThat(list()).contains(PROVIDER);
   }
 
   @Test
@@ -46,10 +42,10 @@ public class CloudDNSProviderTest {
     assertEquals(manager.api().zones().getClass(), CloudDNSZoneApi.class);
     manager = create("clouddns", credentials("username", "apiKey"));
     assertEquals(manager.api().zones().getClass(), CloudDNSZoneApi.class);
-    manager =
-        create("clouddns", credentials(MapCredentials.from(ImmutableMap.<String, String>builder()
-                                                               .put("username", "U")
-                                                               .put("apiKey", "K").build())));
+    Map<String, String> map = new LinkedHashMap<String, String>();
+    map.put("username", "U");
+    map.put("apiKey", "K");
+    manager = create("clouddns", credentials(MapCredentials.from(map)));
     assertEquals(manager.api().zones().getClass(), CloudDNSZoneApi.class);
   }
 
