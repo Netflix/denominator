@@ -1,6 +1,7 @@
 package denominator.dynect;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.inject.Inject;
@@ -9,12 +10,13 @@ import javax.inject.Singleton;
 
 import denominator.CheckConnection;
 import denominator.Credentials;
-import denominator.Credentials.ListCredentials;
 import denominator.dynect.DynECT.Data;
 import feign.Body;
 import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
+
+import static denominator.common.Preconditions.checkNotNull;
 
 /**
  * gets the last auth token, expiring if the url or credentials changed
@@ -83,9 +85,26 @@ class InvalidatableTokenProvider implements Provider<String>, CheckConnection {
   }
 
   private String auth(Credentials currentCreds) {
-    List<Object> listCreds = ListCredentials.asList(currentCreds);
-    return session.login(listCreds.get(0).toString(), listCreds.get(1).toString(),
-                         listCreds.get(2).toString()).data;
+    String customer;
+    String username;
+    String password;
+    if (currentCreds instanceof List) {
+      @SuppressWarnings("unchecked")
+      List<Object> listCreds = (List<Object>) currentCreds;
+      customer = listCreds.get(0).toString();
+      username = listCreds.get(1).toString();
+      password = listCreds.get(2).toString();
+    } else if (currentCreds instanceof Map) {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> mapCreds = (Map<String, Object>) currentCreds;
+      customer = checkNotNull(mapCreds.get("customer"), "customer").toString();
+      username = checkNotNull(mapCreds.get("username"), "username").toString();
+      password = checkNotNull(mapCreds.get("password"), "password").toString();
+    } else {
+      throw new IllegalArgumentException("Unsupported credential type: " + currentCreds);
+    }
+
+    return session.login(customer, username, password).data;
   }
 
   @Override

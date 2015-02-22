@@ -2,14 +2,16 @@ package denominator.designate;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import denominator.Credentials;
-import denominator.Credentials.ListCredentials;
 import denominator.designate.KeystoneV2.TokenIdAndPublicURL;
+
+import static denominator.common.Preconditions.checkNotNull;
 
 /**
  * gets the current endpoint and authorization token from the identity service using password or api
@@ -69,11 +71,27 @@ class InvalidatableAuthProvider implements Provider<TokenIdAndPublicURL> {
   }
 
   private TokenIdAndPublicURL auth(Credentials currentCreds) {
+    String tenantId;
+    String username;
+    String password;
+    if (currentCreds instanceof List) {
+      @SuppressWarnings("unchecked")
+      List<Object> listCreds = (List<Object>) currentCreds;
+      tenantId = listCreds.get(0).toString();
+      username = listCreds.get(1).toString();
+      password = listCreds.get(2).toString();
+    } else if (currentCreds instanceof Map) {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> mapCreds = (Map<String, Object>) currentCreds;
+      tenantId = checkNotNull(mapCreds.get("tenantId"), "tenantId").toString();
+      username = checkNotNull(mapCreds.get("username"), "username").toString();
+      password = checkNotNull(mapCreds.get("password"), "password").toString();
+    } else {
+      throw new IllegalArgumentException("Unsupported credential type: " + currentCreds);
+    }
+
     URI url = URI.create(lastKeystoneUrl);
-    List<Object> listCreds = ListCredentials.asList(currentCreds);
-    return identityService
-        .passwordAuth(url, listCreds.get(0).toString(), listCreds.get(1).toString(), listCreds
-            .get(2).toString());
+    return identityService.passwordAuth(url, tenantId, username, password);
   }
 
   @Override

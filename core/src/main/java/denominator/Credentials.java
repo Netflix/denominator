@@ -111,6 +111,8 @@ public interface Credentials {
      * @return copy of the credentials values
      * @throws IllegalArgumentException if input is not a {@code Map} or {@code List}, or it is
      *                                  empty.
+     * @deprecated This method is deprecated because it converts map credentials into list containing
+     * items in same order as in map. Providers should handle each type of credential separately.
      */
     public static List<Object> asList(Credentials in) throws IllegalArgumentException {
       checkNotNull(in, "credentials");

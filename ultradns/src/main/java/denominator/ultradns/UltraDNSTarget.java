@@ -2,16 +2,17 @@ package denominator.ultradns;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 
 import denominator.Credentials;
-import denominator.Credentials.ListCredentials;
 import denominator.Provider;
 import feign.Request;
 import feign.RequestTemplate;
 import feign.Target;
 
+import static denominator.common.Preconditions.checkNotNull;
 import static feign.Util.UTF_8;
 import static java.lang.String.format;
 
@@ -58,10 +59,25 @@ class UltraDNSTarget implements Target<UltraDNS> {
 
   @Override
   public Request apply(RequestTemplate in) {
+    String username;
+    String password;
+    Credentials creds = credentials.get();
+    if (creds instanceof  List) {
+      @SuppressWarnings("unchecked")
+      List<Object> listCreds = (List<Object>) creds;
+      username = listCreds.get(0).toString();
+      password = listCreds.get(1).toString();
+    } else if (creds instanceof Map) {
+      @SuppressWarnings("unchecked")
+      Map<String, Object> mapCreds = (Map<String, Object>) creds;
+      username = checkNotNull(mapCreds.get("username"), "username").toString();
+      password = checkNotNull(mapCreds.get("password"), "password").toString();
+    } else {
+      throw new IllegalArgumentException("Unsupported credential type: "+ creds);
+    }
+
     in.insert(0, url());
-    List<Object> creds = ListCredentials.asList(credentials.get());
-    in.body(format(SOAP_TEMPLATE, creds.get(0).toString(), creds.get(1).toString(),
-                   new String(in.body(), UTF_8)));
+    in.body(format(SOAP_TEMPLATE, username, password, new String(in.body(), UTF_8)));
     in.header("Host", URI.create(in.url()).getHost());
     in.header("Content-Type", "application/xml");
     return in.request();
