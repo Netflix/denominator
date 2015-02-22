@@ -8,7 +8,6 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 import denominator.designate.Designate.Record;
@@ -104,7 +103,7 @@ public class DesignateTest {
                                   + "}";
 
   @Test
-  public void authSuccess() throws IOException, InterruptedException, URISyntaxException {
+  public void authSuccess() throws Exception {
     server.credentials("tenantId", "username", "password");
     server.enqueueAuthResponse();
 
@@ -358,7 +357,6 @@ public class DesignateTest {
 
     }), new DesignateProvider.FeignModule());
   }
-
 
   @BeforeMethod
   public void resetServer() throws IOException {

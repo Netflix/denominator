@@ -1,18 +1,15 @@
 package denominator.clouddns;
 
-import com.google.common.collect.ImmutableMap;
-
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
-import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.Denominator;
 import feign.Logger;
 
-import static com.google.common.base.Strings.emptyToNull;
 import static denominator.CredentialsConfiguration.credentials;
+import static feign.Util.emptyToNull;
 import static java.lang.System.getProperty;
 
 public class CloudDNSConnection {
@@ -22,21 +19,18 @@ public class CloudDNSConnection {
 
   CloudDNSConnection() {
     String username = emptyToNull(getProperty("clouddns.username"));
-    String password = emptyToNull(getProperty("clouddns.password"));
-    if (username != null && password != null) {
-      manager = create(username, password);
+    String apiKey = emptyToNull(getProperty("clouddns.apiKey"));
+    if (username != null && apiKey != null) {
+      manager = create(username, apiKey);
     } else {
       manager = null;
     }
     mutableZone = emptyToNull(getProperty("clouddns.zone"));
   }
 
-  static DNSApiManager create(String username, String password) {
+  static DNSApiManager create(String username, String apiKey) {
     CloudDNSProvider provider = new CloudDNSProvider(emptyToNull(getProperty("clouddns.url")));
-    return Denominator.create(provider,
-                              credentials(MapCredentials.from(
-                                  ImmutableMap.of("username", username, "password", password))),
-                              new Overrides());
+    return Denominator.create(provider, credentials(username, apiKey), new Overrides());
   }
 
   @Module(overrides = true, library = true)

@@ -1,4 +1,4 @@
-package denominator.designate;
+package denominator.clouddns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
@@ -15,10 +15,10 @@ import static denominator.Credentials.ListCredentials;
 import static denominator.assertj.MockWebServerAssertions.assertThat;
 import static java.lang.String.format;
 
-final class MockDesignateServer extends DesignateProvider {
+final class MockCloudDNSServer extends CloudDNSProvider {
 
   @dagger.Module(injects = DNSApiManager.class, complete = false, includes =
-      DesignateProvider.Module.class)
+      CloudDNSProvider.Module.class)
   static final class Module {
 
   }
@@ -26,13 +26,17 @@ final class MockDesignateServer extends DesignateProvider {
   private final MockWebServer delegate = new MockWebServer();
   private final String tokenId = "b84f4a37-5126-4603-9521-ccd0665fbde1";
   private String tenantId = "123123";
-  private String username = "joe";
-  private String password = "letmein";
+  private String username = "jclouds-joe";
+  private String apiKey = "letmein";
   private String accessResponse;
 
-  MockDesignateServer() throws IOException {
+  MockCloudDNSServer() throws IOException {
     delegate.play();
-    credentials(tenantId, username, password);
+    credentials(username, apiKey);
+  }
+
+  String tenantId() {
+    return tenantId;
   }
 
   String tokenId() {
@@ -49,13 +53,12 @@ final class MockDesignateServer extends DesignateProvider {
   }
 
   Credentials credentials() {
-    return ListCredentials.from(tenantId, username, password);
+    return ListCredentials.from(username, apiKey);
   }
 
-  MockDesignateServer credentials(String tenantId, String username, String password) {
-    this.tenantId = tenantId;
+  MockCloudDNSServer credentials(String username, String apiKey) {
     this.username = username;
-    this.password = password;
+    this.apiKey = apiKey;
     this.accessResponse = "{\"access\": {\n"
                           + "  \"token\": {\n"
                           + "    \"expires\": \"2013-07-08T05:55:31.809Z\",\n"
@@ -67,15 +70,12 @@ final class MockDesignateServer extends DesignateProvider {
                           + "  },\n"
                           + "  \"serviceCatalog\": [\n"
                           + "    {\n"
-                          + "      \"name\": \"DNS\",\n"
-                          + "      \"type\": \"hpext:dns\",\n"
+                          + "      \"name\": \"cloudDNS\",\n"
+                          + "      \"type\": \"rax:dns\",\n"
                           + "      \"endpoints\": [{\n"
                           + format("        \"tenantId\": \"%s\",\n", tenantId)
-                          + format("        \"publicURL\": \"http://localhost:%s\\/v1\\/\",\n",
-                                   delegate.getPort())
-                          + "        \"publicURL2\": \"\",\n"
-                          + "        \"region\": \"region-a.geo-1\",\n"
-                          + "        \"versionId\": \"1\"\n"
+                          + format("        \"publicURL\": \"http://localhost:%s\\/v1.0\\/%s\"\n",
+                                   delegate.getPort(), tenantId)
                           + "      }]\n"
                           + "    }\n"
                           + "  ]\n"
@@ -100,8 +100,8 @@ final class MockDesignateServer extends DesignateProvider {
         .hasMethod("POST")
         .hasPath("/tokens")
         .hasBody(format(
-            "{\"auth\":{\"passwordCredentials\":{\"username\":\"%s\",\"password\":\"%s\"},\"tenantId\":\"%s\"}}",
-            username, password, tenantId));
+            "{\"auth\":{\"RAX-KSKEY:apiKeyCredentials\":{\"username\":\"%s\",\"apiKey\":\"%s\"}}}",
+            username, apiKey));
   }
 
   void shutdown() throws IOException {
