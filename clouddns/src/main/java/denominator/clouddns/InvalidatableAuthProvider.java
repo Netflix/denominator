@@ -9,9 +9,10 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 
 import denominator.Credentials;
-import denominator.Credentials.ListCredentials;
 import denominator.clouddns.RackspaceApis.CloudIdentity;
 import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
+
+import static denominator.common.Preconditions.checkNotNull;
 
 /**
  * gets the current endpoint and authorization token from the identity service using password or api
@@ -74,16 +75,21 @@ class InvalidatableAuthProvider implements Provider<TokenIdAndPublicURL> {
     URI url = URI.create(lastKeystoneUrl);
     if (currentCreds instanceof Map) {
       @SuppressWarnings("unchecked")
-      Map<String, String> mapCreds = Map.class.cast(currentCreds);
-      String username = mapCreds.get("username");
+      Map<String, Object> mapCreds = Map.class.cast(currentCreds);
+      String username = checkNotNull(mapCreds.get("username"), "username").toString();
       if (mapCreds.containsKey("apiKey")) {
-        return identityService.apiKeyAuth(url, username, mapCreds.get("apiKey"));
+        return identityService.apiKeyAuth(url, username, mapCreds.get("apiKey").toString());
       }
-      return identityService.passwordAuth(url, username, mapCreds.get("password"));
+      String password = checkNotNull(mapCreds.get("password"), "password").toString();
+      return identityService.passwordAuth(url, username, password);
+    } else if (currentCreds instanceof List) {
+      @SuppressWarnings("unchecked")
+      List<Object> listCreds = List.class.cast(currentCreds);
+      return identityService
+              .apiKeyAuth(url, listCreds.get(0).toString(), listCreds.get(1).toString());
+    } else {
+      throw new IllegalArgumentException("Unsupported credential type: " + currentCreds);
     }
-    List<Object> listCreds = ListCredentials.asList(currentCreds);
-    return identityService
-        .apiKeyAuth(url, listCreds.get(0).toString(), listCreds.get(1).toString());
   }
 
   @Override
