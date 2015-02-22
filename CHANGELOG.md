@@ -3,6 +3,7 @@
 * Updates to feign 7.2.1 and dagger 1.2.2
 * Reformats code according to [Google Java Style](https://google-styleguide.googlecode.com/svn/trunk/javaguide.html)
 * Removes java.beans.ConstructorProperties from value types
+* Removes dependency on sun.misc
 
 ### Version 4.3.5
 * Support for more exotic RRtypes added
