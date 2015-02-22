@@ -26,7 +26,6 @@ import dagger.Provides;
 import denominator.BasicProvider;
 import denominator.CheckConnection;
 import denominator.Credentials;
-import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
@@ -39,6 +38,8 @@ import denominator.discoverydns.DiscoveryDNSAdapters.ResourceRecordsAdapter;
 import feign.Feign;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
+
+import static denominator.common.Preconditions.checkNotNull;
 
 public class DiscoveryDNSProvider extends BasicProvider {
 
@@ -138,9 +139,22 @@ public class DiscoveryDNSProvider extends BasicProvider {
     // TODO: this doesn't allow for dynamic credential changes.
     @Provides
     SSLSocketFactory sslSocketFactory(Provider<Credentials> credentials) {
-      List<Object> creds = ListCredentials.asList(credentials.get());
-      String cert = creds.get(0).toString();
-      String key = creds.get(1).toString();
+      Credentials creds = credentials.get();
+      String cert;
+      String key;
+      if (creds instanceof List) {
+        @SuppressWarnings("unchecked")
+        List<Object> listCreds = (List<Object>) creds;
+        cert = listCreds.get(0).toString();
+        key = listCreds.get(1).toString();
+      } else if (creds instanceof Map) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> mapCreds = (Map<String, Object>) creds;
+        cert = checkNotNull(mapCreds.get("certificatePem"), "certificatePem").toString();
+        key = checkNotNull(mapCreds.get("keyPem"), "keyPem").toString();
+      } else {
+        throw new IllegalArgumentException("Unsupported credential type: " + creds);
+      }
 
       try {
         Certificate certObj = Pems.readCertificate(cert);
