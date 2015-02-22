@@ -1,7 +1,5 @@
 package denominator.route53;
 
-import sun.misc.BASE64Encoder;
-
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -14,6 +12,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import javax.inject.Inject;
 import javax.inject.Provider;
+import javax.xml.bind.DatatypeConverter;
 
 import denominator.Credentials;
 import denominator.Credentials.ListCredentials;
@@ -103,7 +102,7 @@ public class InvalidatableAuthenticationHeadersProvider {
       Mac mac = Mac.getInstance(HMACSHA256);
       mac.init(new SecretKeySpec(secretKey.getBytes(UTF_8), HMACSHA256));
       byte[] result = mac.doFinal(rfc1123Date.getBytes(UTF_8));
-      return new BASE64Encoder().encode(result);
+      return DatatypeConverter.printBase64Binary(result);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
