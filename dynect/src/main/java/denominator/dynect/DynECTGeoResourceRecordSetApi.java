@@ -175,7 +175,7 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
         }
 
         for (int i = 0; i < entry.getValue().size(); i++) {
-          rrset.add(ToRecord.toRData(entry.getValue().get(i).getAsJsonObject()));
+          rrset.add(ToRecord.toRData(type, entry.getValue().get(i).getAsJsonObject()));
         }
         rrsets.add(rrset);
       }
