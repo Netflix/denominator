@@ -1,25 +1,24 @@
 package denominator.dynect;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.io.Resources;
-
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 
-import denominator.Denominator;
+import denominator.common.Util;
 import denominator.model.ResourceRecordSet;
 import denominator.model.profile.Geo;
 import denominator.model.rdata.CNAMEData;
 import denominator.profile.GeoResourceRecordSetApi;
 
-import static denominator.CredentialsConfiguration.credentials;
-import static denominator.dynect.DynECTProviderDynamicUpdateMockTest.session;
 import static denominator.dynect.DynECTTest.allGeoPermissions;
 import static denominator.dynect.DynECTTest.noGeoPermissions;
 import static org.testng.Assert.assertEquals;
@@ -29,6 +28,8 @@ import static org.testng.Assert.assertNull;
 @Test(singleThreaded = true)
 public class DynECTGeoResourceRecordSetApiMockTest {
 
+  MockDynECTServer server;
+
   String noGeoServices = "{\"status\": \"success\", \"data\": [] }";
   String geoService;
   ResourceRecordSet<CNAMEData> europe = ResourceRecordSet.<CNAMEData>builder()
@@ -37,7 +38,11 @@ public class DynECTGeoResourceRecordSetApiMockTest {
       .qualifier("Europe")
       .ttl(300)
       .add(CNAMEData.create("srv-000000001.eu-west-1.elb.amazonaws.com."))
-      .geo(Geo.create(ImmutableMultimap.of("13", "13").asMap()))
+      .geo(Geo.create(new LinkedHashMap<String, Collection<String>>() {
+        {
+          put("13", Arrays.asList("13"));
+        }
+      }))
       .build();
   ResourceRecordSet<CNAMEData> everywhereElse = ResourceRecordSet.<CNAMEData>builder()
       .name("srv.denominator.io")
@@ -45,13 +50,16 @@ public class DynECTGeoResourceRecordSetApiMockTest {
       .qualifier("Everywhere Else")
       .ttl(300)
       .add(CNAMEData.create("srv-000000001.us-east-1.elb.amazonaws.com."))
-      .geo(Geo.create(ImmutableMultimap.<String, String>builder()
-                          .put("11", "11")
-                          .put("16", "16")
-                          .put("12", "12")
-                          .put("17", "17")
-                          .put("15", "15")
-                          .put("14", "14").build().asMap()))
+      .geo(Geo.create(new LinkedHashMap<String, Collection<String>>() {
+        {
+          put("11", Arrays.asList("11"));
+          put("16", Arrays.asList("16"));
+          put("12", Arrays.asList("12"));
+          put("17", Arrays.asList("17"));
+          put("15", Arrays.asList("15"));
+          put("14", Arrays.asList("14"));
+        }
+      }))
       .build();
   ResourceRecordSet<CNAMEData> fallback = ResourceRecordSet.<CNAMEData>builder()
       .name("srv.denominator.io")
@@ -59,201 +67,181 @@ public class DynECTGeoResourceRecordSetApiMockTest {
       .qualifier("Fallback")
       .ttl(300)
       .add(CNAMEData.create("srv-000000002.us-east-1.elb.amazonaws.com."))
-      .geo(Geo.create(ImmutableMultimap.<String, String>builder()
-                          .put("Unknown IP", "@!")
-                          .put("Fallback", "@@").build().asMap()))
+      .geo(Geo.create(new LinkedHashMap<String, Collection<String>>() {
+        {
+          put("Unknown IP", Arrays.asList("@!"));
+          put("Fallback", Arrays.asList("@@"));
+        }
+      }))
       .build();
 
   DynECTGeoResourceRecordSetApiMockTest() throws IOException {
-    geoService = Resources.toString(Resources.getResource("geoservice.json"), Charsets.UTF_8);
-  }
-
-  private static GeoResourceRecordSetApi mockApi(final int port) {
-    return Denominator.create(new DynECTProvider() {
-      @Override
-      public String url() {
-        return "http://localhost:" + port;
-      }
-    }, credentials("jclouds", "joe", "letmein")).api().geoRecordSetsInZone("denominator.io");
+    geoService =
+        Util.slurp(new InputStreamReader(getClass().getResourceAsStream("/geoservice.json")));
   }
 
   @Test
-  public void listWhenPresent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
-    server.play();
+  public void listWhenPresent() throws Exception {
+    server.enqueueSessionResponse();
+    ;
+    server.enqueue(new MockResponse().setBody(allGeoPermissions));
+    server.enqueue(new MockResponse().setBody(geoService));
 
-    try {
-      GeoResourceRecordSetApi api = mockApi(server.getPort());
-      Iterator<ResourceRecordSet<?>> iterator = api.iterator();
-      assertEquals(iterator.next(), everywhereElse);
-      assertEquals(iterator.next(), europe);
-      assertEquals(iterator.next(), fallback);
-      assertFalse(iterator.hasNext());
+    GeoResourceRecordSetApi api = server.connect().api().geoRecordSetsInZone("denominator.io");
+    Iterator<ResourceRecordSet<?>> iterator = api.iterator();
+    assertEquals(iterator.next(), everywhereElse);
+    assertEquals(iterator.next(), europe);
+    assertEquals(iterator.next(), fallback);
+    assertFalse(iterator.hasNext());
 
-      assertEquals(server.getRequestCount(), 3);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest()
+        .hasMethod("POST")
+        .hasPath("/CheckPermissionReport");
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/Geo?detail=Y");
   }
 
   @Test
-  public void iterateByNameWhenPresent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
-    server.play();
+  public void iterateByNameWhenPresent() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(allGeoPermissions));
+    server.enqueue(new MockResponse().setBody(geoService));
 
-    try {
-      GeoResourceRecordSetApi api = mockApi(server.getPort());
-      Iterator<ResourceRecordSet<?>> iterator = api.iterateByName("srv.denominator.io");
-      assertEquals(iterator.next(), everywhereElse);
-      assertEquals(iterator.next(), europe);
-      assertEquals(iterator.next(), fallback);
-      assertFalse(iterator.hasNext());
+    GeoResourceRecordSetApi api = server.connect().api().geoRecordSetsInZone("denominator.io");
+    Iterator<ResourceRecordSet<?>> iterator = api.iterateByName("srv.denominator.io");
+    assertEquals(iterator.next(), everywhereElse);
+    assertEquals(iterator.next(), europe);
+    assertEquals(iterator.next(), fallback);
+    assertFalse(iterator.hasNext());
 
-      assertEquals(server.getRequestCount(), 3);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest()
+        .hasMethod("POST")
+        .hasPath("/CheckPermissionReport");
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/Geo?detail=Y");
   }
 
   @Test
-  public void iterateByNameWhenNoPermissions() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoPermissions));
-    server.play();
+  public void iterateByNameWhenNoPermissions() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(noGeoPermissions));
 
-    try {
-      assertNull(mockApi(server.getPort()));
+    assertNull(server.connect().api().geoRecordSetsInZone("denominator.io"));
 
-      assertEquals(server.getRequestCount(), 2);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest()
+        .hasMethod("POST")
+        .hasPath("/CheckPermissionReport");
   }
 
   @Test
-  public void iterateByNameWhenAbsent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoServices));
-    server.play();
+  public void iterateByNameWhenAbsent() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(allGeoPermissions));
+    server.enqueue(new MockResponse().setBody(noGeoServices));
 
-    try {
-      GeoResourceRecordSetApi api = mockApi(server.getPort());
-      assertFalse(api.iterateByName("www.denominator.io").hasNext());
+    GeoResourceRecordSetApi api = server.connect().api().geoRecordSetsInZone("denominator.io");
+    assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
-      assertEquals(server.getRequestCount(), 3);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest()
+        .hasMethod("POST")
+        .hasPath("/CheckPermissionReport");
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/Geo?detail=Y");
   }
 
   @Test
-  public void iterateByNameAndTypeWhenPresent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
-    server.play();
+  public void iterateByNameAndTypeWhenPresent() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(allGeoPermissions));
+    server.enqueue(new MockResponse().setBody(geoService));
 
-    try {
-      GeoResourceRecordSetApi api = mockApi(server.getPort());
-      Iterator<ResourceRecordSet<?>>
-          iterator =
-          api.iterateByNameAndType("srv.denominator.io", "CNAME");
-      assertEquals(iterator.next(), everywhereElse);
-      assertEquals(iterator.next(), europe);
-      assertEquals(iterator.next(), fallback);
-      assertFalse(iterator.hasNext());
+    GeoResourceRecordSetApi api = server.connect().api().geoRecordSetsInZone("denominator.io");
+    Iterator<ResourceRecordSet<?>>
+        iterator =
+        api.iterateByNameAndType("srv.denominator.io", "CNAME");
+    assertEquals(iterator.next(), everywhereElse);
+    assertEquals(iterator.next(), europe);
+    assertEquals(iterator.next(), fallback);
+    assertFalse(iterator.hasNext());
 
-      assertEquals(server.getRequestCount(), 3);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest()
+        .hasMethod("POST")
+        .hasPath("/CheckPermissionReport");
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/Geo?detail=Y");
   }
 
   @Test
-  public void iterateByNameAndTypeWhenAbsent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoServices));
-    server.play();
+  public void iterateByNameAndTypeWhenAbsent() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(allGeoPermissions));
+    server.enqueue(new MockResponse().setBody(noGeoServices));
 
-    try {
-      GeoResourceRecordSetApi api = mockApi(server.getPort());
-      assertFalse(api.iterateByNameAndType("www.denominator.io", "A").hasNext());
+    GeoResourceRecordSetApi api = server.connect().api().geoRecordSetsInZone("denominator.io");
+    assertFalse(api.iterateByNameAndType("www.denominator.io", "A").hasNext());
 
-      assertEquals(server.getRequestCount(), 3);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest()
+        .hasMethod("POST")
+        .hasPath("/CheckPermissionReport");
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/Geo?detail=Y");
   }
 
   @Test
-  public void getByNameTypeAndQualifierWhenPresent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(geoService));
-    server.play();
+  public void getByNameTypeAndQualifierWhenPresent() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(allGeoPermissions));
+    server.enqueue(new MockResponse().setBody(geoService));
 
-    try {
-      GeoResourceRecordSetApi api = mockApi(server.getPort());
-      assertEquals(api.getByNameTypeAndQualifier("srv.denominator.io", "CNAME", "Fallback"),
-                   fallback);
+    GeoResourceRecordSetApi api = server.connect().api().geoRecordSetsInZone("denominator.io");
+    assertEquals(api.getByNameTypeAndQualifier("srv.denominator.io", "CNAME", "Fallback"),
+                 fallback);
 
-      assertEquals(server.getRequestCount(), 3);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest()
+        .hasMethod("POST")
+        .hasPath("/CheckPermissionReport");
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/Geo?detail=Y");
   }
 
   @Test
-  public void getByNameTypeAndQualifierWhenAbsent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(allGeoPermissions));
-    server.enqueue(new MockResponse().setResponseCode(200).setBody(noGeoServices));
-    server.play();
+  public void getByNameTypeAndQualifierWhenAbsent() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(allGeoPermissions));
+    server.enqueue(new MockResponse().setBody(noGeoServices));
 
-    try {
-      GeoResourceRecordSetApi api = mockApi(server.getPort());
-      assertNull(api.getByNameTypeAndQualifier("www.denominator.io", "A", "Fallback"));
+    GeoResourceRecordSetApi api = server.connect().api().geoRecordSetsInZone("denominator.io");
+    assertNull(api.getByNameTypeAndQualifier("www.denominator.io", "A", "Fallback"));
 
-      assertEquals(server.getRequestCount(), 3);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /CheckPermissionReport HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /Geo?detail=Y HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest()
+        .hasMethod("POST")
+        .hasPath("/CheckPermissionReport");
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/Geo?detail=Y");
+  }
+
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockDynECTServer();
+  }
+
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 }

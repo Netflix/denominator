@@ -1,12 +1,10 @@
 package denominator.dynect;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.ImmutableSet;
-
 import org.testng.annotations.Test;
 
-import java.util.Set;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import dagger.ObjectGraph;
 import denominator.Credentials.MapCredentials;
@@ -17,8 +15,8 @@ import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
 import static denominator.Providers.list;
 import static denominator.Providers.provide;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
 
 public class DynECTProviderTest {
 
@@ -28,15 +26,13 @@ public class DynECTProviderTest {
   public void testMockMetadata() {
     assertEquals(PROVIDER.name(), "dynect");
     assertEquals(PROVIDER.supportsDuplicateZoneNames(), false);
-    assertEquals(PROVIDER.credentialTypeToParameterNames(),
-                 ImmutableMultimap.<String, String>builder()
-                     .putAll("password", "customer", "username", "password").build().asMap());
+    assertThat(PROVIDER.credentialTypeToParameterNames())
+        .containsEntry("password", Arrays.asList("customer", "username", "password"));
   }
 
   @Test
   public void testDynECTRegistered() {
-    Set<Provider> allProviders = ImmutableSet.copyOf(list());
-    assertTrue(allProviders.contains(PROVIDER));
+    assertThat(list()).contains(PROVIDER);
   }
 
   @Test
@@ -45,11 +41,11 @@ public class DynECTProviderTest {
     assertEquals(manager.api().zones().getClass(), DynECTZoneApi.class);
     manager = create("dynect", credentials("customer", "username", "password"));
     assertEquals(manager.api().zones().getClass(), DynECTZoneApi.class);
-    manager =
-        create("dynect", credentials(MapCredentials.from(ImmutableMap.<String, String>builder()
-                                                             .put("customer", "C")
-                                                             .put("username", "U")
-                                                             .put("password", "P").build())));
+    Map<String, String> map = new LinkedHashMap<String, String>();
+    map.put("customer", "C");
+    map.put("username", "U");
+    map.put("password", "P");
+    manager = create("dynect", credentials(MapCredentials.from(map)));
     assertEquals(manager.api().zones().getClass(), DynECTZoneApi.class);
   }
 
