@@ -1,77 +1,66 @@
 package denominator.dynect;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.util.Iterator;
 
-import denominator.Denominator;
 import denominator.ZoneApi;
 import denominator.model.Zone;
 
-import static denominator.CredentialsConfiguration.credentials;
-import static denominator.dynect.DynECTProviderDynamicUpdateMockTest.session;
-import static org.testng.Assert.assertEquals;
+import static denominator.assertj.ModelAssertions.assertThat;
+import static denominator.dynect.DynECTTest.noZones;
+import static denominator.dynect.DynECTTest.zones;
 import static org.testng.Assert.assertFalse;
 
 @Test(singleThreaded = true)
 public class DynECTZoneApiMockTest {
 
-  String
-      zones =
-      "{\"status\": \"success\", \"data\": [\"/REST/Zone/0.0.0.0.d.6.e.0.0.a.2.ip6.arpa/\", \"/REST/Zone/126.12.44.in-addr.arpa/\", \"/REST/Zone/jclouds.org/\"], \"job_id\": 260657587, \"msgs\": [{\"INFO\": \"get: Your 3 zones\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
-  String
-      noZones =
-      "{\"status\": \"success\", \"data\": [], \"job_id\": 260657587, \"msgs\": [{\"INFO\": \"get: Your 0 zones\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
-
-  private static ZoneApi mockApi(final int port) {
-    return Denominator.create(new DynECTProvider() {
-      @Override
-      public String url() {
-        return "http://localhost:" + port;
-      }
-    }, credentials("jclouds", "joe", "letmein")).api().zones();
-  }
+  MockDynECTServer server;
 
   @Test
-  public void iteratorWhenPresent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(session));
+  public void iteratorWhenPresent() throws Exception {
+    server.enqueueSessionResponse();
     server.enqueue(new MockResponse().setBody(zones));
-    server.play();
 
-    try {
-      ZoneApi api = mockApi(server.getPort());
-      Zone zone = api.iterator().next();
-      assertEquals(zone.name(), "0.0.0.0.d.6.e.0.0.a.2.ip6.arpa");
-      assertFalse(zone.id() != null);
+    ZoneApi api = server.connect().api().zones();
+    Iterator<Zone> domains = api.iterator();
 
-      assertEquals(server.getRequestCount(), 2);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /Zone HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    assertThat(domains.next())
+        .hasName("0.0.0.0.d.6.e.0.0.a.2.ip6.arpa");
+    assertThat(domains.next())
+        .hasName("126.12.44.in-addr.arpa");
+    assertThat(domains.next())
+        .hasName("denominator.io");
+    assertFalse(domains.hasNext());
+
+    server.assertSessionRequest();
+    server.assertRequest().hasPath("/Zone");
   }
 
   @Test
-  public void iteratorWhenAbsent() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(session));
+  public void iteratorWhenAbsent() throws Exception {
+    server.enqueueSessionResponse();
     server.enqueue(new MockResponse().setBody(noZones));
-    server.play();
 
-    try {
-      ZoneApi api = mockApi(server.getPort());
-      assertFalse(api.iterator().hasNext());
+    ZoneApi api = server.connect().api().zones();
+    assertFalse(api.iterator().hasNext());
 
-      assertEquals(server.getRequestCount(), 2);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "GET /Zone HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest().hasPath("/Zone");
+  }
+
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockDynECTServer();
+  }
+
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 }
