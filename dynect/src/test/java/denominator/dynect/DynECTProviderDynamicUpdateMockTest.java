@@ -1,12 +1,12 @@
 package denominator.dynect;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.net.URL;
 import java.util.concurrent.atomic.AtomicReference;
 
 import dagger.Module;
@@ -17,16 +17,14 @@ import denominator.DNSApi;
 import denominator.Denominator;
 
 import static denominator.CredentialsConfiguration.credentials;
-import static denominator.dynect.DynECTTest.noneWithNameAndType;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static denominator.dynect.DynECTTest.noZones;
+import static denominator.dynect.DynECTTest.zones;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Test(singleThreaded = true)
 public class DynECTProviderDynamicUpdateMockTest {
 
-  static String
-      session =
-      "{\"status\": \"success\", \"data\": {\"token\": \"FFFFFFFFFF\", \"version\": \"3.5.0\"}, \"job_id\": 254417252, \"msgs\": [{\"INFO\": \"login: Login successful\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+  MockDynECTServer server;
 
   static String
       mismatch =
@@ -41,118 +39,79 @@ public class DynECTProviderDynamicUpdateMockTest {
       "{\"status\": \"failure\", \"data\": {}, \"job_id\": 427275274, \"msgs\": [{\"INFO\": \"login: Bad or expired credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": \"INVALID_DATA\", \"LVL\": \"ERROR\"}, {\"INFO\": \"login: There was a problem with your credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
   @Test
-  public void ipMisMatchInvalidatesAndRetries() throws IOException, InterruptedException {
-    final MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(session));
+  public void ipMisMatchInvalidatesAndRetries() throws Exception {
+    server.enqueueSessionResponse();
     server.enqueue(new MockResponse().setResponseCode(400).setBody(mismatch));
-    server.enqueue(new MockResponse().setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
-    server.play();
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(noZones));
 
-    try {
+    DNSApi api = server.connect().api();
 
-      DNSApi api = Denominator.create(new DynECTProvider() {
-        @Override
-        public String url() {
-          return "http://localhost:" + server.getPort();
-        }
-      }, credentials("customer", "joe", "letmein")).api();
+    assertThat(api.zones()).isEmpty();
 
-      assertNull(
-          api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
-
-      assertEquals(server.getRequestCount(), 4);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest();
+    server.assertSessionRequest();
+    server.assertRequest();
   }
 
   @Test
-  public void dynamicEndpointUpdates() throws IOException, InterruptedException {
-    MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
-    server.enqueue(new MockResponse().setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
-    server.play();
+  public void dynamicEndpointUpdates() throws Exception {
+    final AtomicReference<String> url = new AtomicReference<String>(server.url());
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(zones));
 
-    try {
-      String initialPath = "";
-      String updatedPath = "/alt";
-      URL mockUrl = server.getUrl(initialPath);
-      final AtomicReference<URL> dynamicUrl = new AtomicReference<URL>(mockUrl);
+    DNSApi api = Denominator.create(new DynECTProvider() {
+      @Override
+      public String url() {
+        return url.get();
+      }
+    }, credentials(server.credentials())).api();
 
-      DNSApi api = Denominator.create(new DynECTProvider() {
-        @Override
-        public String url() {
-          return dynamicUrl.get().toString();
-        }
-      }, credentials("customer", "joe", "letmein")).api();
+    api.zones().iterator();
+    server.assertSessionRequest();
+    server.assertRequest();
 
-      assertNull(
-          api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
-      dynamicUrl.set(new URL(mockUrl, updatedPath));
-      assertNull(
-          api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
+    MockDynECTServer server2 = new MockDynECTServer();
+    url.set(server2.url());
+    server2.enqueueSessionResponse();
+    server2.enqueue(new MockResponse().setBody(zones));
 
-      assertEquals(server.getRequestCount(), 4);
-      assertEquals(server.takeRequest().getRequestLine(), "POST /Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(), "POST /alt/Session HTTP/1.1");
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /alt/ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    api.zones().iterator();
+
+    server2.assertSessionRequest();
+    server2.assertRequest();
+    server2.shutdown();
   }
 
   @Test
-  public void dynamicCredentialUpdates() throws IOException, InterruptedException {
-    final MockWebServer server = new MockWebServer();
-    server.enqueue(new MockResponse().setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
-    server.enqueue(new MockResponse().setBody(session));
-    server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
-    server.play();
+  public void dynamicCredentialUpdates() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(zones));
 
-    try {
-      AtomicReference<Credentials>
-          dynamicCredentials =
-          new AtomicReference<Credentials>(ListCredentials.from(
-              "customer", "joe", "letmein"));
+    AtomicReference<Credentials>
+        dynamicCredentials =
+        new AtomicReference<Credentials>(server.credentials());
 
-      DNSApi api = Denominator.create(new DynECTProvider() {
-        @Override
-        public String url() {
-          return "http://localhost:" + server.getPort();
-        }
-      }, new OverrideCredentials(dynamicCredentials)).api();
+    DNSApi
+        api =
+        Denominator.create(server, new OverrideCredentials(dynamicCredentials)).api();
 
-      assertNull(
-          api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
-      dynamicCredentials.set(ListCredentials.from("customer2", "bob", "comeon"));
-      assertNull(
-          api.basicRecordSetsInZone("denominator.io").getByNameAndType("www.denominator.io", "A"));
+    api.zones().iterator();
 
-      assertEquals(server.getRequestCount(), 4);
-      assertEquals(new String(server.takeRequest().getBody()),
-                   "{\"customer_name\":\"customer\",\"user_name\":\"joe\",\"password\":\"letmein\"}");
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
-      assertEquals(new String(server.takeRequest().getBody()),
-                   "{\"customer_name\":\"customer2\",\"user_name\":\"bob\",\"password\":\"comeon\"}");
-      assertEquals(server.takeRequest().getRequestLine(),
-                   "GET /ARecord/denominator.io/www.denominator.io?detail=Y HTTP/1.1");
-    } finally {
-      server.shutdown();
-    }
+    server.assertSessionRequest();
+    server.assertRequest();
+
+    dynamicCredentials.set(ListCredentials.from("tim", "jclouds-bob", "comeon"));
+
+    server.credentials("tim", "jclouds-bob", "comeon");
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(zones));
+
+    api.zones().iterator();
+
+    server.assertSessionRequest();
+    server.assertRequest();
   }
 
   @Module(complete = false, library = true, overrides = true)
@@ -168,5 +127,15 @@ public class DynECTProviderDynamicUpdateMockTest {
     public Credentials get() {
       return dynamicCredentials.get();
     }
+  }
+
+  @BeforeMethod
+  public void resetServer() throws IOException {
+    server = new MockDynECTServer();
+  }
+
+  @AfterMethod
+  public void shutdownServer() throws IOException {
+    server.shutdown();
   }
 }
