@@ -1,6 +1,7 @@
 ### Version 4.4
 * Adds support for DiscoveryDNS (http://www.discoverydns.com)
 * Allows map credentials to be used without regard to iteration order
+* Changes DynECT to return type-safe rdata
 * Updates to feign 7.2.1 and dagger 1.2.2
 * Reformats code according to [Google Java Style](https://google-styleguide.googlecode.com/svn/trunk/javaguide.html)
 * Removes java.beans.ConstructorProperties from value types
