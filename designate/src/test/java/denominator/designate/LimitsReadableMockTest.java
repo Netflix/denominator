@@ -2,21 +2,18 @@ package denominator.designate;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
+import org.junit.Rule;
+import org.junit.Test;
 
 import denominator.DNSApiManager;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-@Test(singleThreaded = true)
 public class LimitsReadableMockTest {
 
-  MockDesignateServer server;
+  @Rule
+  public MockDesignateServer server = new MockDesignateServer();
 
   String limitsResponse = "{\n"
                           + "  \"limits\": {\n"
@@ -52,15 +49,5 @@ public class LimitsReadableMockTest {
     assertFalse(api.checkConnection());
 
     server.assertAuthRequest();
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockDesignateServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

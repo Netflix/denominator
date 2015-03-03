@@ -25,7 +25,7 @@ public class ResourceRecordSetTest {
         .hasName("www.denominator.io.")
         .hasType("A")
         .hasTtl(3600)
-        .containsOnlyRecords(AData.create("192.0.2.1"));
+        .containsExactlyRecords(AData.create("192.0.2.1"));
   }
 
   @Test

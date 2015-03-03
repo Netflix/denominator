@@ -1,6 +1,8 @@
 package denominator.route53;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -15,6 +17,9 @@ import static denominator.model.ResourceRecordSets.a;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class EncodeChangesTest {
+
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void defaultsTTLTo300() {
@@ -80,8 +85,11 @@ public class EncodeChangesTest {
                       + "</ResourceRecordSet>");
   }
 
-  @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "missing DNSName in alias target ResourceRecordSet .*")
+  @Test
   public void aliasRRSetMissingDNSName() {
+    thrown.expect(NullPointerException.class);
+    thrown.expectMessage("missing DNSName in alias target ResourceRecordSet");
+    
     Map<String, Object> missingDNSName = new LinkedHashMap<String, Object>();
     missingDNSName.put("HostedZoneId", "Z3I0BTR7N27QRM");
 

@@ -2,23 +2,21 @@ package denominator.route53;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 import denominator.ZoneApi;
 import denominator.model.Zone;
 
 import static denominator.assertj.ModelAssertions.assertThat;
-import static org.testng.Assert.assertFalse;
+import static org.junit.Assert.assertFalse;
 
-@Test(singleThreaded = true)
 public class Route53ZoneApiMockTest {
 
-  MockRoute53Server server;
+  @Rule
+  public MockRoute53Server server = new MockRoute53Server();
 
   @Test
   public void iteratorWhenPresent() throws Exception {
@@ -60,15 +58,5 @@ public class Route53ZoneApiMockTest {
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/2012-12-12/hostedzone");
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockRoute53Server();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

@@ -1,6 +1,8 @@
 package denominator.route53;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -11,13 +13,18 @@ import feign.codec.ErrorDecoder;
 
 import static feign.Util.UTF_8;
 
-@Test(singleThreaded = true)
 public class Route53ErrorDecoderTest {
+
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   ErrorDecoder errors = new Route53ErrorDecoder(new Route53Provider.FeignModule().decoder());
 
-  @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error RequestExpired: Request has expired. Timestamp date is 2013-06-07T12:16:22Z")
-  public void requestExpired() throws Throwable {
+  @Test
+  public void requestExpired() throws Exception {
+    thrown.expect(RetryableException.class);
+    thrown.expectMessage("Route53.zones() failed with error RequestExpired: Request has expired. Timestamp date is 2013-06-07T12:16:22Z");
+
     Response
         response =
         response("<Response xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
@@ -32,8 +39,11 @@ public class Route53ErrorDecoderTest {
     throw errors.decode("Route53.zones()", response);
   }
 
-  @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error InternalError")
-  public void internalError() throws Throwable {
+  @Test
+  public void internalError() throws Exception {
+    thrown.expect(RetryableException.class);
+    thrown.expectMessage("Route53.zones() failed with error InternalError");
+
     Response
         response =
         response("<Response xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
@@ -47,8 +57,11 @@ public class Route53ErrorDecoderTest {
     throw errors.decode("Route53.zones()", response);
   }
 
-  @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error InternalFailure")
-  public void internalFailure() throws Throwable {
+  @Test
+  public void internalFailure() throws Exception {
+    thrown.expect(RetryableException.class);
+    thrown.expectMessage("Route53.zones() failed with error InternalFailure");
+
     Response
         response =
         response("<Response xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
@@ -63,8 +76,11 @@ public class Route53ErrorDecoderTest {
     throw errors.decode("Route53.zones()", response);
   }
 
-  @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error Throttling: Rate exceeded")
-  public void throttling() throws Throwable {
+  @Test
+  public void throttling() throws Exception {
+    thrown.expect(RetryableException.class);
+    thrown.expectMessage("Route53.zones() failed with error Throttling: Rate exceeded");
+
     Response
         response =
         response("<Response xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
@@ -79,8 +95,11 @@ public class Route53ErrorDecoderTest {
     throw errors.decode("Route53.zones()", response);
   }
 
-  @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "Route53.zones\\(\\) failed with error PriorRequestNotComplete: The request was rejected because Route 53 was still processing a prior request.")
-  public void priorRequestNotComplete() throws Throwable {
+  @Test
+  public void priorRequestNotComplete() throws Exception {
+    thrown.expect(RetryableException.class);
+    thrown.expectMessage("Route53.zones() failed with error PriorRequestNotComplete: The request was rejected because Route 53 was still processing a prior request.");
+
     Response
         response =
         response("<Response xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"

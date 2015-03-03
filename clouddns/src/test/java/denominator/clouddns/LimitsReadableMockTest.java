@@ -2,22 +2,19 @@ package denominator.clouddns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
+import org.junit.Rule;
+import org.junit.Test;
 
 import denominator.DNSApiManager;
 
 import static denominator.clouddns.RackspaceApisTest.limitsResponse;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-@Test(singleThreaded = true)
 public class LimitsReadableMockTest {
 
-  MockCloudDNSServer server;
+  @Rule
+  public final MockCloudDNSServer server = new MockCloudDNSServer();
 
   @Test
   public void implicitlyStartsSessionWhichIsReusedForLaterRequests() throws Exception {
@@ -44,15 +41,5 @@ public class LimitsReadableMockTest {
     assertFalse(api.checkConnection());
 
     server.assertAuthRequest();
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockCloudDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

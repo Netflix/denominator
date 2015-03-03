@@ -2,15 +2,14 @@ package denominator.ultradns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 
 import denominator.ResourceRecordSetApi;
 
+import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.model.ResourceRecordSets.a;
 import static denominator.model.ResourceRecordSets.aaaa;
 import static denominator.ultradns.UltraDNSTest.SOAP_TEMPLATE;
@@ -32,14 +31,11 @@ import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfZoneResponse
 import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfZoneResponseHeader;
 import static denominator.ultradns.UltraDNSTest.poolAlreadyExists;
 import static java.lang.String.format;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
 
-@Test
 public class UltraDNSResourceRecordSetApiMockTest {
 
-  MockUltraDNSServer server;
+  @Rule
+  public final MockUltraDNSServer server = new MockUltraDNSServer();
 
   static String
       getResourceRecordsOfDNameByTypeAll =
@@ -87,7 +83,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
 
-    assertFalse(api.iterator().hasNext());
+    assertThat(api.iterator()).isEmpty();
 
     server.assertRequestHasBody(getResourceRecordsOfZone);
   }
@@ -97,7 +93,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponseAbsent));
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
-    assertFalse(api.iterateByName("www.denominator.io.").hasNext());
+    assertThat(api.iterateByName("www.denominator.io.")).isEmpty();
 
     server.assertRequestHasBody(getResourceRecordsOfDNameByTypeAll);
   }
@@ -108,8 +104,8 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
 
-    assertEquals(api.iterateByName("www.denominator.io.").next(),
-                 a("www.denominator.io.", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
+    assertThat(api.iterateByName("www.denominator.io."))
+        .containsExactly(a("www.denominator.io.", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
 
     server.assertRequestHasBody(getResourceRecordsOfDNameByTypeAll);
   }
@@ -120,7 +116,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
 
-    assertNull(api.getByNameAndType("www.denominator.io.", "A"));
+    assertThat(api.getByNameAndType("www.denominator.io.", "A")).isNull();
 
     server.assertRequestHasBody(getResourceRecordsOfDNameByTypeA);
   }
@@ -131,8 +127,8 @@ public class UltraDNSResourceRecordSetApiMockTest {
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
 
-    assertEquals(api.getByNameAndType("www.denominator.io.", "A"),
-                 a("www.denominator.io.", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
+    assertThat(api.getByNameAndType("www.denominator.io.", "A"))
+        .isEqualTo(a("www.denominator.io.", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
 
     server.assertRequestHasBody(getResourceRecordsOfDNameByTypeA);
   }
@@ -226,8 +222,7 @@ public class UltraDNSResourceRecordSetApiMockTest {
   }
 
   @Test
-  public void putFirstAAAAReusesExistingEmptyRoundRobinPool()
-      throws Exception {
+  public void putFirstAAAAReusesExistingEmptyRoundRobinPool() throws Exception {
     server.enqueue(new MockResponse().setBody(getResourceRecordsOfZoneResponseAbsent));
     server.enqueue(new MockResponse().setResponseCode(500).setBody(poolAlreadyExists));
     server.enqueue(new MockResponse().setBody(poolsForAandAAAA));
@@ -245,15 +240,5 @@ public class UltraDNSResourceRecordSetApiMockTest {
     server.assertRequestHasBody(
         format(addRecordToRRPoolTemplate, "1111AAAA", "2001:0DB8:85A3:0000:0000:8A2E:0370:7334",
                "28", 3600));
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockUltraDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

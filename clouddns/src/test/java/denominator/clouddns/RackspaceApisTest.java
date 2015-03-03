@@ -2,35 +2,28 @@ package denominator.clouddns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 
 import denominator.clouddns.RackspaceApis.CloudDNS;
 import denominator.clouddns.RackspaceApis.CloudIdentity;
 import denominator.clouddns.RackspaceApis.JobIdAndStatus;
-import denominator.clouddns.RackspaceApis.ListWithNext;
 import denominator.clouddns.RackspaceApis.Record;
 import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
-import denominator.model.Zone;
 import feign.Feign;
 
 import static denominator.assertj.ModelAssertions.assertThat;
 import static feign.Target.EmptyTarget.create;
 import static java.lang.String.format;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.groups.Tuple.tuple;
 
-@Test(singleThreaded = true)
 public class RackspaceApisTest {
 
-  MockCloudDNSServer server;
+  @Rule
+  public final MockCloudDNSServer server = new MockCloudDNSServer();
 
   @Test
   public void passwordAuth() throws Exception {
@@ -43,8 +36,9 @@ public class RackspaceApisTest {
     TokenIdAndPublicURL tokenIdAndPublicURL = api.passwordAuth(
         URI.create(server.url()), "username", "password");
 
-    assertEquals(tokenIdAndPublicURL.tokenId, server.tokenId());
-    assertEquals(tokenIdAndPublicURL.publicURL, server.url() + "/v1.0/" + server.tenantId());
+    assertThat(tokenIdAndPublicURL.tokenId).isEqualTo(server.tokenId());
+    assertThat(tokenIdAndPublicURL.publicURL)
+        .isEqualTo(server.url() + "/v1.0/" + server.tenantId());
 
     server.assertRequest()
         .hasMethod("POST")
@@ -57,7 +51,7 @@ public class RackspaceApisTest {
   public void limitsSuccess() throws Exception {
     server.enqueue(new MockResponse().setBody(limitsResponse));
 
-    assertFalse(mockApi().limits().isEmpty());
+    assertThat(mockApi().limits()).isNotEmpty();
 
     server.assertRequest()
         .hasMethod("GET")
@@ -81,7 +75,7 @@ public class RackspaceApisTest {
   public void domainsAbsent() throws Exception {
     server.enqueue(new MockResponse().setBody("{\"domains\":[]}"));
 
-    assertTrue(mockApi().domains().isEmpty());
+    assertThat(mockApi().domains()).isEmpty();
 
     server.assertRequest()
         .hasMethod("GET")
@@ -92,34 +86,14 @@ public class RackspaceApisTest {
   public void recordsPresent() throws Exception {
     server.enqueue(new MockResponse().setBody(recordsResponse));
 
-    List<Record> records = mockApi().records(domainId);
-    assertEquals(records.size(), 4);
-
-    assertEquals(records.get(0).id, "A-10465369");
-    assertEquals(records.get(0).name, "www.denominator.io");
-    assertEquals(records.get(0).data(), "192.0.2.1");
-    assertNull(records.get(0).priority);
-    assertEquals(records.get(0).ttl.intValue(), 300);
-    assertEquals(records.get(0).type, "A");
-
-    assertEquals(records.get(1).id, "A-10465370");
-    assertEquals(records.get(1).name, "www.denominator.io");
-    assertEquals(records.get(1).data(), "192.0.2.2");
-    assertNull(records.get(1).priority);
-    assertEquals(records.get(1).ttl.intValue(), 300);
-    assertEquals(records.get(1).type, "A");
-
-    assertEquals(records.get(2).id, "NS-9084762");
-    assertEquals(records.get(2).name, "www.denominator.io");
-    assertEquals(records.get(2).data(), "dns1.stabletransit.com");
-    assertEquals(records.get(2).ttl.intValue(), 300);
-    assertEquals(records.get(2).type, "NS");
-
-    assertEquals(records.get(3).id, "NS-9084763");
-    assertEquals(records.get(3).name, "www.denominator.io");
-    assertEquals(records.get(3).data(), "dns2.stabletransit.com");
-    assertEquals(records.get(3).ttl.intValue(), 300);
-    assertEquals(records.get(3).type, "NS");
+    assertThat(mockApi().records(domainId))
+        .extracting("id", "name", "type", "ttl", "priority", "data")
+        .containsExactly(
+            tuple("A-10465369", "www.denominator.io", "A", 300, null, "192.0.2.1"),
+            tuple("A-10465370", "www.denominator.io", "A", 300, null, "192.0.2.2"),
+            tuple("NS-9084762", "www.denominator.io", "NS", 300, null, "dns1.stabletransit.com"),
+            tuple("NS-9084763", "www.denominator.io", "NS", 300, null, "dns2.stabletransit.com")
+        );
 
     server.assertRequest()
         .hasMethod("GET")
@@ -130,7 +104,7 @@ public class RackspaceApisTest {
   public void recordsAbsent() throws Exception {
     server.enqueue(new MockResponse().setBody("{\"records\":[]}"));
 
-    assertTrue(mockApi().records(domainId).isEmpty());
+    assertThat(mockApi().records(domainId)).isEmpty();
 
     server.assertRequest()
         .hasMethod("GET")
@@ -145,8 +119,8 @@ public class RackspaceApisTest {
                                                             1800,
                                                             "mail.denominator.io", 10);
 
-    assertEquals(job.id, "0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
-    assertEquals(job.status, "RUNNING");
+    assertThat(job.id).isEqualTo("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
+    assertThat(job.status).isEqualTo("RUNNING");
 
     server.assertRequest()
         .hasMethod("POST")
@@ -160,8 +134,8 @@ public class RackspaceApisTest {
 
     JobIdAndStatus job = mockApi().getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
 
-    assertEquals(job.id, "0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
-    assertEquals(job.status, "RUNNING");
+    assertThat(job.id).isEqualTo("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
+    assertThat(job.status).isEqualTo("RUNNING");
 
     server.assertRequest()
         .hasMethod("GET")
@@ -174,8 +148,8 @@ public class RackspaceApisTest {
 
     JobIdAndStatus job = mockApi().getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
 
-    assertEquals(job.id, "0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
-    assertEquals(job.status, "COMPLETED");
+    assertThat(job.id).isEqualTo("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
+    assertThat(job.status).isEqualTo("COMPLETED");
 
     server.assertRequest()
         .hasMethod("GET")
@@ -189,8 +163,8 @@ public class RackspaceApisTest {
     JobIdAndStatus job = mockApi().updateRecord(domainId, "MX-4582544", 600,
                                                 "mail.denominator.io");
 
-    assertEquals(job.id, "e32eace1-c44f-49af-8f74-768fa34469f4");
-    assertEquals(job.status, "RUNNING");
+    assertThat(job.id).isEqualTo("e32eace1-c44f-49af-8f74-768fa34469f4");
+    assertThat(job.status).isEqualTo("RUNNING");
 
     server.assertRequest()
         .hasMethod("PUT")
@@ -204,8 +178,8 @@ public class RackspaceApisTest {
 
     JobIdAndStatus job = mockApi().deleteRecord(domainId, "MX-4582544");
 
-    assertEquals(job.id, "da520d24-dd5b-4387-92be-2020a7f2b176");
-    assertEquals(job.status, "RUNNING");
+    assertThat(job.id).isEqualTo("da520d24-dd5b-4387-92be-2020a7f2b176");
+    assertThat(job.status).isEqualTo("RUNNING");
 
     server.assertRequest()
         .hasMethod("DELETE")
@@ -292,14 +266,4 @@ public class RackspaceApisTest {
   static String
       mxRecordDeleteInitialResponse =
       "{\"status\":\"RUNNING\",\"verb\":\"DELETE\",\"jobId\":\"da520d24-dd5b-4387-92be-2020a7f2b176\",\"callbackUrl\":\"https://dns.api.rackspacecloud.com/v1.0/123123/status/da520d24-dd5b-4387-92be-2020a7f2b176\",\"requestUrl\":\"https://dns.api.rackspacecloud.com/v1.0/123123/domains/3854989/records/MX-4582544\"}";
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockCloudDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
-  }
 }

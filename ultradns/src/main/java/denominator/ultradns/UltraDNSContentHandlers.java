@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,10 +70,10 @@ class UltraDNSContentHandlers {
         }
       };
 
-  static Date tryParseDate(String dateString) {
+  static Long tryParseDate(String dateString) {
     synchronized (iso8601SimpleDateFormat) {
       try {
-        return iso8601SimpleDateFormat.parse(dateString);
+        return iso8601SimpleDateFormat.parse(dateString).getTime();
       } catch (ParseException ignored) {
         // only used for sorting, so don't break terribly
         return null;

@@ -1,27 +1,40 @@
 package denominator;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import dagger.ObjectGraph;
 import denominator.mock.MockProvider;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertSame;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ProvidersTest {
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "provider foo not in set of configured providers: \\[mock\\]")
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
+
+  @Test
   public void niceMessageWhenProviderNotFound() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("provider foo not in set of configured providers: [mock]");
+
     Providers.getByName("foo");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*NoModuleProvider should have a static inner class named Module")
+  @Test
   public void illegalArgumentWhenMissingModule() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("NoModuleProvider should have a static inner class named Module");
+
     Providers.instantiateModule(new NoModuleProvider());
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ensure .*Module has a no-args constructor")
+  @Test
   public void illegalArgumentWhenModuleCtorHasArgs() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("Module has a no-args constructor");
+
     Providers.instantiateModule(new WrongCtorModuleProvider());
   }
 
@@ -32,17 +45,21 @@ public class ProvidersTest {
         mgr =
         ObjectGraph.create(Providers.provide(provider), new FooProvider.Module()).get(
             DNSApiManager.class);
-    assertSame(mgr.provider(), provider);
+
+    assertThat(mgr.provider()).isSameAs(provider);
   }
 
   @Test
   public void withUrlOverrides() {
     Provider provider = Providers.withUrl(new URLProvider(), "http://bar");
-    assertEquals(provider.url(), "http://bar");
+    assertThat(provider.url()).isEqualTo("http://bar");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "class .*FooProvider does not have a String parameter constructor")
+  @Test
   public void withUrlWhenProviderMissingStringCtor() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("FooProvider does not have a String parameter constructor");
+
     Providers.withUrl(new FooProvider(), "http://bar");
   }
 
@@ -63,8 +80,8 @@ public class ProvidersTest {
         mgr =
         ObjectGraph.create(Providers.provide(provider), new FooProvider.Module()).get(
             DNSApiManager.class);
-    assertEquals(mgr.provider().name(), "bar");
-    assertEquals(mgr.provider().url(), "http://bar");
+    assertThat(mgr.provider().name()).isEqualTo("bar");
+    assertThat(provider.url()).isEqualTo("http://bar");
   }
 
   static class NoModuleProvider extends BasicProvider {

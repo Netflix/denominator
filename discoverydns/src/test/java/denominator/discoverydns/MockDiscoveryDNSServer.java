@@ -2,6 +2,11 @@ package denominator.discoverydns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.IOException;
 
@@ -14,16 +19,15 @@ import denominator.assertj.RecordedRequestAssert;
 import static denominator.Credentials.ListCredentials;
 import static denominator.assertj.MockWebServerAssertions.assertThat;
 
-final class MockDiscoveryDNSServer extends DiscoveryDNSProvider {
+final class MockDiscoveryDNSServer extends DiscoveryDNSProvider implements TestRule {
 
-  private final MockWebServer delegate = new MockWebServer();
+  private final MockWebServerRule delegate = new MockWebServerRule();
   
   // TODO: actually make this use real pems!
   private String certificatePem = "certificatePem";
   private String keyPem = "keyPem";
 
-  MockDiscoveryDNSServer() throws IOException {
-    delegate.play();
+  MockDiscoveryDNSServer() {
     credentials(certificatePem, keyPem);
   }
 
@@ -55,7 +59,12 @@ final class MockDiscoveryDNSServer extends DiscoveryDNSProvider {
   }
 
   void shutdown() throws IOException {
-    delegate.shutdown();
+    delegate.get().shutdown();
+  }
+
+  @Override
+  public Statement apply(Statement base, Description description) {
+    return delegate.apply(base, description);
   }
 
   @dagger.Module(injects = DNSApiManager.class, complete = false, includes =

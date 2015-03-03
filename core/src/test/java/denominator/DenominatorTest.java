@@ -1,34 +1,47 @@
 package denominator;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import dagger.ObjectGraph;
 import denominator.mock.MockProvider;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertSame;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class DenominatorTest {
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "provider foo not in set of configured providers: \\[mock\\]")
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
+
+  @Test
   public void niceMessageWhenProviderNotFound() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("provider foo not in set of configured providers: [mock]");
+
     Denominator.create("foo");
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = ".*NoModuleProvider should have a static inner class named Module")
+  @Test
   public void illegalArgumentWhenMissingModule() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("NoModuleProvider should have a static inner class named Module");
+
     Denominator.create(new NoModuleProvider());
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ensure .*Module has a no-args constructor")
+  @Test
   public void illegalArgumentWhenCtorHasArgs() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("Module has a no-args constructor");
+
     Denominator.create(new WrongCtorModuleProvider());
   }
 
   @Test
   public void providerBindsProperly() {
     Provider provider = Denominator.create(new FooProvider()).provider();
-    assertEquals(provider, new FooProvider());
+    assertThat(provider).isEqualTo(new FooProvider());
   }
 
   @Test
@@ -39,7 +52,7 @@ public class DenominatorTest {
         mgr =
         ObjectGraph.create(Denominator.provider(provider), new FooProvider.Module()).get(
             DNSApiManager.class);
-    assertSame(mgr.provider(), provider);
+    assertThat(mgr.provider()).isSameAs(provider);
   }
 
   @Test
@@ -55,8 +68,8 @@ public class DenominatorTest {
         return "http://bar";
       }
     }).provider();
-    assertEquals(provider.name(), "bar");
-    assertEquals(provider.url(), "http://bar");
+    assertThat(provider.name()).isEqualTo("bar");
+    assertThat(provider.url()).isEqualTo("http://bar");
   }
 
   static class NoModuleProvider extends BasicProvider {

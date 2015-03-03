@@ -1,14 +1,14 @@
 package denominator.designate;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import denominator.designate.Designate.Record;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Test
 public class DesignateFunctionsTest {
 
+  @Test
   public void transformsNSRecordSet() {
     Record input = new Record();
     input.name = "denominator.io";
@@ -20,6 +20,7 @@ public class DesignateFunctionsTest {
         .containsEntry("nsdname", "dns1.stabletransit.com");
   }
 
+  @Test
   public void transformsTXTRecordSet() {
     Record input = new Record();
     input.name = "denominator.io";

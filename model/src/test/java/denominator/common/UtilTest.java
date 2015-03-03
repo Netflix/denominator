@@ -74,18 +74,18 @@ public class UtilTest {
 
   @Test
   public void splitMiss() {
-    assertThat(split(';', "one,2")).containsOnly("one,2");
+    assertThat(split(';', "one,2")).containsExactly("one,2");
   }
 
   @Test
   public void splitWin() {
-    assertThat(split(';', "one;2;2")).containsOnly("one", "2", "2");
+    assertThat(split(';', "one;2;2")).containsExactly("one", "2", "2");
   }
 
   @Test
   public void splitEmpty() {
-    assertThat(split(';', "one;;2")).containsOnly("one", null, "2");
-    assertThat(split(';', ";;")).containsOnly(null, null, null);
+    assertThat(split(';', "one;;2")).containsExactly("one", null, "2");
+    assertThat(split(';', ";;")).containsExactly(null, null, null);
   }
 
   @Test

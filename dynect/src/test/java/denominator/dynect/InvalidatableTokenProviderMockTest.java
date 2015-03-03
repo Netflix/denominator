@@ -2,30 +2,27 @@ package denominator.dynect;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
+import org.junit.Rule;
+import org.junit.Test;
 
 import denominator.DNSApiManager;
 
-import static denominator.dynect.DynECTProviderDynamicUpdateMockTest.badSession;
 import static denominator.dynect.DynECTProviderDynamicUpdateMockTest.sessionValid;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-@Test(singleThreaded = true)
 public class InvalidatableTokenProviderMockTest {
 
-  MockDynECTServer server;
+  @Rule
+  public MockDynECTServer server = new MockDynECTServer();
 
   @Test
   public void successThenFailure() throws Exception {
     server.enqueueSessionResponse();
     server.enqueue(new MockResponse().setBody(sessionValid));
     server.enqueue(new MockResponse().setBody(sessionValid));
-    server.enqueue(new MockResponse().setResponseCode(400).setBody(badSession));
+    server.enqueue(new MockResponse().setResponseCode(400).setBody(
+        "{\"status\": \"failure\", \"data\": {}, \"job_id\": 427275274, \"msgs\": [{\"INFO\": \"login: Bad or expired credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": \"INVALID_DATA\", \"LVL\": \"ERROR\"}, {\"INFO\": \"login: There was a problem with your credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}"));
 
     DNSApiManager api = server.connect();
 
@@ -45,15 +42,5 @@ public class InvalidatableTokenProviderMockTest {
     assertFalse(server.connect().checkConnection());
 
     server.assertSessionRequest();
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockDynECTServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

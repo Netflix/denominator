@@ -2,11 +2,9 @@ package denominator.clouddns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 import denominator.ResourceRecordSetApi;
@@ -15,13 +13,13 @@ import denominator.model.rdata.AData;
 
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.clouddns.RackspaceApisTest.domainId;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
+import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
-@Test(singleThreaded = true)
 public class CloudDNSResourceRecordSetApiMockTest {
 
-  MockCloudDNSServer server;
+  @Rule
+  public final MockCloudDNSServer server = new MockCloudDNSServer();
 
   String
       records =
@@ -145,7 +143,7 @@ public class CloudDNSResourceRecordSetApiMockTest {
         .hasName("www.denominator.io")
         .hasType("A")
         .hasTtl(600000)
-        .containsOnlyRecords(AData.create("1.2.3.4"), AData.create("5.6.7.8"));
+        .containsExactlyRecords(AData.create("1.2.3.4"), AData.create("5.6.7.8"));
 
     server.assertAuthRequest();
     server.assertRequest()
@@ -166,15 +164,5 @@ public class CloudDNSResourceRecordSetApiMockTest {
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/domains/1234/records?name=www.denominator.io&type=A");
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockCloudDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

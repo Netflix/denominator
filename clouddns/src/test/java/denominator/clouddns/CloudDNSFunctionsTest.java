@@ -1,16 +1,16 @@
 package denominator.clouddns;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import denominator.clouddns.RackspaceApis.Record;
 import denominator.model.rdata.NSData;
 import denominator.model.rdata.TXTData;
 
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Test
 public class CloudDNSFunctionsTest {
 
+  @Test
   public void transformsNSRecordSet() {
     Record input = new Record();
     input.name = "denominator.io";
@@ -18,9 +18,11 @@ public class CloudDNSFunctionsTest {
     input.ttl = 3600;
     input.data("dns1.stabletransit.com");
 
-    assertEquals(CloudDNSFunctions.toRDataMap(input), NSData.create("dns1.stabletransit.com"));
+    assertThat(CloudDNSFunctions.toRDataMap(input))
+        .isEqualTo(NSData.create("dns1.stabletransit.com"));
   }
 
+  @Test
   public void transformsTXTRecordSet() {
     Record input = new Record();
     input.name = "denominator.io";
@@ -28,6 +30,7 @@ public class CloudDNSFunctionsTest {
     input.ttl = 3600;
     input.data("Hello DNS");
 
-    assertEquals(CloudDNSFunctions.toRDataMap(input), TXTData.create("Hello DNS"));
+    assertThat(CloudDNSFunctions.toRDataMap(input))
+        .isEqualTo(TXTData.create("Hello DNS"));
   }
 }
