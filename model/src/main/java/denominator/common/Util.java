@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.InetAddress;
 import java.nio.CharBuffer;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -77,7 +78,10 @@ public class Util {
    */
   public static List<String> split(char delim, String toSplit) {
     checkNotNull(toSplit, "toSplit");
-    LinkedList<String> out = new LinkedList<String>();
+    if (toSplit.indexOf(delim) == -1) {
+      return Arrays.asList(toSplit); // sortable in JRE 7 and 8
+    }
+    List<String> out = new LinkedList<String>();
     StringBuilder currentString = new StringBuilder();
     for (char c : toSplit.toCharArray()) {
       if (c == delim) {
@@ -193,49 +197,47 @@ public class Util {
   }
 
   public static Map<String, Object> toMap(String type, String rdata) {
+    return toMap(type, Util.split(' ', rdata));
+  }
+
+  public static Map<String, Object> toMap(String type, List<String> parts) {
     if ("A".equals(type)) {
-      return AData.create(rdata);
+      return AData.create(parts.get(0));
     } else if ("AAAA".equals(type)) {
-      return AAAAData.create(rdata);
+      return AAAAData.create(parts.get(0));
     } else if ("CNAME".equals(type)) {
-      return CNAMEData.create(rdata);
+      return CNAMEData.create(parts.get(0));
     } else if ("MX".equals(type)) {
-      List<String> parts = split(' ', rdata);
       return MXData.create(Integer.valueOf(parts.get(0)), parts.get(1));
     } else if ("NS".equals(type)) {
-      return NSData.create(rdata);
+      return NSData.create(parts.get(0));
     } else if ("PTR".equals(type)) {
-      return PTRData.create(rdata);
+      return PTRData.create(parts.get(0));
     } else if ("SOA".equals(type)) {
-      List<String> parts = split(' ', rdata);
       return SOAData.builder().mname(parts.get(0)).rname(parts.get(1))
           .serial(Integer.valueOf(parts.get(2)))
           .refresh(Integer.valueOf(parts.get(3))).retry(Integer.valueOf(parts.get(4)))
           .expire(Integer.valueOf(parts.get(5))).minimum(Integer.valueOf(parts.get(6))).build();
     } else if ("SPF".equals(type)) {
-      return SPFData.create(rdata);
+      return SPFData.create(parts.get(0));
     } else if ("SRV".equals(type)) {
-      List<String> parts = split(' ', rdata);
       return SRVData.builder().priority(Integer.valueOf(parts.get(0)))
           .weight(Integer.valueOf(parts.get(1)))
           .port(Integer.valueOf(parts.get(2))).target(parts.get(3)).build();
     } else if ("TXT".equals(type)) {
-      return TXTData.create(rdata);
+      return TXTData.create(parts.get(0));
     } else if ("DS".equals(type)) {
-      List<String> parts = split(' ', rdata);
       return DSData.builder().keyTag(Integer.valueOf(parts.get(0)))
           .algorithmId(Integer.valueOf(parts.get(1)))
           .digestId(Integer.valueOf(parts.get(2)))
           .digest(parts.get(3)).build();
     } else if ("CERT".equals(type)) {
-      List<String> parts = split(' ', rdata);
       return CERTData.builder().certType(Integer.valueOf(parts.get(0)))
           .keyTag(Integer.valueOf(parts.get(1)))
           .algorithm(Integer.valueOf(parts.get(2)))
           .cert(parts.get(3))
           .build();
     } else if ("NAPTR".equals(type)) {
-      List<String> parts = split(' ', rdata);
       return NAPTRData.builder().order(Integer.valueOf(parts.get(0)))
           .preference(Integer.valueOf(parts.get(1)))
           .flags(parts.get(2))
@@ -244,13 +246,11 @@ public class Util {
           .replacement(parts.get(5))
           .build();
     } else if ("SSHFP".equals(type)) {
-      List<String> parts = split(' ', rdata);
       return SSHFPData.builder().algorithm(Integer.valueOf(parts.get(0)))
           .fptype(Integer.valueOf(parts.get(1)))
           .fingerprint(parts.get(2))
           .build();
     } else if ("LOC".equals(type)) {
-      List<String> parts = split(' ', rdata);
       int length = parts.size();
       String latitude = join(' ', parts.get(0), parts.get(1), parts.get(2), parts.get(3));
       String longitude = join(' ', parts.get(4), parts.get(5), parts.get(6), parts.get(7));
@@ -268,7 +268,6 @@ public class Util {
       }
       return builder.build();
     } else if ("TLSA".equals(type)) {
-      List<String> parts = split(' ', rdata);
       return TLSAData.builder().usage(Integer.valueOf(parts.get(0)))
           .selector(Integer.valueOf(parts.get(1)))
           .matchingType(Integer.valueOf(parts.get(2)))
