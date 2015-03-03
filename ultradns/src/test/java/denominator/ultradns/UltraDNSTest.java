@@ -23,6 +23,7 @@ import feign.codec.DecodeException;
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.ultradns.UltraDNSException.DIRECTIONALPOOL_NOT_FOUND;
 import static denominator.ultradns.UltraDNSException.DIRECTIONALPOOL_RECORD_NOT_FOUND;
+import static denominator.ultradns.UltraDNSException.DIRECTIONAL_NOT_ENABLED;
 import static denominator.ultradns.UltraDNSException.GROUP_NOT_FOUND;
 import static denominator.ultradns.UltraDNSException.POOL_ALREADY_EXISTS;
 import static denominator.ultradns.UltraDNSException.POOL_NOT_FOUND;
@@ -1161,4 +1162,8 @@ public class UltraDNSTest {
       + "      </ns2:DirectionalDNSRecordDetail>\n"
       + "    </DirectionalDNSRecordDetailList>\n"
       + getDirectionalDNSRecordsForHostResponseFooter;
+  static String
+      directionalNotEnabled =
+      format(FAULT_TEMPLATE, DIRECTIONAL_NOT_ENABLED,
+             "Directional feature not Enabled or Directional migration is not done.");
 }

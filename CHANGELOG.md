@@ -1,5 +1,6 @@
 ### Version 4.4
 * Adds support for DiscoveryDNS (http://www.discoverydns.com)
+* Accommodates UltraDNS accounts without directional support
 * Allows map credentials to be used without regard to iteration order
 * Changes DynECT to return type-safe rdata
 * Updates to feign 7.2.1 and dagger 1.2.2
