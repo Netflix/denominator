@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import denominator.ResourceTypeToValue;
 import denominator.model.profile.Geo;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
@@ -333,6 +334,7 @@ public class ResourceRecordSetsTest {
           .hasType(longForm.type())
           .hasTtl(longForm.ttl())
           .containsExactlyRecords(longForm.records());
+      ResourceTypeToValue.lookup(longForm.type());
     }
   }
 }
