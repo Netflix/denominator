@@ -2,11 +2,10 @@ package denominator.route53;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -17,25 +16,12 @@ import feign.Feign;
 
 import static denominator.model.ResourceRecordSets.a;
 
-@Test(singleThreaded = true)
 public class Route53Test {
 
-  MockRoute53Server server;
-
-  String changeResourceRecordSetsRequestCreateA =
-      "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">"
-      + "<ChangeBatch><Changes><Change><Action>CREATE</Action>"
-      + "<ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet>"
-      + "</Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
-
-  String changeResourceRecordSetsResponsePending =
-      "<ChangeResourceRecordSetsResponse xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
-      + "  <ChangeInfo>\n"
-      + "    <Id>/change/C2682N5HXP0BZ4</Id>\n"
-      + "    <Status>PENDING</Status>\n"
-      + "    <SubmittedAt>2010-09-10T01:36:41.958Z</SubmittedAt>\n"
-      + "  </ChangeInfo>\n"
-      + "</ChangeResourceRecordSetsResponse>";
+  @Rule
+  public MockRoute53Server server = new MockRoute53Server();
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void changeResourceRecordSetsRequestCreateAPending() throws Exception {
@@ -94,8 +80,11 @@ public class Route53Test {
             + "</ChangeResourceRecordSetsRequest>");
   }
 
-  @Test(expectedExceptions = InvalidChangeBatchException.class, expectedExceptionsMessageRegExp = "Route53#changeResourceRecordSets\\(String,List\\) failed with errors \\[Tried to create resource record set www.denominator.io. type A, but it already exists\\]")
+  @Test
   public void changeResourceRecordSetsRequestCreateADuplicate() throws Exception {
+    thrown.expect(InvalidChangeBatchException.class);
+    thrown.expectMessage("Route53#changeResourceRecordSets(String,List) failed with errors [Tried to create resource record set www.denominator.io. type A, but it already exists]");
+
     server.enqueue(new MockResponse().setResponseCode(400).setBody(
         "<InvalidChangeBatch xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
         + "  <Messages>\n"
@@ -108,11 +97,6 @@ public class Route53Test {
         ActionOnResourceRecordSet.create(a("www.denominator.io.", 3600, "192.0.2.1"));
 
     mockApi().changeResourceRecordSets("Z1PA6795UKMFR9", Arrays.asList(createA));
-
-    server.assertRequest()
-        .hasMethod("POST")
-        .hasPath("/2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset")
-        .hasXMLBody(changeResourceRecordSetsRequestCreateA);
   }
 
   Route53 mockApi() {
@@ -131,13 +115,18 @@ public class Route53Test {
     }), new Route53Provider.FeignModule());
   }
 
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockRoute53Server();
-  }
+  String changeResourceRecordSetsRequestCreateA =
+      "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">"
+      + "<ChangeBatch><Changes><Change><Action>CREATE</Action>"
+      + "<ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet>"
+      + "</Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>";
 
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
-  }
+  String changeResourceRecordSetsResponsePending =
+      "<ChangeResourceRecordSetsResponse xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
+      + "  <ChangeInfo>\n"
+      + "    <Id>/change/C2682N5HXP0BZ4</Id>\n"
+      + "    <Status>PENDING</Status>\n"
+      + "    <SubmittedAt>2010-09-10T01:36:41.958Z</SubmittedAt>\n"
+      + "  </ChangeInfo>\n"
+      + "</ChangeResourceRecordSetsResponse>";
 }

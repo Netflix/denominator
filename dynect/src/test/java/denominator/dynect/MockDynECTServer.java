@@ -1,7 +1,11 @@
 package denominator.dynect;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.IOException;
 
@@ -15,23 +19,16 @@ import static denominator.Credentials.ListCredentials;
 import static denominator.assertj.MockWebServerAssertions.assertThat;
 import static java.lang.String.format;
 
-final class MockDynECTServer extends DynECTProvider {
+final class MockDynECTServer extends DynECTProvider implements TestRule {
 
-  @dagger.Module(injects = DNSApiManager.class, complete = false, includes =
-      DynECTProvider.Module.class)
-  static final class Module {
-
-  }
-
-  private final MockWebServer delegate = new MockWebServer();
+  private final MockWebServerRule delegate = new MockWebServerRule();
   private final String token = "FFFFFFFFFF";
   private String customer = "jclouds";
   private String username = "joe";
   private String password = "letmein";
   private String sessionResponse;
 
-  MockDynECTServer() throws IOException {
-    delegate.play();
+  MockDynECTServer() {
     credentials(customer, username, password);
   }
 
@@ -96,6 +93,17 @@ final class MockDynECTServer extends DynECTProvider {
   }
 
   void shutdown() throws IOException {
-    delegate.shutdown();
+    delegate.get().shutdown();
+  }
+
+  @Override
+  public Statement apply(Statement base, Description description) {
+    return delegate.apply(base, description);
+  }
+
+  @dagger.Module(injects = DNSApiManager.class, complete = false, includes =
+      DynECTProvider.Module.class)
+  static final class Module {
+
   }
 }

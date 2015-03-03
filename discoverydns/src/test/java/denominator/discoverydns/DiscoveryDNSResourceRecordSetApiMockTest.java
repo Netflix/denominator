@@ -2,11 +2,9 @@ package denominator.discoverydns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 import denominator.ResourceRecordSetApi;
@@ -15,16 +13,11 @@ import denominator.model.rdata.AData;
 
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.model.ResourceRecordSets.a;
-import static org.testng.Assert.assertFalse;
 
-@Test(singleThreaded = true)
 public class DiscoveryDNSResourceRecordSetApiMockTest {
 
-  MockDiscoveryDNSServer server;
-
-  String
-      records =
-      "{ \"zone\": { \"@uri\": \"https://api.discoverydns.com/zones/123-123-123-123-123\", \"id\": \"123-123-123-123-123\", \"version\": 10, \"resourceRecords\": [ { \"name\": \"www.denominator.io.\", \"class\": \"IN\", \"ttl\": \"60\", \"type\": \"A\", \"rdata\": \"127.0.0.1\" } ] } }";
+  @Rule
+  public MockDiscoveryDNSServer server = new MockDiscoveryDNSServer();
 
   @Test
   public void listWhenPresent() throws Exception {
@@ -38,8 +31,8 @@ public class DiscoveryDNSResourceRecordSetApiMockTest {
         .hasName("www.denominator.io.")
         .hasType("A")
         .hasTtl(60)
-        .containsOnlyRecords(AData.create("127.0.0.1"));
-    assertFalse(records.hasNext());
+        .containsExactlyRecords(AData.create("127.0.0.1"));
+    assertThat(records).isEmpty();
 
     server.assertRequest()
         .hasMethod("GET")
@@ -51,11 +44,8 @@ public class DiscoveryDNSResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setBody(
         "{ \"zone\": { \"@uri\": \"https://api.discoverydns.com/zones/123-123-123-123-123\", \"id\": \"123-123-123-123-123\", \"version\": 10, \"resourceRecords\": [ ] } }"));
 
-    Iterator<ResourceRecordSet<?>>
-        records =
-        server.connect().api().basicRecordSetsInZone("123-123-123-123-123").iterator();
-
-    assertFalse(records.hasNext());
+    assertThat(server.connect().api().basicRecordSetsInZone("123-123-123-123-123"))
+        .isEmpty();
 
     server.assertRequest()
         .hasMethod("GET")
@@ -94,13 +84,7 @@ public class DiscoveryDNSResourceRecordSetApiMockTest {
             + "}");
   }
 
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockDiscoveryDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
-  }
+  String
+      records =
+      "{ \"zone\": { \"@uri\": \"https://api.discoverydns.com/zones/123-123-123-123-123\", \"id\": \"123-123-123-123-123\", \"version\": 10, \"resourceRecords\": [ { \"name\": \"www.denominator.io.\", \"class\": \"IN\", \"ttl\": \"60\", \"type\": \"A\", \"rdata\": \"127.0.0.1\" } ] } }";
 }

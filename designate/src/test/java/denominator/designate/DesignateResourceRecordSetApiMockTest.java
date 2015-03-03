@@ -2,11 +2,9 @@ package denominator.designate;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -21,13 +19,11 @@ import static denominator.designate.DesignateTest.domainId;
 import static denominator.designate.DesignateTest.recordsResponse;
 import static denominator.model.ResourceRecordSets.a;
 import static java.lang.String.format;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
 
-@Test(singleThreaded = true)
 public class DesignateResourceRecordSetApiMockTest {
 
-  MockDesignateServer server;
+  @Rule
+  public MockDesignateServer server = new MockDesignateServer();
 
   @Test
   public void listWhenPresent() throws Exception {
@@ -41,15 +37,15 @@ public class DesignateResourceRecordSetApiMockTest {
         .hasName("denominator.io.")
         .hasType("MX")
         .hasTtl(300)
-        .containsOnlyRecords(MXData.create(10, "www.denominator.io."));
+        .containsExactlyRecords(MXData.create(10, "www.denominator.io."));
 
     assertThat(records.next())
         .hasName("www.denominator.io.")
         .hasType("A")
         .hasTtl(300)
-        .containsOnlyRecords(AData.create("192.0.2.1"), AData.create("192.0.2.2"));
+        .containsExactlyRecords(AData.create("192.0.2.1"), AData.create("192.0.2.2"));
 
-    assertFalse(records.hasNext());
+    assertThat(records).isEmpty();
 
     server.assertAuthRequest();
     server.assertRequest()
@@ -62,7 +58,7 @@ public class DesignateResourceRecordSetApiMockTest {
     server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
 
-    assertFalse(server.connect().api().basicRecordSetsInZone(domainId).iterator().hasNext());
+    assertThat(server.connect().api().basicRecordSetsInZone(domainId)).isEmpty();
 
     server.assertAuthRequest();
     server.assertRequest()
@@ -174,7 +170,7 @@ public class DesignateResourceRecordSetApiMockTest {
         .hasName("www.denominator.io.")
         .hasType("A")
         .hasTtl(300)
-        .containsOnlyRecords(AData.create("192.0.2.1"), AData.create("192.0.2.2"));
+        .containsExactlyRecords(AData.create("192.0.2.1"), AData.create("192.0.2.2"));
 
     server.assertAuthRequest();
     server.assertRequest()
@@ -188,7 +184,7 @@ public class DesignateResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
-    assertFalse(api.iterateByName("www.denominator.io.").hasNext());
+    assertThat(api.iterateByName("www.denominator.io.")).isEmpty();
 
     server.assertAuthRequest();
     server.assertRequest()
@@ -207,7 +203,7 @@ public class DesignateResourceRecordSetApiMockTest {
         .hasName("www.denominator.io.")
         .hasType("A")
         .hasTtl(300)
-        .containsOnlyRecords(AData.create("192.0.2.1"), AData.create("192.0.2.2"));
+        .containsExactlyRecords(AData.create("192.0.2.1"), AData.create("192.0.2.2"));
 
     server.assertAuthRequest();
     server.assertRequest()
@@ -221,7 +217,7 @@ public class DesignateResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
-    assertNull(api.getByNameAndType("www.denominator.io.", "A"));
+    assertThat(api.getByNameAndType("www.denominator.io.", "A")).isNull();
 
     server.assertAuthRequest();
     server.assertRequest()
@@ -261,15 +257,5 @@ public class DesignateResourceRecordSetApiMockTest {
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockDesignateServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

@@ -1,7 +1,9 @@
 package denominator.ultradns;
 
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
 import java.util.Map;
 
@@ -11,13 +13,24 @@ import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import denominator.ultradns.UltraDNS.Record;
 
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Test
+@RunWith(Parameterized.class)
 public class UltraDNSFunctionsTest {
 
-  @DataProvider(name = "records")
-  public Object[][] createData() {
+  @Parameterized.Parameter(0)
+  public Record input;
+  @Parameterized.Parameter(1)
+  public Map<String, Object> map;
+
+  @Test
+  public void toRdataMap() {
+    String type = ResourceTypeToValue.lookup(input.typeCode);
+    assertThat(UltraDNSFunctions.forTypeAndRData(type, input.rdata)).isEqualTo(map);
+  }
+
+  @Parameters
+  public static Object[][] createData() {
     Object[][] data = new Object[3][2];
 
     Record a = new Record();
@@ -44,11 +57,5 @@ public class UltraDNSFunctionsTest {
     data[2][0] = cname;
     data[2][1] = CNAMEData.create("www.foo.com.");
     return data;
-  }
-
-  @Test(dataProvider = "records")
-  public void toRdataMap(Record input, Map<String, Object> map) {
-    String type = ResourceTypeToValue.lookup(input.typeCode);
-    assertEquals(UltraDNSFunctions.forTypeAndRData(type, input.rdata), map);
   }
 }

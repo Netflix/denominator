@@ -2,11 +2,9 @@ package denominator.route53;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 import denominator.model.ResourceRecordSet;
@@ -15,36 +13,11 @@ import denominator.model.rdata.CNAMEData;
 import denominator.profile.WeightedResourceRecordSetApi;
 
 import static denominator.assertj.ModelAssertions.assertThat;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
 
-@Test(singleThreaded = true)
 public class Route53WeightedResourceRecordSetApiMockTest {
 
-  MockRoute53Server server;
-
-  private String
-      noRecords =
-      "<ListResourceRecordSetsResponse><ResourceRecordSets></ResourceRecordSets></ListResourceRecordSetsResponse>";
-  private String
-      oneRecord =
-      "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>MyService-East</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www1.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
-  private String
-      twoRecords =
-      "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>MyService-East</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www1.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>MyService-West</SetIdentifier><Weight>5</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www2.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
-
-  private String
-      changeSynced =
-      "<GetChangeResponse><ChangeInfo><Id>/change/C2682N5HXP0BZ4</Id><Status>INSYNC</Status><SubmittedAt>2011-09-10T01:36:41.958Z</SubmittedAt></ChangeInfo></GetChangeResponse>";
-
-  private ResourceRecordSet<CNAMEData> rrset1 = ResourceRecordSet.<CNAMEData>builder()
-      .name("www.denominator.io.")
-      .type("CNAME")
-      .qualifier("MyService-East")
-      .ttl(0)
-      .weighted(Weighted.create(1))
-      .add(CNAMEData.create("www1.denominator.io.")).build();
+  @Rule
+  public MockRoute53Server server = new MockRoute53Server();
 
   @Test
   public void iterateByNameWhenPresent() throws Exception {
@@ -52,7 +25,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
 
     WeightedResourceRecordSetApi api = server.connect().api().weightedRecordSetsInZone("Z1PA6795");
     Iterator<ResourceRecordSet<?>> iterator = api.iterateByName("www.denominator.io.");
-    assertEquals(iterator.next(), rrset1);
+    assertThat(iterator.next()).isEqualTo(rrset1);
 
     assertThat(iterator.next())
         .hasName("www.denominator.io.")
@@ -60,7 +33,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
         .hasQualifier("MyService-West")
         .hasTtl(0)
         .hasWeight(5)
-        .containsOnlyRecords(CNAMEData.create("www2.denominator.io."));
+        .containsExactlyRecords(CNAMEData.create("www2.denominator.io."));
 
     server.assertRequest()
         .hasPath("/2012-12-12/hostedzone/Z1PA6795/rrset?name=www.denominator.io.");
@@ -71,7 +44,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setBody(noRecords));
 
     WeightedResourceRecordSetApi api = server.connect().api().weightedRecordSetsInZone("Z1PA6795");
-    assertFalse(api.iterateByName("www.denominator.io.").hasNext());
+    assertThat(api.iterateByName("www.denominator.io.")).isEmpty();
 
     server.assertRequest()
         .hasPath("/2012-12-12/hostedzone/Z1PA6795/rrset?name=www.denominator.io.");
@@ -82,7 +55,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setBody(twoRecords));
 
     WeightedResourceRecordSetApi api = server.connect().api().weightedRecordSetsInZone("Z1PA6795");
-    assertEquals(api.iterateByNameAndType("www.denominator.io.", "CNAME").next(), rrset1);
+    assertThat(api.iterateByNameAndType("www.denominator.io.", "CNAME")).contains(rrset1);
 
     server.assertRequest()
         .hasPath("/2012-12-12/hostedzone/Z1PA6795/rrset?name=www.denominator.io.&type=CNAME");
@@ -93,7 +66,7 @@ public class Route53WeightedResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setBody(noRecords));
 
     WeightedResourceRecordSetApi api = server.connect().api().weightedRecordSetsInZone("Z1PA6795");
-    assertFalse(api.iterateByNameAndType("www.denominator.io.", "CNAME").hasNext());
+    assertThat(api.iterateByNameAndType("www.denominator.io.", "CNAME")).isEmpty();
 
     server.assertRequest()
         .hasPath("/2012-12-12/hostedzone/Z1PA6795/rrset?name=www.denominator.io.&type=CNAME");
@@ -104,8 +77,8 @@ public class Route53WeightedResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setBody(twoRecords));
 
     WeightedResourceRecordSetApi api = server.connect().api().weightedRecordSetsInZone("Z1PA6795");
-    assertEquals(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", "MyService-East"),
-                 rrset1);
+    assertThat(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", "MyService-East"))
+        .isEqualTo(rrset1);
 
     server.assertRequest()
         .hasPath(
@@ -117,7 +90,8 @@ public class Route53WeightedResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setBody(noRecords));
 
     WeightedResourceRecordSetApi api = server.connect().api().weightedRecordSetsInZone("Z1PA6795");
-    assertNull(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", "MyService-East"));
+    assertThat(api.getByNameTypeAndQualifier("www.denominator.io.", "CNAME", "MyService-East"))
+        .isNull();
 
     server.assertRequest()
         .hasPath(
@@ -227,13 +201,25 @@ public class Route53WeightedResourceRecordSetApiMockTest {
             "/2012-12-12/hostedzone/Z1PA6795/rrset?name=www.denominator.io.&type=CNAME&identifier=MyService-West");
   }
 
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockRoute53Server();
-  }
+  private String
+      noRecords =
+      "<ListResourceRecordSetsResponse><ResourceRecordSets></ResourceRecordSets></ListResourceRecordSetsResponse>";
+  private String
+      oneRecord =
+      "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>MyService-East</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www1.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
+  private String
+      twoRecords =
+      "<ListResourceRecordSetsResponse><ResourceRecordSets><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>MyService-East</SetIdentifier><Weight>1</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www1.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet><ResourceRecordSet><Name>www.denominator.io.</Name><Type>CNAME</Type><SetIdentifier>MyService-West</SetIdentifier><Weight>5</Weight><TTL>0</TTL><ResourceRecords><ResourceRecord><Value>www2.denominator.io.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></ResourceRecordSets></ListResourceRecordSetsResponse>";
 
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
-  }
+  private String
+      changeSynced =
+      "<GetChangeResponse><ChangeInfo><Id>/change/C2682N5HXP0BZ4</Id><Status>INSYNC</Status><SubmittedAt>2011-09-10T01:36:41.958Z</SubmittedAt></ChangeInfo></GetChangeResponse>";
+
+  private ResourceRecordSet<CNAMEData> rrset1 = ResourceRecordSet.<CNAMEData>builder()
+      .name("www.denominator.io.")
+      .type("CNAME")
+      .qualifier("MyService-East")
+      .ttl(0)
+      .weighted(Weighted.create(1))
+      .add(CNAMEData.create("www1.denominator.io.")).build();
 }

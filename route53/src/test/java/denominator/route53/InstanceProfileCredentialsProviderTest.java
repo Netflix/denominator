@@ -1,13 +1,11 @@
 package denominator.route53;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -16,24 +14,13 @@ import denominator.hook.InstanceMetadataHook;
 import denominator.route53.InstanceProfileCredentialsProvider.ReadFirstInstanceProfileCredentialsOrNull;
 
 import static denominator.assertj.MockWebServerAssertions.assertThat;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 
-@Test
 public class InstanceProfileCredentialsProviderTest {
 
-  MockWebServer server;
+  @Rule
+  public MockWebServerRule server = new MockWebServerRule();
 
-  String securityCredentials = "{\n"
-                               + "  \"Code\" : \"Success\",\n"
-                               + "  \"LastUpdated\" : \"2013-02-26T02:03:57Z\",\n"
-                               + "  \"Type\" : \"AWS-HMAC\",\n"
-                               + "  \"AccessKeyId\" : \"AAAAA\",\n"
-                               + "  \"SecretAccessKey\" : \"SSSSSSS\",\n"
-                               + "  \"Token\" : \"TTTTTTT\",\n"
-                               + "  \"Expiration\" : \"2013-02-26T08:12:23Z\"\n"
-                               + "}";
-
+  @Test
   public void whenInstanceProfileCredentialsInMetadataServiceReturnMapCredentials()
       throws Exception {
     server.enqueue(new MockResponse().setBody("route53-readonly"));
@@ -58,50 +45,56 @@ public class InstanceProfileCredentialsProviderTest {
         .hasPath("/latest/meta-data/iam/security-credentials/route53-readonly");
   }
 
+  @Test
   public void whenNoInstanceProfileCredentialsInMetadataServiceReturnNull() throws Exception {
     server.enqueue(new MockResponse().setBody(""));
 
-    assertNull(new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
-        InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get());
+    assertThat(new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
+        InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get()).isNull();
 
     assertThat(server.takeRequest()).hasPath("/latest/meta-data/iam/security-credentials/");
   }
 
+  @Test
   public void whenInstanceProfileCredentialsInMetadataServiceReturnJson() throws Exception {
     server.enqueue(new MockResponse().setBody("route53-readonly"));
     server.enqueue(new MockResponse().setBody(securityCredentials));
 
-    assertEquals(
-        new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
-            InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get(), securityCredentials);
+    assertThat(new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
+        InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get())
+        .isEqualTo(securityCredentials);
 
     assertThat(server.takeRequest()).hasPath("/latest/meta-data/iam/security-credentials/");
     assertThat(server.takeRequest()).hasPath(
         "/latest/meta-data/iam/security-credentials/route53-readonly");
   }
 
+  @Test
   public void whenMultipleInstanceProfileCredentialsInMetadataServiceReturnJsonFromFirst()
       throws Exception {
     server.enqueue(new MockResponse().setBody("route53-readonly\nbooberry"));
     server.enqueue(new MockResponse().setBody(securityCredentials));
 
-    assertEquals(
-        new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
-            InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get(), securityCredentials);
+    assertThat(new ReadFirstInstanceProfileCredentialsOrNull(server.getUrl(
+        InstanceMetadataHook.DEFAULT_URI.getPath()).toURI()).get())
+        .isEqualTo(securityCredentials);
 
     assertThat(server.takeRequest()).hasPath("/latest/meta-data/iam/security-credentials/");
     assertThat(server.takeRequest()).hasPath(
         "/latest/meta-data/iam/security-credentials/route53-readonly");
   }
 
+  @Test
   public void testParseInstanceProfileCredentialsFromJsonWhenNull() {
     assertThat(InstanceProfileCredentialsProvider.parseJson(null)).isEmpty();
   }
 
+  @Test
   public void testParseInstanceProfileCredentialsFromJsonWhenWrongKeys() {
     assertThat(InstanceProfileCredentialsProvider.parseJson("{\"Code\" : \"Failure\"}")).isEmpty();
   }
 
+  @Test
   public void testParseInstanceProfileCredentialsFromJsonWhenAccessAndSecretPresent() {
     assertThat(
         InstanceProfileCredentialsProvider
@@ -111,6 +104,7 @@ public class InstanceProfileCredentialsProviderTest {
         .containsEntry("secretKey", "SSSSSSS");
   }
 
+  @Test
   public void testParseInstanceProfileCredentialsFromJsonWhenAccessSecretAndTokenPresent() {
     assertThat(
         InstanceProfileCredentialsProvider
@@ -121,14 +115,13 @@ public class InstanceProfileCredentialsProviderTest {
         .containsEntry("sessionToken", "TTTTTTT");
   }
 
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockWebServer();
-    server.play();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
-  }
+  String securityCredentials = "{\n"
+                               + "  \"Code\" : \"Success\",\n"
+                               + "  \"LastUpdated\" : \"2013-02-26T02:03:57Z\",\n"
+                               + "  \"Type\" : \"AWS-HMAC\",\n"
+                               + "  \"AccessKeyId\" : \"AAAAA\",\n"
+                               + "  \"SecretAccessKey\" : \"SSSSSSS\",\n"
+                               + "  \"Token\" : \"TTTTTTT\",\n"
+                               + "  \"Expiration\" : \"2013-02-26T08:12:23Z\"\n"
+                               + "}";
 }

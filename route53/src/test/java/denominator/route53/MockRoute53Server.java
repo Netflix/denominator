@@ -1,7 +1,11 @@
 package denominator.route53;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.IOException;
 
@@ -14,15 +18,14 @@ import denominator.assertj.RecordedRequestAssert;
 import static denominator.Credentials.ListCredentials;
 import static denominator.assertj.MockWebServerAssertions.assertThat;
 
-final class MockRoute53Server extends Route53Provider {
+final class MockRoute53Server extends Route53Provider implements TestRule {
 
-  private final MockWebServer delegate = new MockWebServer();
+  private final MockWebServerRule delegate = new MockWebServerRule();
   private String accessKey = "accessKey";
   private String secretKey = "secretKey";
   private String token = null;
 
-  MockRoute53Server() throws IOException {
-    delegate.play();
+  MockRoute53Server() {
     credentials(accessKey, secretKey, token);
   }
 
@@ -56,7 +59,12 @@ final class MockRoute53Server extends Route53Provider {
   }
 
   void shutdown() throws IOException {
-    delegate.shutdown();
+    delegate.get().shutdown();
+  }
+
+  @Override
+  public Statement apply(Statement base, Description description) {
+    return delegate.apply(base, description);
   }
 
   @dagger.Module(injects = DNSApiManager.class, complete = false, includes =

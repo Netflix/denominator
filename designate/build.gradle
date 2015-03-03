@@ -3,7 +3,6 @@ apply plugin: 'java'
 sourceCompatibility = 1.6
 
 test {
-  useTestNG()
   systemProperty 'designate.url', System.getProperty('designate.url', '')
   systemProperty 'designate.tenantId', System.getProperty('designate.tenantId', '')
   systemProperty 'designate.username', System.getProperty('designate.username', '')
@@ -16,9 +15,8 @@ dependencies {
   compile     'com.netflix.feign:feign-core:7.2.1'
   compile     'com.netflix.feign:feign-gson:7.2.1'
   testCompile  project(':denominator-model').sourceSets.test.output
-  testCompile  project(':denominator-core').sourceSets.test.output
-  testCompile 'com.google.guava:guava:14.0.1' // needed for live test superclasses
-  testCompile 'org.testng:testng:6.8.5'
+  testCompile  project(':denominator-core').sourceSets.test.output 
+  testCompile 'junit:junit:4.12'
   testCompile 'org.assertj:assertj-core:1.7.1'
   testCompile 'com.squareup.okhttp:mockwebserver:2.2.0'
 }

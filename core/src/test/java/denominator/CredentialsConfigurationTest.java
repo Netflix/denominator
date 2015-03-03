@@ -1,110 +1,141 @@
 package denominator;
 
-import com.google.common.collect.ImmutableMultimap;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-import org.testng.annotations.Test;
-
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import denominator.Credentials.AnonymousCredentials;
 import denominator.Credentials.ListCredentials;
 import denominator.mock.MockProvider;
 
-import static org.testng.Assert.assertEquals;
+import static denominator.CredentialsConfiguration.checkValidForProvider;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Test
 public class CredentialsConfigurationTest {
+
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   public static final Provider OPTIONAL_PROVIDER = new OptionalProvider();
   public static final Provider TWO_PART_PROVIDER = new TwoPartProvider();
   public static final Provider THREE_PART_PROVIDER = new ThreePartProvider();
   public static final Provider MULTI_PART_PROVIDER = new MultiPartProvider();
 
+  @Test
   public void testTwoPartCheckConfiguredIsOptional() {
-    assertEquals(CredentialsConfiguration.checkValidForProvider(null, OPTIONAL_PROVIDER),
-                 AnonymousCredentials.INSTANCE);
+    assertThat(checkValidForProvider(null, OPTIONAL_PROVIDER))
+        .isEqualTo(AnonymousCredentials.INSTANCE);
   }
 
+  @Test
   public void testTwoPartCheckConfiguredSuccess() {
-    assertEquals(CredentialsConfiguration
-                     .checkValidForProvider(ListCredentials.from("user", "pass"),
-                                            TWO_PART_PROVIDER),
-                 ListCredentials.from("user", "pass"));
+    assertThat(checkValidForProvider(ListCredentials.from("user", "pass"), TWO_PART_PROVIDER))
+        .isEqualTo(ListCredentials.from("user", "pass"));
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. twopart requires username,password")
+  @Test
   public void testTwoPartCheckConfiguredExceptionMessageOnNullCredentials() {
-    CredentialsConfiguration.checkValidForProvider(null, TWO_PART_PROVIDER);
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("no credentials supplied. twopart requires username,password");
+
+    checkValidForProvider(null, TWO_PART_PROVIDER);
   }
 
-  @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "provider cannot be null")
+  @Test
   public void testTwoPartCheckConfiguredExceptionMessageOnNullProvider() {
-    CredentialsConfiguration.checkValidForProvider(ListCredentials.from("user", "pass"), null);
+    thrown.expect(NullPointerException.class);
+    thrown.expectMessage("provider cannot be null");
+
+    checkValidForProvider(ListCredentials.from("user", "pass"), null);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. threepart requires customer,username,password")
+  @Test
   public void testTwoPartCheckConfiguredFailsOnIncorrectCountForProvider() {
-    CredentialsConfiguration
-        .checkValidForProvider(ListCredentials.from("user", "pass"), THREE_PART_PROVIDER);
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage(
+        "incorrect credentials supplied. threepart requires customer,username,password");
+
+    checkValidForProvider(ListCredentials.from("user", "pass"), THREE_PART_PROVIDER);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. twopart requires username,password")
+  @Test
   public void testTwoPartCheckConfiguredFailsOnIncorrectType() {
-    CredentialsConfiguration
-        .checkValidForProvider(ListCredentials.from("customer", "user", "pass"), TWO_PART_PROVIDER);
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("incorrect credentials supplied. twopart requires username,password");
+
+    checkValidForProvider(ListCredentials.from("customer", "user", "pass"), TWO_PART_PROVIDER);
   }
 
+  @Test
   public void testThreePartCheckConfiguredSuccess() {
-    assertEquals(CredentialsConfiguration
-                     .checkValidForProvider(ListCredentials.from("customer", "user", "pass"),
-                                            THREE_PART_PROVIDER),
-                 ListCredentials.from("customer", "user", "pass"));
+    assertThat(checkValidForProvider(ListCredentials.from("customer", "user", "pass"),
+                                     THREE_PART_PROVIDER))
+        .isEqualTo(ListCredentials.from("customer", "user", "pass"));
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. threepart requires customer,username,password")
+  @Test
   public void testThreePartCheckConfiguredExceptionMessageOnNullCredentials() {
-    CredentialsConfiguration.checkValidForProvider(null, THREE_PART_PROVIDER);
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("no credentials supplied. threepart requires customer,username,password");
+
+    checkValidForProvider(null, THREE_PART_PROVIDER);
   }
 
-  @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "provider cannot be null")
+  @Test
   public void testThreePartCheckConfiguredExceptionMessageOnNullProvider() {
-    CredentialsConfiguration
-        .checkValidForProvider(ListCredentials.from("customer", "user", "pass"), null);
+    thrown.expect(NullPointerException.class);
+    thrown.expectMessage("provider cannot be null");
+
+    checkValidForProvider(ListCredentials.from("customer", "user", "pass"), null);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. twopart requires username,password")
+  @Test
   public void testThreePartCheckConfiguredFailsOnIncorrectCountForProvider() {
-    CredentialsConfiguration
-        .checkValidForProvider(ListCredentials.from("customer", "user", "pass"), TWO_PART_PROVIDER);
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("incorrect credentials supplied. twopart requires username,password");
+
+    checkValidForProvider(ListCredentials.from("customer", "user", "pass"), TWO_PART_PROVIDER);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. threepart requires customer,username,password")
+  @Test
   public void testThreePartCheckConfiguredFailsOnIncorrectType() {
-    CredentialsConfiguration
-        .checkValidForProvider(ListCredentials.from("user", "pass"), THREE_PART_PROVIDER);
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage(
+        "incorrect credentials supplied. threepart requires customer,username,password");
+
+    checkValidForProvider(ListCredentials.from("user", "pass"), THREE_PART_PROVIDER);
   }
 
+  @Test
   public void testMultiPartCheckConfiguredSuccess() {
-    assertEquals(CredentialsConfiguration
-                     .checkValidForProvider(ListCredentials.from("accessKey", "secretKey"),
-                                            MULTI_PART_PROVIDER),
-                 ListCredentials.from("accessKey", "secretKey"));
-    assertEquals(CredentialsConfiguration.checkValidForProvider(
-                     ListCredentials.from("accessKey", "secretKey", "sessionToken"),
-                     MULTI_PART_PROVIDER),
-                 ListCredentials.from("accessKey", "secretKey", "sessionToken"));
+    assertThat(checkValidForProvider(ListCredentials.from("accessKey", "secretKey"),
+                                     MULTI_PART_PROVIDER))
+        .isEqualTo(ListCredentials.from("accessKey", "secretKey"));
+    assertThat(checkValidForProvider(ListCredentials.from("accessKey", "secretKey", "sessionToken"),
+                                     MULTI_PART_PROVIDER))
+        .isEqualTo(ListCredentials.from("accessKey", "secretKey", "sessionToken"));
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. multipart requires one of the following forms: when type is accessKey: accessKey,secretKey; session: accessKey,secretKey,sessionToken")
+  @Test
   public void testMultiPartCheckConfiguredExceptionMessageOnNullCredentials() {
-    CredentialsConfiguration.checkValidForProvider(null, MULTI_PART_PROVIDER);
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage(
+        "no credentials supplied. multipart requires one of the following forms: when type is accessKey: accessKey,secretKey; session: accessKey,secretKey,sessionToken");
+
+    checkValidForProvider(null, MULTI_PART_PROVIDER);
   }
 
-  @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "provider cannot be null")
+  @Test
   public void testMultiPartCheckConfiguredExceptionMessageOnNullProvider() {
-    CredentialsConfiguration
-        .checkValidForProvider(ListCredentials.from("customer", "user", "pass"), null);
+    thrown.expect(NullPointerException.class);
+    thrown.expectMessage("provider cannot be null");
+
+    checkValidForProvider(ListCredentials.from("customer", "user", "pass"), null);
   }
 
   static final class OptionalProvider extends BasicProvider {
@@ -119,8 +150,9 @@ public class CredentialsConfigurationTest {
 
     @Override
     public Map<String, Collection<String>> credentialTypeToParameterNames() {
-      return ImmutableMultimap.<String, String>builder()
-          .putAll("password", "username", "password").build().asMap();
+      Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
+      options.put("username", Arrays.asList("username", "password"));
+      return options;
     }
 
     @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)
@@ -133,8 +165,9 @@ public class CredentialsConfigurationTest {
 
     @Override
     public Map<String, Collection<String>> credentialTypeToParameterNames() {
-      return ImmutableMultimap.<String, String>builder()
-          .putAll("password", "customer", "username", "password").build().asMap();
+      Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
+      options.put("username", Arrays.asList("customer", "username", "password"));
+      return options;
     }
 
     @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)
@@ -147,9 +180,10 @@ public class CredentialsConfigurationTest {
 
     @Override
     public Map<String, Collection<String>> credentialTypeToParameterNames() {
-      return ImmutableMultimap.<String, String>builder()
-          .putAll("accessKey", "accessKey", "secretKey")
-          .putAll("session", "accessKey", "secretKey", "sessionToken").build().asMap();
+      Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
+      options.put("accessKey", Arrays.asList("accessKey", "secretKey"));
+      options.put("session", Arrays.asList("accessKey", "secretKey", "sessionToken"));
+      return options;
     }
 
     @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)

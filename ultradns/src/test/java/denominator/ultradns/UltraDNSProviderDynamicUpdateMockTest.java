@@ -2,11 +2,9 @@ package denominator.ultradns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import dagger.Module;
@@ -23,10 +21,10 @@ import static denominator.ultradns.UltraDNSTest.getResourceRecordsOfZoneResponse
 import static denominator.ultradns.UltraDNSTest.getZonesOfAccount;
 import static denominator.ultradns.UltraDNSTest.getZonesOfAccountResponseAbsent;
 
-@Test
 public class UltraDNSProviderDynamicUpdateMockTest {
 
-  MockUltraDNSServer server;
+  @Rule
+  public final MockUltraDNSServer server = new MockUltraDNSServer();
 
   @Test
   public void dynamicEndpointUpdates() throws Exception {
@@ -172,15 +170,5 @@ public class UltraDNSProviderDynamicUpdateMockTest {
     public Credentials get() {
       return dynamicCredentials.get();
     }
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockUltraDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

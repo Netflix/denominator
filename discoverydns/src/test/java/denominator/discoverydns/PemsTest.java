@@ -1,6 +1,8 @@
 package denominator.discoverydns;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,55 +11,57 @@ import java.security.cert.Certificate;
 
 import denominator.common.Util;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class PemsTest {
 
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
+
   @Test
-  public void readCertificate() throws IOException {
+  public void readCertificate() throws Exception {
     Certificate cert = Pems.readCertificate(readPemtoString("cert.pem"));
-    assertNotNull(cert);
-    assertEquals(cert.getType(), "X.509");
-    assertTrue(cert.toString().contains("EMAILADDRESS=dontemailme@stuff.com, "
-                                        + "CN=doesnt.matter, "
-                                        + "OU=Issue stuff department, "
-                                        + "O=Ministry of Pems, "
-                                        + "L=Orwellville, "
-                                        + "ST=Oceania, "
-                                        + "C=ZZ"));
+    assertThat(cert.getType()).isEqualTo("X.509");
+    assertThat(cert.toString()).contains("EMAILADDRESS=dontemailme@stuff.com, "
+                                         + "CN=doesnt.matter, "
+                                         + "OU=Issue stuff department, "
+                                         + "O=Ministry of Pems, "
+                                         + "L=Orwellville, "
+                                         + "ST=Oceania, "
+                                         + "C=ZZ");
   }
 
   @Test
-  public void readPrivateKeyRsaUnencrypted() throws IOException {
+  public void readPrivateKeyRsaUnencrypted() throws Exception {
     PrivateKey key = Pems.readPrivateKey(readPemtoString("key.pem"));
-    assertNotNull(key);
-    assertEquals(key.getAlgorithm(), "RSA");
-    assertEquals(key.getFormat(), "PKCS#8");
+    assertThat(key.getAlgorithm()).isEqualTo("RSA");
+    assertThat(key.getFormat()).isEqualTo("PKCS#8");
   }
 
-  @Test(expectedExceptions = IOException.class,
-      expectedExceptionsMessageRegExp = "Encrypted content is not currently supported")
-  public void readPrivateKeyRsaEncrypted() throws IOException {
+  @Test
+  public void readPrivateKeyRsaEncrypted() throws Exception {
+    thrown.expect(IOException.class);
+    thrown.expectMessage("Encrypted content is not currently supported");
+
     Pems.readPrivateKey(readPemtoString("key_enc.pem"));
   }
 
   @Test
-  public void readPrivateKeyRsaUnencryptedPkcs8() throws IOException {
+  public void readPrivateKeyRsaUnencryptedPkcs8() throws Exception {
     PrivateKey key = Pems.readPrivateKey(readPemtoString("key_pkcs8.pem"));
-    assertNotNull(key);
-    assertEquals(key.getAlgorithm(), "RSA");
-    assertEquals(key.getFormat(), "PKCS#8");
+    assertThat(key.getAlgorithm()).isEqualTo("RSA");
+    assertThat(key.getFormat()).isEqualTo("PKCS#8");
   }
 
-  @Test(expectedExceptions = IOException.class,
-      expectedExceptionsMessageRegExp = "Encrypted content is not currently supported")
-  public void readPrivateKeyRsaEncryptedPkcs8() throws IOException {
+  @Test
+  public void readPrivateKeyRsaEncryptedPkcs8() throws Exception {
+    thrown.expect(IOException.class);
+    thrown.expectMessage("Encrypted content is not currently supported");
+
     Pems.readPrivateKey(readPemtoString("key_pkcs8_enc.pem"));
   }
 
-  private String readPemtoString(String file) throws IOException {
+  private String readPemtoString(String file) throws Exception {
     return new String(
         Util.slurp(new InputStreamReader(PemsTest.class.getResourceAsStream("/" + file))));
   }

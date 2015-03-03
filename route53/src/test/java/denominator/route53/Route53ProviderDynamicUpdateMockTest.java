@@ -2,11 +2,9 @@ package denominator.route53;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import dagger.Module;
@@ -18,10 +16,10 @@ import denominator.Denominator;
 
 import static denominator.CredentialsConfiguration.credentials;
 
-@Test(singleThreaded = true)
 public class Route53ProviderDynamicUpdateMockTest {
 
-  MockRoute53Server server;
+  @Rule
+  public MockRoute53Server server = new MockRoute53Server();
 
   String hostedZones = "<ListHostedZonesResponse><HostedZones /></ListHostedZonesResponse>";
 
@@ -74,16 +72,6 @@ public class Route53ProviderDynamicUpdateMockTest {
     api.zones().iterator();
 
     server.assertRequest().hasHeaderContaining("X-Amzn-Authorization", "accessKey2");
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockRoute53Server();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 
   @Module(complete = false, library = true, overrides = true)

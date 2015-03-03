@@ -1,19 +1,18 @@
 package denominator.cli;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
-
-import org.testng.annotations.BeforeTest;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 
 import denominator.AllProfileResourceRecordSetApi;
-import denominator.Credentials;
+import denominator.Credentials.ListCredentials;
 import denominator.DNSApiManager;
 import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
@@ -26,56 +25,52 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
+import denominator.common.Util;
 import denominator.mock.MockProvider;
 import denominator.model.ResourceRecordSet;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import denominator.route53.AliasTarget;
 
-import static denominator.cli.Denominator.json;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static denominator.assertj.ModelAssertions.assertThat;
+import static org.junit.Assert.fail;
 
-@Test(singleThreaded = true)
 public class DenominatorTest {
+
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   DNSApiManager mgr = denominator.Denominator.create(new MockProvider());
 
-  @Test(description = "denominator providers")
+  @Test // denominator providers
   public void listsAllProvidersWithCredentials() {
-    assertEquals(ListProviders.providerAndCredentialsTable(), Joiner.on('\n').join(
-        "provider   url                                                 duplicateZones credentialType credentialArgs",
-        "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           password       username password",
-        "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           apiKey         username apiKey",
-        "designate  http://localhost:5000/v2.0                          true           password       tenantId username password",
-        "discoverydns https://api.reseller.discoverydns.com               false          clientCertificate certificatePem keyPem",
-        "dynect     https://api2.dynect.net/REST                        false          password       customer username password",
-        "mock       mem:mock                                            false          ",
-        "route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey",
-        "route53    https://route53.amazonaws.com                       true           session        accessKey secretKey sessionToken",
-        "ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 false          password       username password",
-        ""));
+    assertThat(ListProviders.providerAndCredentialsTable())
+        .isEqualTo(Util.join('\n',
+                             "provider   url                                                 duplicateZones credentialType credentialArgs",
+                             "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           password       username password",
+                             "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           apiKey         username apiKey",
+                             "designate  http://localhost:5000/v2.0                          true           password       tenantId username password",
+                             "discoverydns https://api.reseller.discoverydns.com               false          clientCertificate certificatePem keyPem",
+                             "dynect     https://api2.dynect.net/REST                        false          password       customer username password",
+                             "mock       mem:mock                                            false          ",
+                             "route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey",
+                             "route53    https://route53.amazonaws.com                       true           session        accessKey secretKey sessionToken",
+                             "ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 false          password       username password",
+                             ""));
   }
 
-  @BeforeTest
-  public void reset() {
-    mgr = denominator.Denominator.create(new MockProvider());
-  }
-
-  @Test(description = "denominator -p mock zone list")
+  @Test // denominator -p mock zone list
   public void testZoneList() {
-    assertEquals(Joiner.on('\n').join(new ZoneList().doRun(mgr)), "denominator.io.");
+    assertThat(new ZoneList().doRun(mgr)).containsExactly("denominator.io.");
   }
 
-  @Test(description = "denominator -u mem:mock2 -p mock zone list")
+  @Test // denominator -u mem:mock2 -p mock zone list
   public void testUrlArg() {
     ZoneList zoneList = new ZoneList() {
       @Override
       public Iterator<String> doRun(DNSApiManager mgr) {
-        assertEquals(mgr.provider().url(), "mem:mock2");
-        return Iterators.emptyIterator();
+        assertThat(mgr.provider().url()).isEqualTo("mem:mock2");
+        return Collections.<String>emptyList().iterator();
       }
     };
     zoneList.providerName = "mock";
@@ -88,9 +83,10 @@ public class DenominatorTest {
     String yaml = getTestYaml();
     ZoneList zoneList = new ZoneList();
     zoneList.providerConfigurationName = "blah1";
-    Map<?, ?> credentials = Map.class.cast(zoneList.getConfigFromYaml(yaml).get("credentials"));
-    assertEquals(credentials.get("accessKey"), "foo1");
-    assertEquals(credentials.get("secretKey"), "foo2");
+    Map<String, String> credentials = (Map) zoneList.getConfigFromYaml(yaml).get("credentials");
+    assertThat(credentials)
+        .containsEntry("accessKey", "foo1")
+        .containsEntry("secretKey", "foo2");
   }
 
   private String getTestYaml() {
@@ -111,15 +107,10 @@ public class DenominatorTest {
   }
 
   @Test
-  public void testFileContentsFromPath() {
+  public void testFileContentsFromPath() throws IOException {
     ZoneList zoneList = new ZoneList();
-    String contents = null;
-    try {
-      contents = zoneList.getFileContentsFromPath(getTestConfigPath());
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    assertEquals(contents, getTestYaml());
+    assertThat(zoneList.getFileContentsFromPath(getTestConfigPath()))
+        .isEqualTo(getTestYaml());
   }
 
   @Test
@@ -139,17 +130,17 @@ public class DenominatorTest {
         return null;
       }
     };
-    Map<String, ?> contents = zoneList.getConfigFromEnv();
-    assertEquals(3, contents.size());
-    assertEquals("route53", contents.get("provider").toString());
-    assertEquals("mem:mock2", contents.get("url").toString());
-    Map<?, ?> credentials = Map.class.cast(contents.get("credentials"));
-    assertEquals(2, credentials.size()); // only found accessKey & secretKey
-    assertEquals(credentials.get("accessKey"), "foo1");
-    assertEquals(credentials.get("secretKey"), "foo2");
+    Map<String, Object> contents = (Map) zoneList.getConfigFromEnv();
+    assertThat(contents)
+        .containsEntry("provider", "route53")
+        .containsEntry("url", "mem:mock2");
+    Map<String, String> credentials = (Map) contents.get("credentials");
+    assertThat(credentials)
+        .containsEntry("accessKey", "foo1")
+        .containsEntry("secretKey", "foo2");
   }
 
-  @Test(description = "denominator zone list")
+  @Test // denominator zone list
   public void testConfigFromEnv() {
     ZoneList zoneList = new ZoneList() {
       @Override
@@ -170,32 +161,35 @@ public class DenominatorTest {
 
       @Override
       public Iterator<String> doRun(DNSApiManager mgr) {
-        assertEquals(providerName, "dynect");
-        assertEquals(url, "mem:mock2");
-        assertEquals(Map.class.cast(credentials).get("customer"), "foo1");
-        assertEquals(Map.class.cast(credentials).get("username"), "foo2");
-        assertEquals(Map.class.cast(credentials).get("password"), "foo3");
-        return Iterators.emptyIterator();
+        assertThat(providerName).isEqualTo("dynect");
+        assertThat(url).isEqualTo("mem:mock2");
+        assertThat(Map.class.cast(credentials))
+            .containsEntry("customer", "foo1")
+            .containsEntry("username", "foo2")
+            .containsEntry("password", "foo3");
+        return Collections.<String>emptyList().iterator();
       }
     };
     zoneList.run();
   }
 
 
-  @Test(description = "denominator -C test-config.yml -n blah2 zone list")
+  @Test // denominator -C test-config.yml -n blah2 zone list
   public void testConfigArgMock() {
     ZoneList zoneList = new ZoneList() {
       @Override
       public Iterator<String> doRun(DNSApiManager mgr) {
-        assertEquals(configPath, getTestConfigPath());
-        Map<?, ?> configFromFile = getConfigFromFile();
-        assertEquals(configFromFile.get("provider"), "mock");
-        assertEquals(configFromFile.get("url"), "mem:mock2");
-        Map<?, ?> credentials = Map.class.cast(configFromFile.get("credentials"));
-        assertEquals(credentials.get("accessKey"), "foo3");
-        assertEquals(credentials.get("secretKey"), "foo4");
-        assertEquals(credentials.get("sessionToken"), "foo5");
-        return Iterators.emptyIterator();
+        assertThat(configPath).isEqualTo(getTestConfigPath());
+        Map<String, Object> contents = (Map) getConfigFromFile();
+        assertThat(contents)
+            .containsEntry("provider", "mock")
+            .containsEntry("url", "mem:mock2");
+        Map<String, String> credentials = (Map) contents.get("credentials");
+        assertThat(credentials)
+            .containsEntry("accessKey", "foo3")
+            .containsEntry("secretKey", "foo4")
+            .containsEntry("sessionToken", "foo5");
+        return Collections.<String>emptyList().iterator();
       }
     };
 
@@ -204,15 +198,16 @@ public class DenominatorTest {
     zoneList.run();
   }
 
-  @Test(description = "denominator -C test-config.yml -n blah1 zone list")
+  @Test // denominator -C test-config.yml -n blah1 zone list
   public void testConfigArgRoute53() {
     ZoneList zoneList = new ZoneList() {
       @Override
       public Iterator<String> doRun(DNSApiManager mgr) {
-        assertEquals(providerName, "route53");
-        assertEquals(Map.class.cast(credentials).get("accessKey"), "foo1");
-        assertEquals(Map.class.cast(credentials).get("secretKey"), "foo2");
-        return Iterators.emptyIterator();
+        assertThat(configPath).isEqualTo(getTestConfigPath());
+        assertThat(Map.class.cast(credentials))
+            .containsEntry("accessKey", "foo1")
+            .containsEntry("secretKey", "foo2");
+        return Collections.<String>emptyList().iterator();
       }
     };
     zoneList.providerConfigurationName = "blah1";
@@ -220,24 +215,22 @@ public class DenominatorTest {
     zoneList.run();
   }
 
-  @Test(description = "denominator -C test-config.yml -p route53 -c user pass -n blah1 zone list")
+  @Test // denominator -C test-config.yml -p route53 -c user pass -n blah1 zone list
   public void testConfigArgWithCliOverride() {
     ZoneList zoneList = new ZoneList() {
       @Override
       public Iterator<String> doRun(DNSApiManager mgr) {
-        assertEquals(credentialArgs.get(0), "user");
-        assertEquals(credentialArgs.get(1), "pass");
+        assertThat(credentialArgs).containsExactly("user", "pass");
         // CLI credential args should override config file args
-        assertTrue(credentials instanceof Credentials.ListCredentials);
-        assertEquals(Credentials.ListCredentials.class.cast(credentials).get(0), "user");
-        assertEquals(Credentials.ListCredentials.class.cast(credentials).get(1), "pass");
-        return Iterators.emptyIterator();
+        assertThat(credentials).isInstanceOf(ListCredentials.class);
+        assertThat((ListCredentials) credentials).containsExactly("user", "pass");
+        return Collections.<String>emptyList().iterator();
       }
     };
     zoneList.providerConfigurationName = "blah1";
     zoneList.providerName = "route53";
     zoneList.configPath = getTestConfigPath();
-    zoneList.credentialArgs = ImmutableList.of("user", "pass").asList();
+    zoneList.credentialArgs = Arrays.asList("user", "pass");
     zoneList.run();
   }
 
@@ -246,11 +239,11 @@ public class DenominatorTest {
     return res != null ? res.getFile() : null;
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. list")
+  @Test // denominator -p mock record -z denominator.io. list
   public void testResourceRecordSetList() {
     ResourceRecordSetList command = new ResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         "denominator.io.                                   MX                         86400 1 mx1.denominator.io.",
         "denominator.io.                                   NS                         86400 ns1.denominator.io.",
         "denominator.io.                                   SOA                        3600  ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 60",
@@ -272,105 +265,109 @@ public class DenominatorTest {
         "www.weighted.denominator.io.                      CNAME  EU-West             0     c.denominator.io.",
         "www.weighted.denominator.io.                      CNAME  US-East             0     b.denominator.io.",
         "www.weighted.denominator.io.                      CNAME  US-West             0     a.denominator.io.",
-        "www1.denominator.io.                              A                          10000 192.0.2.1",
-        "www1.denominator.io.                              A                          10000 192.0.2.2",
+        "www1.denominator.io.                              A                          3600  192.0.2.1\n"
+        + "www1.denominator.io.                              A                          3600  192.0.2.2",
         "www2.denominator.io.                              A                          3600  198.51.100.1",
         "www2.geo.denominator.io.                          A      alazona             300   192.0.2.1",
-        "www2.weighted.denominator.io.                     A      US-West             0     192.0.2.1"));
+        "www2.weighted.denominator.io.                     A      US-West             0     192.0.2.1");
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. list -n www1.denominator.io.")
+  @Test // denominator -p mock record -z denominator.io. list -n www1.denominator.io.
   public void testResourceRecordSetListByName() {
     ResourceRecordSetList command = new ResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-        "www1.denominator.io.                              A                          10000 192.0.2.1",
-        "www1.denominator.io.                              A                          10000 192.0.2.2"));
+    assertThat(command.doRun(mgr)).containsExactly(
+        "www1.denominator.io.                              A                          3600  192.0.2.1\n"
+        + "www1.denominator.io.                              A                          3600  192.0.2.2");
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. get -n www1.denominator.io. -t A ")
+  @Test // denominator -p mock record -z denominator.io. get -n www1.denominator.io. -t A
   public void testResourceRecordSetGetWhenPresent() {
     ResourceRecordSetGet command = new ResourceRecordSetGet();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
-        "www1.denominator.io.                              A                          10000 192.0.2.1",
-        "www1.denominator.io.                              A                          10000 192.0.2.2"));
+    assertThat(command.doRun(mgr)).containsExactly(
+        "www1.denominator.io.                              A                          3600  192.0.2.1\n"
+        + "www1.denominator.io.                              A                          3600  192.0.2.2");
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. get -n www3.denominator.io. -t A ")
+  @Test // denominator -p mock record -z denominator.io. get -n www3.denominator.io. -t A
   public void testResourceRecordSetGetWhenAbsent() {
     ResourceRecordSetGet command = new ResourceRecordSetGet();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www3.denominator.io.";
     command.type = "A";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), "");
+    assertThat(command.doRun(mgr)).containsExactly("");
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. get -n www.geo.denominator.io. -t CNAME -g alazona")
+  @Test
+  // denominator -p mock record -z denominator.io. get -n www.geo.denominator.io. -t CNAME -g alazona
   public void testResourceRecordSetGetWhenQualifierPresent() {
     ResourceRecordSetGet command = new ResourceRecordSetGet();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.geo.denominator.io.";
     command.type = "CNAME";
     command.qualifier = "alazona";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)),
-                 "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}");
+    assertThat(command.doRun(mgr)).containsExactly(
+        "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}");
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. get -n www.geo.denominator.io. -t A -g alazona")
+  @Test
+  // denominator -p mock record -z denominator.io. get -n www.geo.denominator.io. -t A -g alazona
   public void testResourceRecordSetGetWhenQualifierAbsent() {
     ResourceRecordSetGet command = new ResourceRecordSetGet();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.geo.denominator.io.";
     command.type = "A";
     command.qualifier = "alazona";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), "");
+    assertThat(command.doRun(mgr)).containsExactly("");
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. applyttl -n www3.denominator.io. -t A 10000")
+  @Test // denominator -p mock record -z denominator.io. applyttl -n www3.denominator.io. -t A 10000
   public void testResourceRecordSetApplyTTL() {
     ResourceRecordSetApplyTTL command = new ResourceRecordSetApplyTTL();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
     command.ttl = 10000;
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. applying ttl 10000 to rrset www1.denominator.io. A",
-        ";; ok"));
-    assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                     .iterateByNameAndType(command.name, command.type).next().toString(),
-                 ResourceRecordSet.<AData>builder()
-                     .name(command.name)
-                     .type(command.type)
-                     .ttl(command.ttl)
-                     .add(AData.create("192.0.2.1"))
-                     .add(AData.create("192.0.2.2")).build().toString());
+        ";; ok");
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .iterateByNameAndType(command.name, command.type))
+        .contains(ResourceRecordSet.<AData>builder()
+                      .name(command.name)
+                      .type(command.type)
+                      .ttl(command.ttl)
+                      .add(AData.create("192.0.2.1"))
+                      .add(AData.create("192.0.2.2")).build());
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2")
+  @Test
+  // denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2
   public void testResourceRecordSetAdd() {
     ResourceRecordSetAdd command = new ResourceRecordSetAdd();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
-    command.values = ImmutableList.of("192.0.2.1", "192.0.2.2");
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}]",
-        ";; ok"));
-    assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                     .iterateByNameAndType(command.name, command.type).next().toString(),
-                 ResourceRecordSet.<AData>builder()
-                     .name(command.name)
-                     .type(command.type)
-                     .ttl(3600)
-                     .add(AData.create("192.0.2.1"))
-                     .add(AData.create("192.0.2.2")).build().toString());
+        ";; ok");
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .iterateByNameAndType(command.name, command.type))
+        .contains(ResourceRecordSet.<AData>builder()
+                      .name(command.name)
+                      .type(command.type)
+                      .ttl(3600)
+                      .add(AData.create("192.0.2.1"))
+                      .add(AData.create("192.0.2.2")).build());
   }
 
-  @Test(description = "denominator -p route53 record -z denominator.io. add -n www3.denominator.io. -t A --elb-dnsname nccp-cbp-frontend-12345678.us-west-2.elb.amazonaws.com.")
+  @Test
+  // denominator -p route53 record -z denominator.io. add -n www3.denominator.io. -t A --elb-dnsname nccp-cbp-frontend-12345678.us-west-2.elb.amazonaws.com.
   public void testResourceRecordSetAddELBAlias() {
     ResourceRecordSetAdd command = new ResourceRecordSetAdd();
     command.zoneIdOrName = "denominator.io.";
@@ -383,20 +380,21 @@ public class DenominatorTest {
         AliasTarget
             .create(ResourceRecordSetAdd.REGION_TO_HOSTEDZONE.get("us-west-2"), command.elbDNSName);
 
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. adding to rrset www3.denominator.io. A values: [" + target
         + "]",
-        ";; ok"));
+        ";; ok");
 
-    assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                     .iterateByNameAndType(command.name, command.type).next().toString(),
-                 ResourceRecordSet.<AliasTarget>builder()
-                     .name(command.name)
-                     .type(command.type)
-                     .add(target).build().toString());
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .iterateByNameAndType(command.name, command.type))
+        .contains(ResourceRecordSet.<AliasTarget>builder()
+                      .name(command.name)
+                      .type(command.type)
+                      .add(target).build());
   }
 
-  @Test(description = "denominator -p route53 record -z denominator.io. replace -n www4.denominator.io. -t A --elb-dnsname nccp-cbp-frontend-12345678.us-west-2.elb.amazonaws.com.")
+  @Test
+  // denominator -p route53 record -z denominator.io. replace -n www4.denominator.io. -t A --elb-dnsname nccp-cbp-frontend-12345678.us-west-2.elb.amazonaws.com.
   public void testResourceRecordSetReplaceELBAlias() {
     ResourceRecordSetReplace command = new ResourceRecordSetReplace();
     command.zoneIdOrName = "denominator.io.";
@@ -409,20 +407,22 @@ public class DenominatorTest {
         AliasTarget.create(ResourceRecordSetReplace.REGION_TO_HOSTEDZONE.get("us-west-2"),
                            command.elbDNSName);
 
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. replacing rrset www4.denominator.io. A with values: [" + target
         + "]",
-        ";; ok"));
+        ";; ok");
 
-    assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                     .iterateByNameAndType(command.name, command.type).next().toString(),
-                 ResourceRecordSet.<AliasTarget>builder()
-                     .name(command.name)
-                     .type(command.type)
-                     .add(target).build().toString());
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .iterateByNameAndType(command.name, command.type))
+        .contains(
+            ResourceRecordSet.<AliasTarget>builder()
+                .name(command.name)
+                .type(command.type)
+                .add(target).build());
   }
 
-  @Test(description = "denominator -p route53 record -z AAAAAAAA replace -n cbp.nccp.us-east-1.dynprod.netflix.net. -t A --alias-hosted-zone-id BBBBBBBB --alias-dnsname cbp.nccp.us-west-2.dynprod.netflix.net.")
+  @Test
+  // denominator -p route53 record -z AAAAAAAA replace -n cbp.nccp.us-east-1.dynprod.netflix.net. -t A --alias-hosted-zone-id BBBBBBBB --alias-dnsname cbp.nccp.us-west-2.dynprod.netflix.net.
   public void testResourceRecordSetReplaceRoute53Alias() {
     ResourceRecordSetReplace command = new ResourceRecordSetReplace();
     command.zoneIdOrName = "denominator.io.";
@@ -433,21 +433,25 @@ public class DenominatorTest {
 
     AliasTarget target = AliasTarget.create(command.aliasHostedZoneId, command.aliasDNSName);
 
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. replacing rrset cbp.nccp.us-east-1.dynprod.netflix.net. A with values: ["
         + target + "]",
-        ";; ok"));
+        ";; ok");
 
-    assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                     .iterateByNameAndType(command.name, command.type).next().toString(),
-                 ResourceRecordSet.<AliasTarget>builder()
-                     .name(command.name)
-                     .type(command.type)
-                     .add(target).build().toString());
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .iterateByNameAndType(command.name, command.type))
+        .contains(
+            ResourceRecordSet.<AliasTarget>builder()
+                .name(command.name)
+                .type(command.type)
+                .add(target).build());
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "--alias-hosted-zone-id must be present")
+  @Test
   public void testResourceRecordSetReplaceRoute53AliasForgotZone() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("--alias-hosted-zone-id must be present");
+
     ResourceRecordSetReplace command = new ResourceRecordSetReplace();
     command.zoneIdOrName = "denominator.io.";
     command.name = "cbp.nccp.us-east-1.dynprod.netflix.net.";
@@ -456,8 +460,11 @@ public class DenominatorTest {
     command.doRun(mgr);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "--alias-hosted-zone-id must be a hosted zone id, not a zone name")
+  @Test
   public void testResourceRecordSetReplaceRoute53AliasZoneNameInsteadOfZoneId() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("--alias-hosted-zone-id must be a hosted zone id, not a zone name");
+
     ResourceRecordSetReplace command = new ResourceRecordSetReplace();
     command.zoneIdOrName = "denominator.io.";
     command.name = "cbp.nccp.us-east-1.dynprod.netflix.net.";
@@ -467,121 +474,125 @@ public class DenominatorTest {
     command.doRun(mgr);
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A --ttl 3600 -d 192.0.2.1 -d 192.0.2.2")
+  @Test
+  // denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A --ttl 3600 -d 192.0.2.1 -d 192.0.2.2
   public void testResourceRecordSetAddWithTTL() {
     ResourceRecordSetAdd command = new ResourceRecordSetAdd();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
     command.ttl = 3600;
-    command.values = ImmutableList.of("192.0.2.1", "192.0.2.2");
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}] applying ttl 3600",
-        ";; ok"));
-    assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                     .iterateByNameAndType(command.name, command.type).next().toString(),
-                 ResourceRecordSet.<AData>builder()
-                     .name(command.name)
-                     .type(command.type)
-                     .ttl(command.ttl)
-                     .add(AData.create("192.0.2.1"))
-                     .add(AData.create("192.0.2.2")).build().toString());
+        ";; ok");
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .iterateByNameAndType(command.name, command.type))
+        .contains(ResourceRecordSet.<AData>builder()
+                      .name(command.name)
+                      .type(command.type)
+                      .ttl(command.ttl)
+                      .add(AData.create("192.0.2.1"))
+                      .add(AData.create("192.0.2.2")).build());
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. replace -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2")
+  @Test
+  // denominator -p mock record -z denominator.io. replace -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2
   public void testResourceRecordSetReplace() {
     ResourceRecordSetReplace command = new ResourceRecordSetReplace();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.denominator.io.";
     command.type = "CNAME";
-    command.values = ImmutableList.of("www1.denominator.io.", "www2.denominator.io.");
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    command.values = Arrays.asList("www1.denominator.io.", "www2.denominator.io.");
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. replacing rrset www.denominator.io. CNAME with values: [{cname=www1.denominator.io.},{cname=www2.denominator.io.}]",
-        ";; ok"));
-    assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                     .iterateByNameAndType(command.name, command.type).next().toString(),
-                 ResourceRecordSet.<CNAMEData>builder()
-                     .name(command.name)
-                     .type(command.type)
-                     .add(CNAMEData.create("www1.denominator.io."))
-                     .add(CNAMEData.create("www2.denominator.io.")).build().toString());
+        ";; ok");
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .iterateByNameAndType(command.name, command.type))
+        .contains(ResourceRecordSet.<CNAMEData>builder()
+                      .name(command.name)
+                      .type(command.type)
+                      .add(CNAMEData.create("www1.denominator.io."))
+                      .add(CNAMEData.create("www2.denominator.io.")).build());
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. replace -n www1.denominator.io. -t A --ttl 3600 -d 192.0.2.1 -d 192.0.2.2")
+  @Test
+  // denominator -p mock record -z denominator.io. replace -n www1.denominator.io. -t A --ttl 3600 -d 192.0.2.1 -d 192.0.2.2
   public void testResourceRecordSetReplaceWithTTL() {
     ResourceRecordSetReplace command = new ResourceRecordSetReplace();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
     command.ttl = 3600;
-    command.values = ImmutableList.of("192.0.2.1", "192.0.2.2");
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. replacing rrset www1.denominator.io. A with values: [{address=192.0.2.1},{address=192.0.2.2}] and ttl 3600",
-        ";; ok"));
-    assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                     .iterateByNameAndType(command.name, command.type).next().toString(),
-                 ResourceRecordSet.<AData>builder()
-                     .name(command.name)
-                     .type(command.type)
-                     .ttl(command.ttl)
-                     .add(AData.create("192.0.2.1"))
-                     .add(AData.create("192.0.2.2")).build().toString());
+        ";; ok");
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .iterateByNameAndType(command.name, command.type))
+        .contains(ResourceRecordSet.<AData>builder()
+                      .name(command.name)
+                      .type(command.type)
+                      .ttl(command.ttl)
+                      .add(AData.create("192.0.2.1"))
+                      .add(AData.create("192.0.2.2")).build());
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. remove -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2")
+  @Test
+  // denominator -p mock record -z denominator.io. remove -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2
   public void testResourceRecordSetRemove() {
     ResourceRecordSetRemove command = new ResourceRecordSetRemove();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
-    command.values = ImmutableList.of("192.0.2.1", "192.0.2.2");
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. removing from rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}]",
-        ";; ok"));
-    assertFalse(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                    .iterateByNameAndType(command.name, command.type).hasNext());
+        ";; ok");
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .iterateByNameAndType(command.name, command.type)).isEmpty();
   }
 
-  @Test(description = "denominator -p mock record -z denominator.io. delete -n www3.denominator.io. -t A ")
+  @Test // denominator -p mock record -z denominator.io. delete -n www3.denominator.io. -t A
   public void testResourceRecordSetDelete() {
     ResourceRecordSetDelete command = new ResourceRecordSetDelete();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www3.denominator.io.";
     command.type = "A";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. deleting rrset www3.denominator.io. A",
-        ";; ok"));
-    assertFalse(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                    .iterateByNameAndType(command.name, command.type).hasNext());
+        ";; ok");
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .iterateByNameAndType(command.name, command.type)).isEmpty();
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. types")
+  @Test // denominator -p mock geo -z denominator.io. types
   public void testGeoTypeList() {
     GeoTypeList command = new GeoTypeList();
     command.zoneIdOrName = "denominator.io.";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), ""
-                                                           + "A\n"
-                                                           + "AAAA\n"
-                                                           + "CNAME\n"
-                                                           + "NS\n"
-                                                           + "PTR\n"
-                                                           + "SPF\n"
-                                                           + "TXT\n"
-                                                           + "MX\n"
-                                                           + "SRV\n"
-                                                           + "DS\n"
-                                                           + "CERT\n"
-                                                           + "NAPTR\n"
-                                                           + "SSHFP\n"
-                                                           + "LOC\n"
-                                                           + "TLSA");
+    assertThat(command.doRun(mgr)).containsExactly(
+        "A"
+        , "AAAA"
+        , "CNAME"
+        , "NS"
+        , "PTR"
+        , "SPF"
+        , "TXT"
+        , "MX"
+        , "SRV"
+        , "DS"
+        , "CERT"
+        , "NAPTR"
+        , "SSHFP"
+        , "LOC"
+        , "TLSA");
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. regions")
+  @Test // denominator -p mock geo -z denominator.io. regions
   public void testGeoRegionList() {
     GeoRegionList command = new GeoRegionList();
     command.zoneIdOrName = "denominator.io.";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         "Anonymous Proxy (A1)        : Anonymous Proxy",
         "Satellite Provider (A2)     : Satellite Provider",
         "Unknown / Uncategorized IPs : Unknown / Uncategorized IPs",
@@ -597,24 +608,24 @@ public class DenominatorTest {
         "Africa                      : Algeria;Angola;Benin;Botswana;Burkina Faso;Burundi;Cameroon;Cape Verde;Central African Republic;Chad;Comoros;Congo;Cote d'Ivoire;Democratic Republic of the Congo;Djibouti;Egypt;Equatorial Guinea;Eritrea;Ethiopia;Gabon;Gambia;Ghana;Guinea;Guinea-Bissau;Kenya;Lesotho;Liberia;Libyan Arab Jamahiriya;Madagascar;Malawi;Mali;Mauritania;Mauritius;Mayotte;Morocco;Mozambique;Namibia;Niger;Nigeria;Reunion;Rwanda;Sao Tome and Principe;Senegal;Seychelles;Sierra Leone;Somalia;South Africa;St. Helena;Sudan;Swaziland;Tanzania, United Republic of;Togo;Tunisia;Uganda;Undefined Africa;Western Sahara;Zambia;Zimbabwe",
         "Asia                        : Bangladesh;Bhutan;British Indian Ocean Territory - Chagos Islands;Brunei Darussalam;Cambodia;China;Hong Kong;India;Indonesia;Japan;Kazakhstan;Korea, Democratic People's Republic of;Korea, Republic of;Kyrgyzstan;Lao People's Democratic Republic;Macao;Malaysia;Maldives;Mongolia;Myanmar;Nepal;Pakistan;Philippines;Singapore;Sri Lanka;Taiwan;Tajikistan;Thailand;Timor-Leste, Democratic Republic of;Turkmenistan;Undefined Asia;Uzbekistan;Vietnam",
         "Australia / Oceania         : American Samoa;Australia;Christmas Island;Cocos (Keeling) Islands;Cook Islands;Fiji;French Polynesia;Guam;Heard Island and McDonald Islands;Kiribati;Marshall Islands;Micronesia , Federated States of;Nauru;New Caledonia;New Zealand;Niue;Norfolk Island;Northern Mariana Islands, Commonwealth of;Palau;Papua New Guinea;Pitcairn;Samoa;Solomon Islands;Tokelau;Tonga;Tuvalu;Undefined Australia / Oceania;Vanuatu;Wallis and Futuna",
-        "Antarctica                  : Antarctica;Bouvet Island;French Southern Territories"));
+        "Antarctica                  : Antarctica;Bouvet Island;French Southern Territories");
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. list")
+  @Test // denominator -p mock geo -z denominator.io. list
   @Deprecated
   public void testGeoResourceRecordSetList() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList
         command =
         new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}",
         "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io. {\"Antarctica\":[\"Bouvet Island\",\"French Southern Territories\",\"Antarctica\"]}",
         "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {\"South America\":[\"Colombia\",\"Ecuador\"]}",
-        "www2.geo.denominator.io.                          A      alazona             300   192.0.2.1 {\"United States (US)\":[\"Alaska\",\"Arizona\"]}"));
+        "www2.geo.denominator.io.                          A      alazona             300   192.0.2.1 {\"United States (US)\":[\"Alaska\",\"Arizona\"]}");
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. list -n www.geo.denominator.io.")
+  @Test // denominator -p mock geo -z denominator.io. list -n www.geo.denominator.io.
   @Deprecated
   public void testGeoResourceRecordSetListByName() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList
@@ -622,13 +633,13 @@ public class DenominatorTest {
         new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.geo.denominator.io.";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}",
         "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io. {\"Antarctica\":[\"Bouvet Island\",\"French Southern Territories\",\"Antarctica\"]}",
-        "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {\"South America\":[\"Colombia\",\"Ecuador\"]}"));
+        "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {\"South America\":[\"Colombia\",\"Ecuador\"]}");
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. list -n www.geo.denominator.io. -t CNAME")
+  @Test // denominator -p mock geo -z denominator.io. list -n www.geo.denominator.io. -t CNAME
   @Deprecated
   public void testGeoResourceRecordSetListByNameAndType() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList
@@ -637,13 +648,14 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.geo.denominator.io.";
     command.type = "CNAME";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}",
         "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io. {\"Antarctica\":[\"Bouvet Island\",\"French Southern Territories\",\"Antarctica\"]}",
-        "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {\"South America\":[\"Colombia\",\"Ecuador\"]}"));
+        "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {\"South America\":[\"Colombia\",\"Ecuador\"]}");
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. get -n www.geo.denominator.io. -t CNAME -g alazona")
+  @Test
+  // denominator -p mock geo -z denominator.io. get -n www.geo.denominator.io. -t CNAME -g alazona
   @Deprecated
   public void testGeoResourceRecordSetGetWhenPresent() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet
@@ -653,11 +665,11 @@ public class DenominatorTest {
     command.name = "www.geo.denominator.io.";
     command.type = "CNAME";
     command.group = "alazona";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)),
-                 "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}");
+    assertThat(command.doRun(mgr)).containsExactly(
+        "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}");
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. get -n www.geo.denominator.io. -t A -g alazona")
+  @Test // denominator -p mock geo -z denominator.io. get -n www.geo.denominator.io. -t A -g alazona
   @Deprecated
   public void testGeoResourceRecordSetGetWhenAbsent() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet
@@ -667,10 +679,11 @@ public class DenominatorTest {
     command.name = "www.geo.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), "");
+    assertThat(command.doRun(mgr)).containsExactly("");
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. applyttl -n www2.geo.denominator.io. -t A -g alazona 300")
+  @Test
+  // denominator -p mock geo -z denominator.io. applyttl -n www2.geo.denominator.io. -t A -g alazona 300
   @Deprecated
   public void testGeoResourceRecordSetApplyTTL() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL
@@ -681,15 +694,16 @@ public class DenominatorTest {
     command.type = "A";
     command.group = "alazona";
     command.ttl = 300;
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. applying ttl 300 to rrset www2.geo.denominator.io. A alazona",
-        ";; ok"));
-    assertEquals(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                     .getByNameTypeAndQualifier(command.name, command.type, command.group)
-                     .ttl(), Integer.valueOf(command.ttl));
+        ";; ok");
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .getByNameTypeAndQualifier(command.name, command.type, command.group))
+        .hasTtl(command.ttl);
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"]}")
+  @Test
+  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"]}
   public void testGeoResourceRecordSetAddRegionsEntireRegion() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
         command =
@@ -705,22 +719,22 @@ public class DenominatorTest {
         old =
         api.getByNameTypeAndQualifier(command.name, command.type, command.group);
 
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"]} to rrset www2.geo.denominator.io. A alazona",
         ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
         ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"]}}}",
-        ";; ok"));
+        ";; ok");
 
-    assertEquals(
-        json.toJson(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                        .getByNameTypeAndQualifier(command.name, command.type, command.group).geo()
-                        .regions()),
-        "{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"]}");
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .getByNameTypeAndQualifier(command.name, command.type, command.group))
+        .containsRegion("United States (US)", "Alaska", "Arizona")
+        .containsRegion("Mexico", "Mexico");
 
     api.put(old);
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"United States (US)\":[\"Arizona\"]}")
+  @Test
+  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"United States (US)\":[\"Arizona\"]}
   public void testGeoResourceRecordSetAddRegionsSkipsWhenSame() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
         command =
@@ -736,17 +750,18 @@ public class DenominatorTest {
         old =
         api.getByNameTypeAndQualifier(command.name, command.type, command.group);
 
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. adding regions {\"United States (US)\":[\"Arizona\"]} to rrset www2.geo.denominator.io. A alazona",
         ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
-        ";; ok"));
+        ";; ok");
 
-    assertEquals(
+    assertThat(
         mgr.api().recordSetsInZone(command.zoneIdOrName)
-            .getByNameTypeAndQualifier(command.name, command.type, command.group), old);
+            .getByNameTypeAndQualifier(command.name, command.type, command.group)).isEqualTo(old);
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}")
+  @Test
+  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}
   public void testGeoResourceRecordSetAddRegionsEntireRegionAndTerritory() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
         command =
@@ -762,22 +777,23 @@ public class DenominatorTest {
         old =
         api.getByNameTypeAndQualifier(command.name, command.type, command.group);
 
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona",
         ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
         ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}}",
-        ";; ok"));
+        ";; ok");
 
-    assertEquals(
-        json.toJson(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                        .getByNameTypeAndQualifier(command.name, command.type, command.group).geo()
-                        .regions()),
-        "{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}");
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .getByNameTypeAndQualifier(command.name, command.type, command.group))
+        .containsRegion("United States (US)", "Alaska", "Arizona")
+        .containsRegion("Mexico", "Mexico")
+        .containsRegion("South America", "Ecuador");
 
     api.put(old);
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} --dry-run --validate-regions")
+  @Test
+  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} --dry-run --validate-regions
   public void testGeoResourceRecordSetAddRegionsEntireRegionAndTerritoryValidatedDryRun() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
         command =
@@ -795,19 +811,20 @@ public class DenominatorTest {
         old =
         api.getByNameTypeAndQualifier(command.name, command.type, command.group);
 
-    assertEquals(Joiner.on('\n').join(command.doRun(mgr)), Joiner.on('\n').join(
+    assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona",
         ";; validated regions: {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}",
         ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
         ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}}",
-        ";; ok"));
+        ";; ok");
 
-    assertEquals(
+    assertThat(
         mgr.api().recordSetsInZone(command.zoneIdOrName)
-            .getByNameTypeAndQualifier(command.name, command.type, command.group), old);
+            .getByNameTypeAndQualifier(command.name, command.type, command.group)).isEqualTo(old);
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} --validate-regions")
+  @Test
+  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} --validate-regions
   public void testGeoResourceRecordSetAddRegionsValidationFailureOnTerritory() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
         command =
@@ -826,20 +843,21 @@ public class DenominatorTest {
 
     try {
       Iterator<String> iterator = command.doRun(mgr);
-      assertEquals(
-          iterator.next(),
-          ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Equador\"]} to rrset www2.geo.denominator.io. A alazona");
+      assertThat(iterator.next())
+          .isEqualTo(
+              ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Equador\"]} to rrset www2.geo.denominator.io. A alazona");
       iterator.next();
       fail("should have failed on validation");
     } catch (IllegalArgumentException e) {
-      assertEquals(e.getMessage(), "unsupported territories in South America: [[Equador]]");
+      assertThat(e).hasMessage("unsupported territories in South America: [[Equador]]");
     }
-    assertEquals(
-        mgr.api().recordSetsInZone(command.zoneIdOrName)
-            .getByNameTypeAndQualifier(command.name, command.type, command.group), old);
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .getByNameTypeAndQualifier(command.name, command.type, command.group))
+        .isEqualTo(old);
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"Suth America\":[\"Ecuador\"]} --validate-regions")
+  @Test
+  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"Suth America\":[\"Ecuador\"]} --validate-regions
   public void testGeoResourceRecordSetAddRegionsValidationFailureOnRegion() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
         command =
@@ -858,20 +876,21 @@ public class DenominatorTest {
 
     try {
       Iterator<String> iterator = command.doRun(mgr);
-      assertEquals(
-          iterator.next(),
-          ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"Suth America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona");
+      assertThat(iterator.next())
+          .isEqualTo(
+              ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"Suth America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona");
       iterator.next();
       fail("should have failed on validation");
     } catch (IllegalArgumentException e) {
-      assertEquals(e.getMessage(), "unsupported regions: [Suth America]");
+      assertThat(e).hasMessage("unsupported regions: [Suth America]");
     }
-    assertEquals(
-        mgr.api().recordSetsInZone(command.zoneIdOrName)
-            .getByNameTypeAndQualifier(command.name, command.type, command.group), old);
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .getByNameTypeAndQualifier(command.name, command.type, command.group))
+        .isEqualTo(old);
   }
 
-  @Test(description = "denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r Mexico")
+  @Test
+  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r Mexico
   public void testGeoResourceRecordSetAddRegionsBadJson() {
     denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
         command =
@@ -891,11 +910,11 @@ public class DenominatorTest {
       command.doRun(mgr);
       fail("should have failed on bad json");
     } catch (IllegalArgumentException e) {
-      assertEquals(e.getMessage(),
-                   "parse failure on regions! check json syntax. ex. {\"United States (US)\":[\"Arizona\"]}");
+      assertThat(e).hasMessage(
+          "parse failure on regions! check json syntax. ex. {\"United States (US)\":[\"Arizona\"]}");
     }
-    assertEquals(
-        mgr.api().recordSetsInZone(command.zoneIdOrName)
-            .getByNameTypeAndQualifier(command.name, command.type, command.group), old);
+    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
+                   .getByNameTypeAndQualifier(command.name, command.type, command.group))
+        .isEqualTo(old);
   }
 }
