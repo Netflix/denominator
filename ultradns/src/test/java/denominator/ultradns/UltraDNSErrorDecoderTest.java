@@ -1,6 +1,8 @@
 package denominator.ultradns;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -21,8 +23,10 @@ import static denominator.ultradns.UltraDNSTest.rrAlreadyExists;
 import static denominator.ultradns.UltraDNSTest.systemError;
 import static feign.Util.UTF_8;
 
-@Test(singleThreaded = true)
 public class UltraDNSErrorDecoderTest {
+
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   ErrorDecoder errors = new UltraDNSErrorDecoder(new UltraDNSProvider.FeignModule().decoder());
 
@@ -31,60 +35,95 @@ public class UltraDNSErrorDecoderTest {
                            body, UTF_8);
   }
 
-  @Test(expectedExceptions = FeignException.class, expectedExceptionsMessageRegExp = "status 500 reading UltraDNS.accountId\\(\\)")
-  public void noBody() throws Throwable {
-    Response response = errorResponse(null);
-    throw errors.decode("UltraDNS#accountId()", response);
+  @Test
+  public void noBody() throws Exception {
+    thrown.expect(FeignException.class);
+    thrown.expectMessage("status 500 reading UltraDNS#accountId()");
+
+    throw errors.decode("UltraDNS#accountId()", errorResponse(null));
   }
 
-  @Test(expectedExceptions = RetryableException.class, expectedExceptionsMessageRegExp = "UltraDNS#networkStatus\\(\\) failed with error 9999: System Error")
-  public void systemError() throws Throwable {
+  @Test
+  public void systemError() throws Exception {
+    thrown.expect(RetryableException.class);
+    thrown.expectMessage("UltraDNS#networkStatus() failed with error 9999: System Error");
+
     throw errors.decode("UltraDNS#networkStatus()", errorResponse(systemError));
   }
 
-  @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#networkStatus\\(\\) failed: Invalid User")
-  public void invalidUser() throws Throwable {
+  @Test
+  public void invalidUser() throws Exception {
+    thrown.expect(UltraDNSException.class);
+    thrown.expectMessage("UltraDNS#networkStatus() failed: Invalid User");
+
     throw errors.decode("UltraDNS#networkStatus()", errorResponse(invalidUser));
   }
 
-  @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteRRPool\\(String\\) failed with error 2103: No resource record with GUID found in the system AAAAAAAAAAAAAAAA")
-  public void code2103() throws Throwable {
+  @Test
+  public void code2103() throws Exception {
+    thrown.expect(UltraDNSException.class);
+    thrown.expectMessage(
+        "UltraDNS#deleteRRPool(String) failed with error 2103: No resource record with GUID found in the system AAAAAAAAAAAAAAAA");
+
     throw errors.decode("UltraDNS#deleteRRPool(String)", errorResponse(recordNotFound));
   }
 
-  @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#updateRecordInZone\\(Record,String\\) failed with error 2111: Resource Record of type 1 with these attributes already exists in the system.")
-  public void code2111() throws Throwable {
+  @Test
+  public void code2111() throws Exception {
+    thrown.expect(UltraDNSException.class);
+    thrown.expectMessage(
+        "UltraDNS#updateRecordInZone(Record,String) failed with error 2111: Resource Record of type 1 with these attributes already exists in the system.");
+
     throw errors
         .decode("UltraDNS#updateRecordInZone(Record,String)", errorResponse(rrAlreadyExists));
   }
 
-  @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteRRPool\\(String\\) failed with error 2911: Pool does not exist in the system")
-  public void code2911() throws Throwable {
+  @Test
+  public void code2911() throws Exception {
+    thrown.expect(UltraDNSException.class);
+    thrown.expectMessage(
+        "UltraDNS#deleteRRPool(String) failed with error 2911: Pool does not exist in the system");
+
     throw errors.decode("UltraDNS#deleteRRPool(String)", errorResponse(poolNotFound));
   }
 
-  @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#directionalRecordsInZoneByNameAndType\\(String,String,int\\) failed with error 2142: No Pool or Multiple pools of same type exists for the PoolName : www.denominator.io.")
-  public void code2142() throws Throwable {
+  @Test
+  public void code2142() throws Exception {
+    thrown.expect(UltraDNSException.class);
+    thrown.expectMessage(
+        "UltraDNS#directionalRecordsInZoneByNameAndType(String,String,int) failed with error 2142: No Pool or Multiple pools of same type exists for the PoolName : www.denominator.io.");
+
     throw errors.decode("UltraDNS#directionalRecordsInZoneByNameAndType(String,String,int)",
                         errorResponse(dirPoolNotFound));
   }
 
-  @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#createDirectionalPoolInZoneForNameAndType\\(String,String,String\\) failed with error 2912: Pool already created for this host name : www.denominator.io.")
-  public void code2912() throws Throwable {
-    throw errors
-        .decode("UltraDNS#createDirectionalPoolInZoneForNameAndType(String,String,String)",
-                errorResponse(poolAlreadyExists));
+  @Test
+  public void code2912() throws Exception {
+    thrown.expect(UltraDNSException.class);
+    thrown.expectMessage(
+        "UltraDNS#createDirectionalPoolInZoneForNameAndType(String,String,String) failed with error 2912: Pool already created for this host name : www.denominator.io.");
+
+    throw errors.decode("UltraDNS#createDirectionalPoolInZoneForNameAndType(String,String,String)",
+                        errorResponse(poolAlreadyExists));
   }
 
-  @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#directionalRecordsInZoneAndGroupByNameAndType\\(String,String,String,int\\) failed with error 4003: Group does not exist.")
-  public void code4003() throws Throwable {
-    throw errors
-        .decode("UltraDNS#directionalRecordsInZoneAndGroupByNameAndType(String,String,String,int)",
-                errorResponse(groupNotFound));
+  @Test
+  public void code4003() throws Exception {
+    thrown.expect(UltraDNSException.class);
+    thrown.expectMessage(
+        "UltraDNS#directionalRecordsInZoneAndGroupByNameAndType(String,String,String,int) failed with error 4003: Group does not exist.");
+
+    throw errors.decode(
+        "UltraDNS#directionalRecordsInZoneAndGroupByNameAndType(String,String,String,int)",
+        errorResponse(groupNotFound));
   }
 
-  @Test(expectedExceptions = UltraDNSException.class, expectedExceptionsMessageRegExp = "UltraDNS#deleteDirectionalRecord\\(String\\) failed with error 2705: Directional Pool Record does not exist in the system")
-  public void code2705() throws Throwable {
+  @Test
+  public void code2705() throws Exception {
+    thrown.expect(UltraDNSException.class);
+    thrown.expectMessage(
+        "UltraDNS#deleteDirectionalRecord(String) failed with error 2705: Directional Pool Record does not exist in the system");
+
     throw errors
         .decode("UltraDNS#deleteDirectionalRecord(String)", errorResponse(dirRecordNotFound));
   }

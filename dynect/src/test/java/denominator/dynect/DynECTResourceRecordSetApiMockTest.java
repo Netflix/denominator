@@ -2,9 +2,9 @@ package denominator.dynect;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -15,62 +15,17 @@ import denominator.ResourceRecordSetApi;
 import denominator.common.Util;
 import denominator.model.ResourceRecordSet;
 
+import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.dynect.DynECTTest.noneWithName;
 import static denominator.dynect.DynECTTest.noneWithNameAndType;
 import static denominator.model.ResourceRecordSets.a;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
 
-@Test(singleThreaded = true)
 public class DynECTResourceRecordSetApiMockTest {
 
-  MockDynECTServer server;
-
-  String records;
-  String recordsByName;
-  String
-      success =
-      "{\"status\": \"success\", \"data\": {}, \"job_id\": 262989027, \"msgs\": [{\"INFO\": \"thing done\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
-  String createRecord1 = "{\n"
-                         + "  \"ttl\": 3600,\n"
-                         + "  \"rdata\": {\n"
-                         + "    \"address\": \"192.0.2.1\"\n"
-                         + "  }\n"
-                         + "}";
-  String
-      records1 =
-      "{\"status\": \"success\", \"data\": [{\"zone\": \"denominator.io\", \"ttl\": 3600, \"fqdn\": \"www.denominator.io\", \"record_type\": \"A\", \"rdata\": {\"address\": \"192.0.2.1\"}, \"record_id\": 1}], \"job_id\": 273523368, \"msgs\": [{\"INFO\": \"get_tree: Here is your zone tree\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
-  String createRecord2 = "{\n"
-                         + "  \"ttl\": 3600,\n"
-                         + "  \"rdata\": {\n"
-                         + "    \"address\": \"198.51.100.1\"\n"
-                         + "  }\n"
-                         + "}";
-  String createRecord1OverriddenTTL = "{\n"
-                                      + "  \"ttl\": 10000000,\n"
-                                      + "  \"rdata\": {\n"
-                                      + "    \"address\": \"192.0.2.1\"\n"
-                                      + "  }\n"
-                                      + "}";
-  String createRecord2OverriddenTTL = "{\n"
-                                      + "  \"ttl\": 10000000,\n"
-                                      + "  \"rdata\": {\n"
-                                      + "    \"address\": \"198.51.100.1\"\n"
-                                      + "  }\n"
-                                      + "}";
-  String
-      recordIds1And2 =
-      "{\"status\": \"success\", \"data\": [\"/REST/ARecord/denominator.io/www.denominator.io/1\", \"/REST/ARecord/denominator.io/www.denominator.io/2\"], \"job_id\": 273523368, \"msgs\": [{\"INFO\": \"get_tree: Here is your zone tree\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
-  String
-      records1And2 =
-      "{\"status\": \"success\", \"data\": [{\"zone\": \"denominator.io\", \"ttl\": 3600, \"fqdn\": \"www.denominator.io\", \"record_type\": \"A\", \"rdata\": {\"address\": \"192.0.2.1\"}, \"record_id\": 1}, {\"zone\": \"denominator.io\", \"ttl\": 3600, \"fqdn\": \"www.denominator.io\", \"record_type\": \"A\", \"rdata\": {\"address\": \"198.51.100.1\"}, \"record_id\": 2}], \"job_id\": 273523368, \"msgs\": [{\"INFO\": \"get_tree: Here is your zone tree\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
-
-  DynECTResourceRecordSetApiMockTest() throws IOException {
-    records = Util.slurp(new InputStreamReader(getClass().getResourceAsStream("/records.json")));
-    recordsByName = Util.slurp(
-        new InputStreamReader(getClass().getResourceAsStream("/recordsByName.json")));
-  }
+  @Rule
+  public MockDynECTServer server = new MockDynECTServer();
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void putFirstRecordPostsAndPublishes() throws Exception {
@@ -214,22 +169,8 @@ public class DynECTResourceRecordSetApiMockTest {
     Iterator<ResourceRecordSet<?>> iterator = api.iterator();
     iterator.next();
     iterator.next();
-    assertEquals(iterator.next(),
-                 a("www.denominator.io", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
-
-    server.assertSessionRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/AllRecord/denominator.io?detail=Y");
-  }
-
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "zone denominator.io not found")
-  public void listWhenAbsent() throws Exception {
-    server.enqueueSessionResponse();
-    server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithName));
-
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
-    api.iterator().hasNext();
+    assertThat(iterator.next())
+        .isEqualTo(a("www.denominator.io", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
 
     server.assertSessionRequest();
     server.assertRequest()
@@ -238,13 +179,25 @@ public class DynECTResourceRecordSetApiMockTest {
   }
 
   @Test
+  public void listWhenAbsent() throws Exception {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("zone denominator.io not found");
+
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithName));
+
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
+    api.iterator().hasNext();
+  }
+
+  @Test
   public void iterateByNameWhenPresent() throws Exception {
     server.enqueueSessionResponse();
     server.enqueue(new MockResponse().setBody(recordsByName));
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
-    assertEquals(api.iterateByName("www.denominator.io").next(),
-                 a("www.denominator.io", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
+    assertThat(api.iterateByName("www.denominator.io").next())
+        .isEqualTo(a("www.denominator.io", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
 
     server.assertSessionRequest();
     server.assertRequest()
@@ -258,7 +211,7 @@ public class DynECTResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithName));
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
-    assertFalse(api.iterateByName("www.denominator.io").hasNext());
+    assertThat(api.iterateByName("www.denominator.io")).isEmpty();
 
     server.assertSessionRequest();
     server.assertRequest()
@@ -272,8 +225,8 @@ public class DynECTResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setBody(records1And2));
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
-    assertEquals(api.getByNameAndType("www.denominator.io", "A"),
-                 a("www.denominator.io", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
+    assertThat(api.getByNameAndType("www.denominator.io", "A"))
+        .isEqualTo(a("www.denominator.io", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
 
     server.assertSessionRequest();
     server.assertRequest()
@@ -287,7 +240,7 @@ public class DynECTResourceRecordSetApiMockTest {
     server.enqueue(new MockResponse().setResponseCode(404).setBody(noneWithNameAndType));
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
-    assertNull(api.getByNameAndType("www.denominator.io", "A"));
+    assertThat(api.getByNameAndType("www.denominator.io", "A")).isNull();
 
     server.assertSessionRequest();
     server.assertRequest()
@@ -336,13 +289,48 @@ public class DynECTResourceRecordSetApiMockTest {
         .hasPath("/ARecord/denominator.io/www.denominator.io");
   }
 
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockDynECTServer();
-  }
+  String records;
+  String recordsByName;
+  String
+      success =
+      "{\"status\": \"success\", \"data\": {}, \"job_id\": 262989027, \"msgs\": [{\"INFO\": \"thing done\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+  String createRecord1 = "{\n"
+                         + "  \"ttl\": 3600,\n"
+                         + "  \"rdata\": {\n"
+                         + "    \"address\": \"192.0.2.1\"\n"
+                         + "  }\n"
+                         + "}";
+  String
+      records1 =
+      "{\"status\": \"success\", \"data\": [{\"zone\": \"denominator.io\", \"ttl\": 3600, \"fqdn\": \"www.denominator.io\", \"record_type\": \"A\", \"rdata\": {\"address\": \"192.0.2.1\"}, \"record_id\": 1}], \"job_id\": 273523368, \"msgs\": [{\"INFO\": \"get_tree: Here is your zone tree\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+  String createRecord2 = "{\n"
+                         + "  \"ttl\": 3600,\n"
+                         + "  \"rdata\": {\n"
+                         + "    \"address\": \"198.51.100.1\"\n"
+                         + "  }\n"
+                         + "}";
+  String createRecord1OverriddenTTL = "{\n"
+                                      + "  \"ttl\": 10000000,\n"
+                                      + "  \"rdata\": {\n"
+                                      + "    \"address\": \"192.0.2.1\"\n"
+                                      + "  }\n"
+                                      + "}";
+  String createRecord2OverriddenTTL = "{\n"
+                                      + "  \"ttl\": 10000000,\n"
+                                      + "  \"rdata\": {\n"
+                                      + "    \"address\": \"198.51.100.1\"\n"
+                                      + "  }\n"
+                                      + "}";
+  String
+      recordIds1And2 =
+      "{\"status\": \"success\", \"data\": [\"/REST/ARecord/denominator.io/www.denominator.io/1\", \"/REST/ARecord/denominator.io/www.denominator.io/2\"], \"job_id\": 273523368, \"msgs\": [{\"INFO\": \"get_tree: Here is your zone tree\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+  String
+      records1And2 =
+      "{\"status\": \"success\", \"data\": [{\"zone\": \"denominator.io\", \"ttl\": 3600, \"fqdn\": \"www.denominator.io\", \"record_type\": \"A\", \"rdata\": {\"address\": \"192.0.2.1\"}, \"record_id\": 1}, {\"zone\": \"denominator.io\", \"ttl\": 3600, \"fqdn\": \"www.denominator.io\", \"record_type\": \"A\", \"rdata\": {\"address\": \"198.51.100.1\"}, \"record_id\": 2}], \"job_id\": 273523368, \"msgs\": [{\"INFO\": \"get_tree: Here is your zone tree\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
+  public DynECTResourceRecordSetApiMockTest() throws IOException {
+    records = Util.slurp(new InputStreamReader(getClass().getResourceAsStream("/records.json")));
+    recordsByName = Util.slurp(
+        new InputStreamReader(getClass().getResourceAsStream("/recordsByName.json")));
   }
 }

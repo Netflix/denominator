@@ -2,23 +2,20 @@ package denominator.discoverydns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 import denominator.ZoneApi;
 import denominator.model.Zone;
 
 import static denominator.assertj.ModelAssertions.assertThat;
-import static org.testng.Assert.assertFalse;
 
-@Test(singleThreaded = true)
 public class DiscoveryDNSZoneApiMockTest {
 
-  MockDiscoveryDNSServer server;
+  @Rule
+  public MockDiscoveryDNSServer server = new MockDiscoveryDNSServer();
 
   @Test
   public void iteratorWhenPresent() throws Exception {
@@ -41,18 +38,8 @@ public class DiscoveryDNSZoneApiMockTest {
         "{ \"zones\": { \"@uri\": \"https://api.discoverydns.com/zones\", \"zoneList\": [ ] } }"));
 
     ZoneApi api = server.connect().api().zones();
-    assertFalse(api.iterator().hasNext());
+    assertThat(api.iterator()).isEmpty();
 
     server.assertRequest().hasMethod("GET").hasPath("/zones");
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockDiscoveryDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

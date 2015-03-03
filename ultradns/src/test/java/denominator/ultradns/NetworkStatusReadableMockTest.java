@@ -2,23 +2,20 @@ package denominator.ultradns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
+import org.junit.Rule;
+import org.junit.Test;
 
 import denominator.DNSApiManager;
 
 import static denominator.ultradns.UltraDNSTest.getNeustarNetworkStatus;
 import static denominator.ultradns.UltraDNSTest.getNeustarNetworkStatusResponse;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-@Test(singleThreaded = true)
 public class NetworkStatusReadableMockTest {
 
-  MockUltraDNSServer server;
+  @Rule
+  public final MockUltraDNSServer server = new MockUltraDNSServer();
 
   @Test
   public void singleRequestOnSuccess() throws Exception {
@@ -38,15 +35,5 @@ public class NetworkStatusReadableMockTest {
     assertFalse(api.checkConnection());
 
     server.assertRequestHasBody(getNeustarNetworkStatus);
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockUltraDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

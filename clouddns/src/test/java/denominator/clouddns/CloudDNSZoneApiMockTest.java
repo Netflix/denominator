@@ -2,11 +2,9 @@ package denominator.clouddns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 import denominator.ZoneApi;
@@ -15,12 +13,12 @@ import denominator.model.Zone;
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.clouddns.RackspaceApisTest.domainId;
 import static denominator.clouddns.RackspaceApisTest.domainsResponse;
-import static org.testng.Assert.assertFalse;
+import static junit.framework.Assert.assertFalse;
 
-@Test(singleThreaded = true)
 public class CloudDNSZoneApiMockTest {
 
-  MockCloudDNSServer server;
+  @Rule
+  public final MockCloudDNSServer server = new MockCloudDNSServer();
 
   @Test
   public void iteratorWhenPresent() throws Exception {
@@ -48,15 +46,5 @@ public class CloudDNSZoneApiMockTest {
 
     server.assertAuthRequest();
     server.assertRequest().hasPath("/v1.0/123123/domains");
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockCloudDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

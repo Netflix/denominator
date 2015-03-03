@@ -1,6 +1,8 @@
 package denominator.ultradns;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -16,16 +18,18 @@ import static denominator.Denominator.create;
 import static denominator.Providers.list;
 import static denominator.Providers.provide;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.assertEquals;
 
 public class UltraDNSProviderTest {
+
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
 
   private static final Provider PROVIDER = new UltraDNSProvider();
 
   @Test
-  public void testMockMetadata() {
-    assertEquals(PROVIDER.name(), "ultradns");
-    assertEquals(PROVIDER.supportsDuplicateZoneNames(), false);
+  public void testUltraDNSMetadata() {
+    assertThat(PROVIDER.name()).isEqualTo("ultradns");
+    assertThat(PROVIDER.supportsDuplicateZoneNames()).isFalse();
     assertThat(PROVIDER.credentialTypeToParameterNames())
         .containsEntry("password", Arrays.asList("username", "password"));
   }
@@ -38,24 +42,30 @@ public class UltraDNSProviderTest {
   @Test
   public void testProviderWiresUltraDNSZoneApi() {
     DNSApiManager manager = create(PROVIDER, credentials("username", "password"));
-    assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
+    assertThat(manager.api().zones()).isInstanceOf(UltraDNSZoneApi.class);
     manager = create("ultradns", credentials("username", "password"));
-    assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
+    assertThat(manager.api().zones()).isInstanceOf(UltraDNSZoneApi.class);
 
     Map<String, String> map = new LinkedHashMap<String, String>();
     map.put("username", "U");
     map.put("password", "P");
     manager = create("ultradns", credentials(MapCredentials.from(map)));
-    assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
+    assertThat(manager.api().zones()).isInstanceOf(UltraDNSZoneApi.class);
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "no credentials supplied. ultradns requires username,password")
+  @Test
   public void testCredentialsRequired() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("no credentials supplied. ultradns requires username,password");
+
     create(PROVIDER).api().zones().iterator();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "incorrect credentials supplied. ultradns requires username,password")
+  @Test
   public void testTwoPartCredentialsRequired() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("incorrect credentials supplied. ultradns requires username,password");
+
     create(PROVIDER, credentials("customer", "username", "password")).api().zones().iterator();
   }
 
@@ -65,6 +75,6 @@ public class UltraDNSProviderTest {
         .create(provide(new UltraDNSProvider()), new UltraDNSProvider.Module(),
                 credentials("username", "password"))
         .get(DNSApiManager.class);
-    assertEquals(manager.api().zones().getClass(), UltraDNSZoneApi.class);
+    assertThat(manager.api().zones()).isInstanceOf(UltraDNSZoneApi.class);
   }
 }

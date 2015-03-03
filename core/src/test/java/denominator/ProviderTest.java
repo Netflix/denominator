@@ -1,42 +1,54 @@
 package denominator;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableMultimap;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-import org.testng.annotations.Test;
-
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import denominator.mock.MockProvider;
 
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@Test
 public class ProviderTest {
 
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
+
+  @Test
   public void testDefaultProviderNameIsLowercase() {
     BareProvider provider = new BareProvider();
-    assertEquals(provider.name(), "bare");
-    assertEquals(provider.credentialTypeToParameterNames(), ImmutableMap.of());
+    assertThat(provider.credentialTypeToParameterNames()).isEmpty();
   }
 
+  @Test
   public void testCredentialTypeToParameterNamesDefaultsToEmpty() {
     BareProvider provider = new BareProvider();
-    assertEquals(provider.credentialTypeToParameterNames(), ImmutableMap.of());
+    assertThat(provider.credentialTypeToParameterNames()).isEmpty();
   }
 
+  @Test
   public void testLowerCamelCredentialTypesAndValuesAreValid() {
     new ValidCredentialParametersProvider();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "please correct credential type STS_SESSION to lowerCamel case")
+  @Test
   public void testIllegalArgumentWhenCredentialTypeIsntLowerCamel() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("please correct credential type STS_SESSION to lowerCamel case");
+
     new InvalidCredentialKeyProvider();
   }
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "please correct stsSession credential parameter access.key to lowerCamel case")
+  @Test
   public void testIllegalArgumentWhenCredentialParameterIsntLowerCamel() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage(
+        "please correct stsSession credential parameter access.key to lowerCamel case");
+
     new InvalidCredentialParameterProvider();
   }
 
@@ -52,9 +64,10 @@ public class ProviderTest {
 
     @Override
     public Map<String, Collection<String>> credentialTypeToParameterNames() {
-      return ImmutableMultimap.<String, String>builder()
-          .putAll("accessKey", "accessKey", "secretKey")
-          .putAll("stsSession", "accessKey", "secretKey", "sessionToken").build().asMap();
+      Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
+      options.put("accessKey", Arrays.asList("accessKey", "secretKey"));
+      options.put("stsSession", Arrays.asList("accessKey", "secretKey", "sessionToken"));
+      return options;
     }
 
     @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)
@@ -67,9 +80,10 @@ public class ProviderTest {
 
     @Override
     public Map<String, Collection<String>> credentialTypeToParameterNames() {
-      return ImmutableMultimap.<String, String>builder()
-          .putAll("accessKey", "accessKey", "secretKey")
-          .putAll("STS_SESSION", "accessKey", "secretKey", "sessionToken").build().asMap();
+      Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
+      options.put("accessKey", Arrays.asList("accessKey", "secretKey"));
+      options.put("STS_SESSION", Arrays.asList("accessKey", "secretKey", "sessionToken"));
+      return options;
     }
 
     @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)
@@ -82,9 +96,10 @@ public class ProviderTest {
 
     @Override
     public Map<String, Collection<String>> credentialTypeToParameterNames() {
-      return ImmutableMultimap.<String, String>builder()
-          .putAll("accessKey", "accessKey", "secretKey")
-          .putAll("stsSession", "access.key", "secret.key", "session.token").build().asMap();
+      Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
+      options.put("accessKey", Arrays.asList("accessKey", "secretKey"));
+      options.put("stsSession", Arrays.asList("access.key", "secret.key", "session.token"));
+      return options;
     }
 
     @dagger.Module(injects = DNSApiManager.class, includes = MockProvider.Module.class, complete = false)

@@ -2,11 +2,9 @@ package denominator.ultradns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -37,12 +35,11 @@ import static denominator.ultradns.UltraDNSTest.updateDirectionalPoolRecordRegio
 import static denominator.ultradns.UltraDNSTest.updateDirectionalPoolRecordResponse;
 import static denominator.ultradns.UltraDNSTest.updateDirectionalPoolRecordTemplate;
 import static java.lang.String.format;
-import static org.testng.Assert.assertFalse;
 
-@Test
 public class UltraDNSGeoResourceRecordSetApiMockTest {
 
-  MockUltraDNSServer server;
+  @Rule
+  public final MockUltraDNSServer server = new MockUltraDNSServer();
 
   String getDirectionalDNSGroupDetailsResponseEverywhereElse =
       "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
@@ -98,7 +95,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     assertEurope(iterator.next());
     assertEverywhereElse(iterator.next());
     assertUS(iterator.next());
-    assertFalse(iterator.hasNext());
+    assertThat(iterator).isEmpty();
 
     server.assertRequestHasBody(getDirectionalPoolsOfZone);
     server.assertRequestHasBody(getDirectionalDNSRecordsForHost);
@@ -123,7 +120,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     assertEurope(iterator.next());
     assertEverywhereElse(iterator.next());
     assertUS(iterator.next());
-    assertFalse(iterator.hasNext());
+    assertThat(iterator).isEmpty();
 
     server.assertRequestHasBody(getDirectionalDNSRecordsForHost);
     server.assertRequestHasBody(
@@ -150,7 +147,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     assertEurope(iterator.next());
     assertEverywhereElse(iterator.next());
     assertUS(iterator.next());
-    assertFalse(iterator.hasNext());
+    assertThat(iterator).isEmpty();
 
     server.assertRequestHasBody(getDirectionalDNSRecordsForHostIPV4);
     server.assertRequestHasBody(getDirectionalDNSRecordsForHostIPV6);
@@ -263,7 +260,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                         "South Dakota", "Tennessee", "Texas", "Undefined United States",
                         "United States Minor Outlying Islands", "Utah", "Vermont", "Virginia",
                         "Washington", "West Virginia", "Wisconsin", "Wyoming")
-        .containsOnlyRecords(CNAMEData.create("www-000000001.us-east-1.elb.amazonaws.com."));
+        .containsExactlyRecords(CNAMEData.create("www-000000001.us-east-1.elb.amazonaws.com."));
   }
 
   void assertEurope(ResourceRecordSet<?> actual) {
@@ -331,7 +328,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                         "Tokelau", "Tonga", "Tuvalu", "Undefined Australia / Oceania", "Vanuatu",
                         "Wallis and Futuna")
         .containsRegion("Antarctica", "Antarctica", "Bouvet Island", "French Southern Territories")
-        .containsOnlyRecords(
+        .containsExactlyRecords(
             CNAMEData.create("www-000000002.us-east-1.elb.amazonaws.com."));
   }
 
@@ -359,14 +356,4 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
                       "Vatican City"));
         }
       })).build();
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockUltraDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
-  }
 }

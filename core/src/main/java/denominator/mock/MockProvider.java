@@ -71,9 +71,7 @@ public class MockProvider extends BasicProvider {
 
   @Override
   public Map<String, Collection<String>> profileToRecordTypes() {
-    Map<String, Collection<String>>
-        profileToRecordTypes =
-        new LinkedHashMap<String, Collection<String>>();
+    Map<String, Collection<String>> profileToRecordTypes = super.profileToRecordTypes();
     profileToRecordTypes.put("geo", Arrays
         .asList("A", "AAAA", "CNAME", "NS", "PTR", "SPF", "TXT", "MX", "SRV", "DS", "CERT", "NAPTR",
                 "SSHFP", "LOC", "TLSA"));

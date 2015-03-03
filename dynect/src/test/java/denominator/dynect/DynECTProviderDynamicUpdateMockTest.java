@@ -2,11 +2,9 @@ package denominator.dynect;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import dagger.Module;
@@ -21,27 +19,16 @@ import static denominator.dynect.DynECTTest.noZones;
 import static denominator.dynect.DynECTTest.zones;
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Test(singleThreaded = true)
 public class DynECTProviderDynamicUpdateMockTest {
 
-  MockDynECTServer server;
-
-  static String
-      mismatch =
-      "{\"status\": \"failure\", \"data\": {}, \"job_id\": 305900967, \"msgs\": [{\"INFO\": \"login: IP address does not match current session\", \"SOURCE\": \"BLL\", \"ERR_CD\": \"INVALID_DATA\", \"LVL\": \"ERROR\"}, {\"INFO\": \"login: There was a problem with your credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
-
-  static String
-      sessionValid =
-      "{\"status\": \"success\", \"data\": {}, \"job_id\": 427274293, \"msgs\": [{\"INFO\": \"isalive: User session is still active\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
-
-  static String
-      badSession =
-      "{\"status\": \"failure\", \"data\": {}, \"job_id\": 427275274, \"msgs\": [{\"INFO\": \"login: Bad or expired credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": \"INVALID_DATA\", \"LVL\": \"ERROR\"}, {\"INFO\": \"login: There was a problem with your credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+  @Rule
+  public MockDynECTServer server = new MockDynECTServer();
 
   @Test
   public void ipMisMatchInvalidatesAndRetries() throws Exception {
     server.enqueueSessionResponse();
-    server.enqueue(new MockResponse().setResponseCode(400).setBody(mismatch));
+    server.enqueue(new MockResponse().setResponseCode(400).setBody(
+        "{\"status\": \"failure\", \"data\": {}, \"job_id\": 305900967, \"msgs\": [{\"INFO\": \"login: IP address does not match current session\", \"SOURCE\": \"BLL\", \"ERR_CD\": \"INVALID_DATA\", \"LVL\": \"ERROR\"}, {\"INFO\": \"login: There was a problem with your credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}"));
     server.enqueueSessionResponse();
     server.enqueue(new MockResponse().setBody(noZones));
 
@@ -129,13 +116,7 @@ public class DynECTProviderDynamicUpdateMockTest {
     }
   }
 
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockDynECTServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
-  }
+  static String
+      sessionValid =
+      "{\"status\": \"success\", \"data\": {}, \"job_id\": 427274293, \"msgs\": [{\"INFO\": \"isalive: User session is still active\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
 }

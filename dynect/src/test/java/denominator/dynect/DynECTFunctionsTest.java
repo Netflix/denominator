@@ -2,10 +2,11 @@ package denominator.dynect;
 
 import com.google.gson.JsonParser;
 
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+import org.junit.runners.Parameterized.Parameters;
 
-import java.io.IOException;
 import java.util.Map;
 
 import denominator.model.rdata.AAAAData;
@@ -21,11 +22,26 @@ import denominator.model.rdata.TXTData;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DynECTFunctionsTest{
+@RunWith(Parameterized.class)
+public class DynECTFunctionsTest {
 
-  @DataProvider(name = "rdata")
-  public Object[][] rdata() throws IOException {
-    return new Object[][] {
+  @Parameterized.Parameter(0)
+  public String type;
+  @Parameterized.Parameter(1)
+  public String inputJson;
+  @Parameterized.Parameter(2)
+  public Map<String, Object> expectedResult;
+
+  @Test
+  public void toRecord() {
+    assertThat(ToRecord.toRData(type, new JsonParser().parse(inputJson).getAsJsonObject()))
+        .isInstanceOf(expectedResult.getClass())
+        .isEqualTo(expectedResult);
+  }
+
+  @Parameters
+  public static Object[][] createData() {
+    return new Object[][]{
         {
             "SOA",
             "{\n"
@@ -120,13 +136,6 @@ public class DynECTFunctionsTest{
                 .build()
         }
     };
-  }
-
-  @Test(dataProvider = "rdata")
-  public void toRecord(String type, String inputJson, Map<String, Object> expectedResult) throws Exception {
-    assertThat(ToRecord.toRData(type, new JsonParser().parse(inputJson).getAsJsonObject()))
-        .isInstanceOf(expectedResult.getClass())
-        .isEqualTo(expectedResult);
   }
 }
 

@@ -1,23 +1,36 @@
 package denominator;
 
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
-import static org.testng.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class ResourceTypeToValueTest {
 
-  @Test(expectedExceptions = IllegalArgumentException.class, expectedExceptionsMessageRegExp = "ResourceTypes do not include RRRR; types: \\[A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, SSHFP, SPF, SRV\\]")
+  @Rule
+  public final ExpectedException thrown = ExpectedException.none();
+
+  @Test
   public void testNiceExceptionOnNotFound() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage(
+        "ResourceTypes do not include RRRR; types: [A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, SSHFP, SPF, SRV]");
+
     ResourceTypeToValue.lookup("RRRR");
   }
 
-  @Test(expectedExceptions = NullPointerException.class, expectedExceptionsMessageRegExp = "resource type was null")
+  @Test
   public void testNiceExceptionOnNull() {
+    thrown.expect(NullPointerException.class);
+    thrown.expectMessage("resource type was null");
+
     ResourceTypeToValue.lookup((String) null);
   }
 
   @Test
   public void testBasicCase() {
-    assertEquals(ResourceTypeToValue.lookup("AAAA"), Integer.valueOf(28));
+
+    assertThat(ResourceTypeToValue.lookup("AAAA")).isEqualTo(28);
   }
 }

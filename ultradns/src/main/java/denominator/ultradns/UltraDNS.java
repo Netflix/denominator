@@ -138,7 +138,7 @@ interface UltraDNS {
   static class Record {
 
     String id;
-    Date created;
+    Long created;
     String name;
     int typeCode;
     int ttl;

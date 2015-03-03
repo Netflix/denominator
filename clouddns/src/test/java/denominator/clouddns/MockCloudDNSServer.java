@@ -2,6 +2,11 @@ package denominator.clouddns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import com.squareup.okhttp.mockwebserver.MockWebServer;
+import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
 import java.io.IOException;
 
@@ -15,7 +20,7 @@ import static denominator.Credentials.ListCredentials;
 import static denominator.assertj.MockWebServerAssertions.assertThat;
 import static java.lang.String.format;
 
-final class MockCloudDNSServer extends CloudDNSProvider {
+final class MockCloudDNSServer extends CloudDNSProvider implements TestRule {
 
   @dagger.Module(injects = DNSApiManager.class, complete = false, includes =
       CloudDNSProvider.Module.class)
@@ -23,15 +28,14 @@ final class MockCloudDNSServer extends CloudDNSProvider {
 
   }
 
-  private final MockWebServer delegate = new MockWebServer();
+  private final MockWebServerRule delegate = new MockWebServerRule();
   private final String tokenId = "b84f4a37-5126-4603-9521-ccd0665fbde1";
   private String tenantId = "123123";
   private String username = "jclouds-joe";
   private String apiKey = "letmein";
   private String accessResponse;
 
-  MockCloudDNSServer() throws IOException {
-    delegate.play();
+  MockCloudDNSServer() {
     credentials(username, apiKey);
   }
 
@@ -105,6 +109,11 @@ final class MockCloudDNSServer extends CloudDNSProvider {
   }
 
   void shutdown() throws IOException {
-    delegate.shutdown();
+    delegate.get().shutdown();
+  }
+
+  @Override
+  public Statement apply(Statement base, Description description) {
+    return delegate.apply(base, description);
   }
 }

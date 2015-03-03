@@ -2,21 +2,18 @@ package denominator.discoverydns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
+import org.junit.Rule;
+import org.junit.Test;
 
 import denominator.DNSApiManager;
 
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
-@Test(singleThreaded = true)
 public class DiscoveryDNSCheckConnectionApiMockTest {
 
-  MockDiscoveryDNSServer server;
+  @Rule
+  public MockDiscoveryDNSServer server = new MockDiscoveryDNSServer();
 
   @Test
   public void success() throws Exception {
@@ -38,15 +35,5 @@ public class DiscoveryDNSCheckConnectionApiMockTest {
     assertFalse(api.checkConnection());
 
     server.assertRequest().hasMethod("GET").hasPath("/users");
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockDiscoveryDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

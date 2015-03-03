@@ -1,6 +1,6 @@
 package denominator.route53;
 
-import org.testng.annotations.Test;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -16,8 +16,6 @@ import feign.codec.Decoder;
 
 import static denominator.assertj.ModelAssertions.assertThat;
 import static feign.Util.UTF_8;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
 
 public class Route53DecoderTest {
 
@@ -61,7 +59,7 @@ public class Route53DecoderTest {
         .hasName("example2.com.")
         .hasId("Z2682N5HXP0BZ4");
 
-    assertEquals(result.next, "Z333333YYYYYYY");
+    assertThat(result.next).isEqualTo("Z333333YYYYYYY");
   }
 
   @Test
@@ -110,7 +108,7 @@ public class Route53DecoderTest {
         .hasName("example.com.")
         .hasType("SOA")
         .hasTtl(900)
-        .containsOnlyRecords(SOAData.builder()
+        .containsExactlyRecords(SOAData.builder()
                                  .mname("ns-2048.awsdns-64.net.")
                                  .rname("hostmaster.awsdns.com.")
                                  .serial(1)
@@ -124,14 +122,14 @@ public class Route53DecoderTest {
         .hasName("example.com.")
         .hasType("NS")
         .hasTtl(172800)
-        .containsOnlyRecords(NSData.create("ns-2048.awsdns-64.com."),
+        .containsExactlyRecords(NSData.create("ns-2048.awsdns-64.com."),
                              NSData.create("ns-2049.awsdns-65.net."),
                              NSData.create("ns-2050.awsdns-66.org."),
                              NSData.create("ns-2051.awsdns-67.co.uk."));
 
-    assertEquals(result.next.name, "testdoc2.example.com");
-    assertEquals(result.next.type, "NS");
-    assertNull(result.next.identifier);
+    assertThat(result.next.name).isEqualTo("testdoc2.example.com");
+    assertThat(result.next.type).isEqualTo("NS");
+    assertThat(result.next.identifier).isNull();
   }
 
   @Test
@@ -174,14 +172,14 @@ public class Route53DecoderTest {
         .hasQualifier("foobar")
         .hasTtl(300)
         .hasWeight(1)
-        .containsOnlyRecords(AData.create("1.2.3.4"));
+        .containsExactlyRecords(AData.create("1.2.3.4"));
 
     assertThat(result.get(1))
         .hasName("fooo.myzone.com.")
         .hasType("A")
-        .containsOnlyRecords(AliasTarget.create("Z3I0BTR7N27QRM",
+        .containsExactlyRecords(AliasTarget.create("Z3I0BTR7N27QRM",
                                                 "ipv4-route53recordsetlivetest.adrianc.myzone.com."));
-    assertNull(result.next);
+    assertThat(result.next).isNull();
   }
 
   private Response response(String xml) throws IOException {

@@ -2,11 +2,9 @@ package denominator.clouddns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+import org.junit.Rule;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import dagger.Module;
@@ -18,10 +16,10 @@ import denominator.Denominator;
 
 import static denominator.CredentialsConfiguration.credentials;
 
-@Test(singleThreaded = true)
 public class CloudDNSProviderDynamicUpdateMockTest {
 
-  MockCloudDNSServer server;
+  @Rule
+  public final MockCloudDNSServer server = new MockCloudDNSServer();
 
   @Test
   public void dynamicEndpointUpdates() throws Exception {
@@ -98,15 +96,5 @@ public class CloudDNSProviderDynamicUpdateMockTest {
     public Credentials get() {
       return dynamicCredentials.get();
     }
-  }
-
-  @BeforeMethod
-  public void resetServer() throws IOException {
-    server = new MockCloudDNSServer();
-  }
-
-  @AfterMethod
-  public void shutdownServer() throws IOException {
-    server.shutdown();
   }
 }

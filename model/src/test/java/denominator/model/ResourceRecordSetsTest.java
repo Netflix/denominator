@@ -332,7 +332,7 @@ public class ResourceRecordSetsTest {
           .hasName(longForm.name())
           .hasType(longForm.type())
           .hasTtl(longForm.ttl())
-          .containsOnlyRecords(longForm.records());
+          .containsExactlyRecords(longForm.records());
     }
   }
 }
