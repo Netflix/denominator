@@ -14,6 +14,7 @@ import feign.codec.ErrorDecoder;
 
 import static denominator.ultradns.UltraDNSTest.dirPoolNotFound;
 import static denominator.ultradns.UltraDNSTest.dirRecordNotFound;
+import static denominator.ultradns.UltraDNSTest.directionalNotEnabled;
 import static denominator.ultradns.UltraDNSTest.groupNotFound;
 import static denominator.ultradns.UltraDNSTest.invalidUser;
 import static denominator.ultradns.UltraDNSTest.poolAlreadyExists;
@@ -116,6 +117,17 @@ public class UltraDNSErrorDecoderTest {
     throw errors.decode(
         "UltraDNS#directionalRecordsInZoneAndGroupByNameAndType(String,String,String,int)",
         errorResponse(groupNotFound));
+  }
+
+  @Test
+  public void code4006() throws Exception {
+    thrown.expect(UltraDNSException.class);
+    thrown.expectMessage(
+        "UltraDNS#directionalRecordsInZoneAndGroupByNameAndType(String,String,String,int) failed with error 4006: Directional feature not Enabled or Directional migration is not done.");
+
+    throw errors.decode(
+        "UltraDNS#directionalRecordsInZoneAndGroupByNameAndType(String,String,String,int)",
+        errorResponse(directionalNotEnabled));
   }
 
   @Test
