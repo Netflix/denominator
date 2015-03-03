@@ -29,9 +29,6 @@ public class Live extends Suite {
   @Target(ElementType.TYPE)
   public @interface UseTestGraph {
 
-    /**
-     * @return a {@link TestGraph} class (must have a default constructor).
-     */
     Class<? extends TestGraph> value();
   }
 
@@ -40,7 +37,7 @@ public class Live extends Suite {
 
   public Live(Class<?> klass) throws InitializationError {
     super(klass, Collections.<Runner>emptyList());
-    graph = supplier(klass);
+    graph = testGraph(klass);
     if (graph.manager().checkConnection()) {
       runners = createRunners(klass);
     } else {
@@ -56,7 +53,7 @@ public class Live extends Suite {
     return Collections.unmodifiableList(result);
   }
 
-  private static TestGraph supplier(Class<?> klass) throws InitializationError {
+  private static TestGraph testGraph(Class<?> klass) throws InitializationError {
     try {
       return klass.isAnnotationPresent(UseTestGraph.class) ?
              klass.getAnnotation(UseTestGraph.class).value().newInstance() : new TestGraph();
