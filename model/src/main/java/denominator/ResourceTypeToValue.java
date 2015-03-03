@@ -56,7 +56,7 @@ public class ResourceTypeToValue {
    * >iana types</a>.
    */
   // enum only to look and format prettier than fluent bimap builder calls
-  private static enum ResourceTypes {
+  static enum ResourceTypes {
     /**
      * a host address
      */
@@ -98,9 +98,34 @@ public class ResourceTypeToValue {
     AAAA(28),
 
     /**
+     * Location record
+     */
+    LOC(29),
+
+    /**
+     * Naming Authority Pointer
+     */
+    NAPTR(35),
+    
+    /**
+     * Certificate record
+     */
+    CERT(37),
+
+    /**
+     * Delegation signer
+     */
+    DS(43),
+
+    /**
      * SSH Public Key Fingerprint
      */
     SSHFP(44),
+
+    /**
+     * TLSA certificate association
+     */
+    TLSA(52),
 
     /**
      * Sender Policy Framework
