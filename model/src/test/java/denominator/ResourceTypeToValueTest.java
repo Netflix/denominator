@@ -4,6 +4,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
+import java.util.Arrays;
+
+import denominator.ResourceTypeToValue.ResourceTypes;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ResourceTypeToValueTest {
@@ -15,7 +19,7 @@ public class ResourceTypeToValueTest {
   public void testNiceExceptionOnNotFound() {
     thrown.expect(IllegalArgumentException.class);
     thrown.expectMessage(
-        "ResourceTypes do not include RRRR; types: [A, NS, CNAME, SOA, PTR, MX, TXT, AAAA, SSHFP, SPF, SRV]");
+        "ResourceTypes do not include RRRR; types: " + Arrays.asList(ResourceTypes.values()));
 
     ResourceTypeToValue.lookup("RRRR");
   }
