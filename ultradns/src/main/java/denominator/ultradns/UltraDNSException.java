@@ -39,6 +39,10 @@ class UltraDNSException extends FeignException {
    */
   static final int GROUP_NOT_FOUND = 4003;
   /**
+   * Directional feature not Enabled or Directional migration is not done.
+   */
+  static final int DIRECTIONAL_NOT_ENABLED = 4006;
+  /**
    * Resource Record already exists.
    */
   static final int POOL_RECORD_ALREADY_EXISTS = 4009;
