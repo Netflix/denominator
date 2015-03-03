@@ -10,7 +10,7 @@ import denominator.model.ResourceRecordSet.Builder;
 import denominator.ultradns.UltraDNS.Record;
 
 import static denominator.common.Util.peekingIterator;
-import static denominator.ultradns.UltraDNSFunctions.forTypeAndRData;
+import static denominator.common.Util.toMap;
 
 class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>> {
 
@@ -38,13 +38,13 @@ class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>>
         .type(type)
         .ttl(record.ttl);
 
-    builder.add(forTypeAndRData(type, record.rdata));
+    builder.add(toMap(type, record.rdata));
 
     while (hasNext()) {
       Record next = peekingIterator.peek();
       if (fqdnAndTypeEquals(next, record)) {
         peekingIterator.next();
-        builder.add(forTypeAndRData(type, next.rdata));
+        builder.add(toMap(type, next.rdata));
       } else {
         break;
       }

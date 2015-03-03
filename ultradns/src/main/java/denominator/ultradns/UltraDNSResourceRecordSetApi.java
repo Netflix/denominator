@@ -15,7 +15,7 @@ import static denominator.ResourceTypeToValue.lookup;
 import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.nextOrNull;
-import static denominator.ultradns.UltraDNSFunctions.forTypeAndRData;
+import static denominator.common.Util.toMap;
 
 final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSetApi {
 
@@ -75,7 +75,7 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
         new ArrayList<Map<String, Object>>(rrset.records());
 
     for (Record record : records) {
-      Map<String, Object> rdata = forTypeAndRData(rrset.type(), record.rdata);
+      Map<String, Object> rdata = toMap(rrset.type(), record.rdata);
       if (recordsLeftToCreate.contains(rdata)) {
         recordsLeftToCreate.remove(rdata);
         if (ttlToApply == record.ttl) {
