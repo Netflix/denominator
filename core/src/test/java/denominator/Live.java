@@ -88,7 +88,8 @@ public class Live extends Suite {
       Zone zone = graph.zoneIfPresent();
       List<ResourceRecordSet<?>>
           rrsets =
-          profile.equals("basic") ? graph.basicRecordSets() : graph.recordSetsForProfile(profile);
+          profile.equals("basic") ? graph.basicRecordSets(klass)
+                                  : graph.recordSetsForProfile(klass, profile);
       List<Runner> result = new ArrayList<Runner>();
       for (ResourceRecordSet<?> rrs : rrsets) {
         TestWithParameters test = new TestWithParameters("[" + rrs + "]", getTestClass(),

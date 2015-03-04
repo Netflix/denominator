@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import denominator.mock.MockProvider;
 import denominator.model.ResourceRecordSet;
@@ -33,24 +32,18 @@ import static org.junit.Assume.assumeTrue;
 
 public class TestGraph {
 
-  private static final AtomicInteger recordPrefixInt = new AtomicInteger('a');
-  private static String recordPrefix = ((char) recordPrefixInt.getAndIncrement()) + "."
-                                       + getProperty("user.name").replace('.', '-');
-
   private final DNSApiManager manager;
   private final String zoneName;
   private final boolean addTrailingDotToZone;
-  private final String recordSuffix;
 
   public TestGraph() {
     this(Denominator.create(new MockProvider()), "denominator.io.");
   }
 
-  public TestGraph(DNSApiManager manager, String zoneName) {
+  protected TestGraph(DNSApiManager manager, String zoneName) {
     this.manager = manager;
     this.zoneName = zoneName;
     this.addTrailingDotToZone = !manager.provider().name().equals("clouddns");
-    this.recordSuffix = recordPrefix + "." + zoneName;
   }
 
   DNSApiManager manager() {
@@ -71,25 +64,29 @@ public class TestGraph {
     return result;
   }
 
-  List<ResourceRecordSet<?>> basicRecordSets() {
-    return filterRecordSets(manager.provider().basicRecordTypes());
+  List<ResourceRecordSet<?>> basicRecordSets(Class<?> testClass) {
+    return filterRecordSets(testClass, manager.provider().basicRecordTypes());
   }
 
-  List<ResourceRecordSet<?>> recordSetsForProfile(String profile) {
-    return filterRecordSets(manager.provider().profileToRecordTypes().get(profile));
+  List<ResourceRecordSet<?>> recordSetsForProfile(Class<?> testClass, String profile) {
+    return filterRecordSets(testClass, manager.provider().profileToRecordTypes().get(profile));
   }
 
-  private List<ResourceRecordSet<?>> filterRecordSets(Collection<String> recordTypes) {
+  private List<ResourceRecordSet<?>> filterRecordSets(Class<?> testClass, Collection<String> types) {
     List<ResourceRecordSet<?>> filtered = new ArrayList<ResourceRecordSet<?>>();
-    for (Map.Entry<String, ResourceRecordSet<?>> entry : stockRRSets().entrySet()) {
-      if (recordTypes.contains(entry.getKey())) {
+    for (Map.Entry<String, ResourceRecordSet<?>> entry : stockRRSets(testClass).entrySet()) {
+      if (types.contains(entry.getKey())) {
         filtered.add(entry.getValue());
       }
     }
     return filtered;
   }
 
-  private Map<String, ResourceRecordSet<?>> stockRRSets() {
+  /** Creates sample record sets named base on the {@code testClass}. */
+  private Map<String, ResourceRecordSet<?>> stockRRSets(Class<?> testClass) {
+    String recordPrefix = testClass.getSimpleName().toLowerCase() + "."
+                          + getProperty("user.name").replace('.', '-');
+    String recordSuffix = recordPrefix + "." + zoneName;
     String rdataSuffix = recordSuffix;
 
     if (addTrailingDotToZone && !recordSuffix.endsWith(".")) {
