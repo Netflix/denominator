@@ -13,7 +13,7 @@ import denominator.model.profile.Geo;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
 
 import static denominator.common.Util.peekingIterator;
-import static denominator.ultradns.UltraDNSFunctions.forTypeAndRData;
+import static denominator.common.Util.toMap;
 
 /**
  * Generally, this iterator will produce {@link ResourceRecordSet} for only a single record type.
@@ -63,7 +63,7 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
         ResourceRecordSet.builder().name(record.name).type(record.type)
             .qualifier(record.geoGroupName).ttl(record.ttl);
 
-    builder.add(forTypeAndRData(record.type, record.rdata));
+    builder.add(toMap(record.type, record.rdata));
 
     if (!cache.containsKey(record.geoGroupId)) {
       Geo
@@ -77,7 +77,7 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
       DirectionalRecord next = peekingIterator.peek();
       if (typeTTLAndGeoGroupEquals(next, record)) {
         peekingIterator.next();
-        builder.add(forTypeAndRData(record.type, next.rdata));
+        builder.add(toMap(record.type, next.rdata));
       } else {
         break;
       }

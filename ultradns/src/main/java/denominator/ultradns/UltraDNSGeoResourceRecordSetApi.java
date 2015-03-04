@@ -24,8 +24,8 @@ import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.concat;
 import static denominator.common.Util.filter;
 import static denominator.common.Util.nextOrNull;
+import static denominator.common.Util.toMap;
 import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
-import static denominator.ultradns.UltraDNSFunctions.forTypeAndRData;
 
 final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
@@ -170,7 +170,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         recordsByNameTypeAndQualifier(rrset.name(), rrset.type(), group);
     while (iterator.hasNext()) {
       DirectionalRecord record = iterator.next();
-      Map<String, Object> rdata = forTypeAndRData(record.type, record.rdata);
+      Map<String, Object> rdata = toMap(record.type, record.rdata);
       if (recordsLeftToCreate.contains(rdata)) {
         recordsLeftToCreate.remove(rdata);
         boolean shouldUpdate = false;
