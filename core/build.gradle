@@ -17,6 +17,6 @@ dependencies {
   testCompile 'junit:junit:4.12'
   testCompile 'org.assertj:assertj-core:1.7.1'
   testCompile 'com.squareup.okhttp:mockwebserver:2.2.0'
-  testCompile 'com.netflix.feign:feign-core:7.2.1'
+  testCompile 'com.netflix.feign:feign-core:7.3.0'
   testCompile  project(':denominator-model').sourceSets.test.output
 }
