@@ -4,8 +4,8 @@ sourceCompatibility = 1.6
 
 test {
   systemProperty 'route53.url', System.getProperty('route53.url', '')
-  systemProperty 'route53.accesskey', System.getProperty('route53.accesskey', '')
-  systemProperty 'route53.secretkey', System.getProperty('route53.secretkey', '')
+  systemProperty 'route53.accessKey', System.getProperty('route53.accessKey', '')
+  systemProperty 'route53.secretKey', System.getProperty('route53.secretKey', '')
   systemProperty 'route53.zone', System.getProperty('route53.zone', '')
 }
 

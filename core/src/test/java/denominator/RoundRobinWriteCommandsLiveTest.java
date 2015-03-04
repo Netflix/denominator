@@ -41,7 +41,7 @@ public class RoundRobinWriteCommandsLiveTest {
         .hasName(expected.name())
         .hasType(expected.type())
         .hasTtl(1800)
-        .containsExactlyRecords(expected.records().get(0));
+        .containsOnlyRecords(expected.records().get(0));
   }
 
   @Test
@@ -59,7 +59,7 @@ public class RoundRobinWriteCommandsLiveTest {
         .hasName(expected.name())
         .hasType(expected.type())
         .hasTtl(1800)
-        .containsExactlyRecords(expected.records().get(0), expected.records().get(1));
+        .containsOnlyRecords(expected.records().get(0), expected.records().get(1));
   }
 
   @Test
@@ -77,7 +77,7 @@ public class RoundRobinWriteCommandsLiveTest {
         .hasName(expected.name())
         .hasType(expected.type())
         .hasTtl(200000)
-        .containsExactlyRecords(expected.records().get(0), expected.records().get(1));
+        .containsOnlyRecords(expected.records().get(0), expected.records().get(1));
   }
 
   @Test
@@ -94,7 +94,7 @@ public class RoundRobinWriteCommandsLiveTest {
         .hasName(expected.name())
         .hasType(expected.type())
         .hasTtl(200000)
-        .containsExactlyRecords(expected.records().get(0));
+        .containsOnlyRecords(expected.records().get(0));
   }
 
   @Test
