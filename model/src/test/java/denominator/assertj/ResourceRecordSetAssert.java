@@ -51,6 +51,12 @@ public class ResourceRecordSetAssert
     return this;
   }
 
+  /** Asserts {@code records} are the only ones present, in any order. */
+  public ResourceRecordSetAssert containsOnlyRecords(Map<String, Object>... records) {
+    iterables.assertContainsOnly(info, actual.records(), records);
+    return this;
+  }
+
   public ResourceRecordSetAssert containsExactlyRecords(Map<String, Object>... records) {
     iterables.assertContainsExactly(info, actual.records(), records);
     return this;
