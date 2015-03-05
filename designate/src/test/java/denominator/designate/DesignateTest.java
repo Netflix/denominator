@@ -9,12 +9,13 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
+import denominator.Credentials;
+import denominator.Provider;
 import denominator.designate.Designate.Record;
 import denominator.designate.KeystoneV2.TokenIdAndPublicURL;
 import denominator.model.Zone;
 import feign.Feign;
 
-import static feign.Target.EmptyTarget.create;
 import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
@@ -29,7 +30,8 @@ public class DesignateTest {
     server.credentials("tenantId", "username", "password");
     server.enqueueAuthResponse();
 
-    KeystoneV2 api = Feign.create(create(KeystoneV2.class), new DesignateProvider.FeignModule());
+    DesignateProvider.FeignModule module = new DesignateProvider.FeignModule();
+    KeystoneV2 api = module.keystoneV2(module.feign());
     TokenIdAndPublicURL tokenIdAndPublicURL = api.passwordAuth(
         URI.create(server.url()), "tenantId", "username", "password");
 
@@ -41,6 +43,7 @@ public class DesignateTest {
 
   @Test
   public void limitsSuccess() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody("{\n"
                                               + "  \"limits\": {\n"
                                               + "    \"absolute\": {\n"
@@ -52,6 +55,7 @@ public class DesignateTest {
 
     assertThat(mockApi().limits()).hasSize(1);
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1/limits");
@@ -59,11 +63,13 @@ public class DesignateTest {
 
   @Test
   public void domainsPresent() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
     assertThat(mockApi().domains())
         .containsExactly(Zone.create("denominator.io.", domainId));
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1/domains");
@@ -71,10 +77,12 @@ public class DesignateTest {
 
   @Test
   public void domainsAbsent() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
 
     assertThat(mockApi().domains()).isEmpty();
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1/domains");
@@ -82,6 +90,7 @@ public class DesignateTest {
 
   @Test
   public void recordsPresent() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(recordsResponse));
 
     // note that the response parser orders these by name, type, data!
@@ -99,6 +108,7 @@ public class DesignateTest {
             tuple("www.denominator.io.", "A", 300, null, "192.0.2.2")
         );
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
@@ -106,10 +116,12 @@ public class DesignateTest {
 
   @Test
   public void recordsAbsent() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
 
     assertThat(mockApi().records(domainId)).isEmpty();
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
@@ -117,6 +129,7 @@ public class DesignateTest {
 
   @Test
   public void createMXRecord() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordResponse));
 
     Record record = new Record();
@@ -132,6 +145,7 @@ public class DesignateTest {
     assertThat(records).extracting("name", "type", "ttl", "priority", "data")
         .containsExactly(tuple("denominator.io.", "MX", 300, 10, "www.denominator.io."));
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("POST")
         .hasPath(format("/v1/domains/%s/records", domainId))
@@ -146,6 +160,7 @@ public class DesignateTest {
 
   @Test
   public void updateMXRecord() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordResponse));
 
     Record record = new Record();
@@ -162,6 +177,7 @@ public class DesignateTest {
     assertThat(records).extracting("name", "type", "ttl", "priority", "data")
         .containsExactly(tuple("denominator.io.", "MX", 300, 10, "www.denominator.io."));
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("PUT")
         .hasPath(format("/v1/domains/%s/records/%s", domainId, record.id))
@@ -176,6 +192,7 @@ public class DesignateTest {
 
   @Test
   public void createARecord() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(aRecordResponse));
 
     Record record = new Record();
@@ -189,6 +206,7 @@ public class DesignateTest {
     assertThat(records).extracting("name", "type", "ttl", "priority", "data")
         .containsExactly(tuple("www.denominator.io.", "A", null, null, "192.0.2.1"));
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("POST")
         .hasPath(format("/v1/domains/%s/records", domainId))
@@ -201,6 +219,7 @@ public class DesignateTest {
 
   @Test
   public void updateARecord() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(aRecordResponse));
 
     Record record = new Record();
@@ -215,6 +234,7 @@ public class DesignateTest {
     assertThat(records).extracting("name", "type", "ttl", "priority", "data")
         .containsExactly(tuple("www.denominator.io.", "A", null, null, "192.0.2.1"));
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("PUT")
         .hasPath(format("/v1/domains/%s/records/%s", domainId, record.id))
@@ -227,34 +247,40 @@ public class DesignateTest {
 
   @Test
   public void deleteRecord() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse());
 
     String recordId = "13d2516b-1f18-455b-aa05-1997b26192ad";
 
     mockApi().deleteRecord(domainId, recordId);
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("DELETE")
         .hasPath(format("/v1/domains/%s/records/%s", domainId, recordId));
   }
 
   Designate mockApi() {
-    final TokenIdAndPublicURL tokenIdAndPublicURL = new TokenIdAndPublicURL();
-    tokenIdAndPublicURL.tokenId = server.tokenId();
-    tokenIdAndPublicURL.publicURL = server.url() + "/v1";
-    return Feign.create(new DesignateTarget(new DesignateProvider() {
+    DesignateProvider.FeignModule module = new DesignateProvider.FeignModule();
+    Feign feign = module.feign();
+    KeystoneV2 keystoneV2 = module.keystoneV2(feign);
+    Provider provider = new DesignateProvider() {
       @Override
       public String url() {
-        return tokenIdAndPublicURL.publicURL;
+        return server.url();
       }
-    }, new javax.inject.Provider<TokenIdAndPublicURL>() {
+    };
+    javax.inject.Provider<Credentials> credentials = new javax.inject.Provider<Credentials>() {
 
       @Override
-      public TokenIdAndPublicURL get() {
-        return tokenIdAndPublicURL;
+      public Credentials get() {
+        return server.credentials();
       }
 
-    }), new DesignateProvider.FeignModule());
+    };
+    return feign.newInstance(
+        new DesignateTarget(provider,
+                            new InvalidatableAuthProvider(provider, keystoneV2, credentials)));
   }
 
   static String domainId = "62ac4caf-6108-4b74-b6fe-460967db32a7";

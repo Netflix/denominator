@@ -7,9 +7,8 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Map;
 
+import denominator.Credentials;
 import denominator.model.ResourceRecordSet;
 import denominator.route53.Route53.ActionOnResourceRecordSet;
 import feign.Feign;
@@ -83,7 +82,8 @@ public class Route53Test {
   @Test
   public void changeResourceRecordSetsRequestCreateADuplicate() throws Exception {
     thrown.expect(InvalidChangeBatchException.class);
-    thrown.expectMessage("Route53#changeResourceRecordSets(String,List) failed with errors [Tried to create resource record set www.denominator.io. type A, but it already exists]");
+    thrown.expectMessage(
+        "Route53#changeResourceRecordSets(String,List) failed with errors [Tried to create resource record set www.denominator.io. type A, but it already exists]");
 
     server.enqueue(new MockResponse().setResponseCode(400).setBody(
         "<InvalidChangeBatch xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
@@ -100,19 +100,20 @@ public class Route53Test {
   }
 
   Route53 mockApi() {
-    return Feign.create(new Route53Target(new Route53Provider() {
+    Feign feign = new Route53Provider.FeignModule().feign();
+    return feign.newInstance(new Route53Target(new Route53Provider() {
       @Override
       public String url() {
         return server.url();
       }
-    }, new javax.inject.Provider<Map<String, String>>() {
+    }, new InvalidatableAuthenticationHeadersProvider(new javax.inject.Provider<Credentials>() {
 
       @Override
-      public Map<String, String> get() {
-        return Collections.emptyMap();
+      public Credentials get() {
+        return server.credentials();
       }
 
-    }), new Route53Provider.FeignModule());
+    })));
   }
 
   String changeResourceRecordSetsRequestCreateA =

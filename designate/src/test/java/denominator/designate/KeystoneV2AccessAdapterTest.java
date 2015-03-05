@@ -25,7 +25,7 @@ public class KeystoneV2AccessAdapterTest {
 
   KeystoneV2 client = Feign.builder()
       .decoder(
-          new GsonDecoder(Arrays.<TypeAdapter<?>>asList(new KeystoneV2AccessAdapter("hpext:dns"))))
+          new GsonDecoder(Arrays.<TypeAdapter<?>>asList(new KeystoneV2AccessAdapter())))
       .target(Target.EmptyTarget.create(KeystoneV2.class, "keystone"));
   
   @Test

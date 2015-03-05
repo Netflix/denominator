@@ -10,21 +10,11 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
 
-import javax.inject.Inject;
-import javax.inject.Named;
-
 import denominator.designate.KeystoneV2.TokenIdAndPublicURL;
-
-import static denominator.common.Preconditions.checkNotNull;
 
 class KeystoneV2AccessAdapter extends TypeAdapter<TokenIdAndPublicURL> {
 
-  private final String serviceTypeSuffix;
-
-  @Inject
-  KeystoneV2AccessAdapter(@Named("serviceTypeSuffix") String serviceTypeSuffix) {
-    this.serviceTypeSuffix = checkNotNull(serviceTypeSuffix, "serviceTypeSuffix was null");
-  }
+  private final String serviceTypeSuffix = ":dns";
 
   static boolean isNull(JsonElement element) {
     return element == null || element.isJsonNull();

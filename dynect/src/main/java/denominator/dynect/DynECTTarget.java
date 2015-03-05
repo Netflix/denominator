@@ -1,7 +1,6 @@
 package denominator.dynect;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 import denominator.Provider;
 import feign.Request;
@@ -11,10 +10,10 @@ import feign.Target;
 class DynECTTarget implements Target<DynECT> {
 
   private final Provider provider;
-  private final javax.inject.Provider<String> lazyToken;
+  private final InvalidatableTokenProvider lazyToken;
 
   @Inject
-  DynECTTarget(Provider provider, @Named("Auth-Token") javax.inject.Provider<String> lazyToken) {
+  DynECTTarget(Provider provider, InvalidatableTokenProvider lazyToken) {
     this.provider = provider;
     this.lazyToken = lazyToken;
   }

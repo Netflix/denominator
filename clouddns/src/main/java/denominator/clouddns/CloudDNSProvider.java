@@ -20,7 +20,6 @@ import denominator.clouddns.RackspaceAdapters.JobIdAndStatusAdapter;
 import denominator.clouddns.RackspaceAdapters.RecordListAdapter;
 import denominator.clouddns.RackspaceApis.CloudDNS;
 import denominator.clouddns.RackspaceApis.CloudIdentity;
-import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
 import denominator.config.GeoUnsupported;
 import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
@@ -108,11 +107,9 @@ public class CloudDNSProvider extends BasicProvider {
     }
   }
 
-  @dagger.Module(//
-      injects = CloudDNSResourceRecordSetApi.Factory.class, //
-      complete = false, // doesn't bind Provider used by CloudDNSTarget
-      overrides = true, // builds Feign directly
-      includes = Feign.Defaults.class)
+  @dagger.Module(injects = CloudDNSResourceRecordSetApi.Factory.class,
+      complete = false // doesn't bind Provider used by DesignateTarget
+  )
   public static final class FeignModule {
 
     @Provides
@@ -128,14 +125,9 @@ public class CloudDNSProvider extends BasicProvider {
     }
 
     @Provides
-    public TokenIdAndPublicURL urlAndToken(InvalidatableAuthProvider provider) {
-      return provider.get();
-    }
-
-    @Provides
     @Singleton
-    Feign feign(Feign.Builder feignBuilder) {
-      return feignBuilder
+    Feign feign() {
+      return Feign.builder()
           .encoder(new GsonEncoder())
           .decoder(new GsonDecoder(Arrays.asList(
                        new KeystoneAccessAdapter("rax:dns"),

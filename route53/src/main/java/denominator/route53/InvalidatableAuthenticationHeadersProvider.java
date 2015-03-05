@@ -20,7 +20,7 @@ import static java.util.Locale.US;
 import static denominator.common.Preconditions.checkNotNull;
 
 // http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/RESTAuthentication.html
-public class InvalidatableAuthenticationHeadersProvider {
+final class InvalidatableAuthenticationHeadersProvider {
 
   private static final String
       AUTH_FORMAT =
