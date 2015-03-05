@@ -23,6 +23,8 @@ public class DiscoveryDNSLiveTest {
   public static class TestGraph extends denominator.TestGraph {
 
     public TestGraph() {
+      // TODO: read discoverydns.x509CertificatePem and discoverydns.privateKeyPem
+      // using bouncycastle and initialize accordingly
       super(DNSApiManagerFactory.create(new DiscoveryDNSProvider(url)), zone);
     }
   }
