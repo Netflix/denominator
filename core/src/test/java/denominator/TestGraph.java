@@ -51,6 +51,8 @@ public class TestGraph {
   }
 
   Zone zoneIfPresent() {
+    assumeTrue("zone not specified", zoneName != null);
+
     Zone result = null;
     List<Zone> currentZones = new ArrayList<Zone>();
     for (Zone zone : manager.api().zones()) {
@@ -124,13 +126,13 @@ public class TestGraph {
                spf("spf-" + recordSuffix,
                    Arrays.asList("v=spf1 a -all", "v=spf1 mx -all", "v=spf1 ipv6 -all")));
     result.put(
-        "SRV",
+        "SRV", // designate does not support priority zero!
         ResourceRecordSet.<SRVData>builder().name("_http._tcp" + recordSuffix).type("SRV")
-            .add(SRVData.builder().priority(0).weight(1).port(80).target("ipv4-" + rdataSuffix)
+            .add(SRVData.builder().priority(1).weight(1).port(80).target("ipv4-" + rdataSuffix)
                      .build())
-            .add(SRVData.builder().priority(0).weight(1).port(8080).target("ipv4-" + rdataSuffix)
+            .add(SRVData.builder().priority(1).weight(1).port(8080).target("ipv4-" + rdataSuffix)
                      .build())
-            .add(SRVData.builder().priority(0).weight(1).port(443).target("ipv4-" + rdataSuffix)
+            .add(SRVData.builder().priority(1).weight(1).port(443).target("ipv4-" + rdataSuffix)
                      .build())
             .build());
     result.put(
