@@ -29,7 +29,7 @@ public class UltraDNSErrorDecoderTest {
   @Rule
   public final ExpectedException thrown = ExpectedException.none();
 
-  ErrorDecoder errors = new UltraDNSErrorDecoder(new UltraDNSProvider.FeignModule().decoder());
+  ErrorDecoder errors = new UltraDNSErrorDecoder(UltraDNSProvider.FeignModule.decoder());
 
   static Response errorResponse(String body) {
     return Response.create(500, "Server Error", Collections.<String, Collection<String>>emptyMap(),

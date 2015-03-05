@@ -144,11 +144,9 @@ public class UltraDNSProvider extends BasicProvider {
     }
   }
 
-  @dagger.Module(
-      injects = UltraDNSResourceRecordSetApi.Factory.class,
-      complete = false, // doesn't bind Provider used by UltraDNSTarget
-      overrides = true, // builds Feign directly
-      includes = Feign.Defaults.class)
+  @dagger.Module(injects = UltraDNSResourceRecordSetApi.Factory.class,
+      complete = false // doesn't bind Provider used by UltraDNSTarget
+  )
   public static final class FeignModule {
 
     @Provides
@@ -158,35 +156,35 @@ public class UltraDNSProvider extends BasicProvider {
     }
 
     @Provides
-    Decoder decoder() {
-      return SAXDecoder.builder()
-          .registerContentHandler(NetworkStatusHandler.class)//
-          .registerContentHandler(IDHandler.class)//
-          .registerContentHandler(ZoneListHandler.class)//
-          .registerContentHandler(RecordListHandler.class)//
-          .registerContentHandler(DirectionalRecordListHandler.class)//
-          .registerContentHandler(DirectionalPoolListHandler.class)//
-          .registerContentHandler(RRPoolListHandler.class)//
-          .registerContentHandler(RegionTableHandler.class)//
-          .registerContentHandler(DirectionalGroupHandler.class)//
-          .registerContentHandler(UltraDNSError.class)//
-          .build();
-    }
-
-    @Provides
     @Singleton
-    Feign feign(Feign.Builder feignBuilder, Decoder decoder) {
+    Feign feign() {
       /**
        * {@link UltraDNS#updateDirectionalPoolRecord(DirectionalRecord, DirectionalGroup)} and {@link
        * UltraDNS#addDirectionalPoolRecord(DirectionalRecord, DirectionalGroup, String)} can take up
        * to 10 minutes to complete.
        */
       Options options = new Options(10 * 1000, 10 * 60 * 1000);
-      return feignBuilder
+      Decoder decoder = decoder();
+      return Feign.builder()
           .options(options)
           .encoder(new UltraDNSFormEncoder())
           .decoder(decoder)
           .errorDecoder(new UltraDNSErrorDecoder(decoder))
+          .build();
+    }
+
+    static Decoder decoder() {
+      return SAXDecoder.builder()
+          .registerContentHandler(NetworkStatusHandler.class)
+          .registerContentHandler(IDHandler.class)
+          .registerContentHandler(ZoneListHandler.class)
+          .registerContentHandler(RecordListHandler.class)
+          .registerContentHandler(DirectionalRecordListHandler.class)
+          .registerContentHandler(DirectionalPoolListHandler.class)
+          .registerContentHandler(RRPoolListHandler.class)
+          .registerContentHandler(RegionTableHandler.class)
+          .registerContentHandler(DirectionalGroupHandler.class)
+          .registerContentHandler(UltraDNSError.class)
           .build();
     }
   }

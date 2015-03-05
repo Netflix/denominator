@@ -654,7 +654,8 @@ public class UltraDNSTest {
   }
 
   UltraDNS mockApi() {
-    return Feign.create(new UltraDNSTarget(new UltraDNSProvider() {
+    Feign feign = new UltraDNSProvider.FeignModule().feign();
+    return feign.newInstance(new UltraDNSTarget(new UltraDNSProvider() {
       @Override
       public String url() {
         return server.url();
@@ -666,7 +667,7 @@ public class UltraDNSTest {
         return server.credentials();
       }
 
-    }), new UltraDNSProvider.FeignModule());
+    }));
   }
 
   /**

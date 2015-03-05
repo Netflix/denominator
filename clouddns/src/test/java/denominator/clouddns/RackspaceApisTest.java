@@ -6,17 +6,16 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.net.URI;
-import java.util.List;
 
+import denominator.Credentials;
+import denominator.Provider;
 import denominator.clouddns.RackspaceApis.CloudDNS;
 import denominator.clouddns.RackspaceApis.CloudIdentity;
 import denominator.clouddns.RackspaceApis.JobIdAndStatus;
-import denominator.clouddns.RackspaceApis.Record;
 import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
 import feign.Feign;
 
 import static denominator.assertj.ModelAssertions.assertThat;
-import static feign.Target.EmptyTarget.create;
 import static java.lang.String.format;
 import static org.assertj.core.groups.Tuple.tuple;
 
@@ -30,9 +29,9 @@ public class RackspaceApisTest {
     server.credentials("username", "password");
     server.enqueueAuthResponse();
 
-    CloudIdentity
-        api =
-        Feign.create(create(CloudIdentity.class), new CloudDNSProvider.FeignModule());
+    CloudDNSProvider.FeignModule module = new CloudDNSProvider.FeignModule();
+    CloudIdentity api = module.cloudIdentity(module.feign());
+
     TokenIdAndPublicURL tokenIdAndPublicURL = api.passwordAuth(
         URI.create(server.url()), "username", "password");
 
@@ -49,10 +48,12 @@ public class RackspaceApisTest {
 
   @Test
   public void limitsSuccess() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(limitsResponse));
 
     assertThat(mockApi().limits()).isNotEmpty();
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/limits");
@@ -60,12 +61,14 @@ public class RackspaceApisTest {
 
   @Test
   public void domainsPresent() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
     assertThat(mockApi().domains().get(0))
         .hasName("denominator.io")
         .hasId(String.valueOf("1234"));
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/domains");
@@ -73,10 +76,12 @@ public class RackspaceApisTest {
 
   @Test
   public void domainsAbsent() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody("{\"domains\":[]}"));
 
     assertThat(mockApi().domains()).isEmpty();
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/domains");
@@ -84,6 +89,7 @@ public class RackspaceApisTest {
 
   @Test
   public void recordsPresent() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(recordsResponse));
 
     assertThat(mockApi().records(domainId))
@@ -95,6 +101,7 @@ public class RackspaceApisTest {
             tuple("NS-9084763", "www.denominator.io", "NS", 300, null, "dns2.stabletransit.com")
         );
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1.0/123123/domains/%s/records", domainId));
@@ -102,10 +109,12 @@ public class RackspaceApisTest {
 
   @Test
   public void recordsAbsent() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody("{\"records\":[]}"));
 
     assertThat(mockApi().records(domainId)).isEmpty();
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1.0/123123/domains/%s/records", domainId));
@@ -113,6 +122,7 @@ public class RackspaceApisTest {
 
   @Test
   public void createMXRecord() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordInitialResponse));
 
     JobIdAndStatus job = mockApi().createRecordWithPriority(domainId, "www.denominator.io", "MX",
@@ -122,6 +132,7 @@ public class RackspaceApisTest {
     assertThat(job.id).isEqualTo("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
     assertThat(job.status).isEqualTo("RUNNING");
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("POST")
         .hasPath(format("/v1.0/123123/domains/%s/records", domainId))
@@ -130,6 +141,7 @@ public class RackspaceApisTest {
 
   @Test
   public void runningRequest() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordRunningResponse));
 
     JobIdAndStatus job = mockApi().getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
@@ -137,6 +149,7 @@ public class RackspaceApisTest {
     assertThat(job.id).isEqualTo("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
     assertThat(job.status).isEqualTo("RUNNING");
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/status/0ade2b3b-07e4-4e68-821a-fcce4f5406f3?showDetails=true");
@@ -144,6 +157,7 @@ public class RackspaceApisTest {
 
   @Test
   public void completedRequest() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordCompletedResponse));
 
     JobIdAndStatus job = mockApi().getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
@@ -151,6 +165,7 @@ public class RackspaceApisTest {
     assertThat(job.id).isEqualTo("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
     assertThat(job.status).isEqualTo("COMPLETED");
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/status/0ade2b3b-07e4-4e68-821a-fcce4f5406f3?showDetails=true");
@@ -158,6 +173,7 @@ public class RackspaceApisTest {
 
   @Test
   public void updateMXRecord() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordUpdateInitialResponse));
 
     JobIdAndStatus job = mockApi().updateRecord(domainId, "MX-4582544", 600,
@@ -166,6 +182,7 @@ public class RackspaceApisTest {
     assertThat(job.id).isEqualTo("e32eace1-c44f-49af-8f74-768fa34469f4");
     assertThat(job.status).isEqualTo("RUNNING");
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("PUT")
         .hasPath(format("/v1.0/123123/domains/%s/records/MX-4582544", domainId))
@@ -174,6 +191,7 @@ public class RackspaceApisTest {
 
   @Test
   public void deleteRecord() throws Exception {
+    server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordDeleteInitialResponse));
 
     JobIdAndStatus job = mockApi().deleteRecord(domainId, "MX-4582544");
@@ -181,28 +199,33 @@ public class RackspaceApisTest {
     assertThat(job.id).isEqualTo("da520d24-dd5b-4387-92be-2020a7f2b176");
     assertThat(job.status).isEqualTo("RUNNING");
 
+    server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("DELETE")
         .hasPath(format("/v1.0/123123/domains/%s/records/MX-4582544", domainId));
   }
 
   CloudDNS mockApi() {
-    final TokenIdAndPublicURL tokenIdAndPublicURL = new TokenIdAndPublicURL();
-    tokenIdAndPublicURL.tokenId = server.tokenId();
-    tokenIdAndPublicURL.publicURL = server.url() + "/v1.0/" + server.tenantId();
-    return Feign.create(new CloudDNSTarget(new CloudDNSProvider() {
+    CloudDNSProvider.FeignModule module = new CloudDNSProvider.FeignModule();
+    Feign feign = module.feign();
+    CloudIdentity cloudIdentity = module.cloudIdentity(feign);
+    Provider provider = new CloudDNSProvider() {
       @Override
       public String url() {
-        return tokenIdAndPublicURL.publicURL;
+        return server.url();
       }
-    }, new javax.inject.Provider<TokenIdAndPublicURL>() {
+    };
+    javax.inject.Provider<Credentials> credentials = new javax.inject.Provider<Credentials>() {
 
       @Override
-      public TokenIdAndPublicURL get() {
-        return tokenIdAndPublicURL;
+      public Credentials get() {
+        return server.credentials();
       }
 
-    }), new CloudDNSProvider.FeignModule());
+    };
+    return feign.newInstance(
+        new CloudDNSTarget(provider,
+                            new InvalidatableAuthProvider(provider, cloudIdentity, credentials)));
   }
 
   static String limitsResponse = "{\n"

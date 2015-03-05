@@ -3,9 +3,15 @@ package denominator.discoverydns;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
-import denominator.DNSApiManagerFactory;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+
+import denominator.DNSApiManager;
+import denominator.DNSApiManagerFactory.HttpLog;
+import denominator.Denominator;
 import denominator.Live;
 
+import static denominator.CredentialsConfiguration.credentials;
 import static feign.Util.emptyToNull;
 import static java.lang.System.getProperty;
 
@@ -22,10 +28,27 @@ public class DiscoveryDNSLiveTest {
 
   public static class TestGraph extends denominator.TestGraph {
 
+    /** Lazy initializing manager */
     public TestGraph() {
-      // TODO: read discoverydns.x509CertificatePem and discoverydns.privateKeyPem
-      // using bouncycastle and initialize accordingly
-      super(DNSApiManagerFactory.create(new DiscoveryDNSProvider(url)), zone);
+      super(null, zone);
+    }
+
+    /**
+     * Since discoverydns uses client auth, it cannot be eagerly initialized. This lazy initializes
+     * it, if the required credentials are present.
+     */
+    @Override
+    protected DNSApiManager manager() {
+      String x509CertificatePem = emptyToNull(getProperty("discoverydns.x509CertificatePem"));
+      String privateKeyPem = emptyToNull(getProperty("discoverydns.privateKeyPem"));
+      if (x509CertificatePem != null && privateKeyPem != null) {
+        // Use bouncycastle to read pems
+        X509Certificate certificate = null; // TODO: from x509CertificatePem
+        PrivateKey privateKey = null; // TODO: from privateKeyPem
+        Object credentials = credentials(certificate, privateKey);
+        return Denominator.create(new DiscoveryDNSProvider(url), credentials, new HttpLog());
+      }
+      return null;
     }
   }
 

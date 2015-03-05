@@ -40,22 +40,31 @@ public class TestGraph {
     this(Denominator.create(new MockProvider()), "denominator.io.");
   }
 
+  /**
+   * To lazy initialize {@code manager}, pass null and override {@link #manager()}.
+   */
   protected TestGraph(DNSApiManager manager, String zoneName) {
     this.manager = manager;
     this.zoneName = zoneName;
-    this.addTrailingDotToZone = !manager.provider().name().equals("clouddns");
+    this.addTrailingDotToZone = manager == null || !manager.provider().name().equals("clouddns");
   }
 
-  DNSApiManager manager() {
+  /**
+   * Returns null if the manager could not be initialized.
+   *
+   * <p/> Override to lazy initialize, for example if you are using TLS certificate auth.
+   */
+  protected DNSApiManager manager() {
     return manager;
   }
 
   Zone zoneIfPresent() {
+    assumeTrue("manager not initialized", manager() != null);
     assumeTrue("zone not specified", zoneName != null);
 
     Zone result = null;
     List<Zone> currentZones = new ArrayList<Zone>();
-    for (Zone zone : manager.api().zones()) {
+    for (Zone zone : manager().api().zones()) {
       if (zoneName.equals(zone.name())) {
         result = zone;
         break;
@@ -67,14 +76,15 @@ public class TestGraph {
   }
 
   List<ResourceRecordSet<?>> basicRecordSets(Class<?> testClass) {
-    return filterRecordSets(testClass, manager.provider().basicRecordTypes());
+    return filterRecordSets(testClass, manager().provider().basicRecordTypes());
   }
 
   List<ResourceRecordSet<?>> recordSetsForProfile(Class<?> testClass, String profile) {
-    return filterRecordSets(testClass, manager.provider().profileToRecordTypes().get(profile));
+    return filterRecordSets(testClass, manager().provider().profileToRecordTypes().get(profile));
   }
 
-  private List<ResourceRecordSet<?>> filterRecordSets(Class<?> testClass, Collection<String> types) {
+  private List<ResourceRecordSet<?>> filterRecordSets(Class<?> testClass,
+                                                      Collection<String> types) {
     List<ResourceRecordSet<?>> filtered = new ArrayList<ResourceRecordSet<?>>();
     for (Map.Entry<String, ResourceRecordSet<?>> entry : stockRRSets(testClass).entrySet()) {
       if (types.contains(entry.getKey())) {
@@ -84,7 +94,9 @@ public class TestGraph {
     return filtered;
   }
 
-  /** Creates sample record sets named base on the {@code testClass}. */
+  /**
+   * Creates sample record sets named base on the {@code testClass}.
+   */
   private Map<String, ResourceRecordSet<?>> stockRRSets(Class<?> testClass) {
     String recordPrefix = testClass.getSimpleName().toLowerCase() + "."
                           + getProperty("user.name").replace('.', '-');

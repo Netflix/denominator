@@ -47,7 +47,7 @@ public final class DNSApiManagerFactory {
   }
 
   @Module(overrides = true, library = true)
-  static final class HttpLog {
+  public static final class HttpLog {
 
     @Provides
     @Singleton

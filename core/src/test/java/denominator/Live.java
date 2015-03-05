@@ -38,7 +38,7 @@ public class Live extends Suite {
   public Live(Class<?> klass) throws InitializationError {
     super(klass, Collections.<Runner>emptyList());
     graph = testGraph(klass);
-    if (graph.manager().checkConnection()) {
+    if (graph.manager() != null && graph.manager().checkConnection()) {
       runners = createRunners(klass);
     } else {
       runners = Collections.emptyList();

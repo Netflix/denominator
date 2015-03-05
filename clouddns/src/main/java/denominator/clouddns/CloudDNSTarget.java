@@ -12,10 +12,10 @@ import feign.Target;
 class CloudDNSTarget implements Target<CloudDNS> {
 
   private final Provider provider;
-  private final javax.inject.Provider<TokenIdAndPublicURL> lazyUrlAndToken;
+  private final InvalidatableAuthProvider lazyUrlAndToken;
 
   @Inject
-  CloudDNSTarget(Provider provider, javax.inject.Provider<TokenIdAndPublicURL> lazyUrlAndToken) {
+  CloudDNSTarget(Provider provider, InvalidatableAuthProvider lazyUrlAndToken) {
     this.provider = provider;
     this.lazyUrlAndToken = lazyUrlAndToken;
   }
