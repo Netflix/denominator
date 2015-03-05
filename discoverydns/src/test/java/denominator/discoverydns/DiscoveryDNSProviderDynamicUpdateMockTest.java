@@ -7,9 +7,6 @@ import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import dagger.Module;
-import dagger.Provides;
-import denominator.Credentials;
 import denominator.DNSApi;
 import denominator.Denominator;
 
@@ -45,20 +42,5 @@ public class DiscoveryDNSProviderDynamicUpdateMockTest {
     api.zones().iterator();
 
     server.assertRequest().hasPath("/newPath/zones");
-  }
-
-  @Module(complete = false, library = true, overrides = true)
-  static class OverrideCredentials {
-
-    final AtomicReference<Credentials> dynamicCredentials;
-
-    OverrideCredentials(AtomicReference<Credentials> dynamicCredentials) {
-      this.dynamicCredentials = dynamicCredentials;
-    }
-
-    @Provides
-    public Credentials get() {
-      return dynamicCredentials.get();
-    }
   }
 }
