@@ -50,7 +50,7 @@ public class DenominatorTest {
                              "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           password       username password",
                              "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           apiKey         username apiKey",
                              "designate  http://localhost:5000/v2.0                          true           password       tenantId username password",
-                             "discoverydns https://api.reseller.discoverydns.com               false          clientCertificate certificatePem keyPem",
+                             "discoverydns https://api.reseller.discoverydns.com               false          clientCertificate x509Certificate privateKey",
                              "dynect     https://api2.dynect.net/REST                        false          password       customer username password",
                              "mock       mem:mock                                            false          ",
                              "route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey",
