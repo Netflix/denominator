@@ -134,23 +134,15 @@ public class DynECTProvider extends BasicProvider {
     }
   }
 
-  @dagger.Module(
-      injects = DynECTResourceRecordSetApi.Factory.class,
-      complete = false, // doesn't bind Provider used by SessionTarget
-      overrides = true, // builds Feign directly
-      includes = Feign.Defaults.class)
+  @dagger.Module(injects = DynECTResourceRecordSetApi.Factory.class,
+      complete = false // doesn't bind Provider used by SessionTarget
+  )
   public static final class FeignModule {
 
     @Provides
     @Singleton
     Session session(Feign feign, SessionTarget target) {
       return feign.newInstance(target);
-    }
-
-    @Provides
-    @Named("Auth-Token")
-    public String authToken(InvalidatableTokenProvider supplier) {
-      return supplier.get();
     }
 
     @Provides
@@ -167,8 +159,8 @@ public class DynECTProvider extends BasicProvider {
 
     @Provides
     @Singleton
-    Feign feign(Feign.Builder feignBuilder, DynECTErrorDecoder errorDecoder) {
-      return feignBuilder
+    Feign feign(DynECTErrorDecoder errorDecoder) {
+      return Feign.builder()
           .encoder(new GsonEncoder())
           .decoder(new GsonDecoder(Arrays.<TypeAdapter<?>>asList(
                        new TokenAdapter(),

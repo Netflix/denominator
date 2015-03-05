@@ -11,10 +11,10 @@ import feign.Target;
 class DesignateTarget implements Target<Designate> {
 
   private final Provider provider;
-  private final javax.inject.Provider<TokenIdAndPublicURL> lazyUrlAndToken;
+  private final InvalidatableAuthProvider lazyUrlAndToken;
 
   @Inject
-  DesignateTarget(Provider provider, javax.inject.Provider<TokenIdAndPublicURL> lazyUrlAndToken) {
+  DesignateTarget(Provider provider, InvalidatableAuthProvider lazyUrlAndToken) {
     this.provider = provider;
     this.lazyUrlAndToken = lazyUrlAndToken;
   }

@@ -6,8 +6,10 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicReference;
 
-import dagger.ObjectGraph;
+import denominator.Credentials;
+import denominator.dynect.InvalidatableTokenProvider.Session;
 import denominator.model.Zone;
 import feign.Feign;
 
@@ -83,11 +85,13 @@ public class DynECTTest {
   @Test
   public void ipMisMatchRetries() throws Exception {
     server.enqueue(new MockResponse().setResponseCode(400).setBody(mismatch));
+    server.enqueueSessionResponse(); // mismatch invalidates session!
     server.enqueue(new MockResponse().setBody(zones));
 
     mockApi().zones();
 
     server.assertRequest().hasMethod("GET").hasPath("/Zone");
+    server.assertSessionRequest();
     server.assertRequest().hasMethod("GET").hasPath("/Zone");
   }
 
@@ -133,20 +137,40 @@ public class DynECTTest {
   }
 
   DynECT mockApi() {
-    return ObjectGraph.create(new DynECTProvider.FeignModule()).get(Feign.class)
-        .newInstance(new DynECTTarget(new DynECTProvider() {
-          @Override
-          public String url() {
-            return server.url();
-          }
-        }, new javax.inject.Provider<String>() {
+    DynECTProvider.FeignModule module = new DynECTProvider.FeignModule();
+    DynECTProvider provider = new DynECTProvider() {
+      @Override
+      public String url() {
+        return server.url();
+      }
+    };
+    javax.inject.Provider<Credentials> credentials = new javax.inject.Provider<Credentials>() {
 
-          @Override
-          public String get() {
-            return server.token();
-          }
+      @Override
+      public Credentials get() {
+        return server.credentials();
+      }
 
-        }));
+    };
+    AtomicReference<Boolean> sessionValid = module.sessionValid();
+    DynECTErrorDecoder errorDecoder = new DynECTErrorDecoder(sessionValid);
+    Feign feign = module.feign(errorDecoder);
+    Session sessionApi = feign.newInstance(new SessionTarget(provider));
+    InvalidatableTokenProvider
+        tokenProvider =
+        new InvalidatableTokenProvider(provider, sessionApi, credentials, sessionValid);
+
+    // hard-coding session to be true to avoid further boilerplate.
+    tokenProvider.lastCredentialsHashCode = credentials.get().hashCode();
+    tokenProvider.value = "foo";
+    sessionValid.set(true);
+
+    return feign.newInstance(new DynECTTarget(new DynECTProvider() {
+      @Override
+      public String url() {
+        return server.url();
+      }
+    }, tokenProvider));
   }
 
   static final String

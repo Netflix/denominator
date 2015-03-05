@@ -19,11 +19,14 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Singleton;
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
+import dagger.Lazy;
 import dagger.Provides;
 import denominator.BasicProvider;
 import denominator.CheckConnection;
@@ -37,6 +40,7 @@ import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
 import denominator.discoverydns.DiscoveryDNS.ResourceRecords;
 import denominator.discoverydns.DiscoveryDNSAdapters.ResourceRecordsAdapter;
+import feign.Client;
 import feign.Feign;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
@@ -114,11 +118,9 @@ public class DiscoveryDNSProvider extends BasicProvider {
   }
 
 
-  @dagger.Module(//
-      injects = DiscoveryDNS.class, //
-      complete = false, // doesn't bind Provider used by DiscoveryDNSTarget
-      overrides = true, // builds Feign directly + SSLSocketFactory
-      includes = Feign.Defaults.class)
+  @dagger.Module(injects = DiscoveryDNS.class, //
+      complete = false // doesn't bind Provider used by DiscoveryDNSTarget
+  )
   public static final class FeignModule {
 
     @Provides
@@ -129,19 +131,39 @@ public class DiscoveryDNSProvider extends BasicProvider {
 
     @Provides
     @Singleton
-    Feign feign(Feign.Builder feignBuilder) {
+    Feign feign(Client client) {
       Gson gson = new GsonBuilder().setPrettyPrinting()
           .registerTypeAdapter(ResourceRecords.class, new ResourceRecordsAdapter()).create();
-      return feignBuilder
+      return Feign.builder()
+          .client(client)
           .encoder(new GsonEncoder(gson))
           .decoder(new GsonDecoder(gson))
           .build();
     }
 
-    // TODO: this doesn't allow for dynamic credential changes.
+    /**
+     * Returns a custom client which uses TLS client certificate authentication.
+     *
+     * <p/>
+     * Note: this eagerly fetches credentials in order to construct the SSL context.
+     */
     @Provides
-    SSLSocketFactory sslSocketFactory(javax.inject.Provider<Credentials> credentials) {
-      Credentials creds = credentials.get();
+    Client client(Credentials creds) {
+      final SSLSocketFactory sslSocketFactory = sslSocketFactory(creds);
+      return new Client.Default(new Lazy<SSLSocketFactory>() {
+        @Override
+        public SSLSocketFactory get() {
+          return sslSocketFactory;
+        }
+      }, new Lazy<HostnameVerifier>() {
+        @Override
+        public HostnameVerifier get() {
+          return HttpsURLConnection.getDefaultHostnameVerifier();
+        }
+      });
+    }
+
+    static SSLSocketFactory sslSocketFactory(Credentials creds) {
       final X509Certificate certificate;
       final PrivateKey privateKey;
       if (creds instanceof List) {

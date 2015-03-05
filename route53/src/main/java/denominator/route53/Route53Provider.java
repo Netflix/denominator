@@ -137,11 +137,9 @@ public class Route53Provider extends BasicProvider {
     }
   }
 
-  @dagger.Module(
-      injects = Route53ResourceRecordSetApi.Factory.class,
-      complete = false, // doesn't bind Provider used by Route53Target
-      overrides = true, // builds Feign directly
-      includes = Feign.Defaults.class)
+  @dagger.Module(injects = Route53ResourceRecordSetApi.Factory.class,
+      complete = false // doesn't bind Provider used by Route53Target
+  )
   public static final class FeignModule {
 
     @Provides
@@ -151,27 +149,22 @@ public class Route53Provider extends BasicProvider {
     }
 
     @Provides
-    Map<String, String> authHeaders(InvalidatableAuthenticationHeadersProvider provider) {
-      return provider.get();
+    @Singleton
+    Feign feign() {
+      Decoder decoder = decoder();
+      return Feign.builder()
+          .encoder(new EncodeChanges())
+          .decoder(decoder)
+          .errorDecoder(new Route53ErrorDecoder(decoder))
+          .build();
     }
 
-    @Provides
-    Decoder decoder() {
+    static Decoder decoder() {
       return SAXDecoder.builder()
           .registerContentHandler(ListHostedZonesResponseHandler.class)
           .registerContentHandler(ListResourceRecordSetsResponseHandler.class)
           .registerContentHandler(Messages.class)
           .registerContentHandler(Route53Error.class)
-          .build();
-    }
-
-    @Provides
-    @Singleton
-    Feign feign(Feign.Builder feignBuilder, Decoder decoder) {
-      return feignBuilder
-          .encoder(new EncodeChanges())
-          .decoder(decoder)
-          .errorDecoder(new Route53ErrorDecoder(decoder))
           .build();
     }
   }

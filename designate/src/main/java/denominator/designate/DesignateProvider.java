@@ -10,7 +10,6 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Provides;
@@ -26,7 +25,6 @@ import denominator.config.WeightedUnsupported;
 import denominator.designate.DesignateAdapters.DomainListAdapter;
 import denominator.designate.DesignateAdapters.RecordAdapter;
 import denominator.designate.DesignateAdapters.RecordListAdapter;
-import denominator.designate.KeystoneV2.TokenIdAndPublicURL;
 import feign.Feign;
 import feign.Target.EmptyTarget;
 import feign.gson.GsonDecoder;
@@ -106,11 +104,9 @@ public class DesignateProvider extends BasicProvider {
     }
   }
 
-  @dagger.Module(//
-      injects = DesignateResourceRecordSetApi.Factory.class, //
-      complete = false, // doesn't bind Provider used by DesignateTarget
-      overrides = true, // builds Feign directly
-      includes = Feign.Defaults.class)
+  @dagger.Module(injects = DesignateResourceRecordSetApi.Factory.class,
+      complete = false // doesn't bind Provider used by DesignateTarget
+  )
   public static final class FeignModule {
 
     @Provides
@@ -119,32 +115,20 @@ public class DesignateProvider extends BasicProvider {
       return feign.newInstance(target);
     }
 
-    // override binding to use whatever your service type is
-    @Provides
-    @Named("serviceTypeSuffix")
-    String serviceTypeSuffix() {
-      return ":dns";
-    }
-
     @Provides
     @Singleton
-    KeystoneV2 cloudIdentity(Feign feign) {
+    KeystoneV2 keystoneV2(Feign feign) {
       return feign.newInstance(EmptyTarget.create(KeystoneV2.class, "keystone"));
     }
 
     @Provides
-    TokenIdAndPublicURL urlAndToken(InvalidatableAuthProvider provider) {
-      return provider.get();
-    }
-
-    @Provides
     @Singleton
-    Feign feign(Feign.Builder feignBuilder, KeystoneV2AccessAdapter keystoneDecoder) {
+    Feign feign() {
       RecordAdapter recordAdapter = new RecordAdapter();
-      return feignBuilder
+      return Feign.builder()
           .encoder(new GsonEncoder(Collections.<TypeAdapter<?>>singleton(recordAdapter)))
           .decoder(new GsonDecoder(Arrays.asList(
-                       keystoneDecoder,
+                       new KeystoneV2AccessAdapter(),
                        recordAdapter,
                        new DomainListAdapter(),
                        new RecordListAdapter()))

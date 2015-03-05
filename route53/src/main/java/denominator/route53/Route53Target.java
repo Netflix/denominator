@@ -1,6 +1,5 @@
 package denominator.route53;
 
-import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.inject.Inject;
@@ -13,10 +12,10 @@ import feign.Target;
 class Route53Target implements Target<Route53> {
 
   private final Provider provider;
-  private final javax.inject.Provider<Map<String, String>> lazyAuthHeaders;
+  private final InvalidatableAuthenticationHeadersProvider lazyAuthHeaders;
 
   @Inject
-  Route53Target(Provider provider, javax.inject.Provider<Map<String, String>> lazyAuthHeaders) {
+  Route53Target(Provider provider, InvalidatableAuthenticationHeadersProvider lazyAuthHeaders) {
     this.provider = provider;
     this.lazyAuthHeaders = lazyAuthHeaders;
   }
