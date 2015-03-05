@@ -4,8 +4,8 @@ sourceCompatibility = 1.6
 
 test {
     systemProperty 'discoverydns.url', System.getProperty('discoverydns.url', '')
-    systemProperty 'discoverydns.certificatePem', System.getProperty('discoverydns.certificatePem', '')
-    systemProperty 'discoverydns.keyPem', System.getProperty('discoverydns.keyPem', '')
+    systemProperty 'discoverydns.x509CertificatePem', System.getProperty('discoverydns.x509CertificatePem', '')
+    systemProperty 'discoverydns.privateKeyPem', System.getProperty('discoverydns.privateKeyPem', '')
     systemProperty 'discoverydns.zone', System.getProperty('discoverydns.zone', '')
 }
 

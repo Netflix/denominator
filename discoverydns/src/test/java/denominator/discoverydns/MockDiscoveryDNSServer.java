@@ -1,7 +1,7 @@
 package denominator.discoverydns;
 
+import com.squareup.okhttp.internal.SslContextBuilder;
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.MockWebServer;
 import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
 
 import org.junit.rules.TestRule;
@@ -9,6 +9,11 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 
 import denominator.Credentials;
 import denominator.CredentialsConfiguration;
@@ -22,18 +27,27 @@ import static denominator.assertj.MockWebServerAssertions.assertThat;
 final class MockDiscoveryDNSServer extends DiscoveryDNSProvider implements TestRule {
 
   private final MockWebServerRule delegate = new MockWebServerRule();
-  
-  // TODO: actually make this use real pems!
-  private String certificatePem = "certificatePem";
-  private String keyPem = "keyPem";
+  private final X509Certificate certificate;
+  private final PrivateKey privateKey;
 
   MockDiscoveryDNSServer() {
-    credentials(certificatePem, keyPem);
+    try {
+      KeyPair keyPair = new SslContextBuilder("localhost").generateKeyPair();
+      X509Certificate
+          certificate =
+          new SslContextBuilder("localhost").selfSignedCertificate(keyPair, "1");
+      this.certificate = certificate;
+      this.privateKey = keyPair.getPrivate();
+      KeyStore serverKeyStore = FeignModule.keyStore(certificate, privateKey);
+      delegate.get().useHttps(new FeignModule().sslSocketFactory(serverKeyStore), false);
+    } catch (GeneralSecurityException e) {
+      throw new AssertionError(e);
+    }
   }
 
   @Override
   public String url() {
-    return "http://localhost:" + delegate.getPort();
+    return "https://localhost:" + delegate.getPort();
   }
 
   DNSApiManager connect() {
@@ -41,13 +55,7 @@ final class MockDiscoveryDNSServer extends DiscoveryDNSProvider implements TestR
   }
 
   Credentials credentials() {
-    return ListCredentials.from(certificatePem, keyPem);
-  }
-
-  MockDiscoveryDNSServer credentials(String certificatePem, String keyPem) {
-    this.certificatePem = certificatePem;
-    this.keyPem = keyPem;
-    return this;
+    return ListCredentials.from(certificate, privateKey);
   }
 
   void enqueue(MockResponse mockResponse) {

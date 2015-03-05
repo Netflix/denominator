@@ -20,7 +20,7 @@ public abstract class BasicProvider implements Provider {
   /**
    * if we choose to support numbers, this will need to be updated
    */
-  private static Pattern lowerCamel = Pattern.compile("^[a-z]+([A-Z][a-z]+)*$");
+  private static Pattern lowerCamel = Pattern.compile("^[a-z0-9]+([A-Z][a-z]+)*$");
 
   // protected to ensure subclassed
   protected BasicProvider() {

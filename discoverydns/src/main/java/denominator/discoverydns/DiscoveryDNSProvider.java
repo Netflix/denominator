@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -16,11 +18,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
 
 import dagger.Provides;
 import denominator.BasicProvider;
@@ -79,7 +81,7 @@ public class DiscoveryDNSProvider extends BasicProvider {
   @Override
   public Map<String, Collection<String>> credentialTypeToParameterNames() {
     Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
-    options.put("clientCertificate", Arrays.asList("certificatePem", "keyPem"));
+    options.put("clientCertificate", Arrays.asList("x509Certificate", "privateKey"));
     return options;
   }
 
@@ -138,44 +140,60 @@ public class DiscoveryDNSProvider extends BasicProvider {
 
     // TODO: this doesn't allow for dynamic credential changes.
     @Provides
-    SSLSocketFactory sslSocketFactory(Provider<Credentials> credentials) {
+    SSLSocketFactory sslSocketFactory(javax.inject.Provider<Credentials> credentials) {
       Credentials creds = credentials.get();
-      String cert;
-      String key;
+      final X509Certificate certificate;
+      final PrivateKey privateKey;
       if (creds instanceof List) {
         @SuppressWarnings("unchecked")
         List<Object> listCreds = (List<Object>) creds;
-        cert = listCreds.get(0).toString();
-        key = listCreds.get(1).toString();
+        certificate = (X509Certificate) listCreds.get(0);
+        privateKey = (PrivateKey) listCreds.get(1);
       } else if (creds instanceof Map) {
         @SuppressWarnings("unchecked")
         Map<String, Object> mapCreds = (Map<String, Object>) creds;
-        cert = checkNotNull(mapCreds.get("certificatePem"), "certificatePem").toString();
-        key = checkNotNull(mapCreds.get("keyPem"), "keyPem").toString();
+        certificate =
+            (X509Certificate) checkNotNull(mapCreds.get("x509Certificate"), "x509Certificate");
+        privateKey = (PrivateKey) checkNotNull(mapCreds.get("privateKey"), "privateKey");
       } else {
         throw new IllegalArgumentException("Unsupported credential type: " + creds);
       }
 
+      KeyStore keyStore = keyStore(certificate, privateKey);
+      return sslSocketFactory(keyStore);
+    }
+
+    private static final char[] KEYSTORE_PASSWORD = "password".toCharArray();
+
+    static KeyStore keyStore(X509Certificate certificate, PrivateKey privateKey) {
       try {
-        Certificate certObj = Pems.readCertificate(cert);
-        PrivateKey keyObj = Pems.readPrivateKey(key);
-
-        KeyManagerFactory
-            kmf =
-            KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(null, null);
-        // TODO: document why we are saying dummy alias or use a better name!
-        keyStore.setKeyEntry("dummy alias", keyObj, null, new Certificate[]{certObj});
-        kmf.init(keyStore, null);
-
-        SSLContext context = SSLContext.getInstance("TLSv1.1");
-        context.init(kmf.getKeyManagers(), null, null);
-        return context.getSocketFactory();
-      } catch (IOException e) {
-        throw new IllegalArgumentException("Key or certificate could not be read");
+        KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+        keyStore.load(null, KEYSTORE_PASSWORD);
+        Certificate[] certificateChain = {certificate};
+        keyStore.setKeyEntry("privateKey", privateKey, KEYSTORE_PASSWORD, certificateChain);
+        keyStore.setCertificateEntry("x509Certificate", certificate);
+        return keyStore;
       } catch (GeneralSecurityException e) {
-        throw new IllegalArgumentException("Key or certificate could not be initialised");
+        throw new IllegalArgumentException("Could not create a KeyStore", e);
+      } catch (IOException e) {
+        throw new IllegalArgumentException("Could not create a KeyStore", e);
+      }
+    }
+
+    static SSLSocketFactory sslSocketFactory(KeyStore keyStore) {
+      try {
+        KeyManagerFactory keyManagerFactory =
+            KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyManagerFactory.init(keyStore, KEYSTORE_PASSWORD);
+        TrustManagerFactory trustManagerFactory =
+            TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustManagerFactory.init(keyStore);
+        SSLContext sslContext = SSLContext.getInstance("TLSv1.1");
+        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(),
+                        new SecureRandom());
+        return sslContext.getSocketFactory();
+      } catch (GeneralSecurityException e) {
+        throw new IllegalArgumentException("Could not initialize SSLSocketFactory!", e);
       }
     }
   }
