@@ -7,6 +7,7 @@
 * Reformats code according to [Google Java Style](https://google-styleguide.googlecode.com/svn/trunk/javaguide.html)
 * Removes java.beans.ConstructorProperties from value types
 * Removes dependency on sun.misc
+* Removes DNSSec and LOC RData types; fix CERT
 
 ### Version 4.3.5
 * Support for more exotic RRtypes added
