@@ -7,5 +7,3 @@ import denominator.Live.UseTestGraph;
 public class UltraDNSCheckConnectionLiveTest extends CheckConnectionLiveTest {
 
 }
-
- 
