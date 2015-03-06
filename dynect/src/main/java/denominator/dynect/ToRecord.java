@@ -1,16 +1,17 @@
 package denominator.dynect;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+
 import denominator.dynect.DynECT.Record;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
+import denominator.model.rdata.CERTData;
 import denominator.model.rdata.CNAMEData;
 import denominator.model.rdata.MXData;
 import denominator.model.rdata.NSData;
@@ -59,6 +60,12 @@ enum ToRecord {
                  .build();
     } else if ("TXT".equals(type)) {
       return TXTData.create(rdata.get("txtdata").getAsString());
+    } else if ("CERT".equals(type)) {
+        return CERTData.builder()
+                .format(rdata.get("format").getAsInt())
+                .tag(rdata.get("tag").getAsInt())
+                .algorithm(rdata.get("algorithm").getAsInt())
+                .certificate(rdata.get("certificate").getAsString()).build();
     } else {
       Map<String, Object> builder = new LinkedHashMap<String, Object>();
       for (Entry<String, JsonElement> entry : rdata.entrySet()) {

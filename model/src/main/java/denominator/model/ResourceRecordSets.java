@@ -8,8 +8,6 @@ import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CERTData;
 import denominator.model.rdata.CNAMEData;
-import denominator.model.rdata.DSData;
-import denominator.model.rdata.LOCData;
 import denominator.model.rdata.MXData;
 import denominator.model.rdata.NAPTRData;
 import denominator.model.rdata.NSData;
@@ -17,9 +15,7 @@ import denominator.model.rdata.PTRData;
 import denominator.model.rdata.SPFData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.SSHFPData;
-import denominator.model.rdata.TLSAData;
 import denominator.model.rdata.TXTData;
-
 import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 
@@ -561,52 +557,6 @@ public class ResourceRecordSets {
   }
 
   /**
-   * creates ds set of {@link denominator.model.rdata.DSData DS} records for the specified name and
-   * ttl.
-   *
-   * @param name   ex. {@code denominator.io.}
-   * @param dsdata {@code 12345 1 1 B33F}
-   */
-  public static ResourceRecordSet<DSData> ds(String name, String dsdata) {
-    return new DSBuilder().name(name).add(dsdata).build();
-  }
-
-  /**
-   * creates ds set of {@link denominator.model.rdata.DSData DS} records for the specified name and
-   * ttl.
-   *
-   * @param name   ex. {@code denominator.io.}
-   * @param ttl    see {@link ResourceRecordSet#ttl()}
-   * @param dsdata {@code 12345 1 1 B33F}
-   */
-  public static ResourceRecordSet<DSData> ds(String name, int ttl, String dsdata) {
-    return new DSBuilder().name(name).ttl(ttl).add(dsdata).build();
-  }
-
-  /**
-   * creates ds set of {@link denominator.model.rdata.DSData DS} records for the specified name and
-   * ttl.
-   *
-   * @param name   ex. {@code denominator.io.}
-   * @param dsdata dsdata values ex. {@code [12345 1 1 B33F, 6789 1 1 F00M00]}
-   */
-  public static ResourceRecordSet<DSData> ds(String name, Collection<String> dsdata) {
-    return new DSBuilder().name(name).addAll(dsdata).build();
-  }
-
-  /**
-   * creates ds set of {@link denominator.model.rdata.DSData DS} records for the specified name and
-   * ttl.
-   *
-   * @param name   ex. {@code denominator.io.}
-   * @param ttl    see {@link ResourceRecordSet#ttl()}
-   * @param dsdata dsdata values ex. {@code [12345 1 1 B33F, 6789 1 1 F00M00]}
-   */
-  public static ResourceRecordSet<DSData> ds(String name, int ttl, Collection<String> dsdata) {
-    return new DSBuilder().name(name).ttl(ttl).addAll(dsdata).build();
-  }
-
-  /**
    * creates cert set of {@link denominator.model.rdata.CERTData CERT} records for the specified
    * name and ttl.
    *
@@ -751,101 +701,6 @@ public class ResourceRecordSets {
     return new SSHFPBuilder().name(name).ttl(ttl).addAll(sshfpdata).build();
   }
 
-  /**
-   * creates loc set of {@link denominator.model.rdata.LOCData LOC} records for the specified name
-   * and ttl.
-   *
-   * @param name    ex. {@code denominator.io.}
-   * @param locdata locdata values ex. {@code 37 48 48.892 S 144 57 57.502 E 26m 10m 100m 10m}
-   */
-  public static ResourceRecordSet<LOCData> loc(String name, String locdata) {
-    return new LOCBuilder().name(name).add(locdata).build();
-  }
-
-  /**
-   * creates loc set of {@link denominator.model.rdata.LOCData LOC} records for the specified name
-   * and ttl.
-   *
-   * @param name    ex. {@code denominator.io.}
-   * @param ttl     see {@link ResourceRecordSet#ttl()}
-   * @param locdata locdata values ex. {@code 37 48 48.892 S 144 57 57.502 E 26m 10m 100m 10m}
-   */
-  public static ResourceRecordSet<LOCData> loc(String name, int ttl, String locdata) {
-    return new LOCBuilder().name(name).ttl(ttl).add(locdata).build();
-  }
-
-  /**
-   * creates loc set of {@link denominator.model.rdata.LOCData LOC} records for the specified name
-   * and ttl.
-   *
-   * @param name    ex. {@code denominator.io.}
-   * @param locdata locdata values ex. {@code [37 48 48.892 S 144 57 57.502 E 26m 10m 100m 10m, 48
-   *                12 27.879 N 16 22 18.08 E 172m 10m 100m 10m]}
-   */
-  public static ResourceRecordSet<LOCData> loc(String name, Collection<String> locdata) {
-    return new LOCBuilder().name(name).addAll(locdata).build();
-  }
-
-  /**
-   * creates loc set of {@link denominator.model.rdata.LOCData LOC} records for the specified name
-   * and ttl.
-   *
-   * @param name    ex. {@code denominator.io.}
-   * @param ttl     see {@link ResourceRecordSet#ttl()}
-   * @param locdata locdata values ex. {@code [37 48 48.892 S 144 57 57.502 E 26m 10m 100m 10m, 48
-   *                12 27.879 N 16 22 18.08 E 172m 10m 100m 10m]}
-   */
-  public static ResourceRecordSet<LOCData> loc(String name, int ttl, Collection<String> locdata) {
-    return new LOCBuilder().name(name).ttl(ttl).addAll(locdata).build();
-  }
-
-  /**
-   * creates tlsa set of {@link denominator.model.rdata.TLSAData TLSA} records for the specified
-   * name and ttl.
-   *
-   * @param name     ex. {@code denominator.io.}
-   * @param tlsadata tlsadata values ex. {@code 1 1 1 B33F}
-   */
-  public static ResourceRecordSet<TLSAData> tlsa(String name, String tlsadata) {
-    return new TLSABuilder().name(name).add(tlsadata).build();
-  }
-
-  /**
-   * creates tlsa set of {@link denominator.model.rdata.TLSAData TLSA} records for the specified
-   * name and ttl.
-   *
-   * @param name     ex. {@code denominator.io.}
-   * @param ttl      see {@link ResourceRecordSet#ttl()}
-   * @param tlsadata tlsadata values ex. {@code 1 1 1 B33F}
-   */
-  public static ResourceRecordSet<TLSAData> tlsa(String name, int ttl, String tlsadata) {
-    return new TLSABuilder().name(name).ttl(ttl).add(tlsadata).build();
-  }
-
-  /**
-   * creates tlsa set of {@link denominator.model.rdata.TLSAData TLSA} records for the specified
-   * name and ttl.
-   *
-   * @param name     ex. {@code denominator.io.}
-   * @param tlsadata tlsadata values ex. {@code [1 1 1 B33F, 1 1 1 F00M00]}
-   */
-  public static ResourceRecordSet<TLSAData> tlsa(String name, Collection<String> tlsadata) {
-    return new TLSABuilder().name(name).addAll(tlsadata).build();
-  }
-
-  /**
-   * creates tlsa set of {@link denominator.model.rdata.TLSAData TLSA} records for the specified
-   * name and ttl.
-   *
-   * @param name     ex. {@code denominator.io.}
-   * @param ttl      see {@link ResourceRecordSet#ttl()}
-   * @param tlsadata tlsadata values ex. {@code [1 1 1 B33F, 1 1 1 F00M00]}
-   */
-  public static ResourceRecordSet<TLSAData> tlsa(String name, int ttl,
-                                                 Collection<String> tlsadata) {
-    return new TLSABuilder().name(name).ttl(ttl).addAll(tlsadata).build();
-  }
-
   private static final class ContainsRecord implements Filter<ResourceRecordSet<?>> {
 
     private final Map<String, ?> record;
@@ -975,23 +830,6 @@ public class ResourceRecordSets {
     }
   }
 
-  private static class DSBuilder extends StringRecordBuilder<DSData> {
-
-    private DSBuilder() {
-      type("DS");
-    }
-
-    public DSData apply(String input) {
-      String[] parts = input.split(" ");
-      checkArgument(parts.length == 4, "record must have exactly four parts");
-      return DSData.builder().keyTag(Integer.parseInt(parts[0]))
-          .algorithmId(Integer.parseInt(parts[1]))
-          .digestId(Integer.parseInt(parts[2]))
-          .digest(parts[3])
-          .build();
-    }
-  }
-
   private static class CERTBuilder extends StringRecordBuilder<CERTData> {
 
     private CERTBuilder() {
@@ -1001,10 +839,10 @@ public class ResourceRecordSets {
     public CERTData apply(String input) {
       String[] parts = input.split(" ");
       checkArgument(parts.length == 4, "record must have exactly four parts");
-      return CERTData.builder().certType(Integer.parseInt(parts[0]))
-          .keyTag(Integer.parseInt(parts[1]))
+      return CERTData.builder().format(Integer.parseInt(parts[0]))
+          .tag(Integer.parseInt(parts[1]))
           .algorithm(Integer.parseInt(parts[2]))
-          .cert(parts[3])
+          .certificate(parts[3])
           .build();
     }
   }
@@ -1040,34 +878,6 @@ public class ResourceRecordSets {
       return SSHFPData.builder().algorithm(Integer.parseInt(parts[0]))
           .fptype(Integer.parseInt(parts[1]))
           .fingerprint(parts[2])
-          .build();
-    }
-  }
-
-  private static class LOCBuilder extends StringRecordBuilder<LOCData> {
-
-    private LOCBuilder() {
-      type("LOC");
-    }
-
-    public LOCData apply(String input) {
-      return LOCData.create(input);
-    }
-  }
-
-  private static class TLSABuilder extends StringRecordBuilder<TLSAData> {
-
-    private TLSABuilder() {
-      type("TLSA");
-    }
-
-    public TLSAData apply(String input) {
-      String[] parts = input.split(" ");
-      checkArgument(parts.length == 4, "record must have exactly four parts");
-      return TLSAData.builder().usage(Integer.parseInt(parts[0]))
-          .selector(Integer.parseInt(parts[1]))
-          .matchingType(Integer.parseInt(parts[2]))
-          .certificateAssociationData(parts[3])
           .build();
     }
   }
