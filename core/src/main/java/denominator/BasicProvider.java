@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import static denominator.common.Preconditions.checkArgument;
+import static java.util.Arrays.asList;
 
 /**
  * base implementation of {@link Provider}, which sets defaults and properly implements {@code
@@ -52,9 +53,9 @@ public abstract class BasicProvider implements Provider {
   @Override
   public Set<String> basicRecordTypes() {
     Set<String> types = new LinkedHashSet<String>();
-    types.addAll(Arrays
-                     .asList("A", "AAAA", "CNAME", "MX", "NS", "PTR", "SOA", "SPF", "SRV", "SSHFP",
-                             "TXT"));
+    types.addAll(
+        asList("A", "AAAA", "CERT", "CNAME", "MX", "NAPTR", "NS", "PTR", "SOA", "SPF", "SRV",
+               "SSHFP", "TXT"));
     return types;
   }
 
@@ -65,7 +66,7 @@ public abstract class BasicProvider implements Provider {
         new LinkedHashMap<String, Collection<String>>();
     List<String>
         roundRobinType =
-        Arrays.asList("A", "AAAA", "MX", "NS", "PTR", "SPF", "SRV", "SSHFP", "TXT");
+        asList("A", "AAAA", "MX", "NS", "PTR", "SPF", "SRV", "SSHFP", "TXT");
     profileToRecordTypes.put("roundRobin", roundRobinType);
     return profileToRecordTypes;
   }

@@ -1,7 +1,6 @@
 package denominator.model.rdata;
 
 import denominator.model.NumbersAreUnsignedIntsLinkedHashMap;
-
 import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 
@@ -12,10 +11,10 @@ import static denominator.common.Preconditions.checkNotNull;
  *
  * <pre>
  * CERTData rdata = CERTData.builder()
- *                          .certType(12345)
- *                          .keyTag(1)
+ *                          .format(12345)
+ *                          .tag(1)
  *                          .algorithm(1)
- *                          .cert("B33F").build()
+ *                          .certificate("B33F").build()
  * </pre>
  *
  * See <a href="http://www.ietf.org/rfc/rfc4398.txt">RFC 4398</a>
@@ -24,35 +23,36 @@ public final class CERTData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   private static final long serialVersionUID = 1L;
 
-  CERTData(int certType, int keyTag, int algorithm, String cert) {
-    checkArgument(certType <= 0xFFFF, "certType must be 0-65535");
-    checkArgument(keyTag <= 0xFFFF, "keyTag must be 0-65535");
+  CERTData(int format, int tag, int algorithm, String certificate) {
+    checkArgument(format <= 0xFFFF, "format must be 0-65535");
+    checkArgument(tag <= 0xFFFF, "tag must be 0-65535");
     checkArgument(algorithm <= 0xFF, "algorithm must be 0-255");
-    checkNotNull(cert, "cert");
-    put("certType", certType);
-    put("keyTag", keyTag);
+    checkNotNull(certificate, "certificate");
+    put("format", format);
+    put("tag", tag);
     put("algorithm", algorithm);
-    put("cert", cert);
+    put("certificate", certificate);
   }
 
   public static CERTData.Builder builder() {
     return new Builder();
   }
 
-  public int certType() {
-    return Integer.class.cast(get("certType"));
+  /** {@code type} in the spec. This name avoids clashing on keywords. */
+  public int format() {
+    return Integer.class.cast(get("format"));
   }
 
-  public int keyTag() {
-    return Integer.class.cast(get("keyTag"));
+  public int tag() {
+    return Integer.class.cast(get("tag"));
   }
 
   public int algorithm() {
     return Integer.class.cast(get("algorithm"));
   }
 
-  public String cert() {
-    return get("cert").toString();
+  public String certificate() {
+    return get("certificate").toString();
   }
 
   public CERTData.Builder toBuilder() {
@@ -61,18 +61,18 @@ public final class CERTData extends NumbersAreUnsignedIntsLinkedHashMap {
 
   public final static class Builder {
 
-    private int certType = -1;
-    private int keyTag = -1;
+    private int format = -1;
+    private int tag = -1;
     private int algorithm = -1;
-    private String cert;
+    private String certificate;
 
-    public CERTData.Builder certType(int certType) {
-      this.certType = certType;
+    public CERTData.Builder format(int format) {
+      this.format = format;
       return this;
     }
 
-    public CERTData.Builder keyTag(int keyTag) {
-      this.keyTag = keyTag;
+    public CERTData.Builder tag(int tag) {
+      this.tag = tag;
       return this;
     }
 
@@ -81,20 +81,17 @@ public final class CERTData extends NumbersAreUnsignedIntsLinkedHashMap {
       return this;
     }
 
-    public CERTData.Builder cert(String cert) {
-      this.cert = cert;
+    public CERTData.Builder certificate(String certificate) {
+      this.certificate = certificate;
       return this;
     }
 
     public CERTData build() {
-      return new CERTData(certType, keyTag, algorithm, cert);
+      return new CERTData(format, tag, algorithm, certificate);
     }
 
     public CERTData.Builder from(CERTData in) {
-      return this.certType(in.certType())
-          .keyTag(in.keyTag())
-          .algorithm(in.algorithm())
-          .cert(in.cert());
+        return format(in.format()).tag(in.tag()).algorithm(in.algorithm()).certificate(in.certificate());
     }
   }
 }
