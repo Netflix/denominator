@@ -23,14 +23,8 @@ import static denominator.common.Preconditions.checkState;
 
 /**
  * DynECT json includes an envelope called "data". These type adapters apply at that level.
- *
- * @see DynECTDecoder
  */
 class DynECTAdapters {
-
-  private DynECTAdapters() {
-    // no instances.
-  }
 
   private static List<String> toFirstGroup(String pattern, JsonArray elements) {
     Pattern compiled = Pattern.compile(pattern);
@@ -128,5 +122,9 @@ class DynECTAdapters {
     public void write(JsonWriter out, Data<X> value) throws IOException {
       throw new UnsupportedOperationException();
     }
+  }
+
+  private DynECTAdapters() {
+    // no instances.
   }
 }
