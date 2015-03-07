@@ -79,8 +79,7 @@ public class DynECTProvider extends BasicProvider {
     profileToRecordTypes
         .put("roundRobin", Arrays.asList("A", "AAAA", "CERT", "DHCID", "DNAME", "DNSKEY", "DS",
                                          "IPSECKEY", "KEY", "KX", "LOC", "MX", "NAPTR", "NS",
-                                         "NSAP", "PTR", "PX", "RP", "SPF", "SRV", "SSHFP",
-                                         "TXT"));
+                                         "NSAP", "PTR", "PX", "RP", "SPF", "SRV", "SSHFP", "TXT"));
     return profileToRecordTypes;
   }
 
