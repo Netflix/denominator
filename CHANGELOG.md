@@ -2,6 +2,7 @@
 * Accommodates UltraDNS accounts without directional support
 * Allows map credentials to be used without regard to iteration order
 * Changes DynECT to return type-safe rdata
+* Polls DynECT on incomplete, even when http status is 200
 * Updates to feign 7.3.0 and dagger 1.2.2
 * Reformats code according to [Google Java Style](https://google-styleguide.googlecode.com/svn/trunk/javaguide.html)
 * Removes java.beans.ConstructorProperties from value types
