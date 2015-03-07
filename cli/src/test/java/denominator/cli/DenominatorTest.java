@@ -17,6 +17,10 @@ import denominator.DNSApiManager;
 import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet;
+import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoTypeList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetAdd;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetApplyTTL;
@@ -33,6 +37,7 @@ import denominator.model.rdata.CNAMEData;
 import denominator.route53.AliasTarget;
 
 import static denominator.assertj.ModelAssertions.assertThat;
+import static denominator.model.ResourceRecordSets.a;
 import static org.junit.Assert.fail;
 
 public class DenominatorTest {
@@ -344,23 +349,64 @@ public class DenominatorTest {
 
   @Test
   // denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2
-  public void testResourceRecordSetAdd() {
+  public void resourceRecordSetAdd() {
     ResourceRecordSetAdd command = new ResourceRecordSetAdd();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
     command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+
+    // Ensure the rrset didn't formerly exist.
+    mgr.api().basicRecordSetsInZone(command.zoneIdOrName).deleteByNameAndType(command.name,
+                                                                              command.type);
+
     assertThat(command.doRun(mgr)).containsExactly(
-        ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}]",
+        ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1}, {address=192.0.2.2}]",
         ";; ok");
-    assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
-                   .iterateByNameAndType(command.name, command.type))
-        .contains(ResourceRecordSet.<AData>builder()
-                      .name(command.name)
-                      .type(command.type)
-                      .ttl(3600)
-                      .add(AData.create("192.0.2.1"))
-                      .add(AData.create("192.0.2.2")).build());
+    assertThat(mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
+                   .getByNameAndType(command.name, command.type))
+        .containsExactlyRecords(AData.create("192.0.2.1"), AData.create("192.0.2.2"));
+  }
+
+  @Test
+  // denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2
+  public void resourceRecordSetAdd_addsOne() {
+    ResourceRecordSetAdd command = new ResourceRecordSetAdd();
+    command.zoneIdOrName = "denominator.io.";
+    command.name = "www1.denominator.io.";
+    command.type = "A";
+    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+
+    // Setup base record with only one value.
+    mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
+        .put(a(command.name, Arrays.asList(command.values.get(0))));
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1}, {address=192.0.2.2}]",
+        ";; ok");
+    assertThat(mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
+                   .getByNameAndType(command.name, command.type))
+        .containsExactlyRecords(AData.create("192.0.2.1"), AData.create("192.0.2.2"));
+  }
+
+  @Test
+  // denominator -p mock record -z denominator.io. add -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2
+  public void resourceRecordSetAdd_whenRecordsAlreadyExist() {
+    ResourceRecordSetAdd command = new ResourceRecordSetAdd();
+    command.zoneIdOrName = "denominator.io.";
+    command.name = "www1.denominator.io.";
+    command.type = "A";
+    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+
+    // Setup base record which already has the values.
+    mgr.api().basicRecordSetsInZone(command.zoneIdOrName).put(a(command.name, command.values));
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1}, {address=192.0.2.2}]",
+        ";; ok");
+    assertThat(mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
+                   .getByNameAndType(command.name, command.type))
+        .containsExactlyRecords(AData.create("192.0.2.1"), AData.create("192.0.2.2"));
   }
 
   @Test
@@ -481,7 +527,7 @@ public class DenominatorTest {
     command.ttl = 3600;
     command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
     assertThat(command.doRun(mgr)).containsExactly(
-        ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}] applying ttl 3600",
+        ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1}, {address=192.0.2.2}] applying ttl 3600",
         ";; ok");
     assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
                    .iterateByNameAndType(command.name, command.type))
@@ -502,7 +548,7 @@ public class DenominatorTest {
     command.type = "CNAME";
     command.values = Arrays.asList("www1.denominator.io.", "www2.denominator.io.");
     assertThat(command.doRun(mgr)).containsExactly(
-        ";; in zone denominator.io. replacing rrset www.denominator.io. CNAME with values: [{cname=www1.denominator.io.},{cname=www2.denominator.io.}]",
+        ";; in zone denominator.io. replacing rrset www.denominator.io. CNAME with values: [{cname=www1.denominator.io.}, {cname=www2.denominator.io.}]",
         ";; ok");
     assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
                    .iterateByNameAndType(command.name, command.type))
@@ -523,7 +569,7 @@ public class DenominatorTest {
     command.ttl = 3600;
     command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
     assertThat(command.doRun(mgr)).containsExactly(
-        ";; in zone denominator.io. replacing rrset www1.denominator.io. A with values: [{address=192.0.2.1},{address=192.0.2.2}] and ttl 3600",
+        ";; in zone denominator.io. replacing rrset www1.denominator.io. A with values: [{address=192.0.2.1}, {address=192.0.2.2}] and ttl 3600",
         ";; ok");
     assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
                    .iterateByNameAndType(command.name, command.type))
@@ -544,10 +590,71 @@ public class DenominatorTest {
     command.type = "A";
     command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
     assertThat(command.doRun(mgr)).containsExactly(
-        ";; in zone denominator.io. removing from rrset www1.denominator.io. A values: [{address=192.0.2.1},{address=192.0.2.2}]",
+        ";; in zone denominator.io. removing from rrset www1.denominator.io. A values: [{address=192.0.2.1}, {address=192.0.2.2}]",
         ";; ok");
     assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
                    .iterateByNameAndType(command.name, command.type)).isEmpty();
+  }
+
+
+  @Test
+  // denominator -p mock record -z denominator.io. remove -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2
+  public void resourceRecordSetRemove() {
+    ResourceRecordSetRemove command = new ResourceRecordSetRemove();
+    command.zoneIdOrName = "denominator.io.";
+    command.name = "www1.denominator.io.";
+    command.type = "A";
+    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+
+    // Setup base record which has both values.
+    mgr.api().basicRecordSetsInZone(command.zoneIdOrName).put(a(command.name, command.values));
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; in zone denominator.io. removing from rrset www1.denominator.io. A values: [{address=192.0.2.1}, {address=192.0.2.2}]",
+        ";; ok");
+    assertThat(mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
+                   .getByNameAndType(command.name, command.type)).isNull();
+  }
+
+  @Test
+  // denominator -p mock record -z denominator.io. remove -n www1.denominator.io. -t A -d 192.0.2.2
+  public void resourceRecordSetRemove_removesOne() {
+    ResourceRecordSetRemove command = new ResourceRecordSetRemove();
+    command.zoneIdOrName = "denominator.io.";
+    command.name = "www1.denominator.io.";
+    command.type = "A";
+    command.values = Arrays.asList("192.0.2.2");
+
+    // Setup base record which has two values.
+    mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
+        .put(a(command.name, Arrays.asList("192.0.2.1", "192.0.2.2")));
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; in zone denominator.io. removing from rrset www1.denominator.io. A values: [{address=192.0.2.2}]",
+        ";; ok");
+    assertThat(mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
+                   .getByNameAndType(command.name, command.type))
+        .containsExactlyRecords(AData.create("192.0.2.1"));
+  }
+
+  @Test
+  // denominator -p mock record -z denominator.io. remove -n www1.denominator.io. -t A -d 192.0.2.1 -d 192.0.2.2
+  public void resourceRecordSetRemove_whenDoesntExist() {
+    ResourceRecordSetRemove command = new ResourceRecordSetRemove();
+    command.zoneIdOrName = "denominator.io.";
+    command.name = "www1.denominator.io.";
+    command.type = "A";
+    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+
+    // Setup base record which already has the values.
+    mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
+        .deleteByNameAndType(command.name, command.type);
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; in zone denominator.io. removing from rrset www1.denominator.io. A values: [{address=192.0.2.1}, {address=192.0.2.2}]",
+        ";; ok");
+    assertThat(mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
+                   .getByNameAndType(command.name, command.type)).isNull();
   }
 
   @Test // denominator -p mock record -z denominator.io. delete -n www3.denominator.io. -t A
@@ -611,9 +718,7 @@ public class DenominatorTest {
   @Test // denominator -p mock geo -z denominator.io. list
   @Deprecated
   public void testGeoResourceRecordSetList() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList();
+    GeoResourceRecordSetList command = new GeoResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
     assertThat(command.doRun(mgr)).containsExactly(
         "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}",
@@ -625,9 +730,7 @@ public class DenominatorTest {
   @Test // denominator -p mock geo -z denominator.io. list -n www.geo.denominator.io.
   @Deprecated
   public void testGeoResourceRecordSetListByName() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList();
+    GeoResourceRecordSetList command = new GeoResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.geo.denominator.io.";
     assertThat(command.doRun(mgr)).containsExactly(
@@ -639,9 +742,7 @@ public class DenominatorTest {
   @Test // denominator -p mock geo -z denominator.io. list -n www.geo.denominator.io. -t CNAME
   @Deprecated
   public void testGeoResourceRecordSetListByNameAndType() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetList();
+    GeoResourceRecordSetList command = new GeoResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.geo.denominator.io.";
     command.type = "CNAME";
@@ -655,9 +756,7 @@ public class DenominatorTest {
   // denominator -p mock geo -z denominator.io. get -n www.geo.denominator.io. -t CNAME -g alazona
   @Deprecated
   public void testGeoResourceRecordSetGetWhenPresent() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet();
+    GeoResourceRecordSetGet command = new GeoResourceRecordSetGet();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.geo.denominator.io.";
     command.type = "CNAME";
@@ -669,9 +768,7 @@ public class DenominatorTest {
   @Test // denominator -p mock geo -z denominator.io. get -n www.geo.denominator.io. -t A -g alazona
   @Deprecated
   public void testGeoResourceRecordSetGetWhenAbsent() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetGet();
+    GeoResourceRecordSetGet command = new GeoResourceRecordSetGet();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.geo.denominator.io.";
     command.type = "A";
@@ -683,9 +780,7 @@ public class DenominatorTest {
   // denominator -p mock geo -z denominator.io. applyttl -n www2.geo.denominator.io. -t A -g alazona 300
   @Deprecated
   public void testGeoResourceRecordSetApplyTTL() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL();
+    GeoResourceRecordSetApplyTTL command = new GeoResourceRecordSetApplyTTL();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -702,9 +797,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"]}
   public void testGeoResourceRecordSetAddRegionsEntireRegion() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -733,9 +826,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"United States (US)\":[\"Arizona\"]}
   public void testGeoResourceRecordSetAddRegionsSkipsWhenSame() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -760,9 +851,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}
   public void testGeoResourceRecordSetAddRegionsEntireRegionAndTerritory() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -792,9 +881,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} --dry-run --validate-regions
   public void testGeoResourceRecordSetAddRegionsEntireRegionAndTerritoryValidatedDryRun() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -823,9 +910,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} --validate-regions
   public void testGeoResourceRecordSetAddRegionsValidationFailureOnTerritory() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -856,9 +941,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"Suth America\":[\"Ecuador\"]} --validate-regions
   public void testGeoResourceRecordSetAddRegionsValidationFailureOnRegion() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -889,9 +972,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r Mexico
   public void testGeoResourceRecordSetAddRegionsBadJson() {
-    denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions
-        command =
-        new denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
