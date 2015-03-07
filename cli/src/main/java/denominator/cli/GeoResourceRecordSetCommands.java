@@ -22,10 +22,10 @@ import denominator.cli.Denominator.DenominatorCommand;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetToString;
 import denominator.model.ResourceRecordSet;
 import denominator.profile.GeoResourceRecordSetApi;
-import io.airlift.command.Arguments;
-import io.airlift.command.Command;
-import io.airlift.command.Option;
-import io.airlift.command.OptionType;
+import io.airlift.airline.Arguments;
+import io.airlift.airline.Command;
+import io.airlift.airline.Option;
+import io.airlift.airline.OptionType;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.collect.Iterators.concat;

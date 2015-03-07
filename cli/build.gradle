@@ -4,8 +4,8 @@ sourceCompatibility = 1.6
 
 dependencies {
   compile      project(':denominator-core')
-  compile     'io.airlift:airline:0.5'
-  compile     'org.yaml:snakeyaml:1.12'
+  compile     'io.airlift:airline:0.7'
+  compile     'org.yaml:snakeyaml:1.15'
   // TODO: the following should really only be in the fatJar
   compile      project(':denominator-dynect')
   compile      project(':denominator-ultradns')
