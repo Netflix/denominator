@@ -100,7 +100,8 @@ public class Route53Test {
   }
 
   Route53 mockApi() {
-    Feign feign = new Route53Provider.FeignModule().feign();
+    Route53Provider.FeignModule module = new Route53Provider.FeignModule();
+    Feign feign = module.feign(module.logger(), module.logLevel());
     return feign.newInstance(new Route53Target(new Route53Provider() {
       @Override
       public String url() {

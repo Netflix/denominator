@@ -31,7 +31,7 @@ public class DesignateTest {
     server.enqueueAuthResponse();
 
     DesignateProvider.FeignModule module = new DesignateProvider.FeignModule();
-    KeystoneV2 api = module.keystoneV2(module.feign());
+    KeystoneV2 api = module.keystoneV2(module.feign(module.logger(), module.logLevel()));
     TokenIdAndPublicURL tokenIdAndPublicURL = api.passwordAuth(
         URI.create(server.url()), "tenantId", "username", "password");
 
@@ -262,7 +262,7 @@ public class DesignateTest {
 
   Designate mockApi() {
     DesignateProvider.FeignModule module = new DesignateProvider.FeignModule();
-    Feign feign = module.feign();
+    Feign feign = module.feign(module.logger(), module.logLevel());
     KeystoneV2 keystoneV2 = module.keystoneV2(feign);
     Provider provider = new DesignateProvider() {
       @Override

@@ -154,7 +154,7 @@ public class DynECTTest {
     };
     AtomicReference<Boolean> sessionValid = module.sessionValid();
     DynECTErrorDecoder errorDecoder = new DynECTErrorDecoder(sessionValid);
-    Feign feign = module.feign(errorDecoder);
+    Feign feign = module.feign(module.logger(), module.logLevel(), errorDecoder);
     Session sessionApi = feign.newInstance(new SessionTarget(provider));
     InvalidatableTokenProvider
         tokenProvider =

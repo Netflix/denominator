@@ -31,6 +31,7 @@ import denominator.dynect.DynECTAdapters.ZonesAdapter;
 import denominator.dynect.InvalidatableTokenProvider.Session;
 import denominator.profile.GeoResourceRecordSetApi;
 import feign.Feign;
+import feign.Logger;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
 
@@ -157,9 +158,21 @@ public class DynECTProvider extends BasicProvider {
     }
 
     @Provides
+    Logger logger() {
+      return new Logger.NoOpLogger();
+    }
+
+    @Provides
+    Logger.Level logLevel() {
+      return Logger.Level.NONE;
+    }
+
+    @Provides
     @Singleton
-    Feign feign(DynECTErrorDecoder errorDecoder) {
+    Feign feign(Logger logger, Logger.Level logLevel, DynECTErrorDecoder errorDecoder) {
       return Feign.builder()
+          .logger(logger)
+          .logLevel(logLevel)
           .encoder(new GsonEncoder())
           .decoder(new GsonDecoder(Arrays.<TypeAdapter<?>>asList(
                        new TokenAdapter(),
