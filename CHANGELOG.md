@@ -1,5 +1,4 @@
 ### Version 4.4
-* Adds support for DiscoveryDNS (http://www.discoverydns.com)
 * Accommodates UltraDNS accounts without directional support
 * Allows map credentials to be used without regard to iteration order
 * Changes DynECT to return type-safe rdata
