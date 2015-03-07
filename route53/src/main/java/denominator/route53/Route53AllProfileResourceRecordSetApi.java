@@ -15,7 +15,6 @@ import denominator.route53.Route53.ActionOnResourceRecordSet;
 import denominator.route53.Route53.ResourceRecordSetList;
 import denominator.route53.Route53.ResourceRecordSetList.NextRecord;
 
-import static denominator.common.Util.equal;
 import static denominator.common.Util.filter;
 import static denominator.common.Util.nextOrNull;
 import static denominator.common.Util.peekingIterator;
@@ -91,7 +90,7 @@ public final class Route53AllProfileResourceRecordSetApi implements AllProfileRe
       oldRRS = getByNameAndType(rrset.name(), rrset.type());
     }
     if (oldRRS != null) {
-      if (equal(oldRRS.ttl(), rrset.ttl()) && oldRRS.equals(rrset)) {
+      if (oldRRS.equals(rrset)) {
         return;
       }
       changes.add(delete(oldRRS));

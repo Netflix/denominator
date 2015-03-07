@@ -73,23 +73,20 @@ public class Zone {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
+  public boolean equals(Object obj) {
+    if (obj instanceof Zone) {
+      Zone other = (Zone) obj;
+      return equal(name(), other.name())
+             && equal(id(), other.id());
     }
-    if (!(o instanceof Zone)) {
-      return false;
-    }
-    Zone that = Zone.class.cast(o);
-    return equal(name(), that.name()) && equal(id(), that.id());
+    return false;
   }
 
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + name().hashCode();
-    result = prime * result + ((id() == null) ? 0 : id().hashCode());
+    int result = 17;
+    result = 31 * result + name().hashCode();
+    result = 31 * result + (id() != null ? id().hashCode() : 0);
     return result;
   }
 
