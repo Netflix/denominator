@@ -61,8 +61,8 @@ public class DynECTTest {
   }
 
   @Test
-  public void incompleteRetries() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(400).setBody(incomplete));
+  public void incompleteRetriesOn200() throws Exception {
+    server.enqueue(new MockResponse().setBody(incomplete));
     server.enqueue(new MockResponse().setBody(zones));
 
     mockApi().zones();

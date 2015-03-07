@@ -6,6 +6,7 @@ import com.google.gson.JsonIOException;
 import com.google.gson.JsonParser;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
 import denominator.dynect.DynECT.Data;
 import denominator.dynect.DynECT.Record;
 import denominator.model.Zone;
+import feign.RetryableException;
 
 import static denominator.common.Preconditions.checkState;
 
@@ -98,10 +100,11 @@ class DynECTAdapters {
     @Override
     public Data<X> read(JsonReader reader) throws IOException {
       Data<X> data = new Data<X>();
+      String status = null;
       reader.beginObject();
       while (reader.hasNext()) {
         String nextName = reader.nextName();
-        if ("data".equals(nextName)) {
+        if ("data".equals(nextName) && reader.peek() != JsonToken.NULL) {
           try {
             data.data = build(reader);
           } catch (JsonIOException e) {
@@ -110,11 +113,16 @@ class DynECTAdapters {
             }
             throw e;
           }
+        } else if ("status".equals(nextName)) {
+          status = reader.nextString();
         } else {
           reader.skipValue();
         }
       }
       reader.endObject();
+      if ("incomplete".equals(status)) {
+        throw new RetryableException(status, null);
+      }
       return data;
     }
 
