@@ -133,32 +133,30 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
+  public boolean equals(Object obj) {
+    if (obj instanceof ResourceRecordSet) {
+      ResourceRecordSet<?> other = (ResourceRecordSet) obj;
+      return equal(name(), other.name())
+             && equal(type(), other.type())
+             && equal(qualifier(), other.qualifier())
+             && equal(ttl(), other.ttl())
+             && equal(records(), other.records())
+             && equal(geo(), other.geo())
+             && equal(weighted(), other.weighted());
     }
-    if (!(o instanceof ResourceRecordSet)) {
-      return false;
-    }
-    ResourceRecordSet<?> that = ResourceRecordSet.class.cast(o);
-    return equal(name(), that.name()) && equal(type(), that.type()) && equal(qualifier(),
-                                                                             that.qualifier())
-           && equal(ttl(), that.ttl()) && equal(records(), that.records()) && equal(geo(),
-                                                                                    that.geo())
-           && equal(weighted(), that.weighted());
+    return false;
   }
 
   @Override
   public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * name().hashCode();
-    result = prime * type().hashCode();
-    result = prime * result + ((qualifier() == null) ? 0 : qualifier().hashCode());
-    result = prime * result + ((ttl() == null) ? 0 : ttl().hashCode());
-    result = prime * records().hashCode();
-    result = prime * result + ((geo() == null) ? 0 : geo().hashCode());
-    result = prime * result + ((weighted() == null) ? 0 : weighted().hashCode());
+    int result = 17;
+    result = 31 * result + name().hashCode();
+    result = 31 * result + type().hashCode();
+    result = 31 * result + (qualifier() != null ? qualifier().hashCode() : 0);
+    result = 31 * result + (ttl() != null ? ttl().hashCode() : 0);
+    result = 31 * records().hashCode();
+    result = 31 * result + (geo() != null ? geo().hashCode() : 0);
+    result = 31 * result + (weighted() != null ? weighted().hashCode() : 0);
     return result;
   }
 

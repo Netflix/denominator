@@ -43,15 +43,8 @@ public class Weighted {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof Weighted)) {
-      return false;
-    }
-    Weighted that = Weighted.class.cast(o);
-    return weight() == that.weight();
+  public boolean equals(Object obj) {
+    return obj instanceof Weighted && weight() == ((Weighted) obj).weight();
   }
 
   @Override
