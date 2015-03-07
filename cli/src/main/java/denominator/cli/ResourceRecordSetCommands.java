@@ -74,15 +74,13 @@ class ResourceRecordSetCommands {
 
     public Iterator<String> doRun(DNSApiManager mgr) {
       Iterator<ResourceRecordSet<?>> iterator;
-      if (name != null && type != null) {
-        iterator =
-            mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName))
-                .iterateByNameAndType(name, type);
-      }
-      if (name != null) {
-        iterator = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByName(name);
+      String zoneId = idOrName(mgr, zoneIdOrName);
+      if (type != null) {
+        iterator = mgr.api().recordSetsInZone(zoneId).iterateByNameAndType(name, type);
+      } else if (name != null) {
+        iterator = mgr.api().recordSetsInZone(zoneId).iterateByName(name);
       } else {
-        iterator = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName)).iterator();
+        iterator = mgr.api().recordSetsInZone(zoneId).iterator();
       }
       return transform(iterator, ResourceRecordSetToString.INSTANCE);
     }
@@ -105,12 +103,11 @@ class ResourceRecordSetCommands {
 
     public Iterator<String> doRun(DNSApiManager mgr) {
       ResourceRecordSet<?> rrs;
+      String zoneId = idOrName(mgr, zoneIdOrName);
       if (qualifier != null) {
-        rrs = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName))
-            .getByNameTypeAndQualifier(name, type, qualifier);
+        rrs = mgr.api().recordSetsInZone(zoneId).getByNameTypeAndQualifier(name, type, qualifier);
       } else {
-        rrs = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName))
-            .getByNameAndType(name, type);
+        rrs = mgr.api().basicRecordSetsInZone(zoneId).getByNameAndType(name, type);
       }
       return rrs != null ? singletonIterator(GeoResourceRecordSetToString.INSTANCE.apply(rrs))
                          : singletonIterator("");
@@ -226,15 +223,15 @@ class ResourceRecordSetCommands {
      */
     protected Builder<Map<String, Object>> rrsetBuilder() throws IllegalArgumentException {
       if (ec2PublicIpv4) {
-        addIfPresentInMetadataService(values, "public-ipv4", metadataService);
+        addIfPresentInMetadataService("public-ipv4");
       } else if (ec2PublicHostname) {
-        addIfPresentInMetadataService(values, "public-hostname", metadataService);
+        addIfPresentInMetadataService("public-hostname");
       } else if (ec2LocalIpv4) {
-        addIfPresentInMetadataService(values, "local-ipv4", metadataService);
+        addIfPresentInMetadataService("local-ipv4");
       } else if (ec2LocalHostname) {
-        addIfPresentInMetadataService(values, "local-hostname", metadataService);
+        addIfPresentInMetadataService("local-hostname");
       }
-      checkArgument(aliasDNSName != null || elbDNSName != null || values.size() > 0,
+      checkArgument(aliasDNSName != null || elbDNSName != null || !values.isEmpty(),
                     "you must pass data to add");
       Builder<Map<String, Object>> builder = ResourceRecordSet.builder().name(name).type(type);
       if (aliasDNSName != null) {
@@ -262,9 +259,7 @@ class ResourceRecordSetCommands {
      * @throws IllegalArgumentException if an ec2 instance metadata hook was requested, but the
      *                                  service could not be contacted.
      */
-    private void addIfPresentInMetadataService(List<String> values,
-                                               String key,
-                                               URI metadataService) {
+    private void addIfPresentInMetadataService(String key) {
       String value = InstanceMetadataHook.get(metadataService, key);
       checkArgument(value != null, "could not retrieve %s from %s", key, metadataService);
       values.add(value);
