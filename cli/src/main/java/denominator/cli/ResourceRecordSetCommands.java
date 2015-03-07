@@ -1,14 +1,16 @@
 package denominator.cli;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -27,14 +29,12 @@ import io.airlift.command.Option;
 import io.airlift.command.OptionType;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.base.Predicates.in;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterables.filter;
 import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
 import static denominator.cli.Denominator.idOrName;
+import static denominator.common.Util.join;
 import static java.lang.String.format;
 
 class ResourceRecordSetCommands {
@@ -44,13 +44,13 @@ class ResourceRecordSetCommands {
 
     @Override
     public String apply(ResourceRecordSet<?> input) {
-      ImmutableList.Builder<String> lines = ImmutableList.<String>builder();
+      List<String> lines = new ArrayList<String>();
       for (Map<String, Object> rdata : input.records()) {
         lines.add(format("%-50s%-7s%-20s%-6s%s", input.name(), input.type(),
                          input.qualifier() != null ? input.qualifier() : "", input.ttl(),
                          Util.flatten(rdata)));
       }
-      return Joiner.on('\n').join(lines.build());
+      return join('\n', lines.toArray());
     }
   }
 
@@ -109,9 +109,8 @@ class ResourceRecordSetCommands {
         rrs = mgr.api().recordSetsInZone(idOrName(mgr, zoneIdOrName))
             .getByNameTypeAndQualifier(name, type, qualifier);
       } else {
-        rrs =
-            mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName))
-                .getByNameAndType(name, type);
+        rrs = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName))
+            .getByNameAndType(name, type);
       }
       return rrs != null ? singletonIterator(GeoResourceRecordSetToString.INSTANCE.apply(rrs))
                          : singletonIterator("");
@@ -173,13 +172,18 @@ class ResourceRecordSetCommands {
         ELB_REGION =
         Pattern.compile("[^.]+\\.([^.]+)\\.elb\\.amazonaws\\.com\\.?");
 
-    static final Map<String, String> REGION_TO_HOSTEDZONE = ImmutableMap.<String, String>builder()//
-        .put("us-east-1", "Z3DZXE0Q79N41H")//
-        .put("us-west-2", "Z33MTJ483KN6FU")//
-        .put("eu-west-1", "Z3NF1Z3NOM5OY2")//
-        .put("ap-northeast-1", "Z2YN17T5R711GT")//
-        .put("ap-southeast-1", "Z1WI8VXHPB1R38")//
-        .put("sa-east-1", "Z2ES78Y61JGQKS").build();
+    static final Map<String, String> REGION_TO_HOSTEDZONE;
+
+    static {
+      LinkedHashMap<String, String> regionToHostedZone = new LinkedHashMap<String, String>();
+      regionToHostedZone.put("us-east-1", "Z3DZXE0Q79N41H");
+      regionToHostedZone.put("us-west-2", "Z33MTJ483KN6FU");
+      regionToHostedZone.put("eu-west-1", "Z3NF1Z3NOM5OY2");
+      regionToHostedZone.put("ap-northeast-1", "Z2YN17T5R711GT");
+      regionToHostedZone.put("ap-southeast-1", "Z1WI8VXHPB1R38");
+      regionToHostedZone.put("sa-east-1", "Z2ES78Y61JGQKS");
+      REGION_TO_HOSTEDZONE = Collections.unmodifiableMap(regionToHostedZone);
+    } 
 
     @Option(type = OptionType.COMMAND, required = true, name = {"-n",
                                                                 "--name"}, description = "name of the record set. ex. www.denominator.io.")
@@ -191,7 +195,7 @@ class ResourceRecordSetCommands {
 
     @Option(type = OptionType.COMMAND, required = false, name = {"-d",
                                                                  "--data"}, description = "repeat for each record value (rdata) to add. ex. 192.0.2.1")
-    public List<String> values;
+    public List<String> values = new ArrayList<String>();
 
     @Option(type = OptionType.COMMAND, required = false, name = "--ec2-public-ipv4", description = "take data from EC2 Instance Metadata public-ipv4")
     public boolean ec2PublicIpv4;
@@ -221,20 +225,15 @@ class ResourceRecordSetCommands {
      *                                  service could not be contacted.
      */
     protected Builder<Map<String, Object>> rrsetBuilder() throws IllegalArgumentException {
-      ImmutableList.Builder<String> valuesBuilder = ImmutableList.<String>builder();
-      if (values != null) {
-        valuesBuilder.addAll(values);
-      }
       if (ec2PublicIpv4) {
-        addIfPresentInMetadataService(valuesBuilder, "public-ipv4", metadataService);
+        addIfPresentInMetadataService(values, "public-ipv4", metadataService);
       } else if (ec2PublicHostname) {
-        addIfPresentInMetadataService(valuesBuilder, "public-hostname", metadataService);
+        addIfPresentInMetadataService(values, "public-hostname", metadataService);
       } else if (ec2LocalIpv4) {
-        addIfPresentInMetadataService(valuesBuilder, "local-ipv4", metadataService);
+        addIfPresentInMetadataService(values, "local-ipv4", metadataService);
       } else if (ec2LocalHostname) {
-        addIfPresentInMetadataService(valuesBuilder, "local-hostname", metadataService);
+        addIfPresentInMetadataService(values, "local-hostname", metadataService);
       }
-      values = valuesBuilder.build();
       checkArgument(aliasDNSName != null || elbDNSName != null || values.size() > 0,
                     "you must pass data to add");
       Builder<Map<String, Object>> builder = ResourceRecordSet.builder().name(name).type(type);
@@ -263,13 +262,12 @@ class ResourceRecordSetCommands {
      * @throws IllegalArgumentException if an ec2 instance metadata hook was requested, but the
      *                                  service could not be contacted.
      */
-    private void addIfPresentInMetadataService(ImmutableList.Builder<String> valuesBuilder,
+    private void addIfPresentInMetadataService(List<String> values,
                                                String key,
-                                               URI metadataService)
-        throws IllegalArgumentException {
+                                               URI metadataService) {
       String value = InstanceMetadataHook.get(metadataService, key);
       checkArgument(value != null, "could not retrieve %s from %s", key, metadataService);
-      valuesBuilder.add(value);
+      values.add(value);
     }
   }
 
@@ -287,9 +285,8 @@ class ResourceRecordSetCommands {
       final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
       String
           cmd =
-          format(";; in zone %s adding to rrset %s %s values: [%s]", zoneIdOrName, name, type,
-                 Joiner
-                     .on(',').join(toAdd.records()));
+          format(";; in zone %s adding to rrset %s %s values: %s", zoneIdOrName, name, type,
+                 join(',', toAdd.records()));
       if (ttl != -1) {
         cmd = format("%s applying ttl %d", cmd, ttl);
       }
@@ -306,17 +303,13 @@ class ResourceRecordSetCommands {
           ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
           ResourceRecordSet<?> rrset = api.getByNameAndType(name, type);
           if (rrset != null) {
-            ImmutableList<Map<String, Object>> oldRDataAsList =
-                ImmutableList.copyOf(rrset.records());
-            ImmutableList<Map<String, Object>> newRData =
-                ImmutableList.copyOf(filter(rrset.records(), not(in(toAdd.records()))));
-            if (!newRData.isEmpty()) {
+            Set<Map<String, Object>> data = new LinkedHashSet<Map<String, Object>>(rrset.records());
+            if (data.addAll(toAdd.records())) {
               api.put(ResourceRecordSet.builder()
                           .name(rrset.name())
                           .type(rrset.type())
                           .ttl(rrset.ttl())
-                          .addAll(oldRDataAsList)
-                          .addAll(newRData).build());
+                          .addAll(data).build());
             }
           } else {
             api.put(toAdd);
@@ -347,9 +340,8 @@ class ResourceRecordSetCommands {
       final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
       String
           cmd =
-          format(";; in zone %s replacing rrset %s %s with values: [%s]", zoneIdOrName, name, type,
-                 Joiner
-                     .on(',').join(toAdd.records()));
+          format(";; in zone %s replacing rrset %s %s with values: %s", zoneIdOrName, name, type,
+                 join(',', toAdd.records()));
       if (ttl != -1) {
         cmd = format("%s and ttl %d", cmd, ttl);
       }
@@ -383,9 +375,8 @@ class ResourceRecordSetCommands {
       final ResourceRecordSet<Map<String, Object>> toRemove = rrsetBuilder().build();
       String
           cmd =
-          format(";; in zone %s removing from rrset %s %s values: [%s]", zoneIdOrName, name, type,
-                 Joiner
-                     .on(',').join(toRemove.records()));
+          format(";; in zone %s removing from rrset %s %s values: %s", zoneIdOrName, name, type,
+                 join(',', toRemove.records()));
       return concat(forArray(cmd), new Iterator<String>() {
         boolean done = false;
 
@@ -399,18 +390,17 @@ class ResourceRecordSetCommands {
           ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
           ResourceRecordSet<?> rrset = api.getByNameAndType(name, type);
           if (rrset != null) {
-            ImmutableList<Map<String, Object>> oldRDataAsList =
-                ImmutableList.copyOf(rrset.records());
-            ImmutableList<Map<String, Object>> retainedRData =
-                ImmutableList.copyOf(filter(rrset.records(), not(in(toRemove.records()))));
-            if (retainedRData.isEmpty()) {
-              api.deleteByNameAndType(name, type);
-            } else if (!oldRDataAsList.equals(retainedRData)) {
-              api.put(ResourceRecordSet.builder()
-                          .name(rrset.name())
-                          .type(rrset.type())
-                          .ttl(rrset.ttl())
-                          .addAll(retainedRData).build());
+            Set<Map<String, Object>> data = new LinkedHashSet<Map<String, Object>>(rrset.records());
+            if (data.removeAll(toRemove.records())) {
+              if (data.isEmpty()) {
+                api.deleteByNameAndType(name, type);
+              } else {
+                api.put(ResourceRecordSet.builder()
+                            .name(rrset.name())
+                            .type(rrset.type())
+                            .ttl(rrset.ttl())
+                            .addAll(data).build());
+              }
             }
           }
           done = true;

@@ -1,10 +1,8 @@
 package denominator.cli;
 
 import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Splitter;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapDifference;
 import com.google.common.collect.Maps;
@@ -12,8 +10,10 @@ import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.google.gson.reflect.TypeToken;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -34,6 +34,7 @@ import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
 import static denominator.cli.Denominator.idOrName;
 import static denominator.cli.Denominator.json;
+import static denominator.common.Util.join;
 import static denominator.model.profile.Geos.withAdditionalRegions;
 import static java.lang.String.format;
 
@@ -62,7 +63,7 @@ class GeoResourceRecordSetCommands {
 
     @Override
     public String apply(ResourceRecordSet<?> rrset) {
-      ImmutableList.Builder<String> lines = ImmutableList.<String>builder();
+      List<String> lines = new ArrayList<String>();
       for (String line : Splitter.on('\n').split(ResourceRecordSetToString.INSTANCE.apply(rrset))) {
         if (rrset.geo() != null) {
           lines.add(new StringBuilder().append(line).append(' ')
@@ -72,7 +73,7 @@ class GeoResourceRecordSetCommands {
           lines.add(line);
         }
       }
-      return Joiner.on('\n').join(lines.build());
+      return join('\n', lines.toArray());
     }
   }
 
@@ -103,7 +104,7 @@ class GeoResourceRecordSetCommands {
           .transform(new Function<Map.Entry<String, Collection<String>>, String>() {
             @Override
             public String apply(Entry<String, Collection<String>> input) {
-              return format("%-28s: %s", input.getKey(), Joiner.on(';').join(input.getValue()));
+              return format("%-28s: %s", input.getKey(), join(';', input.getValue().toArray()));
             }
           }).iterator();
     }
