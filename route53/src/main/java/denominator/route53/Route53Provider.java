@@ -26,6 +26,7 @@ import denominator.profile.WeightedResourceRecordSetApi;
 import denominator.route53.Route53ErrorDecoder.Messages;
 import denominator.route53.Route53ErrorDecoder.Route53Error;
 import feign.Feign;
+import feign.Logger;
 import feign.codec.Decoder;
 import feign.sax.SAXDecoder;
 
@@ -149,10 +150,22 @@ public class Route53Provider extends BasicProvider {
     }
 
     @Provides
+    Logger logger() {
+      return new Logger.NoOpLogger();
+    }
+
+    @Provides
+    Logger.Level logLevel() {
+      return Logger.Level.NONE;
+    }
+
+    @Provides
     @Singleton
-    Feign feign() {
+    Feign feign(Logger logger, Logger.Level logLevel) {
       Decoder decoder = decoder();
       return Feign.builder()
+          .logger(logger)
+          .logLevel(logLevel)
           .encoder(new EncodeChanges())
           .decoder(decoder)
           .errorDecoder(new Route53ErrorDecoder(decoder))

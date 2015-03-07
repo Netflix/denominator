@@ -42,6 +42,7 @@ import denominator.discoverydns.DiscoveryDNS.ResourceRecords;
 import denominator.discoverydns.DiscoveryDNSAdapters.ResourceRecordsAdapter;
 import feign.Client;
 import feign.Feign;
+import feign.Logger;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
 
@@ -130,11 +131,23 @@ public class DiscoveryDNSProvider extends BasicProvider {
     }
 
     @Provides
+    Logger logger() {
+      return new Logger.NoOpLogger();
+    }
+
+    @Provides
+    Logger.Level logLevel() {
+      return Logger.Level.NONE;
+    }
+
+    @Provides
     @Singleton
-    Feign feign(Client client) {
+    Feign feign(Logger logger, Logger.Level logLevel, Client client) {
       Gson gson = new GsonBuilder().setPrettyPrinting()
           .registerTypeAdapter(ResourceRecords.class, new ResourceRecordsAdapter()).create();
       return Feign.builder()
+          .logger(logger)
+          .logLevel(logLevel)
           .client(client)
           .encoder(new GsonEncoder(gson))
           .decoder(new GsonDecoder(gson))

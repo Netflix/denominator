@@ -34,6 +34,7 @@ import denominator.ultradns.UltraDNSContentHandlers.RegionTableHandler;
 import denominator.ultradns.UltraDNSContentHandlers.ZoneListHandler;
 import denominator.ultradns.UltraDNSErrorDecoder.UltraDNSError;
 import feign.Feign;
+import feign.Logger;
 import feign.Request.Options;
 import feign.codec.Decoder;
 import feign.sax.SAXDecoder;
@@ -156,8 +157,19 @@ public class UltraDNSProvider extends BasicProvider {
     }
 
     @Provides
+    Logger logger() {
+      return new Logger.NoOpLogger();
+    }
+
+    @Provides
+    Logger.Level logLevel() {
+      return Logger.Level.NONE;
+    }
+
+    @Provides
     @Singleton
-    Feign feign() {
+    Feign feign(Logger logger, Logger.Level logLevel) {
+
       /**
        * {@link UltraDNS#updateDirectionalPoolRecord(DirectionalRecord, DirectionalGroup)} and {@link
        * UltraDNS#addDirectionalPoolRecord(DirectionalRecord, DirectionalGroup, String)} can take up
@@ -166,6 +178,8 @@ public class UltraDNSProvider extends BasicProvider {
       Options options = new Options(10 * 1000, 10 * 60 * 1000);
       Decoder decoder = decoder();
       return Feign.builder()
+          .logger(logger)
+          .logLevel(logLevel)
           .options(options)
           .encoder(new UltraDNSFormEncoder())
           .decoder(decoder)

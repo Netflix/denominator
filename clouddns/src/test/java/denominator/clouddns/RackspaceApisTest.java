@@ -30,7 +30,7 @@ public class RackspaceApisTest {
     server.enqueueAuthResponse();
 
     CloudDNSProvider.FeignModule module = new CloudDNSProvider.FeignModule();
-    CloudIdentity api = module.cloudIdentity(module.feign());
+    CloudIdentity api = module.cloudIdentity(module.feign(module.logger(), module.logLevel()));
 
     TokenIdAndPublicURL tokenIdAndPublicURL = api.passwordAuth(
         URI.create(server.url()), "username", "password");
@@ -207,7 +207,7 @@ public class RackspaceApisTest {
 
   CloudDNS mockApi() {
     CloudDNSProvider.FeignModule module = new CloudDNSProvider.FeignModule();
-    Feign feign = module.feign();
+    Feign feign = module.feign(module.logger(), module.logLevel());
     CloudIdentity cloudIdentity = module.cloudIdentity(feign);
     Provider provider = new CloudDNSProvider() {
       @Override
