@@ -12,6 +12,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.TreeMap;
 
 import denominator.model.Zone;
@@ -24,16 +25,17 @@ import feign.sax.SAXDecoder;
 import feign.sax.SAXDecoder.ContentHandlerWithResult;
 
 import static denominator.common.Util.split;
-import static java.util.Locale.US;
 
 /**
  * all decoders use {@code .endsWith} as a cheap way to strip out namespaces, such as {@code ns2:}.
  */
 class UltraDNSContentHandlers {
 
-  static final SimpleDateFormat
-      iso8601SimpleDateFormat =
-      new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", US);
+  static final SimpleDateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+  static {
+    iso8601.setTimeZone(TimeZone.getTimeZone("GMT"));
+  }
+
   private static final Comparator<Record> byNameTypeAndCreateDate = new Comparator<Record>() {
 
     @Override
@@ -71,9 +73,9 @@ class UltraDNSContentHandlers {
       };
 
   static Long tryParseDate(String dateString) {
-    synchronized (iso8601SimpleDateFormat) {
+    synchronized (iso8601) {
       try {
-        return iso8601SimpleDateFormat.parse(dateString).getTime();
+        return iso8601.parse(dateString).getTime();
       } catch (ParseException ignored) {
         // only used for sorting, so don't break terribly
         return null;

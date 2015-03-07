@@ -128,8 +128,8 @@ public class UltraDNSTest {
     List<Record> records = mockApi().getResourceRecordsOfZone("denominator.io.");
     assertThat(records).extracting("id", "created")
         .containsExactly(
-            tuple("0B0338C2023F7969", 1255374143000L),
-            tuple("04023A2507B6468F", 1286063836000L)
+            tuple("0B0338C2023F7969", 1255348943000L),
+            tuple("04023A2507B6468F", 1286038636000L)
         );
     assertThat(records).extracting("name", "typeCode", "ttl", "rdata")
         .containsExactly(
@@ -156,8 +156,7 @@ public class UltraDNSTest {
     assertThat(mockApi().getResourceRecordsOfDNameByType("denominator.io.", "denominator.io.", 6))
         .extracting("id", "created", "name", "typeCode", "ttl", "rdata")
         .contains(
-            tuple("04053D8E57C7A22F", 1361550168000L
-                , "denominator.io.", 6, 86400, asList(
+            tuple("04053D8E57C7A22F", 1361521368000L, "denominator.io.", 6, 86400, asList(
                 "pdns75.ultradns.com.",
                 "adrianc.netflix.com.",
                 "2013022200",
@@ -274,9 +273,9 @@ public class UltraDNSTest {
     assertThat(mockApi().getRRPoolRecords("000000000000002"))
         .extracting("id", "created", "name", "typeCode", "ttl", "rdata")
         .containsExactly(
-            tuple("0B0338C2023F7969", 1255374143000L, "denominator.io.", 2, 86400, asList(
+            tuple("0B0338C2023F7969", 1255348943000L, "denominator.io.", 2, 86400, asList(
                 "pdns2.ultradns.net.")),
-            tuple("04023A2507B6468F", 1286063836000L, "www.denominator.io.", 1, 3600, asList(
+            tuple("04023A2507B6468F", 1286038636000L, "www.denominator.io.", 1, 3600, asList(
                 "1.2.3.4"))
         );
 
