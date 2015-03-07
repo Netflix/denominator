@@ -273,25 +273,35 @@ public class DenominatorTest {
         "www2.weighted.denominator.io.                     A      US-West             0     192.0.2.1");
   }
 
-  @Test // denominator -p mock record -z denominator.io. list -n www1.denominator.io.
+  @Test // denominator -p mock record -z denominator.io. list -n server1.denominator.io.
   public void testResourceRecordSetListByName() {
     ResourceRecordSetList command = new ResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www1.denominator.io.";
+    command.name = "server1.denominator.io.";
     assertThat(command.doRun(mgr)).containsExactly(
-        "www1.denominator.io.                              A                          3600  192.0.2.1\n"
-        + "www1.denominator.io.                              A                          3600  192.0.2.2");
+        "server1.denominator.io.                           CERT                       3600  12345 1 1 B33F",
+        "server1.denominator.io.                           SRV                        3600  0 1 80 www.denominator.io.",
+        "server1.denominator.io.                           SSHFP                      3600  1 1 B33F");
   }
 
-  @Test // denominator -p mock record -z denominator.io. get -n www1.denominator.io. -t A
+  @Test // denominator -p mock record -z denominator.io. list -n server1.denominator.io. -t SRV
+  public void testResourceRecordSetListByNameAndType() {
+    ResourceRecordSetList command = new ResourceRecordSetList();
+    command.zoneIdOrName = "denominator.io.";
+    command.name = "server1.denominator.io.";
+    command.type = "CERT";
+    assertThat(command.doRun(mgr)).containsExactly(
+        "server1.denominator.io.                           CERT                       3600  12345 1 1 B33F");
+  }
+
+  @Test // denominator -p mock record -z denominator.io. get -n server1.denominator.io. -t SRV
   public void testResourceRecordSetGetWhenPresent() {
     ResourceRecordSetGet command = new ResourceRecordSetGet();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www1.denominator.io.";
-    command.type = "A";
+    command.name = "server1.denominator.io.";
+    command.type = "CERT";
     assertThat(command.doRun(mgr)).containsExactly(
-        "www1.denominator.io.                              A                          3600  192.0.2.1\n"
-        + "www1.denominator.io.                              A                          3600  192.0.2.2");
+        "server1.denominator.io.                           CERT                       3600  12345 1 1 B33F");
   }
 
   @Test // denominator -p mock record -z denominator.io. get -n www3.denominator.io. -t A
