@@ -63,12 +63,12 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.model.Zone;
 import feign.Logger;
 import feign.Logger.Level;
-import io.airlift.command.Cli;
-import io.airlift.command.Cli.CliBuilder;
-import io.airlift.command.Command;
-import io.airlift.command.Help;
-import io.airlift.command.Option;
-import io.airlift.command.OptionType;
+import io.airlift.airline.Cli;
+import io.airlift.airline.Cli.CliBuilder;
+import io.airlift.airline.Command;
+import io.airlift.airline.Help;
+import io.airlift.airline.Option;
+import io.airlift.airline.OptionType;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static denominator.CredentialsConfiguration.credentials;

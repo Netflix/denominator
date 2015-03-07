@@ -4,6 +4,7 @@
 * Changes DynECT to return type-safe rdata
 * Polls DynECT on incomplete, even when http status is 200
 * Updates to feign 7.3.0 and dagger 1.2.2
+* Updates CLI to airline 0.7 and snakeyaml 1.15
 * Reformats code according to [Google Java Style](https://google-styleguide.googlecode.com/svn/trunk/javaguide.html)
 * Removes java.beans.ConstructorProperties from value types
 * Removes dependency on sun.misc
