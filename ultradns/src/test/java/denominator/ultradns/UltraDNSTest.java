@@ -206,7 +206,22 @@ public class UltraDNSTest {
     record.rdata.add("1.1.1.1");
     mockApi().updateResourceRecord(record, "denominator.io.");
 
-    server.assertRequestHasBody(updateResourceRecord);
+    server.assertRequestHasBody(format(
+        SOAP_TEMPLATE,
+        "<v01:updateResourceRecord><transactionID /><resourceRecord Guid=\"ABCDEF\" ZoneName=\"denominator.io.\" Type=\"1\" DName=\"www.denominator.io.\" TTL=\"3600\"><InfoValues Info1Value=\"1.1.1.1\" /></resourceRecord></v01:updateResourceRecord>"));
+  }
+
+  @Test
+  public void updateRecordOfRRPool() throws Exception {
+    server.enqueue(new MockResponse().setBody(updateResourceRecordResponse));
+
+    mockApi().updateRecordOfRRPool("ABCDEF", "000000000000002", "1.1.1.1", 3600);
+
+    server.assertRequestHasBody(format(SOAP_TEMPLATE,
+                                       "<v01:updateRecordOfRRPool>\n"
+                                       + "    <transactionID/>\n"
+                                       + "    <resourceRecord TTL=\"3600\" info1Value=\"1.1.1.1\" lbPoolID=\"000000000000002\" rrGuid=\"ABCDEF\"/>\n"
+                                       + "</v01:updateRecordOfRRPool>"));
   }
 
   /**
@@ -805,9 +820,6 @@ public class UltraDNSTest {
       + "    </ns1:createResourceRecordResponse>\n"
       + "  </soap:Body>\n"
       + "</soap:Envelope>";
-  static String updateResourceRecord = format(
-      SOAP_TEMPLATE,
-      "<v01:updateResourceRecord><transactionID /><resourceRecord Guid=\"ABCDEF\" ZoneName=\"denominator.io.\" Type=\"1\" DName=\"www.denominator.io.\" TTL=\"3600\"><InfoValues Info1Value=\"1.1.1.1\" /></resourceRecord></v01:updateResourceRecord>");
   static String
       updateResourceRecordResponse =
       "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
