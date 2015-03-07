@@ -41,10 +41,8 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
   @Override
   public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
     checkNotNull(name, "name");
-    Iterator<Record>
-        orderedRecords =
-        api.getResourceRecordsOfDNameByType(zoneName, name, 0).iterator();
-    return new GroupByRecordNameAndTypeIterator(orderedRecords);
+    Iterator<Record> ordered = api.getResourceRecordsOfDNameByType(zoneName, name, 0).iterator();
+    return new GroupByRecordNameAndTypeIterator(ordered);
   }
 
   @Override
@@ -68,46 +66,58 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
     checkArgument(!rrset.records().isEmpty(), "rrset was empty %s", rrset);
     int ttlToApply = rrset.ttl() != null ? rrset.ttl() : DEFAULT_TTL;
 
-    List<Record> records = recordsByNameAndType(rrset.name(), rrset.type());
+    List<Record> toUpdate = recordsByNameAndType(rrset.name(), rrset.type());
+    List<Map<String, Object>> toCreate = new ArrayList<Map<String, Object>>(rrset.records());
 
-    List<Map<String, Object>>
-        recordsLeftToCreate =
-        new ArrayList<Map<String, Object>>(rrset.records());
-
-    for (Record record : records) {
+    for (Iterator<Record> shouldUpdate = toUpdate.iterator(); shouldUpdate.hasNext();) {
+      Record record = shouldUpdate.next();
       Map<String, Object> rdata = toMap(rrset.type(), record.rdata);
-      if (recordsLeftToCreate.contains(rdata)) {
-        recordsLeftToCreate.remove(rdata);
+      if (toCreate.contains(rdata)) {
+        toCreate.remove(rdata);
         if (ttlToApply == record.ttl) {
-          continue;
+          shouldUpdate.remove();
         }
-        record.ttl = ttlToApply;
-        api.updateResourceRecord(record, zoneName);
       } else {
+        shouldUpdate.remove();
         remove(rrset.name(), rrset.type(), record.id);
       }
     }
-    create(rrset.name(), rrset.type(), ttlToApply, recordsLeftToCreate);
+    if (!toUpdate.isEmpty()) {
+      update(rrset.name(), rrset.type(), ttlToApply, toUpdate);
+    }
+    if (!toCreate.isEmpty()) {
+      create(rrset.name(), rrset.type(), ttlToApply, toCreate);
+    }
+  }
+
+  private void update(String name, String type, int ttlToApply, List<Record> toUpdate) {
+    if (roundRobinPoolApi.isPoolType(type)) {
+      String lbPoolId = roundRobinPoolApi.getPoolByNameAndType(name, type);
+      for (Record record : toUpdate) {
+        api.updateRecordOfRRPool(record.id, lbPoolId, record.rdata.get(0), ttlToApply);
+      }
+    } else {
+      for (Record record : toUpdate) {
+        record.ttl = ttlToApply;
+        api.updateResourceRecord(record, zoneName);
+      }
+    }
   }
 
   private void create(String name, String type, int ttl, List<Map<String, Object>> rdatas) {
-    if (rdatas.size() > 0) {
-      // adding requires the use of a special RR pool api, however we can
-      // update them using the basic one..
-      if (roundRobinPoolApi.isPoolType(type)) {
-        roundRobinPoolApi.add(name, type, ttl, rdatas);
-      } else {
-        Record record = new Record();
-        record.name = name;
-        record.typeCode = lookup(type);
-        record.ttl = ttl;
+    if (roundRobinPoolApi.isPoolType(type)) {
+      roundRobinPoolApi.add(name, type, ttl, rdatas);
+    } else {
+      Record record = new Record();
+      record.name = name;
+      record.typeCode = lookup(type);
+      record.ttl = ttl;
 
-        for (Map<String, Object> rdata : rdatas) {
-          for (Object rdatum : rdata.values()) {
-            record.rdata.add(rdatum.toString());
-          }
-          api.createResourceRecord(record, zoneName);
+      for (Map<String, Object> rdata : rdatas) {
+        for (Object rdatum : rdata.values()) {
+          record.rdata.add(rdatum.toString());
         }
+        api.createResourceRecord(record, zoneName);
       }
     }
   }
