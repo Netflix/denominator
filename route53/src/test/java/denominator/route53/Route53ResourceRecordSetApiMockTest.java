@@ -58,12 +58,12 @@ public class Route53ResourceRecordSetApiMockTest {
   }
 
   @Test
-  public void putRecreatesWhenPresent() throws Exception {
+  public void putRecreates_ttlChanged() throws Exception {
     server.enqueue(new MockResponse().setBody(oneRecord));
     server.enqueue(new MockResponse().setBody(changeSynced));
 
     ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("Z1PA6795UKMFR9");
-    api.put(a("www.denominator.io.", 10000000, Arrays.asList("192.0.2.1", "198.51.100.1")));
+    api.put(a("www.denominator.io.", 10000000, Arrays.asList("192.0.2.1")));
 
     server.assertRequest()
         .hasPath("/2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=A");
@@ -71,7 +71,24 @@ public class Route53ResourceRecordSetApiMockTest {
         .hasMethod("POST")
         .hasPath("/2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset")
         .hasXMLBody(
-            "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>10000000</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>");
+            "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>10000000</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>");
+  }
+
+  @Test
+  public void putRecreates_recordAdded() throws Exception {
+    server.enqueue(new MockResponse().setBody(oneRecord));
+    server.enqueue(new MockResponse().setBody(changeSynced));
+
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("Z1PA6795UKMFR9");
+    api.put(a("www.denominator.io.", 3600, Arrays.asList("192.0.2.1", "198.51.100.1")));
+
+    server.assertRequest()
+        .hasPath("/2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=www.denominator.io.&type=A");
+    server.assertRequest()
+        .hasMethod("POST")
+        .hasPath("/2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset")
+        .hasXMLBody(
+            "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\"><ChangeBatch><Changes><Change><Action>DELETE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change><Change><Action>CREATE</Action><ResourceRecordSet><Name>www.denominator.io.</Name><Type>A</Type><TTL>3600</TTL><ResourceRecords><ResourceRecord><Value>192.0.2.1</Value></ResourceRecord><ResourceRecord><Value>198.51.100.1</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>");
   }
 
   @Test

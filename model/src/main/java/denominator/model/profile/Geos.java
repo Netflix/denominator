@@ -32,8 +32,7 @@ public class Geos {
       throws IllegalArgumentException {
     checkArgument(!regionsToAdd.isEmpty(), "no regions specified");
     checkArgument(existing.geo() != null, "rrset does not include geo configuration: %s", existing);
-    Map<String, Collection<String>>
-        regionsToApply =
+    Map<String, Collection<String>> regionsToApply =
         new LinkedHashMap<String, Collection<String>>();
     for (Entry<String, Collection<String>> entry : existing.geo().regions().entrySet()) {
       regionsToApply.put(entry.getKey(), entry.getValue());

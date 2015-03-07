@@ -42,15 +42,8 @@ public class Geo {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (o == this) {
-      return true;
-    }
-    if (!(o instanceof Geo)) {
-      return false;
-    }
-    Geo that = Geo.class.cast(o);
-    return regions().equals(that.regions());
+  public boolean equals(Object obj) {
+    return obj instanceof Geo && regions().equals(((Geo) obj).regions());
   }
 
   @Override
