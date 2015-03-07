@@ -25,6 +25,7 @@ import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
 import feign.Feign;
+import feign.Logger;
 import feign.Target.EmptyTarget;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
@@ -125,9 +126,21 @@ public class CloudDNSProvider extends BasicProvider {
     }
 
     @Provides
+    Logger logger() {
+      return new Logger.NoOpLogger();
+    }
+
+    @Provides
+    Logger.Level logLevel() {
+      return Logger.Level.NONE;
+    }
+
+    @Provides
     @Singleton
-    Feign feign() {
+    Feign feign(Logger logger, Logger.Level logLevel) {
       return Feign.builder()
+          .logger(logger)
+          .logLevel(logLevel)
           .encoder(new GsonEncoder())
           .decoder(new GsonDecoder(Arrays.asList(
                        new KeystoneAccessAdapter("rax:dns"),

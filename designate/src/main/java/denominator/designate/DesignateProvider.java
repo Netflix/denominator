@@ -26,6 +26,7 @@ import denominator.designate.DesignateAdapters.DomainListAdapter;
 import denominator.designate.DesignateAdapters.RecordAdapter;
 import denominator.designate.DesignateAdapters.RecordListAdapter;
 import feign.Feign;
+import feign.Logger;
 import feign.Target.EmptyTarget;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
@@ -122,10 +123,22 @@ public class DesignateProvider extends BasicProvider {
     }
 
     @Provides
+    Logger logger() {
+      return new Logger.NoOpLogger();
+    }
+
+    @Provides
+    Logger.Level logLevel() {
+      return Logger.Level.NONE;
+    }
+
+    @Provides
     @Singleton
-    Feign feign() {
+    Feign feign(Logger logger, Logger.Level logLevel) {
       RecordAdapter recordAdapter = new RecordAdapter();
       return Feign.builder()
+          .logger(logger)
+          .logLevel(logLevel)
           .encoder(new GsonEncoder(Collections.<TypeAdapter<?>>singleton(recordAdapter)))
           .decoder(new GsonDecoder(Arrays.asList(
                        new KeystoneV2AccessAdapter(),
