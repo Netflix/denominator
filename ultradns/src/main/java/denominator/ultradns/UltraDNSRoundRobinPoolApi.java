@@ -40,11 +40,15 @@ class UltraDNSRoundRobinPoolApi {
       if (e.code() != UltraDNSException.POOL_ALREADY_EXISTS) {
         throw e;
       }
-      NameAndType nameAndType = new NameAndType();
-      nameAndType.name = name;
-      nameAndType.type = type;
-      return api.getLoadBalancingPoolsByZone(zoneName).get(nameAndType);
+      return getPoolByNameAndType(name, type);
     }
+  }
+
+  String getPoolByNameAndType(String name, String type) {
+    NameAndType nameAndType = new NameAndType();
+    nameAndType.name = name;
+    nameAndType.type = type;
+    return api.getLoadBalancingPoolsByZone(zoneName).get(nameAndType);
   }
 
   void deletePool(String name, String type) {

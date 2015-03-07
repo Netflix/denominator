@@ -2,7 +2,6 @@ package denominator.ultradns;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -69,6 +68,11 @@ interface UltraDNS {
   void addRecordToRRPool(@Param("type") int type, @Param("ttl") int ttl,
                          @Param("address") String rdata,
                          @Param("lbPoolID") String lbPoolID, @Param("zoneName") String zoneName);
+
+  @RequestLine("POST")
+  @Body("<v01:updateRecordOfRRPool><transactionID /><resourceRecord rrGuid=\"{rrGuid}\" lbPoolID=\"{lbPoolID}\" info1Value=\"{info1Value}\" TTL=\"{ttl}\"/></v01:updateRecordOfRRPool>")
+  void updateRecordOfRRPool(@Param("rrGuid") String rrGuid, @Param("lbPoolID") String lbPoolID,
+                            @Param("info1Value") String info1Value, @Param("ttl") int ttl);
 
   /**
    * @throws UltraDNSException with code {@link UltraDNSException#POOL_NOT_FOUND} and {@link
