@@ -5,12 +5,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized.Parameter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import denominator.AllProfileResourceRecordSetApi;
@@ -45,19 +40,15 @@ public class GeoWriteCommandsLiveTest {
   public void test1_putNewRRS() {
     Map<String, Collection<String>> regions = geoApi(zone).supportedRegions();
 
-    Foo foo = new Foo(regions);
-    Map<String, Collection<String>>
-        allButOne = new LinkedHashMap<String, Collection<String>>(regions);
-    allButOne.put(foo.lastRegion, foo.exceptLastTerritory);
-
-    Map<String, Collection<String>> onlyOne = new LinkedHashMap<String, Collection<String>>(1);
-    onlyOne.put(foo.lastRegion, Arrays.asList(foo.lastTerritory));
+    Regions regionsForTest = new Regions(regions);
+    Map<String, Collection<String>> allButLastTerritory = regionsForTest.allButLastTerritory();
+    Map<String, Collection<String>> onlyLastTerritory = regionsForTest.onlyLastTerritory();
 
     int i = 0;
     for (String qualifier : new String[]{qualifier1, qualifier2}) {
       assumeRRSetAbsent(zone, expected.name(), expected.type(), qualifier);
 
-      Geo territories = Geo.create(i == 0 ? allButOne : onlyOne);
+      Geo territories = Geo.create(i == 0 ? allButLastTerritory : onlyLastTerritory);
 
       allApi(zone).put(ResourceRecordSet.builder()
                            .name(expected.name())
@@ -69,8 +60,7 @@ public class GeoWriteCommandsLiveTest {
 
       ResourceRecordSet<?>
           rrs =
-          geoApi(zone).getByNameTypeAndQualifier(expected.name(), expected.type(),
-                                                 qualifier);
+          geoApi(zone).getByNameTypeAndQualifier(expected.name(), expected.type(), qualifier);
 
       assertThat(rrs)
           .hasName(expected.name())
@@ -87,25 +77,12 @@ public class GeoWriteCommandsLiveTest {
     ResourceRecordSet<?> rrs1 = geoApi(zone)
         .getByNameTypeAndQualifier(expected.name(), expected.type(), qualifier1);
 
-    Map<String, Collection<String>> regionsFrom1 = rrs1.geo().regions();
-    Foo foo = new Foo(regionsFrom1);
-
-    Map<String, Collection<String>> toYank = new LinkedHashMap<String, Collection<String>>(1);
-    toYank.put(foo.lastRegion, Arrays.asList(foo.lastTerritory));
+    Regions regionsFrom1 = new Regions(rrs1.geo().regions());
 
     ResourceRecordSet<?> rrs2 = geoApi(zone)
         .getByNameTypeAndQualifier(expected.name(), expected.type(), qualifier2);
 
-    Map<String, Collection<String>>
-        plus1 =
-        new LinkedHashMap<String, Collection<String>>(rrs2.geo().regions());
-    if (plus1.containsKey(foo.lastRegion)) {
-      List<String> moreTerritories = new ArrayList<String>(plus1.get(foo.lastRegion));
-      moreTerritories.add(foo.lastTerritory);
-      plus1.put(foo.lastRegion, moreTerritories);
-    } else {
-      plus1.put(foo.lastRegion, Arrays.asList(foo.lastTerritory));
-    }
+    Map<String, Collection<String>> plus1 = regionsFrom1.plusLastTerritory(rrs2.geo().regions());
 
     geoApi(zone).put(ResourceRecordSet.builder()
                          .name(expected.name())
@@ -117,8 +94,7 @@ public class GeoWriteCommandsLiveTest {
 
     rrs1 = geoApi(zone).getByNameTypeAndQualifier(expected.name(), expected.type(), qualifier1);
 
-    assertThat(rrs1)
-        .containsRegion(foo.lastRegion, foo.exceptLastTerritory.toArray(new String[]{}));
+    assertThat(rrs1).hasGeo(Geo.create(regionsFrom1.allButLastTerritory()));
 
     rrs2 = geoApi(zone).getByNameTypeAndQualifier(expected.name(), expected.type(), qualifier2);
 
@@ -131,8 +107,7 @@ public class GeoWriteCommandsLiveTest {
     for (String qualifier : new String[]{qualifier1, qualifier2}) {
       ResourceRecordSet<?>
           rrs =
-          geoApi(zone).getByNameTypeAndQualifier(expected.name(), expected.type(),
-                                                 qualifier);
+          geoApi(zone).getByNameTypeAndQualifier(expected.name(), expected.type(), qualifier);
 
       int ttl = (rrs.ttl() != null ? rrs.ttl() : 60000) + 60000;
       Geo oldGeo = rrs.geo();
@@ -185,21 +160,6 @@ public class GeoWriteCommandsLiveTest {
 
     assertNull(format("recordset(%s, %s, %s) still present in %s",
                       expected.name(), expected.type(), qualifier2, zone), rrs);
-  }
-
-  private static final class Foo {
-
-    String lastRegion;
-    String lastTerritory;
-    List<String> exceptLastTerritory;
-
-    Foo(Map<String, Collection<String>> regions) {
-      for (Iterator<String> r = regions.keySet().iterator(); r.hasNext(); ) {
-        lastRegion = r.next();
-      }
-      exceptLastTerritory = new ArrayList<String>(regions.get(lastRegion));
-      lastTerritory = exceptLastTerritory.remove(exceptLastTerritory.size() - 1);
-    }
   }
 
   // TODO
