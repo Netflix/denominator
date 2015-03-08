@@ -46,7 +46,7 @@ class ResourceRecordSetCommands {
     public String apply(ResourceRecordSet<?> input) {
       List<String> lines = new ArrayList<String>();
       for (Map<String, Object> rdata : input.records()) {
-        lines.add(format("%-50s%-7s%-20s%-6s%s", input.name(), input.type(),
+        lines.add(format("%-49s %-6s %-19s %-5s %s", input.name(), input.type(),
                          input.qualifier() != null ? input.qualifier() : "", input.ttl(),
                          Util.flatten(rdata)));
       }
