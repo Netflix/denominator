@@ -9,10 +9,12 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.Credentials.ListCredentials;
+import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
@@ -119,65 +121,23 @@ public class DenominatorTest {
   }
 
   @Test
-  public void testEnvConfig() {
-    ZoneList zoneList = new ZoneList() {
-      @Override
-      String getEnvValue(String name) {
-        if (name.equals("PROVIDER")) {
-          return "route53";
-        } else if (name.equals("URL")) {
-          return "mem:mock2";
-        } else if (name.equals("ACCESS_KEY")) {
-          return "foo1";
-        } else if (name.equals("SECRET_KEY")) {
-          return "foo2";
-        }
-        return null;
-      }
-    };
-    Map<String, Object> contents = (Map) zoneList.getConfigFromEnv();
-    assertThat(contents)
-        .containsEntry("provider", "route53")
-        .containsEntry("url", "mem:mock2");
-    Map<String, String> credentials = (Map) contents.get("credentials");
-    assertThat(credentials)
+  public void testOverrideFromEnv() {
+    ZoneList zoneList = new ZoneList();
+    Map<String, String> env = new LinkedHashMap<String, String>();
+    env.put("DENOMINATOR_PROVIDER", "route53");
+    env.put("DENOMINATOR_URL", "mem:mock2");
+    env.put("DENOMINATOR_ACCESS_KEY", "foo1");
+    env.put("DENOMINATOR_SECRET_KEY", "foo2");
+    zoneList.overrideFromEnv(env);
+
+    assertThat(zoneList.providerName).isEqualTo("route53");
+    assertThat(zoneList.url).isEqualTo("mem:mock2");
+
+    assertThat((Map<String, Object>) zoneList.credentials)
+        .isInstanceOf(MapCredentials.class)
         .containsEntry("accessKey", "foo1")
         .containsEntry("secretKey", "foo2");
   }
-
-  @Test // denominator zone list
-  public void testConfigFromEnv() {
-    ZoneList zoneList = new ZoneList() {
-      @Override
-      String getEnvValue(String name) {
-        if (name.equals("PROVIDER")) {
-          return "dynect";
-        } else if (name.equals("URL")) {
-          return "mem:mock2";
-        } else if (name.equals("CUSTOMER")) {
-          return "foo1";
-        } else if (name.equals("USERNAME")) {
-          return "foo2";
-        } else if (name.equals("PASSWORD")) {
-          return "foo3";
-        }
-        return null;
-      }
-
-      @Override
-      public Iterator<String> doRun(DNSApiManager mgr) {
-        assertThat(providerName).isEqualTo("dynect");
-        assertThat(url).isEqualTo("mem:mock2");
-        assertThat(Map.class.cast(credentials))
-            .containsEntry("customer", "foo1")
-            .containsEntry("username", "foo2")
-            .containsEntry("password", "foo3");
-        return Collections.<String>emptyList().iterator();
-      }
-    };
-    zoneList.run();
-  }
-
 
   @Test // denominator -C test-config.yml -n blah2 zone list
   public void testConfigArgMock() {
@@ -807,7 +767,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"]}
   public void testGeoResourceRecordSetAddRegionsEntireRegion() {
-    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -836,7 +796,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"United States (US)\":[\"Arizona\"]}
   public void testGeoResourceRecordSetAddRegionsSkipsWhenSame() {
-    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -861,7 +821,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}
   public void testGeoResourceRecordSetAddRegionsEntireRegionAndTerritory() {
-    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -891,7 +851,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} --dry-run --validate-regions
   public void testGeoResourceRecordSetAddRegionsEntireRegionAndTerritoryValidatedDryRun() {
-    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -920,7 +880,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} --validate-regions
   public void testGeoResourceRecordSetAddRegionsValidationFailureOnTerritory() {
-    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -951,7 +911,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"Suth America\":[\"Ecuador\"]} --validate-regions
   public void testGeoResourceRecordSetAddRegionsValidationFailureOnRegion() {
-    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";
@@ -982,7 +942,7 @@ public class DenominatorTest {
   @Test
   // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r Mexico
   public void testGeoResourceRecordSetAddRegionsBadJson() {
-    GeoResourceRecordAddRegions command =  new GeoResourceRecordAddRegions();
+    GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
     command.name = "www2.geo.denominator.io.";
     command.type = "A";

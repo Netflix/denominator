@@ -42,6 +42,8 @@ import javax.inject.Singleton;
 import dagger.ObjectGraph;
 import dagger.Provides;
 import denominator.Credentials;
+import denominator.Credentials.AnonymousCredentials;
+import denominator.Credentials.ListCredentials;
 import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.Denominator.Version;
@@ -252,12 +254,12 @@ public class Denominator {
     @Option(type = OptionType.GLOBAL, name = {"-n",
                                               "--configuration-name"}, description = "unique name of provider configuration")
     public String providerConfigurationName;
-    protected Credentials credentials = Credentials.AnonymousCredentials.INSTANCE;
+    protected Credentials credentials = AnonymousCredentials.INSTANCE;
 
     @SuppressWarnings("unchecked")
     public void run() {
       if (providerName != null && credentialArgs != null) {
-        credentials = Credentials.ListCredentials.from(credentialArgs);
+        credentials = ListCredentials.from(credentialArgs);
       } else if (providerConfigurationName != null) {
         Map<?, ?> configFromFile = getConfigFromFile();
         if (configFromFile != null) {
@@ -268,16 +270,7 @@ public class Denominator {
           }
         }
       } else {
-        Map<String, ?> configMap = getConfigFromEnv();
-        if (configMap.containsKey("url")) {
-          url = configMap.get("url").toString();
-        }
-        if (configMap.containsKey("provider")) {
-          providerName = configMap.get("provider").toString();
-        }
-        if (configMap.containsKey("credentials")) {
-          credentials = MapCredentials.from(Map.class.cast(configMap.get("credentials")));
-        }
+        overrideFromEnv(System.getenv());
       }
       Provider provider = Providers.getByName(providerName);
       if (url != null) {
@@ -293,7 +286,7 @@ public class Denominator {
         modulesForGraph.add(logModule);
       }
 
-      if (credentials != null) {
+      if (credentials != AnonymousCredentials.INSTANCE) {
         modulesForGraph.add(credentials(credentials));
       }
       DNSApiManager mgr = null;
@@ -349,20 +342,17 @@ public class Denominator {
       return Files.toString(new File(path), Charsets.UTF_8);
     }
 
-    Map<String, ?> getConfigFromEnv() {
-      Map<String, Object> env = new LinkedHashMap<String, Object>();
+    void overrideFromEnv(Map<String, String> env) {
       if (providerName == null) {
-        providerName = getEnvValue("PROVIDER");
+        providerName = env.get(ENV_PREFIX + "PROVIDER");
       }
-      env.put("provider", providerName);
       if (url == null) {
-        url = getEnvValue("URL");
+        url = env.get(ENV_PREFIX + "URL");
       }
-      env.put("url", url);
 
-      Map<String, String> credentialMap = new LinkedHashMap<String, String>();
       Provider providerLoaded = Providers.getByName(providerName);
       if (providerLoaded != null) {
+        Map<String, String> credentialMap = new LinkedHashMap<String, String>();
         // merge the list of possible credentials
         for (Entry<String, Collection<String>> entry :
             providerLoaded.credentialTypeToParameterNames().entrySet()) {
@@ -370,19 +360,16 @@ public class Denominator {
             String
                 upperParamName =
                 CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_UNDERSCORE, paramName);
-            String value = getEnvValue(upperParamName);
+            String value = env.get(ENV_PREFIX + upperParamName);
             if (value != null) {
               credentialMap.put(paramName, value);
             }
           }
         }
+        if (!credentialMap.isEmpty()) {
+          credentials = MapCredentials.from(credentialMap);
+        }
       }
-      env.put("credentials", credentialMap);
-      return env;
-    }
-
-    String getEnvValue(String name) {
-      return System.getenv(ENV_PREFIX + name);
     }
 
     /**
