@@ -40,6 +40,7 @@ import denominator.route53.AliasTarget;
 
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.model.ResourceRecordSets.a;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.fail;
 
 public class DenominatorTest {
@@ -195,7 +196,7 @@ public class DenominatorTest {
     zoneList.providerConfigurationName = "blah1";
     zoneList.providerName = "route53";
     zoneList.configPath = getTestConfigPath();
-    zoneList.credentialArgs = Arrays.asList("user", "pass");
+    zoneList.credentialArgs = asList("user", "pass");
     zoneList.run();
   }
 
@@ -265,6 +266,78 @@ public class DenominatorTest {
         "server1.denominator.io.                           CERT                       3600  12345 1 1 B33F");
   }
 
+  @Test
+  public void testResourceRecordSetGet_longName() {
+    ResourceRecordSetGet command = new ResourceRecordSetGet();
+    command.zoneIdOrName = "denominator.io.";
+    command.name = new String(new char[51 - 16]).replace("\0", "a") + "." + command.zoneIdOrName; 
+    command.type = "A";
+
+    mgr.api().basicRecordSetsInZone(command.zoneIdOrName).put(a(command.name, asList("192.0.1.1")));
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.denominator.io. A                          null  192.0.1.1");
+  }
+
+  @Test
+  public void testResourceRecordSetGet_longType() {
+    ResourceRecordSetGet command = new ResourceRecordSetGet();
+    command.zoneIdOrName = "denominator.io.";
+    command.name = "server1.denominator.io.";
+    command.type = "IPSECKEY";
+    command.qualifier = "mavenlover"; // just to ensure type doesn't overrun
+
+    Map<String, Object> rdata = new LinkedHashMap<String, Object>();
+    rdata.put("precedence", 1);
+    rdata.put("gatetype", 0);
+    rdata.put("algorithm", 0);
+    rdata.put("gateway", "foo.");
+    rdata.put("public_key", "AAAAB3");
+
+    mgr.api().recordSetsInZone(command.zoneIdOrName).put(
+        ResourceRecordSet.builder()
+            .name(command.name)
+            .type(command.type)
+            .qualifier(command.qualifier)
+            .add(rdata).build());
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        "server1.denominator.io.                           IPSECKEY mavenlover          null  1 0 0 foo. AAAAB3");
+  }
+
+  @Test
+  public void testResourceRecordSetGet_longTtl() {
+    ResourceRecordSetGet command = new ResourceRecordSetGet();
+    command.zoneIdOrName = "denominator.io.";
+    command.name = "server1.denominator.io.";
+    command.type = "A";
+
+    mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
+        .put(a(command.name, 99999999, asList("192.0.1.1")));
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        "server1.denominator.io.                           A                          99999999 192.0.1.1");
+  }
+
+  @Test
+  public void testResourceRecordSetGet_longQualifier() {
+    ResourceRecordSetGet command = new ResourceRecordSetGet();
+    command.zoneIdOrName = "denominator.io.";
+    command.name = "server1.denominator.io.";
+    command.type = "A";
+    command.qualifier = new String(new char[21]).replace("\0", "a");
+
+    mgr.api().recordSetsInZone(command.zoneIdOrName).put(
+        ResourceRecordSet.<AData>builder()
+            .name(command.name)
+            .type(command.type)
+            .qualifier(command.qualifier)
+            .add(AData.create("192.0.1.1")).build());
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        "server1.denominator.io.                           A      aaaaaaaaaaaaaaaaaaaaa null  192.0.1.1");
+  }
+
   @Test // denominator -p mock record -z denominator.io. get -n www3.denominator.io. -t A
   public void testResourceRecordSetGetWhenAbsent() {
     ResourceRecordSetGet command = new ResourceRecordSetGet();
@@ -324,7 +397,7 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
-    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    command.values = asList("192.0.2.1", "192.0.2.2");
 
     // Ensure the rrset didn't formerly exist.
     mgr.api().basicRecordSetsInZone(command.zoneIdOrName).deleteByNameAndType(command.name,
@@ -345,11 +418,11 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
-    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    command.values = asList("192.0.2.1", "192.0.2.2");
 
     // Setup base record with only one value.
     mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
-        .put(a(command.name, Arrays.asList(command.values.get(0))));
+        .put(a(command.name, asList(command.values.get(0))));
 
     assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1}, {address=192.0.2.2}]",
@@ -366,7 +439,7 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
-    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    command.values = asList("192.0.2.1", "192.0.2.2");
 
     // Setup base record which already has the values.
     mgr.api().basicRecordSetsInZone(command.zoneIdOrName).put(a(command.name, command.values));
@@ -495,7 +568,7 @@ public class DenominatorTest {
     command.name = "www1.denominator.io.";
     command.type = "A";
     command.ttl = 3600;
-    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    command.values = asList("192.0.2.1", "192.0.2.2");
     assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. adding to rrset www1.denominator.io. A values: [{address=192.0.2.1}, {address=192.0.2.2}] applying ttl 3600",
         ";; ok");
@@ -516,7 +589,7 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.denominator.io.";
     command.type = "CNAME";
-    command.values = Arrays.asList("www1.denominator.io.", "www2.denominator.io.");
+    command.values = asList("www1.denominator.io.", "www2.denominator.io.");
     assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. replacing rrset www.denominator.io. CNAME with values: [{cname=www1.denominator.io.}, {cname=www2.denominator.io.}]",
         ";; ok");
@@ -537,7 +610,7 @@ public class DenominatorTest {
     command.name = "www1.denominator.io.";
     command.type = "A";
     command.ttl = 3600;
-    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    command.values = asList("192.0.2.1", "192.0.2.2");
     assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. replacing rrset www1.denominator.io. A with values: [{address=192.0.2.1}, {address=192.0.2.2}] and ttl 3600",
         ";; ok");
@@ -558,7 +631,7 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
-    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    command.values = asList("192.0.2.1", "192.0.2.2");
     assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. removing from rrset www1.denominator.io. A values: [{address=192.0.2.1}, {address=192.0.2.2}]",
         ";; ok");
@@ -574,7 +647,7 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
-    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    command.values = asList("192.0.2.1", "192.0.2.2");
 
     // Setup base record which has both values.
     mgr.api().basicRecordSetsInZone(command.zoneIdOrName).put(a(command.name, command.values));
@@ -593,11 +666,11 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
-    command.values = Arrays.asList("192.0.2.2");
+    command.values = asList("192.0.2.2");
 
     // Setup base record which has two values.
     mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
-        .put(a(command.name, Arrays.asList("192.0.2.1", "192.0.2.2")));
+        .put(a(command.name, asList("192.0.2.1", "192.0.2.2")));
 
     assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. removing from rrset www1.denominator.io. A values: [{address=192.0.2.2}]",
@@ -614,7 +687,7 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "www1.denominator.io.";
     command.type = "A";
-    command.values = Arrays.asList("192.0.2.1", "192.0.2.2");
+    command.values = asList("192.0.2.1", "192.0.2.2");
 
     // Setup base record which already has the values.
     mgr.api().basicRecordSetsInZone(command.zoneIdOrName)
