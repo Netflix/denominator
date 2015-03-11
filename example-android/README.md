@@ -4,7 +4,7 @@
 You will need to use either [Android Studio](http://developer.android.com/sdk/installing/studio.html) or the command-line tools to install this.  The easiest way to get started is by using homebrew to install the android sdk.
 1. `brew install android`
 2. `android update sdk --no-ui`
-3. `export ANDROID_HOME=`/usr/local/opt/android-sdk`
+3. `export ANDROID_HOME=/usr/local/opt/android-sdk`
 4. `echo sdk.dir=$ANDROID_HOME >>local.properties`
 
 ## Build
