@@ -1,5 +1,6 @@
 package denominator.ultradns;
 
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -8,7 +9,6 @@ import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
 import denominator.ultradns.UltraDNS.Record;
 import feign.RequestTemplate;
-import feign.codec.EncodeException;
 import feign.codec.Encoder;
 
 import static denominator.common.Util.join;
@@ -117,9 +117,8 @@ class UltraDNSFormEncoder implements Encoder {
   }
 
   @Override
-  public void encode(Object object, RequestTemplate template) throws EncodeException {
-    @SuppressWarnings("unchecked")
-    Map<String, ?> formParams = Map.class.cast(object);
+  public void encode(Object object, Type bodyType, RequestTemplate template) {
+    Map<String, ?> formParams = (Map<String, ?>) object;
     if (formParams.containsKey("zoneName")) {
       template.body(encodeZoneAndResourceRecord(formParams));
     } else {

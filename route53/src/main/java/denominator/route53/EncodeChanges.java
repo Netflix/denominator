@@ -1,12 +1,12 @@
 package denominator.route53;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
 import denominator.model.ResourceRecordSet;
 import denominator.route53.Route53.ActionOnResourceRecordSet;
 import feign.RequestTemplate;
-import feign.codec.EncodeException;
 import feign.codec.Encoder;
 
 import static denominator.common.Preconditions.checkNotNull;
@@ -59,9 +59,8 @@ class EncodeChanges implements Encoder {
   }
 
   @Override
-  public void encode(Object object, RequestTemplate template) throws EncodeException {
-    @SuppressWarnings("unchecked")
-    List<ActionOnResourceRecordSet> actions = List.class.cast(object);
+  public void encode(Object object, Type bodyType, RequestTemplate template) {
+    List<ActionOnResourceRecordSet> actions = (List<ActionOnResourceRecordSet>) object;
     StringBuilder b = new StringBuilder();
     b.append(
         "<ChangeResourceRecordSetsRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\"><ChangeBatch>");
