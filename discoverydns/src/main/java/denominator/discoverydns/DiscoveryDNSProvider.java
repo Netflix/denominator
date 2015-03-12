@@ -19,14 +19,11 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.inject.Singleton;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
-import dagger.Lazy;
 import dagger.Provides;
 import denominator.BasicProvider;
 import denominator.CheckConnection;
@@ -162,18 +159,7 @@ public class DiscoveryDNSProvider extends BasicProvider {
      */
     @Provides
     Client client(Credentials creds) {
-      final SSLSocketFactory sslSocketFactory = sslSocketFactory(creds);
-      return new Client.Default(new Lazy<SSLSocketFactory>() {
-        @Override
-        public SSLSocketFactory get() {
-          return sslSocketFactory;
-        }
-      }, new Lazy<HostnameVerifier>() {
-        @Override
-        public HostnameVerifier get() {
-          return HttpsURLConnection.getDefaultHostnameVerifier();
-        }
-      });
+      return new Client.Default(sslSocketFactory(creds), null);
     }
 
     static SSLSocketFactory sslSocketFactory(Credentials creds) {
