@@ -1,3 +1,6 @@
+### Version 4.5
+* Updates to feign 8.0
+
 ### Version 4.4
 * Accommodates UltraDNS accounts without directional support
 * Allows map credentials to be used without regard to iteration order
