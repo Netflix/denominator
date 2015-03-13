@@ -1,4 +1,4 @@
-### Version 4.5
+### Version 4.4.2
 * Updates to feign 8.0
 
 ### Version 4.4
