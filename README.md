@@ -15,9 +15,9 @@ There's no official android client, yet.  However, we do have an [Android Exampl
 ### Binaries
 If you are using OSX, [Homebrew](http://mxcl.github.io/homebrew/) has a built-in installer for denominator.
 
-Here's how to get denominator-cli `4.4.1` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
+Here's how to get denominator-cli `4.4.2` from [bintray](https://bintray.com/pkg/show/general/netflixoss/denominator/denominator-cli)
 
-1. [Download denominator](https://bintray.com/artifact/download/netflixoss/maven/com/netflix/denominator/denominator-cli/4.4.1/denominator-cli-4.4.1-fat.jar)
+1. [Download denominator](https://bintray.com/artifact/download/netflixoss/maven/com/netflix/denominator/denominator-cli/4.4.2/denominator-cli-4.4.2-fat.jar)
 2. Place it on your `$PATH`. (ex. `~/bin`)
 3. Set it to be executable. (`chmod 755 ~/bin/denominator`)
 
@@ -67,7 +67,7 @@ Denominator exposes a portable [model](https://github.com/Netflix/denominator/wi
 
 ### Binaries
 
-The current version of denominator is `4.4.1`
+The current version of denominator is `4.4.2`
 
 Denominator can be resolved as maven dependencies, or equivalent in lein, gradle, etc.  Here are the coordinates, noting you only need to list the providers you use.
 ```xml
