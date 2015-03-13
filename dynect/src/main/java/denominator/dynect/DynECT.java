@@ -11,9 +11,11 @@ import java.util.Map;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import feign.Body;
+import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
 
+@Headers({"API-Version: 3.5.0", "Content-Type: application/json"})
 public interface DynECT {
 
   @RequestLine("GET /Zone")

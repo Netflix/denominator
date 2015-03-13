@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import denominator.model.ResourceRecordSet;
+import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
 
+@Headers({"Accept: application/json", "Content-Type: application/json"})
 interface DiscoveryDNS {
 
   @RequestLine("GET /users")

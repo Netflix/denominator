@@ -35,8 +35,6 @@ class DynECTTarget implements Target<DynECT> {
 
   @Override
   public Request apply(RequestTemplate input) {
-    input.header("API-Version", "3.5.0");
-    input.header("Content-Type", "application/json");
     input.header("Auth-Token", lazyToken.get());
     input.insert(0, url());
     return input.request();
