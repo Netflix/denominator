@@ -28,8 +28,8 @@ public class UltraDNSZoneApiMockTest {
 
     assertThat(api.iterator().next()).hasName("denominator.io.");
 
-    server.assertRequestHasBody(getAccountsListOfUser);
-    server.assertRequestHasBody(getZonesOfAccount);
+    server.assertSoapBody(getAccountsListOfUser);
+    server.assertSoapBody(getZonesOfAccount);
   }
 
   @Test
@@ -41,7 +41,7 @@ public class UltraDNSZoneApiMockTest {
 
     assertThat(api.iterator()).isEmpty();
 
-    server.assertRequestHasBody(getAccountsListOfUser);
-    server.assertRequestHasBody(getZonesOfAccount);
+    server.assertSoapBody(getAccountsListOfUser);
+    server.assertSoapBody(getZonesOfAccount);
   }
 }
