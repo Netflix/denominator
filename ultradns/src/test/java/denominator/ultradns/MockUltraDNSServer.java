@@ -17,15 +17,37 @@ import denominator.assertj.RecordedRequestAssert;
 
 import static denominator.Credentials.ListCredentials;
 import static denominator.assertj.MockWebServerAssertions.assertThat;
+import static denominator.ultradns.UltraDNSTarget.SOAP_TEMPLATE;
+import static java.lang.String.format;
 
 final class MockUltraDNSServer extends UltraDNSProvider implements TestRule {
 
+  /**
+   * param 1 is the code, 2 is the description
+   */
+  static final String FAULT_TEMPLATE =
+      "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
+      + "    <soap:Body>\n"
+      + "            <soap:Fault>\n"
+      + "                    <faultcode>soap:Server</faultcode>\n"
+      + "                    <faultstring>Fault occurred while processing.</faultstring>\n"
+      + "                    <detail>\n"
+      + "                            <ns1:UltraWSException xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
+      + "                                    <errorCode xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"xs:int\">%s</errorCode>\n"
+      + "                                    <errorDescription xmlns:ns2=\"http://schema.ultraservice.neustar.com/v01/\">%s</errorDescription>\n"
+      + "                            </ns1:UltraWSException>\n"
+      + "                    </detail>\n"
+      + "            </soap:Fault>\n"
+      + "    </soap:Body>\n"
+      + "</soap:Envelope>";
+
   private final MockWebServerRule delegate = new MockWebServerRule();
-  private String username = "joe";
-  private String password = "letmein";
+  private String username;
+  private String password;
+  private String soapTemplate;
 
   MockUltraDNSServer() {
-    credentials(username, password);
+    credentials("joe", "letmein");
   }
 
   @Override
@@ -44,18 +66,24 @@ final class MockUltraDNSServer extends UltraDNSProvider implements TestRule {
   MockUltraDNSServer credentials(String username, String password) {
     this.username = username;
     this.password = password;
+    this.soapTemplate = format(SOAP_TEMPLATE, username, password, "%s");
     return this;
+  }
+
+  void enqueueError(int code, String description) {
+    delegate.enqueue(
+        new MockResponse().setResponseCode(500).setBody(format(FAULT_TEMPLATE, code, description)));
   }
 
   void enqueue(MockResponse mockResponse) {
     delegate.enqueue(mockResponse);
   }
 
-  RecordedRequestAssert assertRequestHasBody(String xmlBody) throws InterruptedException {
+  RecordedRequestAssert assertSoapBody(String soapBody) throws InterruptedException {
     return assertThat(delegate.takeRequest())
         .hasMethod("POST")
         .hasPath("/")
-        .hasXMLBody(xmlBody);
+        .hasXMLBody(format(soapTemplate, soapBody));
   }
 
   void shutdown() throws IOException {

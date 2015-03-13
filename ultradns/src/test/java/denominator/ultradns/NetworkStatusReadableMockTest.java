@@ -24,7 +24,7 @@ public class NetworkStatusReadableMockTest {
     DNSApiManager api = server.connect();
     assertTrue(api.checkConnection());
 
-    server.assertRequestHasBody(getNeustarNetworkStatus);
+    server.assertSoapBody(getNeustarNetworkStatus);
   }
 
   @Test
@@ -34,6 +34,6 @@ public class NetworkStatusReadableMockTest {
     DNSApiManager api = server.connect();
     assertFalse(api.checkConnection());
 
-    server.assertRequestHasBody(getNeustarNetworkStatus);
+    server.assertSoapBody(getNeustarNetworkStatus);
   }
 }
