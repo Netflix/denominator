@@ -16,7 +16,7 @@ import denominator.model.rdata.CNAMEData;
 import denominator.profile.GeoResourceRecordSetApi;
 
 import static denominator.assertj.ModelAssertions.assertThat;
-import static denominator.ultradns.UltraDNSTest.directionalNotEnabled;
+import static denominator.ultradns.UltraDNSException.DIRECTIONAL_NOT_ENABLED;
 import static denominator.ultradns.UltraDNSTest.getAvailableRegions;
 import static denominator.ultradns.UltraDNSTest.getAvailableRegionsResponse;
 import static denominator.ultradns.UltraDNSTest.getDirectionalDNSGroupDetails;
@@ -44,11 +44,12 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
 
   @Test
   public void apiWhenUnsupported() throws Exception {
-    server.enqueue(new MockResponse().setResponseCode(500).setBody(directionalNotEnabled));
+    server.enqueueError(DIRECTIONAL_NOT_ENABLED,
+                        "Directional feature not Enabled or Directional migration is not done.");
 
     assertThat(server.connect().api().geoRecordSetsInZone("denominator.io.")).isNull();
 
-    server.assertRequestHasBody(getAvailableRegions);
+    server.assertSoapBody(getAvailableRegions);
   }
 
   @Test
@@ -68,14 +69,14 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     assertUS(iterator.next());
     assertThat(iterator).isEmpty();
 
-    server.assertRequestHasBody(getAvailableRegions);
-    server.assertRequestHasBody(getDirectionalPoolsOfZone);
-    server.assertRequestHasBody(getDirectionalDNSRecordsForHost);
-    server.assertRequestHasBody(
+    server.assertSoapBody(getAvailableRegions);
+    server.assertSoapBody(getDirectionalPoolsOfZone);
+    server.assertSoapBody(getDirectionalDNSRecordsForHost);
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000001"));
-    server.assertRequestHasBody(
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000003"));
-    server.assertRequestHasBody(
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000002"));
   }
 
@@ -95,13 +96,13 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     assertUS(iterator.next());
     assertThat(iterator).isEmpty();
 
-    server.assertRequestHasBody(getAvailableRegions);
-    server.assertRequestHasBody(getDirectionalDNSRecordsForHost);
-    server.assertRequestHasBody(
+    server.assertSoapBody(getAvailableRegions);
+    server.assertSoapBody(getDirectionalDNSRecordsForHost);
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000001"));
-    server.assertRequestHasBody(
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000003"));
-    server.assertRequestHasBody(
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000002"));
   }
 
@@ -124,14 +125,14 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     assertUS(iterator.next());
     assertThat(iterator).isEmpty();
 
-    server.assertRequestHasBody(getAvailableRegions);
-    server.assertRequestHasBody(getDirectionalDNSRecordsForHostIPV4);
-    server.assertRequestHasBody(getDirectionalDNSRecordsForHostIPV6);
-    server.assertRequestHasBody(
+    server.assertSoapBody(getAvailableRegions);
+    server.assertSoapBody(getDirectionalDNSRecordsForHostIPV4);
+    server.assertSoapBody(getDirectionalDNSRecordsForHostIPV6);
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000001"));
-    server.assertRequestHasBody(
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000003"));
-    server.assertRequestHasBody(
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000002"));
   }
 
@@ -144,7 +145,7 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
     assertThat(api.supportedRegions()).hasSize(2);
     api.supportedRegions(); // cached
 
-    server.assertRequestHasBody(getAvailableRegions);
+    server.assertSoapBody(getAvailableRegions);
   }
 
   @Test
@@ -158,10 +159,10 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
 
     api.put(europe);
 
-    server.assertRequestHasBody(getAvailableRegions);
-    server.assertRequestHasBody(getDirectionalDNSRecordsForGroup);
-    server.assertRequestHasBody(getDirectionalDNSRecordsForGroupEuropeIPV6);
-    server.assertRequestHasBody(
+    server.assertSoapBody(getAvailableRegions);
+    server.assertSoapBody(getDirectionalDNSRecordsForGroup);
+    server.assertSoapBody(getDirectionalDNSRecordsForGroupEuropeIPV6);
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000001"));
   }
 
@@ -188,12 +189,12 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         })).build();
     api.put(lessOfEurope);
 
-    server.assertRequestHasBody(getAvailableRegions);
-    server.assertRequestHasBody(getDirectionalDNSRecordsForGroup);
-    server.assertRequestHasBody(getDirectionalDNSRecordsForGroupEuropeIPV6);
-    server.assertRequestHasBody(
+    server.assertSoapBody(getAvailableRegions);
+    server.assertSoapBody(getDirectionalDNSRecordsForGroup);
+    server.assertSoapBody(getDirectionalDNSRecordsForGroupEuropeIPV6);
+    server.assertSoapBody(
         getDirectionalDNSGroupDetails.replace("AAAAAAAAAAAAAAAA", "C000000000000001"));
-    server.assertRequestHasBody(updateDirectionalPoolRecordRegions);
+    server.assertSoapBody(updateDirectionalPoolRecordRegions);
   }
 
   @Test
@@ -213,10 +214,10 @@ public class UltraDNSGeoResourceRecordSetApiMockTest {
         .geo(europe.geo()).build();
     api.put(lessTTL);
 
-    server.assertRequestHasBody(getAvailableRegions);
-    server.assertRequestHasBody(getDirectionalDNSRecordsForGroup);
-    server.assertRequestHasBody(getDirectionalDNSRecordsForGroupEuropeIPV6);
-    server.assertRequestHasBody(format(
+    server.assertSoapBody(getAvailableRegions);
+    server.assertSoapBody(getDirectionalDNSRecordsForGroup);
+    server.assertSoapBody(getDirectionalDNSRecordsForGroupEuropeIPV6);
+    server.assertSoapBody(format(
         updateDirectionalPoolRecordTemplate,
         "A000000000000001",
         600,

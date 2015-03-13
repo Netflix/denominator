@@ -40,8 +40,8 @@ public class UltraDNSProviderDynamicUpdateMockTest {
     }, credentials(server.credentials())).api();
 
     api.zones().iterator();
-    server.assertRequestHasBody(getAccountsListOfUser);
-    server.assertRequestHasBody(getZonesOfAccount);
+    server.assertSoapBody(getAccountsListOfUser);
+    server.assertSoapBody(getZonesOfAccount);
 
     MockUltraDNSServer server2 = new MockUltraDNSServer();
     url.set(server2.url());
@@ -50,8 +50,8 @@ public class UltraDNSProviderDynamicUpdateMockTest {
 
     api.zones().iterator();
 
-    server2.assertRequestHasBody(getAccountsListOfUser);
-    server2.assertRequestHasBody(getZonesOfAccount);
+    server2.assertSoapBody(getAccountsListOfUser);
+    server2.assertSoapBody(getZonesOfAccount);
     server2.shutdown();
   }
 
@@ -70,8 +70,8 @@ public class UltraDNSProviderDynamicUpdateMockTest {
 
     api.zones().iterator();
 
-    server.assertRequestHasBody(getAccountsListOfUser);
-    server.assertRequestHasBody(getZonesOfAccount);
+    server.assertSoapBody(getAccountsListOfUser);
+    server.assertSoapBody(getZonesOfAccount);
 
     dynamicCredentials.set(ListCredentials.from("bob", "comeon"));
 
@@ -81,10 +81,8 @@ public class UltraDNSProviderDynamicUpdateMockTest {
 
     api.zones().iterator();
 
-    server.assertRequestHasBody(
-        getAccountsListOfUser.replace("joe", "bob").replace("letmein", "comeon"));
-    server
-        .assertRequestHasBody(getZonesOfAccount.replace("joe", "bob").replace("letmein", "comeon"));
+    server.assertSoapBody(getAccountsListOfUser);
+    server.assertSoapBody(getZonesOfAccount);
   }
 
   @Test
@@ -102,8 +100,8 @@ public class UltraDNSProviderDynamicUpdateMockTest {
 
     api.zones().iterator();
 
-    server.assertRequestHasBody(getAccountsListOfUser);
-    server.assertRequestHasBody(getZonesOfAccount);
+    server.assertSoapBody(getAccountsListOfUser);
+    server.assertSoapBody(getZonesOfAccount);
 
     MockUltraDNSServer server2 = new MockUltraDNSServer();
     url.set(server2.url());
@@ -113,9 +111,8 @@ public class UltraDNSProviderDynamicUpdateMockTest {
 
     api.zones().iterator();
 
-    server2.assertRequestHasBody(
-        getAccountsListOfUser.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"));
-    server2.assertRequestHasBody(getZonesOfAccount.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"));
+    server2.assertSoapBody(getAccountsListOfUser.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"));
+    server2.assertSoapBody(getZonesOfAccount.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"));
 
     server2.shutdown();
   }
@@ -135,9 +132,8 @@ public class UltraDNSProviderDynamicUpdateMockTest {
 
     api.zones().iterator();
 
-    server.assertRequestHasBody(
-        getAccountsListOfUser.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"));
-    server.assertRequestHasBody(getZonesOfAccount);
+    server.assertSoapBody(getAccountsListOfUser.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"));
+    server.assertSoapBody(getZonesOfAccount);
 
     dynamicCredentials.set(ListCredentials.from("bob", "comeon"));
 
@@ -148,13 +144,8 @@ public class UltraDNSProviderDynamicUpdateMockTest {
 
     api.zones().iterator();
 
-    server.assertRequestHasBody(
-        getAccountsListOfUser.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB").replace("joe", "bob")
-            .replace("letmein", "comeon"));
-    server
-        .assertRequestHasBody(
-            getZonesOfAccount.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB").replace(
-                "joe", "bob").replace("letmein", "comeon"));
+    server.assertSoapBody(getAccountsListOfUser.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"));
+    server.assertSoapBody(getZonesOfAccount.replace("AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"));
   }
 
   @Module(complete = false, library = true, overrides = true)
