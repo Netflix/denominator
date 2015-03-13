@@ -11,7 +11,6 @@ import feign.Target;
 final class DiscoveryDNSTarget implements Target<DiscoveryDNS> {
 
   private static final String CLIENT_ID = "Denominator " + Version.INSTANCE;
-  private static final String CONTENT_TYPE = "application/json";
   private final Provider provider;
 
   @Inject
@@ -38,8 +37,6 @@ final class DiscoveryDNSTarget implements Target<DiscoveryDNS> {
   public Request apply(RequestTemplate in) {
     in.insert(0, url());
     in.header("X-Requested-By", CLIENT_ID);
-    in.header("Accept", CONTENT_TYPE);
-    in.header("Content-Type", CONTENT_TYPE);
     return in.request();
   }
 }

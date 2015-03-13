@@ -8,9 +8,11 @@ import java.util.TreeMap;
 
 import denominator.model.Zone;
 import feign.Body;
+import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
 
+@Headers("Content-Type: application/xml")
 interface UltraDNS {
 
   @RequestLine("POST")

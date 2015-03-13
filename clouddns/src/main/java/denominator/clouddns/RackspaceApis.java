@@ -24,17 +24,16 @@ class RackspaceApis {
     }
   }
 
+  @Headers("Content-Type: application/json")
   static interface CloudIdentity {
 
     @RequestLine("POST /tokens")
     @Body("%7B\"auth\":%7B\"RAX-KSKEY:apiKeyCredentials\":%7B\"username\":\"{username}\",\"apiKey\":\"{apiKey}\"%7D%7D%7D")
-    @Headers("Content-Type: application/json")
     TokenIdAndPublicURL apiKeyAuth(URI endpoint, @Param("username") String username,
                                    @Param("apiKey") String apiKey);
 
     @RequestLine("POST /tokens")
     @Body("%7B\"auth\":%7B\"passwordCredentials\":%7B\"username\":\"{username}\",\"password\":\"{password}\"%7D%7D%7D")
-    @Headers("Content-Type: application/json")
     TokenIdAndPublicURL passwordAuth(URI endpoint, @Param("username") String username,
                                      @Param("password") String password);
   }

@@ -1,5 +1,5 @@
 ### Version 4.4.2
-* Updates to feign 8.0
+* Updates to feign 8.1
 
 ### Version 4.4
 * Accommodates UltraDNS accounts without directional support
