@@ -5,5 +5,5 @@ install: "./installViaTravis.sh"
 script: "./buildViaTravis.sh"
 env:
   global:
-    secure: csjoYYvSn6q4FLjNbVOudrDUCjKa1OZLnoqcTXoWv2oDq+LDfwg8HgRGoQp3F3GRXIaf9Fdgp45CMDGKT3DLLoj74jbK6fvLcOOUj4wAzMCEi0N6l3aqn/Y+863/gN1gmLHOLTRb+VFK3jOjSDXqMF4Xli8+vGKtJxnCr3EvIz0=
-    secure: Pw01KCxXCHHDBHddg1PifepaIkefdVzWh3H4tCoyCg3zO/xI5bqwof/E6+NxDQ9pWYQVVF/o9ZPEuiAzX8/42mKnCFR/FPS8ihzjkb8yn4OPSXza78IXMCE35PbuUUVIOmFoCEnIHHbO03distow+r4lY8pJjcWE4fMQDb/NpPE=
+  - secure: V/R3NwWPG9UqW6PC5rhfa1eYsvRSHve84es7/7SIWMdu971b3NzOAQj+pRw9WcrhtfuOBUNocAGlUQwJVU3ZVtua28Ed/Fb8bSyx9Se7dmwyx3HL6DWdBgQpAtG64oB70gqXZc6ZQ2kUKn95sUkvoeOZmEFoCIG3zTeEXWG2x4E=
+  - secure: VMpk3K/1UJYTFKq9XZ2Il9imrnmUOVmvz0y51qUVkccFFvIML/g4Mv277Cv9pC3aQzy/rDn0m3M8zJH7Z1N9la16N0qOMjZeZSEhCLOn2VX4zdAPvMBNlYg6bpuWl613qtAJe2djc41GUx/luoX6hnGyxnmcG8mIc4nWZgEKG0Q=
