@@ -30,7 +30,7 @@ $ build/denominatord route53 accessKey secretKey
 By default, denominatord listens on port 8080.  Export `DENOMINATORD_PORT` to use a different port.
 
 ## API
-The api is read-only, and based on [OpenStack Designate V2](https://wiki.openstack.org/wiki/Designate/APIv2).
+The api is read-write, and based on [OpenStack Designate V2](https://wiki.openstack.org/wiki/Designate/APIv2).
 
 Output is always json, and there's really only a few error cases.
   * 404 for an invalid request.
