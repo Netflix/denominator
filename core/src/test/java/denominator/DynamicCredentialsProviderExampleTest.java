@@ -6,12 +6,10 @@ import org.junit.rules.ExpectedException;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
@@ -23,8 +21,6 @@ import denominator.config.GeoUnsupported;
 import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
-import denominator.mock.MockResourceRecordSetApi;
-import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 
 import static denominator.CredentialsConfiguration.anonymous;
@@ -189,17 +185,15 @@ public class DynamicCredentialsProviderExampleTest {
        * using mock as example case is made already with the zone api
        */
       @Provides
-      ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(
-          MockResourceRecordSetApi.Factory in) {
-        return in;
-      }
+      ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory() {
+        return new ResourceRecordSetApi.Factory() {
+          final DNSApi mock = Denominator.create("mock").api();
 
-      // unbound wildcards are not currently injectable in dagger
-      @SuppressWarnings("rawtypes")
-      @Provides
-      @Singleton
-      Map<Zone, SortedSet<ResourceRecordSet>> provideRecords() {
-        return Collections.emptyMap();
+          @Override
+          public ResourceRecordSetApi create(String idOrName) {
+            return mock.basicRecordSetsInZone(idOrName);
+          }
+        };
       }
 
       /**

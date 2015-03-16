@@ -154,7 +154,7 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
     result = 31 * result + type().hashCode();
     result = 31 * result + (qualifier() != null ? qualifier().hashCode() : 0);
     result = 31 * result + (ttl() != null ? ttl().hashCode() : 0);
-    result = 31 * records().hashCode();
+    result = 31 * result + records().hashCode();
     result = 31 * result + (geo() != null ? geo().hashCode() : 0);
     result = 31 * result + (weighted() != null ? weighted().hashCode() : 0);
     return result;

@@ -8,7 +8,7 @@ import org.junit.Test;
 import denominator.DNSApiManager;
 
 import static denominator.clouddns.RackspaceApisTest.limitsResponse;
-import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class LimitsReadableMockTest {
