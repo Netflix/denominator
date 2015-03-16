@@ -1,10 +1,8 @@
-package denominator;
+package denominator.mock;
 
 import org.junit.Test;
 
 import denominator.Provider;
-import denominator.mock.MockProvider;
-import denominator.mock.MockZoneApi;
 
 import static denominator.Denominator.create;
 import static denominator.Providers.list;
