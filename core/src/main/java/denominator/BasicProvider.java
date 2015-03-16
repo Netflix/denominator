@@ -1,6 +1,5 @@
 package denominator;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -52,23 +51,18 @@ public abstract class BasicProvider implements Provider {
 
   @Override
   public Set<String> basicRecordTypes() {
-    Set<String> types = new LinkedHashSet<String>();
-    types.addAll(
-        asList("A", "AAAA", "CERT", "CNAME", "MX", "NAPTR", "NS", "PTR", "SOA", "SPF", "SRV",
-               "SSHFP", "TXT"));
-    return types;
+    Set<String> result = new LinkedHashSet<String>();
+    result.addAll(asList("A", "AAAA", "CERT", "CNAME", "MX", "NAPTR", "NS", "PTR", "SOA", "SPF",
+                         "SRV", "SSHFP", "TXT"));
+    return result;
   }
 
   @Override
   public Map<String, Collection<String>> profileToRecordTypes() {
-    Map<String, Collection<String>>
-        profileToRecordTypes =
-        new LinkedHashMap<String, Collection<String>>();
-    List<String>
-        roundRobinType =
-        asList("A", "AAAA", "MX", "NS", "PTR", "SPF", "SRV", "SSHFP", "TXT");
-    profileToRecordTypes.put("roundRobin", roundRobinType);
-    return profileToRecordTypes;
+    Map<String, Collection<String>> result = new LinkedHashMap<String, Collection<String>>();
+    List<String> roundRobin = asList("A", "AAAA", "MX", "NS", "PTR", "SPF", "SRV", "SSHFP", "TXT");
+    result.put("roundRobin", roundRobin);
+    return result;
   }
 
   @Override
@@ -82,26 +76,30 @@ public abstract class BasicProvider implements Provider {
   }
 
   @Override
-  public int hashCode() {
-    return 37 * name().hashCode() + url().hashCode();
+  public boolean equals(Object obj) {
+    if (obj instanceof Provider) {
+      Provider other = (Provider) obj;
+      return name().equals(other.name())
+             && url().equals(other.url());
+    }
+    return false;
   }
 
   @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
-    }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
-    }
-    return this.name().equals(Provider.class.cast(obj).name()) && this.url()
-        .equals(Provider.class.cast(obj).url());
+  public int hashCode() {
+    int result = 17;
+    result = 31 * result + name().hashCode();
+    result = 31 * result + url().hashCode();
+    return result;
   }
 
   @Override
   public String toString() {
-    return new StringBuilder().append(getClass().getSimpleName()).append('{').append("name=")
-        .append(name())
-        .append(',').append("url=").append(url()).append('}').toString();
+    StringBuilder builder = new StringBuilder();
+    builder.append("Provider [");
+    builder.append("name=").append(name());
+    builder.append("url=").append(url());
+    builder.append("]");
+    return builder.toString();
   }
 }

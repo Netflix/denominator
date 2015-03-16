@@ -13,7 +13,7 @@ import denominator.model.Zone;
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.clouddns.RackspaceApisTest.domainId;
 import static denominator.clouddns.RackspaceApisTest.domainsResponse;
-import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.assertFalse;
 
 public class CloudDNSZoneApiMockTest {
 

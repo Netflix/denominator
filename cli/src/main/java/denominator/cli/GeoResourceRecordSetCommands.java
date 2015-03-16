@@ -195,7 +195,8 @@ class GeoResourceRecordSetCommands {
         public String next() {
           GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName));
           ResourceRecordSet<?> rrs = api.getByNameTypeAndQualifier(name, type, group);
-          if (rrs != null && rrs.ttl() != null && rrs.ttl().intValue() != ttl) {
+          if (rrs != null && 
+              (rrs.ttl() == null || (rrs.ttl() != null && rrs.ttl().intValue() != ttl))) {
             api.put(ResourceRecordSet.<Map<String, Object>>builder()
                         .name(name)
                         .type(type)
@@ -233,7 +234,7 @@ class GeoResourceRecordSetCommands {
     public String group;
 
     @Option(type = OptionType.COMMAND, required = true, name = {"-r",
-                                                                "--regions"}, description = "regions to add in json. ex. {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}")
+                                                                "--regions"}, description = "regions to add in json. ex. {\"Mexico\":[\"CM\"],\"United States\":[\"AZ\"]}")
     public String regions;
 
     @Option(type = OptionType.COMMAND, required = false, name = {
@@ -307,8 +308,7 @@ class GeoResourceRecordSetCommands {
         }.getType());
       } catch (RuntimeException e) {
         throw new IllegalArgumentException(
-            "parse failure on regions! check json syntax. ex. {\"United States (US)\":[\"Arizona\"]}",
-            e);
+            "parse failure on regions! check json syntax. ex. {\"United States\":[\"AZ\"]}", e);
       }
     }
   }

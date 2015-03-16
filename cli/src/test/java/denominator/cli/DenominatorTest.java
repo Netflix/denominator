@@ -1,21 +1,26 @@
 package denominator.cli;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.Credentials.ListCredentials;
 import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
+import denominator.ResourceRecordSetApi;
 import denominator.cli.Denominator.ListProviders;
 import denominator.cli.Denominator.ZoneList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
@@ -34,12 +39,15 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.common.Util;
 import denominator.mock.MockProvider;
 import denominator.model.ResourceRecordSet;
+import denominator.model.profile.Geo;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import denominator.route53.AliasTarget;
 
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.model.ResourceRecordSets.a;
+import static denominator.model.ResourceRecordSets.cert;
+import static denominator.model.ResourceRecordSets.srv;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.fail;
 
@@ -210,29 +218,15 @@ public class DenominatorTest {
     ResourceRecordSetList command = new ResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
     assertThat(command.doRun(mgr)).containsExactly(
-        "denominator.io.                                   MX                         86400 1 mx1.denominator.io.",
+        "a.denominator.io.                                 A      alazona             null  192.0.2.1",
         "denominator.io.                                   NS                         86400 ns1.denominator.io.",
         "denominator.io.                                   SOA                        3600  ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 60",
-        "denominator.io.                                   SPF                        86400 v=spf1 a mx -all",
-        "denominator.io.                                   TXT                        86400 blah",
-        "phone.denominator.io.                             NAPTR                      3600  1 1 U E2U+sip !^.*$!sip:customer-service@example.com! .",
-        "ptr.denominator.io.                               PTR                        3600  www.denominator.io.",
         "server1.denominator.io.                           CERT                       3600  12345 1 1 B33F",
         "server1.denominator.io.                           SRV                        3600  0 1 80 www.denominator.io.",
-        "server1.denominator.io.                           SSHFP                      3600  1 1 B33F",
-        "subdomain.denominator.io.                         NS                         3600  ns1.denominator.io.",
-        "www.denominator.io.                               CNAME                      3600  www1.denominator.io.",
-        "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io.",
-        "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io.",
-        "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io.",
-        "www.weighted.denominator.io.                      CNAME  EU-West             0     c.denominator.io.",
-        "www.weighted.denominator.io.                      CNAME  US-East             0     b.denominator.io.",
-        "www.weighted.denominator.io.                      CNAME  US-West             0     a.denominator.io.",
+        "www.geo.denominator.io.                           CNAME  alazona             86400 a.denominator.io.",
+        "www.geo.denominator.io.                           CNAME  allElse             600   b.denominator.io.",
         "www1.denominator.io.                              A                          3600  192.0.2.1\n"
-        + "www1.denominator.io.                              A                          3600  192.0.2.2",
-        "www2.denominator.io.                              A                          3600  198.51.100.1",
-        "www2.geo.denominator.io.                          A      alazona             300   192.0.2.1",
-        "www2.weighted.denominator.io.                     A      US-West             0     192.0.2.1");
+        + "www1.denominator.io.                              A                          3600  192.0.2.2");
   }
 
   @Test // denominator -p mock record -z denominator.io. list -n server1.denominator.io.
@@ -242,8 +236,7 @@ public class DenominatorTest {
     command.name = "server1.denominator.io.";
     assertThat(command.doRun(mgr)).containsExactly(
         "server1.denominator.io.                           CERT                       3600  12345 1 1 B33F",
-        "server1.denominator.io.                           SRV                        3600  0 1 80 www.denominator.io.",
-        "server1.denominator.io.                           SSHFP                      3600  1 1 B33F");
+        "server1.denominator.io.                           SRV                        3600  0 1 80 www.denominator.io.");
   }
 
   @Test // denominator -p mock record -z denominator.io. list -n server1.denominator.io. -t SRV
@@ -270,7 +263,7 @@ public class DenominatorTest {
   public void testResourceRecordSetGet_longName() {
     ResourceRecordSetGet command = new ResourceRecordSetGet();
     command.zoneIdOrName = "denominator.io.";
-    command.name = new String(new char[51 - 16]).replace("\0", "a") + "." + command.zoneIdOrName; 
+    command.name = new String(new char[51 - 16]).replace("\0", "a") + ".denominator.io.";
     command.type = "A";
 
     mgr.api().basicRecordSetsInZone(command.zoneIdOrName).put(a(command.name, asList("192.0.1.1")));
@@ -356,15 +349,15 @@ public class DenominatorTest {
     command.type = "CNAME";
     command.qualifier = "alazona";
     assertThat(command.doRun(mgr)).containsExactly(
-        "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}");
+        "www.geo.denominator.io.                           CNAME  alazona             86400 a.denominator.io. {\"United States\":[\"AK\",\"AZ\"]}");
   }
 
   @Test
-  // denominator -p mock record -z denominator.io. get -n www.geo.denominator.io. -t A -g alazona
+  // denominator -p mock record -z denominator.io. get -n b.denominator.io. -t A -g alazona
   public void testResourceRecordSetGetWhenQualifierAbsent() {
     ResourceRecordSetGet command = new ResourceRecordSetGet();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www.geo.denominator.io.";
+    command.name = "b.denominator.io.";
     command.type = "A";
     command.qualifier = "alazona";
     assertThat(command.doRun(mgr)).containsExactly("");
@@ -377,6 +370,7 @@ public class DenominatorTest {
     command.name = "www1.denominator.io.";
     command.type = "A";
     command.ttl = 10000;
+
     assertThat(command.doRun(mgr)).containsExactly(
         ";; in zone denominator.io. applying ttl 10000 to rrset www1.denominator.io. A",
         ";; ok");
@@ -718,21 +712,7 @@ public class DenominatorTest {
     GeoTypeList command = new GeoTypeList();
     command.zoneIdOrName = "denominator.io.";
     assertThat(command.doRun(mgr)).containsExactly(
-        "A"
-        , "AAAA"
-        , "CNAME"
-        , "NS"
-        , "PTR"
-        , "SPF"
-        , "TXT"
-        , "MX"
-        , "SRV"
-        , "DS"
-        , "CERT"
-        , "NAPTR"
-        , "SSHFP"
-        , "LOC"
-        , "TLSA");
+        "A", "AAAA", "CERT", "CNAME", "MX", "NAPTR", "NS", "PTR", "SPF", "SRV", "SSHFP", "TXT");
   }
 
   @Test // denominator -p mock geo -z denominator.io. regions
@@ -740,22 +720,9 @@ public class DenominatorTest {
     GeoRegionList command = new GeoRegionList();
     command.zoneIdOrName = "denominator.io.";
     assertThat(command.doRun(mgr)).containsExactly(
-        "Anonymous Proxy (A1)        : Anonymous Proxy",
-        "Satellite Provider (A2)     : Satellite Provider",
-        "Unknown / Uncategorized IPs : Unknown / Uncategorized IPs",
-        "United States (US)          : Alabama;Alaska;Arizona;Arkansas;Armed Forces Americas;Armed Forces Europe, Middle East, and Canada;Armed Forces Pacific;California;Colorado;Connecticut;Delaware;District of Columbia;Florida;Georgia;Hawaii;Idaho;Illinois;Indiana;Iowa;Kansas;Kentucky;Louisiana;Maine;Maryland;Massachusetts;Michigan;Minnesota;Mississippi;Missouri;Montana;Nebraska;Nevada;New Hampshire;New Jersey;New Mexico;New York;North Carolina;North Dakota;Ohio;Oklahoma;Oregon;Pennsylvania;Rhode Island;South Carolina;South Dakota;Tennessee;Texas;Undefined United States;United States Minor Outlying Islands;Utah;Vermont;Virginia;Washington;West Virginia;Wisconsin;Wyoming",
-        "Mexico                      : Mexico",
-        "Canada (CA)                 : Alberta;British Columbia;Greenland;Manitoba;New Brunswick;Newfoundland and Labrador;Northwest Territories;Nova Scotia;Nunavut;Ontario;Prince Edward Island;Quebec;Saint Pierre and Miquelon;Saskatchewan;Undefined Canada;Yukon",
-        "The Caribbean               : Anguilla;Antigua and Barbuda;Aruba;Bahamas;Barbados;Bermuda;British Virgin Islands;Cayman Islands;Cuba;Dominica;Dominican Republic;Grenada;Guadeloupe;Haiti;Jamaica;Martinique;Montserrat;Netherlands Antilles;Puerto Rico;Saint Barthelemy;Saint Martin;Saint Vincent and the Grenadines;St. Kitts and Nevis;St. Lucia;Trinidad and Tobago;Turks and Caicos Islands;U.S. Virgin Islands",
-        "Central America             : Belize;Costa Rica;El Salvador;Guatemala;Honduras;Nicaragua;Panama;Undefined Central America",
-        "South America               : Argentina;Bolivia;Brazil;Chile;Colombia;Ecuador;Falkland Islands;French Guiana;Guyana;Paraguay;Peru;South Georgia and the South Sandwich Islands;Suriname;Undefined South America;Uruguay;Venezuela, Bolivarian Republic of",
-        "Europe                      : Aland Islands;Albania;Andorra;Armenia;Austria;Azerbaijan;Belarus;Belgium;Bosnia-Herzegovina;Bulgaria;Croatia;Czech Republic;Denmark;Estonia;Faroe Islands;Finland;France;Georgia;Germany;Gibraltar;Greece;Guernsey;Hungary;Iceland;Ireland;Isle of Man;Italy;Jersey;Latvia;Liechtenstein;Lithuania;Luxembourg;Macedonia, the former Yugoslav Republic of;Malta;Moldova, Republic of;Monaco;Montenegro;Netherlands;Norway;Poland;Portugal;Romania;San Marino;Serbia;Slovakia;Slovenia;Spain;Svalbard and Jan Mayen;Sweden;Switzerland;Ukraine;Undefined Europe;United Kingdom - England, Northern Ireland, Scotland, Wales;Vatican City",
-        "Russian Federation          : Russian Federation",
-        "Middle East                 : Afghanistan;Bahrain;Cyprus;Iran;Iraq;Israel;Jordan;Kuwait;Lebanon;Oman;Palestinian Territory, Occupied;Qatar;Saudi Arabia;Syrian Arab Republic;Turkey, Republic of;Undefined Middle East;United Arab Emirates;Yemen",
-        "Africa                      : Algeria;Angola;Benin;Botswana;Burkina Faso;Burundi;Cameroon;Cape Verde;Central African Republic;Chad;Comoros;Congo;Cote d'Ivoire;Democratic Republic of the Congo;Djibouti;Egypt;Equatorial Guinea;Eritrea;Ethiopia;Gabon;Gambia;Ghana;Guinea;Guinea-Bissau;Kenya;Lesotho;Liberia;Libyan Arab Jamahiriya;Madagascar;Malawi;Mali;Mauritania;Mauritius;Mayotte;Morocco;Mozambique;Namibia;Niger;Nigeria;Reunion;Rwanda;Sao Tome and Principe;Senegal;Seychelles;Sierra Leone;Somalia;South Africa;St. Helena;Sudan;Swaziland;Tanzania, United Republic of;Togo;Tunisia;Uganda;Undefined Africa;Western Sahara;Zambia;Zimbabwe",
-        "Asia                        : Bangladesh;Bhutan;British Indian Ocean Territory - Chagos Islands;Brunei Darussalam;Cambodia;China;Hong Kong;India;Indonesia;Japan;Kazakhstan;Korea, Democratic People's Republic of;Korea, Republic of;Kyrgyzstan;Lao People's Democratic Republic;Macao;Malaysia;Maldives;Mongolia;Myanmar;Nepal;Pakistan;Philippines;Singapore;Sri Lanka;Taiwan;Tajikistan;Thailand;Timor-Leste, Democratic Republic of;Turkmenistan;Undefined Asia;Uzbekistan;Vietnam",
-        "Australia / Oceania         : American Samoa;Australia;Christmas Island;Cocos (Keeling) Islands;Cook Islands;Fiji;French Polynesia;Guam;Heard Island and McDonald Islands;Kiribati;Marshall Islands;Micronesia , Federated States of;Nauru;New Caledonia;New Zealand;Niue;Norfolk Island;Northern Mariana Islands, Commonwealth of;Palau;Papua New Guinea;Pitcairn;Samoa;Solomon Islands;Tokelau;Tonga;Tuvalu;Undefined Australia / Oceania;Vanuatu;Wallis and Futuna",
-        "Antarctica                  : Antarctica;Bouvet Island;French Southern Territories");
+        "United States               : AL;AK;AS;AZ;AR;AA;AE;AP;CA;CO;CT;DE;DC;FM;FL;GA;GU;HI;ID;IL;IN;IA;KS;KY;LA;ME;MH;MD;MA;MI;MN;MS;MO;MT;NE;NV;NH;NJ;NM;NY;NC;ND;MP;OH;OK;OR;PW;PA;PR;RI;SC;SD;TN;TX;UT;VT;VI;VA;WA;WV;WI;WY",
+        "Mexico                      : AG;CM;CP;CH;CA;CL;DU;GJ;GR;HI;JA;MX;MC;MR;NA;OA;PU;QE;SI;SO;TB;TM;TL;VE;YU;ZA"
+    );
   }
 
   @Test // denominator -p mock geo -z denominator.io. list
@@ -763,11 +730,11 @@ public class DenominatorTest {
   public void testGeoResourceRecordSetList() {
     GeoResourceRecordSetList command = new GeoResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
+
     assertThat(command.doRun(mgr)).containsExactly(
-        "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}",
-        "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io. {\"Antarctica\":[\"Bouvet Island\",\"French Southern Territories\",\"Antarctica\"]}",
-        "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {\"South America\":[\"Colombia\",\"Ecuador\"]}",
-        "www2.geo.denominator.io.                          A      alazona             300   192.0.2.1 {\"United States (US)\":[\"Alaska\",\"Arizona\"]}");
+        "a.denominator.io.                                 A      alazona             null  192.0.2.1 {\"United States\":[\"AK\",\"AZ\"]}",
+        "www.geo.denominator.io.                           CNAME  alazona             86400 a.denominator.io. {\"United States\":[\"AK\",\"AZ\"]}",
+        "www.geo.denominator.io.                           CNAME  allElse             600   b.denominator.io. {\"United States\":[\"AL\",\"AS\",\"AR\",\"AA\",\"AE\",\"AP\",\"CA\",\"CO\",\"CT\",\"DE\",\"DC\",\"FM\",\"FL\",\"GA\",\"GU\",\"HI\",\"ID\",\"IL\",\"IN\",\"IA\",\"KS\",\"KY\",\"LA\",\"ME\",\"MH\",\"MD\",\"MA\",\"MI\",\"MN\",\"MS\",\"MO\",\"MT\",\"NE\",\"NV\",\"NH\",\"NJ\",\"NM\",\"NY\",\"NC\",\"ND\",\"MP\",\"OH\",\"OK\",\"OR\",\"PW\",\"PA\",\"PR\",\"RI\",\"SC\",\"SD\",\"TN\",\"TX\",\"UT\",\"VT\",\"VI\",\"VA\",\"WA\",\"WV\",\"WI\",\"WY\"],\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}");
   }
 
   @Test // denominator -p mock geo -z denominator.io. list -n www.geo.denominator.io.
@@ -777,9 +744,8 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "www.geo.denominator.io.";
     assertThat(command.doRun(mgr)).containsExactly(
-        "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}",
-        "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io. {\"Antarctica\":[\"Bouvet Island\",\"French Southern Territories\",\"Antarctica\"]}",
-        "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {\"South America\":[\"Colombia\",\"Ecuador\"]}");
+        "www.geo.denominator.io.                           CNAME  alazona             86400 a.denominator.io. {\"United States\":[\"AK\",\"AZ\"]}",
+        "www.geo.denominator.io.                           CNAME  allElse             600   b.denominator.io. {\"United States\":[\"AL\",\"AS\",\"AR\",\"AA\",\"AE\",\"AP\",\"CA\",\"CO\",\"CT\",\"DE\",\"DC\",\"FM\",\"FL\",\"GA\",\"GU\",\"HI\",\"ID\",\"IL\",\"IN\",\"IA\",\"KS\",\"KY\",\"LA\",\"ME\",\"MH\",\"MD\",\"MA\",\"MI\",\"MN\",\"MS\",\"MO\",\"MT\",\"NE\",\"NV\",\"NH\",\"NJ\",\"NM\",\"NY\",\"NC\",\"ND\",\"MP\",\"OH\",\"OK\",\"OR\",\"PW\",\"PA\",\"PR\",\"RI\",\"SC\",\"SD\",\"TN\",\"TX\",\"UT\",\"VT\",\"VI\",\"VA\",\"WA\",\"WV\",\"WI\",\"WY\"],\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}");
   }
 
   @Test // denominator -p mock geo -z denominator.io. list -n www.geo.denominator.io. -t CNAME
@@ -787,12 +753,10 @@ public class DenominatorTest {
   public void testGeoResourceRecordSetListByNameAndType() {
     GeoResourceRecordSetList command = new GeoResourceRecordSetList();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www.geo.denominator.io.";
-    command.type = "CNAME";
+    command.name = "a.denominator.io.";
+    command.type = "A";
     assertThat(command.doRun(mgr)).containsExactly(
-        "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}",
-        "www.geo.denominator.io.                           CNAME  antarctica          0     c.denominator.io. {\"Antarctica\":[\"Bouvet Island\",\"French Southern Territories\",\"Antarctica\"]}",
-        "www.geo.denominator.io.                           CNAME  columbador          86400 b.denominator.io. {\"South America\":[\"Colombia\",\"Ecuador\"]}");
+        "a.denominator.io.                                 A      alazona             null  192.0.2.1 {\"United States\":[\"AK\",\"AZ\"]}");
   }
 
   @Test
@@ -805,10 +769,10 @@ public class DenominatorTest {
     command.type = "CNAME";
     command.group = "alazona";
     assertThat(command.doRun(mgr)).containsExactly(
-        "www.geo.denominator.io.                           CNAME  alazona             300   a.denominator.io. {\"United States (US)\":[\"Alaska\",\"Arizona\"]}");
+        "www.geo.denominator.io.                           CNAME  alazona             86400 a.denominator.io. {\"United States\":[\"AK\",\"AZ\"]}");
   }
 
-  @Test // denominator -p mock geo -z denominator.io. get -n www.geo.denominator.io. -t A -g alazona
+  @Test // denominator -p mock geo -z denominator.io. get -n a.denominator.io. -t A -g alazona
   @Deprecated
   public void testGeoResourceRecordSetGetWhenAbsent() {
     GeoResourceRecordSetGet command = new GeoResourceRecordSetGet();
@@ -820,17 +784,18 @@ public class DenominatorTest {
   }
 
   @Test
-  // denominator -p mock geo -z denominator.io. applyttl -n www2.geo.denominator.io. -t A -g alazona 300
+  // denominator -p mock geo -z denominator.io. applyttl -n a.denominator.io. -t A -g alazona 10000
   @Deprecated
   public void testGeoResourceRecordSetApplyTTL() {
     GeoResourceRecordSetApplyTTL command = new GeoResourceRecordSetApplyTTL();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www2.geo.denominator.io.";
+    command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    command.ttl = 300;
+    command.ttl = 10000;
+
     assertThat(command.doRun(mgr)).containsExactly(
-        ";; in zone denominator.io. applying ttl 300 to rrset www2.geo.denominator.io. A alazona",
+        ";; in zone denominator.io. applying ttl 10000 to rrset a.denominator.io. A alazona",
         ";; ok");
     assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
                    .getByNameTypeAndQualifier(command.name, command.type, command.group))
@@ -838,14 +803,14 @@ public class DenominatorTest {
   }
 
   @Test
-  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"]}
+  // denominator -p mock geo -z denominator.io. add -n a.denominator.io. -t A -g alazona -r '{"Mexico":["AG","CM","CP","CH","CA","CL","DU","GJ","GR","HI","JA","MX","MC","MR","NA","OA","PU","QE","SI","SO","TB","TM","TL","VE","YU","ZA"]}'
   public void testGeoResourceRecordSetAddRegionsEntireRegion() {
     GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www2.geo.denominator.io.";
+    command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    command.regions = "{\"Mexico\":[\"Mexico\"]}";
+    command.regions = "{\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}";
 
     AllProfileResourceRecordSetApi api = mgr.api().recordSetsInZone(command.zoneIdOrName);
     ResourceRecordSet<?>
@@ -853,28 +818,28 @@ public class DenominatorTest {
         api.getByNameTypeAndQualifier(command.name, command.type, command.group);
 
     assertThat(command.doRun(mgr)).containsExactly(
-        ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"]} to rrset www2.geo.denominator.io. A alazona",
-        ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
-        ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"]}}}",
+        ";; in zone denominator.io. adding regions {\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]} to rrset a.denominator.io. A alazona",
+        ";; current rrset: {\"name\":\"a.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States\":[\"AK\",\"AZ\"]}}}",
+        ";; revised rrset: {\"name\":\"a.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States\":[\"AK\",\"AZ\"],\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}}}",
         ";; ok");
 
     assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
                    .getByNameTypeAndQualifier(command.name, command.type, command.group))
-        .containsRegion("United States (US)", "Alaska", "Arizona")
-        .containsRegion("Mexico", "Mexico");
+        .containsRegion("United States", "AK", "AZ")
+        .containsRegion("Mexico", mexicanStates(command));
 
     api.put(old);
   }
 
   @Test
-  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"United States (US)\":[\"Arizona\"]}
+  // denominator -p mock geo -z denominator.io. add -n a.denominator.io. -t A -g alazona -r '{"United States":["AZ"]}'
   public void testGeoResourceRecordSetAddRegionsSkipsWhenSame() {
     GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www2.geo.denominator.io.";
+    command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    command.regions = "{\"United States (US)\":[\"Arizona\"]}";
+    command.regions = "{\"United States\":[\"AZ\"]}";
 
     AllProfileResourceRecordSetApi api = mgr.api().recordSetsInZone(command.zoneIdOrName);
     ResourceRecordSet<?>
@@ -882,8 +847,8 @@ public class DenominatorTest {
         api.getByNameTypeAndQualifier(command.name, command.type, command.group);
 
     assertThat(command.doRun(mgr)).containsExactly(
-        ";; in zone denominator.io. adding regions {\"United States (US)\":[\"Arizona\"]} to rrset www2.geo.denominator.io. A alazona",
-        ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
+        ";; in zone denominator.io. adding regions {\"United States\":[\"AZ\"]} to rrset a.denominator.io. A alazona",
+        ";; current rrset: {\"name\":\"a.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States\":[\"AK\",\"AZ\"]}}}",
         ";; ok");
 
     assertThat(
@@ -892,14 +857,14 @@ public class DenominatorTest {
   }
 
   @Test
-  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}
+  // denominator -p mock geo -z denominator.io. add -n a.denominator.io. -t A -g alazona -r '{"Mexico":["AG","CM","CP","CH","CA","CL","DU","GJ","GR","HI","JA","MX","MC","MR","NA","OA","PU","QE","SI","SO","TB","TM","TL","VE","YU","ZA"], "United States":["MD"]}'
   public void testGeoResourceRecordSetAddRegionsEntireRegionAndTerritory() {
     GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www2.geo.denominator.io.";
+    command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    command.regions = "{\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}";
+    command.regions = "{\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"], \"United States\":[\"MD\"]}";
 
     AllProfileResourceRecordSetApi api = mgr.api().recordSetsInZone(command.zoneIdOrName);
     ResourceRecordSet<?>
@@ -907,29 +872,28 @@ public class DenominatorTest {
         api.getByNameTypeAndQualifier(command.name, command.type, command.group);
 
     assertThat(command.doRun(mgr)).containsExactly(
-        ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona",
-        ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
-        ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}}",
+        ";; in zone denominator.io. adding regions {\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"], \"United States\":[\"MD\"]} to rrset a.denominator.io. A alazona",
+        ";; current rrset: {\"name\":\"a.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States\":[\"AK\",\"AZ\"]}}}",
+        ";; revised rrset: {\"name\":\"a.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States\":[\"AK\",\"AZ\",\"MD\"],\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}}}",
         ";; ok");
 
     assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
                    .getByNameTypeAndQualifier(command.name, command.type, command.group))
-        .containsRegion("United States (US)", "Alaska", "Arizona")
-        .containsRegion("Mexico", "Mexico")
-        .containsRegion("South America", "Ecuador");
+        .containsRegion("United States", "AK", "AZ", "MD")
+        .containsRegion("Mexico", mexicanStates(command));
 
     api.put(old);
   }
 
   @Test
-  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} --dry-run --validate-regions
+  // denominator -p mock geo -z denominator.io. add -n a.denominator.io. -t A -g alazona -r '{"Mexico":["AG","CM","CP","CH","CA","CL","DU","GJ","GR","HI","JA","MX","MC","MR","NA","OA","PU","QE","SI","SO","TB","TM","TL","VE","YU","ZA"]}' --dry-run --validate-regions
   public void testGeoResourceRecordSetAddRegionsEntireRegionAndTerritoryValidatedDryRun() {
     GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www2.geo.denominator.io.";
+    command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    command.regions = "{\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}";
+    command.regions = "{\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}";
     command.validateRegions = true;
     command.dryRun = true;
 
@@ -939,10 +903,10 @@ public class DenominatorTest {
         api.getByNameTypeAndQualifier(command.name, command.type, command.group);
 
     assertThat(command.doRun(mgr)).containsExactly(
-        ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona",
-        ";; validated regions: {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}",
-        ";; current rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"]}}}",
-        ";; revised rrset: {\"name\":\"www2.geo.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"ttl\":300,\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States (US)\":[\"Alaska\",\"Arizona\"],\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]}}}",
+        ";; in zone denominator.io. adding regions {\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]} to rrset a.denominator.io. A alazona",
+        ";; validated regions: {\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}",
+        ";; current rrset: {\"name\":\"a.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States\":[\"AK\",\"AZ\"]}}}",
+        ";; revised rrset: {\"name\":\"a.denominator.io.\",\"type\":\"A\",\"qualifier\":\"alazona\",\"records\":[{\"address\":\"192.0.2.1\"}],\"geo\":{\"regions\":{\"United States\":[\"AK\",\"AZ\"],\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}}}",
         ";; ok");
 
     assertThat(
@@ -951,14 +915,14 @@ public class DenominatorTest {
   }
 
   @Test
-  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"South America\":[\"Ecuador\"]} --validate-regions
+  // denominator -p mock geo -z denominator.io. add -n a.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Ru\"]} --validate-regions
   public void testGeoResourceRecordSetAddRegionsValidationFailureOnTerritory() {
     GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www2.geo.denominator.io.";
+    command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    command.regions = "{\"Mexico\":[\"Mexico\"],\"South America\":[\"Equador\"]}";
+    command.regions = "{\"Mexico\":[\"Ru\"]}";
     command.validateRegions = true;
 
     AllProfileResourceRecordSetApi api = mgr.api().recordSetsInZone(command.zoneIdOrName);
@@ -970,11 +934,11 @@ public class DenominatorTest {
       Iterator<String> iterator = command.doRun(mgr);
       assertThat(iterator.next())
           .isEqualTo(
-              ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"South America\":[\"Equador\"]} to rrset www2.geo.denominator.io. A alazona");
+              ";; in zone denominator.io. adding regions {\"Mexico\":[\"Ru\"]} to rrset a.denominator.io. A alazona");
       iterator.next();
       fail("should have failed on validation");
     } catch (IllegalArgumentException e) {
-      assertThat(e).hasMessage("unsupported territories in South America: [[Equador]]");
+      assertThat(e).hasMessage("unsupported territories in Mexico: [[Ru]]");
     }
     assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
                    .getByNameTypeAndQualifier(command.name, command.type, command.group))
@@ -982,14 +946,14 @@ public class DenominatorTest {
   }
 
   @Test
-  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"Suth America\":[\"Ecuador\"]} --validate-regions
+  // denominator -p mock geo -z denominator.io. add -n a.denominator.io. -t A -g alazona -r {\"Mexico\":[\"Mexico\"],\"Suth America\":[\"Ecuador\"]} --validate-regions
   public void testGeoResourceRecordSetAddRegionsValidationFailureOnRegion() {
     GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www2.geo.denominator.io.";
+    command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    command.regions = "{\"Mexico\":[\"Mexico\"],\"Suth America\":[\"Ecuador\"]}";
+    command.regions = "{\"Mexico\":[\"AG\"],\"Suth America\":[\"EC\"]}";
     command.validateRegions = true;
 
     AllProfileResourceRecordSetApi api = mgr.api().recordSetsInZone(command.zoneIdOrName);
@@ -1001,7 +965,7 @@ public class DenominatorTest {
       Iterator<String> iterator = command.doRun(mgr);
       assertThat(iterator.next())
           .isEqualTo(
-              ";; in zone denominator.io. adding regions {\"Mexico\":[\"Mexico\"],\"Suth America\":[\"Ecuador\"]} to rrset www2.geo.denominator.io. A alazona");
+              ";; in zone denominator.io. adding regions {\"Mexico\":[\"AG\"],\"Suth America\":[\"EC\"]} to rrset a.denominator.io. A alazona");
       iterator.next();
       fail("should have failed on validation");
     } catch (IllegalArgumentException e) {
@@ -1013,11 +977,11 @@ public class DenominatorTest {
   }
 
   @Test
-  // denominator -p mock geo -z denominator.io. add -n www2.geo.denominator.io. -t A -g alazona -r Mexico
+  // denominator -p mock geo -z denominator.io. add -n a.denominator.io. -t A -g alazona -r Mexico
   public void testGeoResourceRecordSetAddRegionsBadJson() {
     GeoResourceRecordAddRegions command = new GeoResourceRecordAddRegions();
     command.zoneIdOrName = "denominator.io.";
-    command.name = "www2.geo.denominator.io.";
+    command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
     command.regions = "Mexico";
@@ -1032,10 +996,54 @@ public class DenominatorTest {
       fail("should have failed on bad json");
     } catch (IllegalArgumentException e) {
       assertThat(e).hasMessage(
-          "parse failure on regions! check json syntax. ex. {\"United States (US)\":[\"Arizona\"]}");
+          "parse failure on regions! check json syntax. ex. {\"United States\":[\"AZ\"]}");
     }
     assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
                    .getByNameTypeAndQualifier(command.name, command.type, command.group))
         .isEqualTo(old);
+  }
+
+  @Before
+  public void stockRecords() {
+    {
+      ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone("denominator.io.");
+      api.put(a("www1.denominator.io.", 3600, asList("192.0.2.1", "192.0.2.2")));
+      api.put(srv("server1.denominator.io.", 3600, "0 1 80 www.denominator.io."));
+      api.put(cert("server1.denominator.io.", 3600, "12345 1 1 B33F"));
+    }
+
+    AllProfileResourceRecordSetApi api = mgr.api().recordSetsInZone("denominator.io.");
+    Map<String, Collection<String>> alazona = new LinkedHashMap<String, Collection<String>>();
+    alazona.put("United States", asList("AK", "AZ"));
+    api.put(ResourceRecordSet.builder()
+                .name("a.denominator.io.")
+                .type("A")
+                .qualifier("alazona")
+                .add(AData.create("192.0.2.1"))
+                .geo(Geo.create(alazona)).build());
+
+    api.put(ResourceRecordSet.builder().name("www.geo.denominator.io.")
+                .type("CNAME")
+                .qualifier("alazona")
+                .ttl(86400)
+                .add(CNAMEData.create("a.denominator.io."))
+                .geo(Geo.create(alazona)).build());
+
+    Map<String, Collection<String>> allElse = new LinkedHashMap<String, Collection<String>>();
+    allElse.putAll(mgr.api().geoRecordSetsInZone("denominator.io.").supportedRegions());
+    Collection<String> us = new LinkedHashSet<String>(allElse.get("United States"));
+    us.removeAll(alazona.get("United States"));
+    allElse.put("United States", us);
+
+    api.put(ResourceRecordSet.builder().name("www.geo.denominator.io.")
+                .type("CNAME")
+                .qualifier("allElse")
+                .ttl(600)
+                .add(CNAMEData.create("b.denominator.io."))
+                .geo(Geo.create(allElse)).build());
+  }
+
+  private String[] mexicanStates(GeoResourceRecordAddRegions command) {
+    return mgr.api().geoRecordSetsInZone(command.zoneIdOrName).supportedRegions().get("Mexico").toArray(new String[]{});
   }
 }
