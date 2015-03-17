@@ -12,7 +12,6 @@ dependencies {
   compile      project(':denominator-route53')
   compile      project(':denominator-clouddns')
   compile      project(':denominator-designate')
-  compile      project(':denominator-discoverydns')
   testCompile  project(':denominator-model').sourceSets.test.output
   testCompile  project(':denominator-core').sourceSets.test.output
   testCompile 'junit:junit:4.12'
