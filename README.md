@@ -2,7 +2,7 @@
 
 # Portable control of DNS clouds
 
-Denominator is a portable Java library for manipulating DNS clouds.  Denominator has pluggable back-ends, initially including AWS Route53, Neustar Ultra, DynECT, Rackspace Cloud DNS, OpenStack Designate, and a mock for testing.  We also ship a command line version so it's easy for anyone to try it out.  Denominator currently supports basic zone and record features, as well GEO (aka Directional) profiles.  See [Netflix Tech Blog](http://techblog.netflix.com/2013/03/denominator-multi-vendor-interface-for.html) for an introduction.
+Denominator is a portable Java library for manipulating DNS clouds.  Denominator has pluggable back-ends, including AWS Route53, Neustar Ultra, DynECT, Rackspace Cloud DNS, OpenStack Designate, and a mock for testing.  We also ship a command line version so it's easy for anyone to try it out.  Denominator currently supports basic zone and record features, as well GEO (aka Directional) profiles.  See [Netflix Tech Blog](http://techblog.netflix.com/2013/03/denominator-multi-vendor-interface-for.html) for an introduction.
 
 [![Build Status](https://netflixoss.ci.cloudbees.com/job/denominator-master/badge/icon)](https://netflixoss.ci.cloudbees.com/job/denominator-master/)
 
@@ -151,6 +151,18 @@ Supplier<Credentials> fromEncryptedStore = new Supplier<Credentials>() {
 DNSApiManager manager = ObjectGraph.create(provider(fromDiscovery), new UltraDNSProvider.Module(), credentials(fromEncryptedStore))
                                    .get(DNSApiManager.java);
 ```
+
+## Third-Party Providers
+Denominator also operates with third-party DNS providers such as [DiscoveryDNS](https://github.com/discoverydns/denominator-discoverydns).
+
+Providers are looked up by name using [ServiceLoader](https://docs.oracle.com/javase/6/docs/api/java/util/ServiceLoader.html). Given the provider is in the classpath, normal lookups should work.
+
+```java
+// Given the discoverydns jar is in the classpath
+DNSApiManager manager = Denominator.create("discoverydns");
+```
+
+Third-party support is also explained in the [CLI readme](https://github.com/Netflix/denominator/tree/master/cli).
 
 ## Build
 
