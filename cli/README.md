@@ -55,6 +55,17 @@ export DENOMINATOR_ACCESS_KEY=foo1
 export DENOMINATOR_SECRET_KEY=foo2
 ```
 
+### Third-Party Providers
+
+If you'd like to test with a dns provider that is not in the standard build, create a `3rdparty` directory and place its jar there. Make sure you use a compatible version of the jar!
+
+Ex. To enable [DiscoveryDNS](https://github.com/discoverydns/denominator-discoverydns):
+```bash
+$ mkdir 3rdparty
+$ cp /path/to/denominator-discoverydns.jar 3rdparty/
+$ denominator providers |grep discoverydns
+discoverydns https://api.reseller.discoverydns.com               false          clientCertificate x509Certificate privateKey
+```
 
 ## Running
 denominator will print out a help statement, but here's the gist.
