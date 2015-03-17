@@ -5,6 +5,13 @@ DenominatorD is an example HTTP server that proxies a connection to your DNS pro
 ## Building
 To build the daemon, execute `gradle clean build`.  The binary will end up at `./build/denominatord`.  If you don't have gradle, install it.
 
+### Third-Party Providers
+If you'd like to try a third-party dns provider, add it as a `compile` dependency, and update `supportedProviders.txt` before building. Make sure you use a compatible version!
+
+Ex. To try [DiscoveryDNS](https://github.com/discoverydns/denominator-discoverydns):
+  1. Add `compile 'com.discoverydns.dnsapi:denominator-discoverydns:0.0.1'` into `build.gradle`.
+  2. Append `denominator.discoverydns.DiscoveryDNSProvider` to `supportedProviders.txt`.
+
 ## Running
 The syntax is simple.  First arg is the name of the provider.  For example, clouddns, dynect, mock, route53, or ultradns.  The remaining args are any credentials to that provider.
 

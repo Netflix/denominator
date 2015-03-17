@@ -55,7 +55,7 @@ task fatJar(dependsOn: classes, type: Jar) {
     def shortcutFile = new File("${buildDir}/denominator")
     shortcutFile.delete()
     shortcutFile << "#!/usr/bin/env sh\n"
-    shortcutFile << 'exec java -jar $0 "$@"' + "\n"
+    shortcutFile << 'exec java -cp 3rdparty/*:$0 denominator.cli.Denominator "$@"' + "\n"
     shortcutFile << srcFile.bytes
     shortcutFile.setExecutable(true, true)
     srcFile.delete()
