@@ -6,6 +6,7 @@
 * Adds `-n` parameter to CLI zone list
 * Deprecates `Zone.idOrName()` as `Zone.id()` cannot be null
 * Documents third-party provider process
+* Publishes model and core test jars
 * Adds example server
 * Enforces source compatibility with animal-sniffer
 * Corrects CloudDNS and Designate implementations as they don't support duplicate zones
