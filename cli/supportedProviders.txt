@@ -8,4 +8,3 @@ denominator.dynect.DynECTProvider
 denominator.mock.MockProvider
 denominator.route53.Route53Provider
 denominator.ultradns.UltraDNSProvider
-denominator.discoverydns.DiscoveryDNSProvider
