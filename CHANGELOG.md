@@ -1,5 +1,6 @@
 ### Version 4.5
 * Documents third-party provider process
+* Publishes model and core test jars
 * Adds example server
 
 ### Version 4.4.2
