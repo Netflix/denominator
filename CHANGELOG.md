@@ -1,4 +1,5 @@
 ### Version 4.5
+* Documents third-party provider process
 * Adds example server
 
 ### Version 4.4.2
