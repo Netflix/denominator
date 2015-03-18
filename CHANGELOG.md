@@ -1,6 +1,7 @@
 ### Version 4.5
 * Documents third-party provider process
 * Adds example server
+* Enforces source compatibility with animal-sniffer
 
 ### Version 4.4.2
 * Updates to feign 8.1
