@@ -1,5 +1,9 @@
 apply plugin: 'java'
 
+animalsniffer { // Don't use apis that require JRE 8
+    signature = "org.codehaus.mojo.signature:java17:+@signature"
+}
+
 sourceCompatibility = 1.6
 
 dependencies {
