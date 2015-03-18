@@ -2,6 +2,7 @@
 * Documents third-party provider process
 * Publishes model and core test jars
 * Adds example server
+* Enforces source compatibility with animal-sniffer
 
 ### Version 4.4.2
 * Updates to feign 8.1
