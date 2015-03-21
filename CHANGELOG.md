@@ -3,7 +3,7 @@
 * Publishes model and core test jars
 * Adds example server
 * Enforces source compatibility with animal-sniffer
-* Corrects Designate implementation as it doesn't support duplicate zones
+* Corrects CloudDNS and Designate implementations as they don't support duplicate zones
 
 ### Version 4.4.2
 * Updates to feign 8.1

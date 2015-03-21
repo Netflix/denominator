@@ -11,15 +11,13 @@ import javax.inject.Inject;
 
 import denominator.ResourceRecordSetApi;
 import denominator.clouddns.RackspaceApis.CloudDNS;
-import denominator.clouddns.RackspaceApis.JobIdAndStatus;
 import denominator.clouddns.RackspaceApis.ListWithNext;
 import denominator.clouddns.RackspaceApis.Pager;
 import denominator.clouddns.RackspaceApis.Record;
 import denominator.common.Util;
 import denominator.model.ResourceRecordSet;
-import feign.RetryableException;
-import feign.Retryer;
 
+import static denominator.clouddns.CloudDNSFunctions.awaitComplete;
 import static denominator.clouddns.CloudDNSFunctions.toRDataMap;
 import static denominator.clouddns.RackspaceApis.emptyOn404;
 import static denominator.common.Preconditions.checkArgument;
@@ -89,10 +87,10 @@ class CloudDNSResourceRecordSetApi implements denominator.ResourceRecordSetApi {
             continue;
           }
 
-          awaitComplete(api.updateRecord(domainId, record.id, rrset.ttl(), record.data()));
+          awaitComplete(api, api.updateRecord(domainId, record.id, rrset.ttl(), record.data()));
         }
       } else {
-        awaitComplete(api.deleteRecord(domainId, record.id));
+        awaitComplete(api, api.deleteRecord(domainId, record.id));
       }
     }
 
@@ -104,29 +102,12 @@ class CloudDNSResourceRecordSetApi implements denominator.ResourceRecordSetApi {
       String data = join(' ', mutableRData.values().toArray());
 
       if (priority == null) {
-        awaitComplete(api.createRecord(domainId, rrset.name(), rrset.type(), ttlToApply, data));
+        awaitComplete(api,
+                      api.createRecord(domainId, rrset.name(), rrset.type(), ttlToApply, data));
       } else {
-        awaitComplete(api.createRecordWithPriority(
+        awaitComplete(api, api.createRecordWithPriority(
             domainId, rrset.name(), rrset.type(), ttlToApply, data, priority));
       }
-    }
-  }
-
-  private void awaitComplete(JobIdAndStatus job) {
-    RetryableException retryableException = new RetryableException(
-        String.format("JobId %s did not complete. Check your logs.", job.id), null);
-    Retryer retryer = new Retryer.Default(500, 1000, 30);
-
-    while (true) {
-      JobIdAndStatus jobIdAndStatus = api.getStatus(job.id);
-
-      if ("COMPLETED".equals(jobIdAndStatus.status)) {
-        break;
-      } else if ("ERROR".equals(jobIdAndStatus.status)) {
-        throw retryableException;
-      }
-
-      retryer.continueOrPropagate(retryableException);
     }
   }
 
@@ -153,7 +134,7 @@ class CloudDNSResourceRecordSetApi implements denominator.ResourceRecordSetApi {
     checkNotNull(type, "type");
 
     for (Record record : api.recordsByNameAndType(domainId, name, type)) {
-      awaitComplete(api.deleteRecord(domainId, record.id));
+      awaitComplete(api, api.deleteRecord(domainId, record.id));
     }
   }
 
@@ -200,8 +181,10 @@ class CloudDNSResourceRecordSetApi implements denominator.ResourceRecordSetApi {
     }
 
     @Override
-    public ResourceRecordSetApi create(String id) {
-      return new CloudDNSResourceRecordSetApi(api, Integer.parseInt(id));
+    public ResourceRecordSetApi create(String name) {
+      ListWithNext<Integer> matching = api.domainIdsByName(name);
+      checkArgument(!matching.isEmpty(), "zone %s does not exist", name);
+      return new CloudDNSResourceRecordSetApi(api, matching.get(0));
     }
   }
 }

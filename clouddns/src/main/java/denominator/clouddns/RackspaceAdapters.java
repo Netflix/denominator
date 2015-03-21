@@ -9,7 +9,7 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.Comparator;
 
-import denominator.clouddns.RackspaceApis.JobIdAndStatus;
+import denominator.clouddns.RackspaceApis.Job;
 import denominator.clouddns.RackspaceApis.ListWithNext;
 import denominator.clouddns.RackspaceApis.Record;
 import denominator.model.Zone;
@@ -28,25 +28,25 @@ class RackspaceAdapters {
     return Comparator.class.cast(TO_STRING_COMPARATOR);
   }
 
-  static class JobIdAndStatusAdapter extends TypeAdapter<JobIdAndStatus> {
+  static class JobIdAndStatusAdapter extends TypeAdapter<Job> {
 
     @Override
-    public void write(JsonWriter out, JobIdAndStatus value) throws IOException {
+    public void write(JsonWriter out, Job value) throws IOException {
       // never need to write this object
     }
 
     @Override
-    public JobIdAndStatus read(JsonReader reader) throws IOException {
-      JobIdAndStatus jobIdAndStatus = new JobIdAndStatus();
+    public Job read(JsonReader reader) throws IOException {
+      Job job = new Job();
 
       reader.beginObject();
 
       while (reader.hasNext()) {
         String key = reader.nextName();
         if (key.equals("jobId")) {
-          jobIdAndStatus.id = reader.nextString();
+          job.id = reader.nextString();
         } else if (key.equals("status")) {
-          jobIdAndStatus.status = reader.nextString();
+          job.status = reader.nextString();
         } else {
           reader.skipValue();
         }
@@ -54,10 +54,34 @@ class RackspaceAdapters {
 
       reader.endObject();
 
-      return jobIdAndStatus;
+      return job;
     }
   }
 
+  static class DomainIdListAdapter extends ListWithNextAdapter<Integer> {
+
+    @Override
+    protected String jsonKey() {
+      return "domains";
+    }
+
+    protected Integer build(JsonReader reader) throws IOException {
+      Integer id = null;
+      while (reader.hasNext()) {
+        if (reader.nextName().equals("id")) {
+          id = reader.nextInt();
+        } else {
+          reader.skipValue();
+        }
+      }
+      return id;
+    }
+  }
+
+  /**
+   * Note that we do not expose the ID back to the user as ID isn't semantic when the API doesn't
+   * support multiple zones
+   */
   static class DomainListAdapter extends ListWithNextAdapter<Zone> {
 
     @Override
@@ -69,11 +93,8 @@ class RackspaceAdapters {
       String name = null;
       String id = null;
       while (reader.hasNext()) {
-        String key = reader.nextName();
-        if (key.equals("name")) {
+        if (reader.nextName().equals("name")) {
           name = reader.nextString();
-        } else if (key.equals("id")) {
-          id = reader.nextString();
         } else {
           reader.skipValue();
         }
