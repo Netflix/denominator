@@ -18,7 +18,6 @@ import static denominator.Denominator.create;
 import static denominator.Providers.list;
 import static denominator.Providers.provide;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class CloudDNSProviderTest {
 
@@ -30,7 +29,7 @@ public class CloudDNSProviderTest {
   @Test
   public void testCloudDNSMetadata() {
     assertThat(PROVIDER.name()).isEqualTo("clouddns");
-    assertTrue(PROVIDER.supportsDuplicateZoneNames());
+    assertThat(PROVIDER.supportsDuplicateZoneNames()).isFalse();
     assertThat(PROVIDER.credentialTypeToParameterNames())
         .containsEntry("password", Arrays.asList("username", "password"))
         .containsEntry("apiKey", Arrays.asList("username", "apiKey"));

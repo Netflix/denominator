@@ -15,6 +15,7 @@ import denominator.CheckConnection;
 import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
+import denominator.clouddns.RackspaceAdapters.DomainIdListAdapter;
 import denominator.clouddns.RackspaceAdapters.DomainListAdapter;
 import denominator.clouddns.RackspaceAdapters.JobIdAndStatusAdapter;
 import denominator.clouddns.RackspaceAdapters.RecordListAdapter;
@@ -71,11 +72,6 @@ public class CloudDNSProvider extends BasicProvider {
   }
 
   @Override
-  public boolean supportsDuplicateZoneNames() {
-    return true;
-  }
-
-  @Override
   public Map<String, Collection<String>> credentialTypeToParameterNames() {
     Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
     options.put("password", Arrays.asList("username", "password"));
@@ -109,7 +105,7 @@ public class CloudDNSProvider extends BasicProvider {
   }
 
   @dagger.Module(injects = CloudDNSResourceRecordSetApi.Factory.class,
-      complete = false // doesn't bind Provider used by DesignateTarget
+      complete = false // doesn't bind Provider used by CloudDNSTarget
   )
   public static final class FeignModule {
 
@@ -146,6 +142,7 @@ public class CloudDNSProvider extends BasicProvider {
                        new KeystoneAccessAdapter("rax:dns"),
                        new JobIdAndStatusAdapter(),
                        new DomainListAdapter(),
+                       new DomainIdListAdapter(),
                        new RecordListAdapter()))
           )
           .build();
