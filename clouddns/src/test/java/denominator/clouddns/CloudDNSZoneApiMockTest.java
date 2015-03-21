@@ -11,7 +11,6 @@ import denominator.ZoneApi;
 import denominator.model.Zone;
 
 import static denominator.assertj.ModelAssertions.assertThat;
-import static denominator.clouddns.RackspaceApisTest.domainId;
 import static denominator.clouddns.RackspaceApisTest.domainsResponse;
 import static org.junit.Assert.assertFalse;
 
@@ -29,8 +28,7 @@ public class CloudDNSZoneApiMockTest {
     Iterator<Zone> domains = api.iterator();
 
     assertThat(domains.next())
-        .hasName("denominator.io")
-        .hasId(String.valueOf(domainId));
+        .hasName("denominator.io");
 
     server.assertAuthRequest();
     server.assertRequest().hasPath("/v1.0/123123/domains");

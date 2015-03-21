@@ -3,6 +3,8 @@ package denominator.clouddns;
 import java.util.List;
 import java.util.Map;
 
+import denominator.clouddns.RackspaceApis.CloudDNS;
+import denominator.clouddns.RackspaceApis.Job;
 import denominator.clouddns.RackspaceApis.Record;
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
@@ -11,12 +13,30 @@ import denominator.model.rdata.MXData;
 import denominator.model.rdata.NSData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.TXTData;
+import feign.RetryableException;
+import feign.Retryer;
 
 import static denominator.common.Util.split;
+import static java.lang.String.format;
 
-public final class CloudDNSFunctions {
+final class CloudDNSFunctions {
 
-  private CloudDNSFunctions() {
+  static void awaitComplete(CloudDNS api, Job job) {
+    RetryableException retryableException = new RetryableException(
+        format("Job %s did not complete. Check your logs.", job.id), null);
+    Retryer retryer = new Retryer.Default(500, 1000, 30);
+
+    while (true) {
+      job = api.getStatus(job.id);
+
+      if ("COMPLETED".equals(job.status)) {
+        break;
+      } else if ("ERROR".equals(job.status)) {
+        throw retryableException;
+      }
+
+      retryer.continueOrPropagate(retryableException);
+    }
   }
 
   static Map<String, Object> toRDataMap(Record record) {
@@ -42,5 +62,8 @@ public final class CloudDNSFunctions {
     } else {
       throw new UnsupportedOperationException("record type not yet supported" + record);
     }
+  }
+
+  private CloudDNSFunctions() {
   }
 }

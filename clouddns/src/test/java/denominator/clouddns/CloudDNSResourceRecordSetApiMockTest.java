@@ -12,7 +12,7 @@ import denominator.model.ResourceRecordSet;
 import denominator.model.rdata.AData;
 
 import static denominator.assertj.ModelAssertions.assertThat;
-import static denominator.clouddns.RackspaceApisTest.domainId;
+import static denominator.clouddns.RackspaceApisTest.domainsResponse;
 import static junit.framework.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
@@ -40,9 +40,10 @@ public class CloudDNSResourceRecordSetApiMockTest {
   @Test
   public void listWhenPresent() throws Exception {
     server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(records));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId + "");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
     Iterator<ResourceRecordSet<?>> records = api.iterator();
 
     while (records.hasNext()) {
@@ -52,6 +53,9 @@ public class CloudDNSResourceRecordSetApiMockTest {
     }
 
     server.assertAuthRequest();
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/v1.0/123123/domains?name=denominator.io");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/domains/1234/records");
@@ -60,14 +64,18 @@ public class CloudDNSResourceRecordSetApiMockTest {
   @Test
   public void listWhenAbsent() throws Exception {
     server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setResponseCode(404).setBody(
         "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId + "");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
 
     assertFalse(api.iterator().hasNext());
 
     server.assertAuthRequest();
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/v1.0/123123/domains?name=denominator.io");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/domains/1234/records");
@@ -76,10 +84,11 @@ public class CloudDNSResourceRecordSetApiMockTest {
   @Test
   public void listPagesWhenPresent() throws Exception {
     server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(recordsPage1.replace("URL", server.url())));
     server.enqueue(new MockResponse().setBody(recordsPage2.replace("URL", server.url())));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId + "");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
     Iterator<ResourceRecordSet<?>> records = api.iterator();
 
     while (records.hasNext()) {
@@ -89,6 +98,9 @@ public class CloudDNSResourceRecordSetApiMockTest {
     }
 
     server.assertAuthRequest();
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/v1.0/123123/domains?name=denominator.io");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/domains/1234/records");
@@ -100,9 +112,10 @@ public class CloudDNSResourceRecordSetApiMockTest {
   @Test
   public void iterateByNameWhenPresent() throws Exception {
     server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(recordsByName));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId + "");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
     Iterator<ResourceRecordSet<?>> records = api.iterateByName("www.denominator.io");
 
     while (records.hasNext()) {
@@ -114,19 +127,26 @@ public class CloudDNSResourceRecordSetApiMockTest {
     server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
+        .hasPath("/v1.0/123123/domains?name=denominator.io");
+    server.assertRequest()
+        .hasMethod("GET")
         .hasPath("/v1.0/123123/domains/1234/records");
   }
 
   @Test
   public void iterateByNameWhenAbsent() throws Exception {
     server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setResponseCode(404).setBody(
         "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId + "");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
     assertFalse(api.iterateByName("www.denominator.io").hasNext());
 
     server.assertAuthRequest();
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/v1.0/123123/domains?name=denominator.io");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/domains/1234/records");
@@ -135,9 +155,10 @@ public class CloudDNSResourceRecordSetApiMockTest {
   @Test
   public void getByNameAndTypeWhenPresent() throws Exception {
     server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(recordsByNameAndType));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId + "");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
 
     assertThat(api.getByNameAndType("www.denominator.io", "A"))
         .hasName("www.denominator.io")
@@ -148,19 +169,26 @@ public class CloudDNSResourceRecordSetApiMockTest {
     server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
+        .hasPath("/v1.0/123123/domains?name=denominator.io");
+    server.assertRequest()
+        .hasMethod("GET")
         .hasPath("/v1.0/123123/domains/1234/records?name=www.denominator.io&type=A");
   }
 
   @Test
   public void getByNameAndTypeWhenAbsent() throws Exception {
     server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setResponseCode(404).setBody(
         "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId + "");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
     assertNull(api.getByNameAndType("www.denominator.io", "A"));
 
     server.assertAuthRequest();
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/v1.0/123123/domains?name=denominator.io");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/domains/1234/records?name=www.denominator.io&type=A");

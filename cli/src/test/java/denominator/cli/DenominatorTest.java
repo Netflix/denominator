@@ -63,8 +63,8 @@ public class DenominatorTest {
     assertThat(ListProviders.providerAndCredentialsTable())
         .isEqualTo(Util.join('\n',
                              "provider   url                                                 duplicateZones credentialType credentialArgs",
-                             "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           password       username password",
-                             "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           apiKey         username apiKey",
+                             "clouddns   https://identity.api.rackspacecloud.com/v2.0        false          password       username password",
+                             "clouddns   https://identity.api.rackspacecloud.com/v2.0        false          apiKey         username apiKey",
                              "designate  http://localhost:5000/v2.0                          false          password       tenantId username password",
                              "dynect     https://api2.dynect.net/REST                        false          password       customer username password",
                              "mock       mem:mock                                            false          ",
