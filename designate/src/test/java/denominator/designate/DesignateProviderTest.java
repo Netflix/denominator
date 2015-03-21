@@ -29,7 +29,7 @@ public class DesignateProviderTest {
   @Test
   public void testDesignateMetadata() {
     assertThat(PROVIDER.name()).isEqualTo("designate");
-    assertThat(PROVIDER.supportsDuplicateZoneNames()).isTrue();
+    assertThat(PROVIDER.supportsDuplicateZoneNames()).isFalse();
     assertThat(PROVIDER.credentialTypeToParameterNames())
         .containsEntry("password", Arrays.asList("tenantId", "username", "password"));
   }

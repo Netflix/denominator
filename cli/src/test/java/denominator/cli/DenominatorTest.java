@@ -65,7 +65,7 @@ public class DenominatorTest {
                              "provider   url                                                 duplicateZones credentialType credentialArgs",
                              "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           password       username password",
                              "clouddns   https://identity.api.rackspacecloud.com/v2.0        true           apiKey         username apiKey",
-                             "designate  http://localhost:5000/v2.0                          true           password       tenantId username password",
+                             "designate  http://localhost:5000/v2.0                          false          password       tenantId username password",
                              "dynect     https://api2.dynect.net/REST                        false          password       customer username password",
                              "mock       mem:mock                                            false          ",
                              "route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey",
