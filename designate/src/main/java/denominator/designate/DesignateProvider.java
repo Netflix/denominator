@@ -23,6 +23,7 @@ import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
 import denominator.designate.DesignateAdapters.DomainListAdapter;
+import denominator.designate.DesignateAdapters.DomainNameToIdAdapter;
 import denominator.designate.DesignateAdapters.RecordAdapter;
 import denominator.designate.DesignateAdapters.RecordListAdapter;
 import feign.Feign;
@@ -66,11 +67,6 @@ public class DesignateProvider extends BasicProvider {
         new LinkedHashMap<String, Collection<String>>();
     profileToRecordTypes.put("roundRobin", Arrays.asList("A", "AAAA", "MX", "NS", "SRV", "TXT"));
     return profileToRecordTypes;
-  }
-
-  @Override
-  public boolean supportsDuplicateZoneNames() {
-    return true;
   }
 
   @Override
@@ -144,6 +140,7 @@ public class DesignateProvider extends BasicProvider {
                        new KeystoneV2AccessAdapter(),
                        recordAdapter,
                        new DomainListAdapter(),
+                       new DomainNameToIdAdapter(),
                        new RecordListAdapter()))
           )
           .build();

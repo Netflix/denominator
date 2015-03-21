@@ -8,7 +8,7 @@ import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
 
-// http://docs.hpcloud.com/api/dns/#4.RESTAPISpecifications
+// http://designate.readthedocs.org/en/latest/rest.html#v1-api
 public interface Designate {
 
   @RequestLine("GET /limits")
@@ -16,6 +16,9 @@ public interface Designate {
 
   @RequestLine("GET /domains")
   List<Zone> domains();
+
+  @RequestLine("GET /domains")
+  Map<String, String> domainIdsByName();
 
   @RequestLine("GET /domains/{domainId}/records")
   List<Record> records(@Param("domainId") String domainId);
