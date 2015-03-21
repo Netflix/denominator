@@ -44,7 +44,14 @@ class RackspaceApis {
     Map<String, Object> limits();
 
     @RequestLine("GET /status/{jobId}?showDetails=true")
-    JobIdAndStatus getStatus(@Param("jobId") String jobId);
+    Job getStatus(@Param("jobId") String jobId);
+
+    /**
+     * Note this doesn't make sense to return anything except one or none, as duplicate domains
+     * aren't permitted in the create api.
+     */
+    @RequestLine("GET /domains?name={name}")
+    ListWithNext<Integer> domainIdsByName(@Param("name") String name);
 
     @RequestLine("GET")
     ListWithNext<Zone> domains(URI href);
@@ -66,27 +73,25 @@ class RackspaceApis {
     @RequestLine("POST /domains/{domainId}/records")
     @Body("%7B\"records\":[%7B\"name\":\"{name}\",\"type\":\"{type}\",\"ttl\":\"{ttl}\",\"data\":\"{data}\"%7D]%7D")
     @Headers("Content-Type: application/json")
-    JobIdAndStatus createRecord(@Param("domainId") int id, @Param("name") String name,
-                                @Param("type") String type, @Param("ttl") int ttl,
-                                @Param("data") String data);
+    Job createRecord(@Param("domainId") int id, @Param("name") String name,
+                     @Param("type") String type, @Param("ttl") int ttl, @Param("data") String data);
 
     @RequestLine("POST /domains/{domainId}/records")
     @Body("%7B\"records\":[%7B\"name\":\"{name}\",\"type\":\"{type}\",\"ttl\":\"{ttl}\",\"data\":\"{data}\",\"priority\":\"{priority}\"%7D]%7D")
     @Headers("Content-Type: application/json")
-    JobIdAndStatus createRecordWithPriority(@Param("domainId") int id, @Param("name") String name,
-                                            @Param("type") String type, @Param("ttl") int ttl,
-                                            @Param("data") String data,
-                                            @Param("priority") int priority);
+    Job createRecordWithPriority(@Param("domainId") int id, @Param("name") String name,
+                                 @Param("type") String type, @Param("ttl") int ttl,
+                                 @Param("data") String data, @Param("priority") int priority);
 
     @RequestLine("PUT /domains/{domainId}/records/{recordId}")
     @Body("%7B\"ttl\":\"{ttl}\",\"data\":\"{data}\"%7D")
     @Headers("Content-Type: application/json")
-    JobIdAndStatus updateRecord(@Param("domainId") int domainId, @Param("recordId") String recordId,
-                                @Param("ttl") int ttl, @Param("data") String data);
+    Job updateRecord(@Param("domainId") int domainId, @Param("recordId") String recordId,
+                     @Param("ttl") int ttl, @Param("data") String data);
 
     @RequestLine("DELETE /domains/{domainId}/records/{recordId}")
-    JobIdAndStatus deleteRecord(@Param("domainId") int domainId,
-                                @Param("recordId") String recordId);
+    Job deleteRecord(@Param("domainId") int domainId,
+                     @Param("recordId") String recordId);
   }
 
   interface Pager<X> {
@@ -100,7 +105,7 @@ class RackspaceApis {
     String publicURL;
   }
 
-  static class JobIdAndStatus {
+  static class Job {
 
     String id;
     String status;

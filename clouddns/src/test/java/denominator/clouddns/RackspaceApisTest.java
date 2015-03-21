@@ -11,7 +11,7 @@ import denominator.Credentials;
 import denominator.Provider;
 import denominator.clouddns.RackspaceApis.CloudDNS;
 import denominator.clouddns.RackspaceApis.CloudIdentity;
-import denominator.clouddns.RackspaceApis.JobIdAndStatus;
+import denominator.clouddns.RackspaceApis.Job;
 import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
 import feign.Feign;
 
@@ -65,13 +65,26 @@ public class RackspaceApisTest {
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
     assertThat(mockApi().domains().get(0))
-        .hasName("denominator.io")
-        .hasId(String.valueOf("1234"));
+        .hasName("denominator.io");
 
     server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/v1.0/123123/domains");
+  }
+
+  @Test
+  public void domainIdsByNamePresent() throws Exception {
+    server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(domainsResponse));
+
+    assertThat(mockApi().domainIdsByName("denominator.io"))
+        .containsOnly(1234);
+
+    server.assertAuthRequest();
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/v1.0/123123/domains?name=denominator.io");
   }
 
   @Test
@@ -125,9 +138,8 @@ public class RackspaceApisTest {
     server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordInitialResponse));
 
-    JobIdAndStatus job = mockApi().createRecordWithPriority(domainId, "www.denominator.io", "MX",
-                                                            1800,
-                                                            "mail.denominator.io", 10);
+    Job job = mockApi().createRecordWithPriority(domainId, "www.denominator.io", "MX",
+                                                            1800, "mail.denominator.io", 10);
 
     assertThat(job.id).isEqualTo("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
     assertThat(job.status).isEqualTo("RUNNING");
@@ -144,7 +156,7 @@ public class RackspaceApisTest {
     server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordRunningResponse));
 
-    JobIdAndStatus job = mockApi().getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
+    Job job = mockApi().getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
 
     assertThat(job.id).isEqualTo("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
     assertThat(job.status).isEqualTo("RUNNING");
@@ -160,7 +172,7 @@ public class RackspaceApisTest {
     server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordCompletedResponse));
 
-    JobIdAndStatus job = mockApi().getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
+    Job job = mockApi().getStatus("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
 
     assertThat(job.id).isEqualTo("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
     assertThat(job.status).isEqualTo("COMPLETED");
@@ -176,8 +188,7 @@ public class RackspaceApisTest {
     server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordUpdateInitialResponse));
 
-    JobIdAndStatus job = mockApi().updateRecord(domainId, "MX-4582544", 600,
-                                                "mail.denominator.io");
+    Job job = mockApi().updateRecord(domainId, "MX-4582544", 600, "mail.denominator.io");
 
     assertThat(job.id).isEqualTo("e32eace1-c44f-49af-8f74-768fa34469f4");
     assertThat(job.status).isEqualTo("RUNNING");
@@ -194,7 +205,7 @@ public class RackspaceApisTest {
     server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(mxRecordDeleteInitialResponse));
 
-    JobIdAndStatus job = mockApi().deleteRecord(domainId, "MX-4582544");
+    Job job = mockApi().deleteRecord(domainId, "MX-4582544");
 
     assertThat(job.id).isEqualTo("da520d24-dd5b-4387-92be-2020a7f2b176");
     assertThat(job.status).isEqualTo("RUNNING");
