@@ -17,9 +17,6 @@ public interface Designate {
   @RequestLine("GET /domains")
   List<Zone> domains();
 
-  @RequestLine("GET /domains")
-  Map<String, String> domainIdsByName();
-
   @RequestLine("GET /domains/{domainId}/records")
   List<Record> records(@Param("domainId") String domainId);
 

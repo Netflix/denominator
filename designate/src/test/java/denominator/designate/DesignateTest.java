@@ -67,21 +67,7 @@ public class DesignateTest {
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
     assertThat(mockApi().domains())
-        .containsExactly(Zone.create("denominator.io."));
-
-    server.assertAuthRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/v1/domains");
-  }
-
-  @Test
-  public void domainIdsByNamePresent() throws Exception {
-    server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
-
-    assertThat(mockApi().domainIdsByName())
-        .containsEntry("denominator.io.", domainId);
+        .containsExactly(Zone.create("denominator.io.", domainId));
 
     server.assertAuthRequest();
     server.assertRequest()

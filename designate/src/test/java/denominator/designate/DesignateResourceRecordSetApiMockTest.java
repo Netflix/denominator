@@ -16,7 +16,6 @@ import denominator.model.rdata.MXData;
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.designate.DesignateTest.aRecordResponse;
 import static denominator.designate.DesignateTest.domainId;
-import static denominator.designate.DesignateTest.domainsResponse;
 import static denominator.designate.DesignateTest.recordsResponse;
 import static denominator.model.ResourceRecordSets.a;
 import static java.lang.String.format;
@@ -29,12 +28,11 @@ public class DesignateResourceRecordSetApiMockTest {
   @Test
   public void listWhenPresent() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(recordsResponse));
 
     Iterator<ResourceRecordSet<?>>
         records =
-        server.connect().api().basicRecordSetsInZone("denominator.io.").iterator();
+        server.connect().api().basicRecordSetsInZone(domainId).iterator();
     assertThat(records.next())
         .hasName("denominator.io.")
         .hasType("MX")
@@ -52,24 +50,17 @@ public class DesignateResourceRecordSetApiMockTest {
     server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
-        .hasPath("/v1/domains");
-    server.assertRequest()
-        .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
   }
 
   @Test
   public void listWhenAbsent() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
 
-    assertThat(server.connect().api().basicRecordSetsInZone("denominator.io.")).isEmpty();
+    assertThat(server.connect().api().basicRecordSetsInZone(domainId)).isEmpty();
 
     server.assertAuthRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/v1/domains");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
@@ -78,17 +69,13 @@ public class DesignateResourceRecordSetApiMockTest {
   @Test
   public void putCreatesRecord() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
     server.enqueue(new MockResponse().setBody(aRecordResponse));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
     api.put(a("www.denominator.io.", 3600, "192.0.2.1"));
 
     server.assertAuthRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/v1/domains");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
@@ -106,16 +93,12 @@ public class DesignateResourceRecordSetApiMockTest {
   @Test
   public void putSameRecordNoOp() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(recordsResponse));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
     api.put(a("www.denominator.io.", Arrays.asList("192.0.2.1", "192.0.2.2")));
 
     server.assertAuthRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/v1/domains");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
@@ -124,18 +107,14 @@ public class DesignateResourceRecordSetApiMockTest {
   @Test
   public void putUpdatesWhenPresent() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(recordsResponse));
     server.enqueue(new MockResponse().setBody(aRecordResponse));
     server.enqueue(new MockResponse().setBody(aRecordResponse));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
     api.put(a("www.denominator.io.", 10000000, Arrays.asList("192.0.2.1", "192.0.2.2")));
 
     server.assertAuthRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/v1/domains");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
@@ -164,17 +143,13 @@ public class DesignateResourceRecordSetApiMockTest {
   @Test
   public void putOneLessDeletesExtra() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(recordsResponse));
     server.enqueue(new MockResponse());
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
     api.put(a("www.denominator.io.", "192.0.2.2"));
 
     server.assertAuthRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/v1/domains");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
@@ -187,10 +162,9 @@ public class DesignateResourceRecordSetApiMockTest {
   @Test
   public void iterateByNameWhenPresent() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(recordsResponse));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
 
     assertThat(api.iterateByName("www.denominator.io.").next())
         .hasName("www.denominator.io.")
@@ -201,25 +175,18 @@ public class DesignateResourceRecordSetApiMockTest {
     server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
-        .hasPath("/v1/domains");
-    server.assertRequest()
-        .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
   }
 
   @Test
   public void iterateByNameWhenAbsent() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
     assertThat(api.iterateByName("www.denominator.io.")).isEmpty();
 
     server.assertAuthRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/v1/domains");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
@@ -228,10 +195,9 @@ public class DesignateResourceRecordSetApiMockTest {
   @Test
   public void getByNameAndTypeWhenPresent() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(recordsResponse));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
 
     assertThat(api.getByNameAndType("www.denominator.io.", "A"))
         .hasName("www.denominator.io.")
@@ -242,25 +208,18 @@ public class DesignateResourceRecordSetApiMockTest {
     server.assertAuthRequest();
     server.assertRequest()
         .hasMethod("GET")
-        .hasPath("/v1/domains");
-    server.assertRequest()
-        .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
   }
 
   @Test
   public void getByNameAndTypeWhenAbsent() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody("{ \"records\": [] }"));
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
     assertThat(api.getByNameAndType("www.denominator.io.", "A")).isNull();
 
     server.assertAuthRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/v1/domains");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
@@ -269,17 +228,13 @@ public class DesignateResourceRecordSetApiMockTest {
   @Test
   public void deleteOne() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(recordsResponse));
     server.enqueue(new MockResponse());
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
     api.deleteByNameAndType("denominator.io.", "MX");
 
     server.assertAuthRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/v1/domains");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
@@ -292,17 +247,13 @@ public class DesignateResourceRecordSetApiMockTest {
   @Test
   public void deleteAbsentRRSDoesNothing() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setBody(domainsResponse));
     server.enqueue(new MockResponse().setBody(aRecordResponse));
     server.enqueue(new MockResponse());
 
-    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io.");
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone(domainId);
     api.deleteByNameAndType("www1.denominator.io.", "A");
 
     server.assertAuthRequest();
-    server.assertRequest()
-        .hasMethod("GET")
-        .hasPath("/v1/domains");
     server.assertRequest()
         .hasMethod("GET")
         .hasPath(format("/v1/domains/%s/records", domainId));
