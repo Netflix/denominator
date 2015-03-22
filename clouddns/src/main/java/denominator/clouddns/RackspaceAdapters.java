@@ -58,30 +58,6 @@ class RackspaceAdapters {
     }
   }
 
-  static class DomainIdListAdapter extends ListWithNextAdapter<Integer> {
-
-    @Override
-    protected String jsonKey() {
-      return "domains";
-    }
-
-    protected Integer build(JsonReader reader) throws IOException {
-      Integer id = null;
-      while (reader.hasNext()) {
-        if (reader.nextName().equals("id")) {
-          id = reader.nextInt();
-        } else {
-          reader.skipValue();
-        }
-      }
-      return id;
-    }
-  }
-
-  /**
-   * Note that we do not expose the ID back to the user as ID isn't semantic when the API doesn't
-   * support multiple zones
-   */
   static class DomainListAdapter extends ListWithNextAdapter<Zone> {
 
     @Override
@@ -93,8 +69,11 @@ class RackspaceAdapters {
       String name = null;
       String id = null;
       while (reader.hasNext()) {
-        if (reader.nextName().equals("name")) {
+        String nextName = reader.nextName();
+        if (nextName.equals("name")) {
           name = reader.nextString();
+        } else if (nextName.equals("id")) {
+          id = reader.nextString();
         } else {
           reader.skipValue();
         }
