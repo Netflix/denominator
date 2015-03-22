@@ -11,31 +11,83 @@ import static denominator.common.Util.equal;
  */
 public class Zone {
 
+  /**
+   * Metadata about how zones are identified within the scope of a connection to a provider.
+   *
+   * <p/>For example {@link denominator.model.Zone.Identification#NAME} means you can safely assume
+   * a zone's id is its name.
+   *
+   * <pre>
+   * String zoneId;
+   * if (mgr.provider().zoneIdentification() == NAME) {
+   *    zoneId = zoneName;
+   * } else {
+   *    zoneId = mgr.api().zones().iterateByName(zoneName).next().id();
+   * }
+   * </pre>
+   *
+   * @since 4.5
+   */
+  public enum Identification {
+    /**
+     * Only one zone allowed with the same name, and it is {@link Zone#id() identified} by {@link
+     * Zone#name() name}.
+     */
+    NAME,
+    /**
+     * Only one zone allowed with the same name, but its {@link Zone#id() identifier} is opaque.
+     * <p/> Note that a zone with the name name may have different identifiers over time.
+     */
+    OPAQUE,
+    /**
+     * Multiple zones are allowed with the same name, and each have a {@link Zone#qualifier()
+     * user-defined qualifier}. Each zone's {@link Zone#id() identifier} is opaque. <p/> Note that a
+     * zone with the name name may have different identifiers over time.
+     */
+    QUALIFIED;
+  }
+
   private final String name;
+  private final String qualifier;
   private final String id;
 
-  Zone(String name, String id) {
+  Zone(String name, String qualifier, String id) {
     this.name = checkNotNull(name, "name");
-    this.id = id;
+    this.qualifier = qualifier;
+    this.id = checkNotNull(id, "id");
   }
 
   /**
-   * Represent a zone without an {@link #id() id}.
+   * Represent a zone without a {@link #qualifier() qualifier} when its {@link #id() id} is its
+   * name.
    *
-   * @param name corresponds to {@link #name()}
+   * @param name corresponds to {@link #name()} and {@link #id()}
    */
   public static Zone create(String name) {
-    return create(name, null);
+    return new Zone(name, null, name);
   }
 
   /**
-   * Represent a zone with an {@link #id() id}.
+   * Represent a zone without a {@link #qualifier() qualifier}.
    *
    * @param name corresponds to {@link #name()}
-   * @param id   nullable; corresponds to {@link #id()}
+   * @param id   corresponds to {@link #id()}
    */
   public static Zone create(String name, String id) {
-    return new Zone(name, id);
+    return new Zone(name, null, id);
+  }
+
+  /**
+   * Represent a zone with a {@link #qualifier() qualifier}.
+   *
+   * @param name      corresponds to {@link #name()}
+   * @param qualifier corresponds to {@link #qualifier()}
+   * @param id        corresponds to {@link #id()}
+   *
+   * @since 4.5                  
+   */
+  public static Zone create(String name, String qualifier, String id) {
+    return new Zone(name, qualifier, id);
   }
 
   /**
@@ -47,27 +99,34 @@ public class Zone {
   }
 
   /**
-   * When present, the service supports multiple zones with the same {@link #name}. When absent, it
-   * doesn't. The value is likely to have been system generated. Even if a provider has an id
-   * associated with a zone, if it isn't used by their api calls, this method will return null.
+   * A user-defined unique string that differentiates zones with the same name. Only supported when
+   * the {@code denominator.Provider#zoneIdentification()} is {@link denominator.model.Zone.Identification#QUALIFIED}.
    *
-   * @see #idOrName()
+   * @return qualifier or null if the provider doesn't support multiple zones with the same name.
+   * @since 4.5
+   */
+  public String qualifier() {
+    return qualifier;
+  }
+
+  /**
+   * The potentially transient and opaque string that uniquely identifies the zone.
+   *
+   * <p/>Note that this is not used in {@link #hashCode()} or {@link #equals(Object)}, as it may
+   * change over time.
+   *
+   * @return identifier based on {@code denominator.Provider#zoneIdentification()}.
+   * @see denominator.model.Zone.Identification
    */
   public String id() {
     return id;
   }
 
   /**
-   * It is possible that some zones do not have an id, and in this case the name is used. The
-   * following form will ensure you get a reference regardless.
-   *
-   * In implementation, this method is the same as calling: {@code zone.id().or(zone.name())}
-   *
-   * <br> If {@code denominator.Provider#supportsDuplicateZoneNames()} is true, this will return an
-   * id.
-   *
-   * @return {@link #id() id} or {@link #name() name} if absent
+   * @deprecated only use {@link #id()} when performing operations against a zone. This will be
+   * removed in version 5.
    */
+  @Deprecated
   public String idOrName() {
     return id() != null ? id() : name();
   }
@@ -77,7 +136,7 @@ public class Zone {
     if (obj instanceof Zone) {
       Zone other = (Zone) obj;
       return equal(name(), other.name())
-             && equal(id(), other.id());
+             && equal(qualifier(), other.qualifier());
     }
     return false;
   }
@@ -86,7 +145,7 @@ public class Zone {
   public int hashCode() {
     int result = 17;
     result = 31 * result + name().hashCode();
-    result = 31 * result + (id() != null ? id().hashCode() : 0);
+    result = 31 * result + (qualifier() != null ? qualifier().hashCode() : 0);
     return result;
   }
 
@@ -95,7 +154,10 @@ public class Zone {
     StringBuilder builder = new StringBuilder();
     builder.append("Zone [");
     builder.append("name=").append(name());
-    if (id() != null) {
+    if (qualifier() != null) {
+      builder.append(", ").append("qualifier=").append(qualifier());
+    }
+    if (!name().equals(id())) {
       builder.append(", ").append("id=").append(id());
     }
     builder.append("]");

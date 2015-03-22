@@ -164,11 +164,11 @@ public class GeoWriteCommandsLiveTest {
 
   // TODO
   private AllProfileResourceRecordSetApi allApi(Zone zone) {
-    return manager.api().recordSetsInZone(zone.idOrName());
+    return manager.api().recordSetsInZone(zone.id());
   }
 
   private GeoResourceRecordSetApi geoApi(Zone zone) {
-    GeoResourceRecordSetApi geoOption = manager.api().geoRecordSetsInZone(zone.idOrName());
+    GeoResourceRecordSetApi geoOption = manager.api().geoRecordSetsInZone(zone.id());
     assumeTrue("geo not available or not available in zone " + zone, geoOption != null);
     return geoOption;
   }

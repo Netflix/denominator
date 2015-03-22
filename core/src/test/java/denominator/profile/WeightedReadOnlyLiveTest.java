@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import denominator.AllProfileResourceRecordSetApi;
 import denominator.DNSApiManager;
 import denominator.Live;
 import denominator.model.ResourceRecordSet;
@@ -101,14 +100,10 @@ public class WeightedReadOnlyLiveTest {
   }
 
   // TODO
-  private AllProfileResourceRecordSetApi allApi(Zone zone) {
-    return manager.api().recordSetsInZone(zone.idOrName());
-  }
-
   protected WeightedResourceRecordSetApi weightedApi(Zone zone) {
     WeightedResourceRecordSetApi
         weightedOption =
-        manager.api().weightedRecordSetsInZone(zone.idOrName());
+        manager.api().weightedRecordSetsInZone(zone.id());
     assumeTrue("weighted not available or not available in zone " + zone, weightedOption != null);
     return weightedOption;
   }

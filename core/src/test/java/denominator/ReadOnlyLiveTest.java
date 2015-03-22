@@ -12,6 +12,7 @@ import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 
 import static denominator.assertj.ModelAssertions.assertThat;
+import static org.junit.Assume.assumeTrue;
 
 @RunWith(Live.class)
 public class ReadOnlyLiveTest {
@@ -20,11 +21,46 @@ public class ReadOnlyLiveTest {
   public DNSApiManager manager;
 
   @Test
-  public void testListRRSs() {
+  public void zoneIdentification() {
+    Iterator<Zone> zones = manager.api().zones().iterator();
+    assumeTrue("No zones to test", zones.hasNext());
+    Zone zone = zones.next();
+    switch (manager.provider().zoneIdentification()) {
+      case NAME:
+        assertThat(zone).hasNoQualifier().hasId(zone.name());
+        break;
+      case OPAQUE:
+        assertThat(zone).hasNoQualifier();
+        assertThat(zone.id()).isNotEqualTo(zone.name());
+        break;
+      case QUALIFIED:
+        assertThat(zone.qualifier()).isNotNull();
+        assertThat(zone.id()).isNotEqualTo(zone.name());
+        break;
+      default:
+        throw new AssertionError("unknown zone identification");
+    }
+  }
+
+  @Test
+  public void iterateZonesByName() {
+    Iterator<Zone> zones = manager.api().zones().iterator();
+    assumeTrue("No zones to test", zones.hasNext());
+    Zone zone = zones.next();
+    assertThat(manager.api().zones().iterateByName(zone.name())).contains(zone);
+  }
+
+  @Test
+  public void iterateZonesByNameWhenNotFound() {
+    assertThat(manager.api().zones().iterateByName("ARGHH")).isEmpty();
+  }
+
+  @Test
+  public void iterateRRSets() {
     for (Zone zone : manager.api().zones()) {
       for (ResourceRecordSet<?> rrs : allApi(zone)) {
         assertThat(rrs).isValid();
-        checkListByNameAndTypeConsistent(zone, rrs);
+        checkIterateByNameAndTypeConsistent(zone, rrs);
         if (rrs.qualifier() != null) {
           checkGetByNameTypeAndQualifierConsistent(zone, rrs);
         }
@@ -32,26 +68,8 @@ public class ReadOnlyLiveTest {
     }
   }
 
-  protected void checkGetByNameTypeAndQualifierConsistent(Zone zone, ResourceRecordSet<?> rrs) {
-    ResourceRecordSet<?>
-        byNameTypeAndQualifier =
-        allApi(zone).getByNameTypeAndQualifier(rrs.name(), rrs.type(),
-                                               rrs.qualifier());
-    assertThat(byNameTypeAndQualifier)
-        .describedAs("could not lookup by name, type, and qualifier: " + rrs)
-        .isEqualTo(rrs);
-  }
-
-  protected void checkListByNameAndTypeConsistent(Zone zone, ResourceRecordSet<?> rrs) {
-    Iterator<ResourceRecordSet<?>>
-        byNameAndType = allApi(zone).iterateByNameAndType(rrs.name(), rrs.type());
-    assertThat(byNameAndType)
-        .describedAs(rrs + " not found in list by name and type: " + byNameAndType)
-        .contains(rrs);
-  }
-
   @Test
-  public void testListByName() {
+  public void iterateRRSetsByName() {
     for (Zone zone : manager.api().zones()) {
       Iterator<ResourceRecordSet<?>> rrsIterator = allApi(zone).iterator();
       if (!rrsIterator.hasNext()) {
@@ -75,7 +93,7 @@ public class ReadOnlyLiveTest {
   }
 
   @Test
-  public void testListByNameWhenNotFound() {
+  public void iterateRRSetsByNameWhenNotFound() {
     for (Zone zone : manager.api().zones()) {
       assertThat(allApi(zone).iterateByName("ARGHH." + zone.name())).isEmpty();
       break;
@@ -83,7 +101,7 @@ public class ReadOnlyLiveTest {
   }
 
   @Test
-  public void testListByNameAndTypeWhenEmpty() {
+  public void iterateRRSetsByNameAndTypeWhenEmpty() {
     for (Zone zone : manager.api().zones()) {
       assertThat(allApi(zone).iterateByNameAndType("ARGHH." + zone.name(), "TXT")).isEmpty();
       break;
@@ -91,7 +109,7 @@ public class ReadOnlyLiveTest {
   }
 
   @Test
-  public void testGetByNameTypeAndGroupWhenAbsent() {
+  public void getByNameTypeAndGroupWhenAbsent() {
     for (Zone zone : manager.api().zones()) {
       assertThat(allApi(zone).getByNameTypeAndQualifier("ARGHH." + zone.name(), "TXT", "Mars"))
           .isNull();
@@ -100,7 +118,25 @@ public class ReadOnlyLiveTest {
   }
 
   // TODO
+  private void checkGetByNameTypeAndQualifierConsistent(Zone zone, ResourceRecordSet<?> rrs) {
+    ResourceRecordSet<?>
+        byNameTypeAndQualifier =
+        allApi(zone).getByNameTypeAndQualifier(rrs.name(), rrs.type(),
+                                               rrs.qualifier());
+    assertThat(byNameTypeAndQualifier)
+        .describedAs("could not lookup by name, type, and qualifier: " + rrs)
+        .isEqualTo(rrs);
+  }
+
+  private void checkIterateByNameAndTypeConsistent(Zone zone, ResourceRecordSet<?> rrs) {
+    Iterator<ResourceRecordSet<?>>
+        byNameAndType = allApi(zone).iterateByNameAndType(rrs.name(), rrs.type());
+    assertThat(byNameAndType)
+        .describedAs(rrs + " not found in list by name and type: " + byNameAndType)
+        .contains(rrs);
+  }
+
   private AllProfileResourceRecordSetApi allApi(Zone zone) {
-    return manager.api().recordSetsInZone(zone.idOrName());
+    return manager.api().recordSetsInZone(zone.id());
   }
 }

@@ -21,6 +21,9 @@ public interface DynECT {
   @RequestLine("GET /Zone")
   Data<List<Zone>> zones();
 
+  @RequestLine("GET /Zone/{name}")
+  void getZone(@Param("name") String name);
+
   @RequestLine("PUT /Zone/{zone}")
   @Body("{\"publish\":true}")
   void publish(@Param("zone") String zone);

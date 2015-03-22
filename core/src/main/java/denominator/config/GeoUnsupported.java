@@ -19,7 +19,7 @@ public class GeoUnsupported {
     return new GeoResourceRecordSetApi.Factory() {
 
       @Override
-      public GeoResourceRecordSetApi create(String idOrName) {
+      public GeoResourceRecordSetApi create(String id) {
         return null;
       }
 

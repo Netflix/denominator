@@ -83,9 +83,7 @@ class UltraDNSContentHandlers {
     }
   }
 
-  // text of <DirPoolID> <RRPoolID> <DirectionalPoolRecordID
-  // xmlns:ns2=...>
-  // or attribute accountID, where ids are uppercase hex
+  // text of <DirPoolID> <RRPoolID> <DirectionalPoolRecordID> or attribute accountID
   static class IDHandler extends DefaultHandler implements ContentHandlerWithResult<String> {
 
     private StringBuilder currentText = new StringBuilder();
@@ -100,6 +98,8 @@ class UltraDNSContentHandlers {
     public void startElement(String uri, String localName, String qName, Attributes attrs) {
       if (attrs.getValue("accountID") != null) {
         id = attrs.getValue("accountID");
+      } else if (attrs.getValue("accountId") != null) {
+        id =  attrs.getValue("accountId");
       }
     }
 

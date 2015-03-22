@@ -46,4 +46,46 @@ public class DesignateZoneApiMockTest {
     server.assertAuthRequest();
     server.assertRequest().hasPath("/v1/domains");
   }
+
+  @Test
+  public void iteratorByNameWhenPresent() throws Exception {
+    server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(domainsResponse));
+
+    ZoneApi api = server.connect().api().zones();
+
+    assertThat(api.iterateByName("denominator.io."))
+        .contains(Zone.create("denominator.io.", domainId));
+
+    server.assertAuthRequest();
+    server.assertRequest().hasPath("/v1/domains");
+  }
+
+  /**
+   * Client-side filter is used as there's no server-side command.
+   */
+  @Test
+  public void iteratorByNameWhenIrrelevant() throws Exception {
+    server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(domainsResponse));
+
+    ZoneApi api = server.connect().api().zones();
+
+    assertThat(api.iterateByName("denominator.com.")).isEmpty();
+
+    server.assertAuthRequest();
+    server.assertRequest().hasPath("/v1/domains");
+  }
+
+  @Test
+  public void iteratorByNameWhenAbsent() throws Exception {
+    server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
+
+    ZoneApi api = server.connect().api().zones();
+    assertThat(api.iterateByName("denominator.io.")).isEmpty();
+
+    server.assertAuthRequest();
+    server.assertRequest().hasPath("/v1/domains");
+  }
 }

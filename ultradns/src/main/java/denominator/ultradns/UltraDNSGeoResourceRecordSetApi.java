@@ -301,8 +301,8 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     }
 
     @Override
-    public GeoResourceRecordSetApi create(String idOrName) {
-      checkNotNull(idOrName, "idOrName was null");
+    public GeoResourceRecordSetApi create(String name) {
+      checkNotNull(name, "name was null");
       // Eager fetch of regions to determine if directional records are supported or not.
       try {
         regions.get();
@@ -313,7 +313,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         throw e;
       }
       return new UltraDNSGeoResourceRecordSetApi(supportedTypes, regions, api, iteratorFactory,
-                                                 idOrName);
+                                                 name);
     }
   }
 }

@@ -11,7 +11,9 @@ import denominator.model.Zone;
 import denominator.model.rdata.SOAData;
 
 import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Util.filter;
 import static denominator.model.ResourceRecordSets.ns;
+import static denominator.model.Zones.nameEqualTo;
 
 final class MockZoneApi implements denominator.ZoneApi {
 
@@ -30,20 +32,20 @@ final class MockZoneApi implements denominator.ZoneApi {
     create("denominator.io.");
   }
 
-  public void create(String idOrName) {
-    checkArgument(!data.containsKey(idOrName), "zone %s already exists", idOrName);
+  public void create(String name) {
+    checkArgument(!data.containsKey(name), "zone %s already exists", name);
     Collection<ResourceRecordSet<?>>
         zone =
         new ConcurrentSkipListSet<ResourceRecordSet<?>>(TO_STRING);
     zone.add(ResourceRecordSet.builder()
                  .type("SOA")
-                 .name(idOrName)
+                 .name(name)
                  .ttl(3600)
-                 .add(SOAData.builder().mname("ns1." + idOrName).rname("admin." + idOrName)
+                 .add(SOAData.builder().mname("ns1." + name).rname("admin." + name)
                           .serial(1).refresh(3600).retry(600).expire(604800).minimum(60).build())
                  .build());
-    zone.add(ns(idOrName, 86400, "ns1." + idOrName));
-    data.put(idOrName, zone);
+    zone.add(ns(name, 86400, "ns1." + name));
+    data.put(name, zone);
   }
 
   @Override
@@ -65,5 +67,10 @@ final class MockZoneApi implements denominator.ZoneApi {
         throw new UnsupportedOperationException("remove");
       }
     };
+  }
+
+  @Override
+  public Iterator<Zone> iterateByName(String name) {
+    return filter(iterator(), nameEqualTo(name));
   }
 }

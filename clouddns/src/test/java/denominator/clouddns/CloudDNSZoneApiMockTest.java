@@ -47,4 +47,32 @@ public class CloudDNSZoneApiMockTest {
     server.assertAuthRequest();
     server.assertRequest().hasPath("/v1.0/123123/domains");
   }
+
+  @Test
+  public void iteratorByNameWhenPresent() throws Exception {
+    server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody(
+        "{\"domains\":[{\"name\":\"denominator.io\",\"id\":1234,\"emailAddress\":\"fake@denominator.io\",\"updated\":\"2015-03-22T18:21:33.000+0000\",\"created\":\"2015-03-22T18:21:33.000+0000\"}],\"totalEntries\":1}"));
+
+    ZoneApi api = server.connect().api().zones();
+
+    assertThat(api.iterateByName("denominator.io").next())
+        .hasName("denominator.io")
+        .hasId(String.valueOf(domainId));
+
+    server.assertAuthRequest();
+    server.assertRequest().hasPath("/v1.0/123123/domains?name=denominator.io");
+  }
+
+  @Test
+  public void iteratorByNameWhenAbsent() throws Exception {
+    server.enqueueAuthResponse();
+    server.enqueue(new MockResponse().setBody("{\"domains\":[],\"totalEntries\":0}"));
+
+    ZoneApi api = server.connect().api().zones();
+    assertThat(api.iterateByName("denominator.io")).isEmpty();
+
+    server.assertAuthRequest();
+    server.assertRequest().hasPath("/v1.0/123123/domains?name=denominator.io");
+  }
 }

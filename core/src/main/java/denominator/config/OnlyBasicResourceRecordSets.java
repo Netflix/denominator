@@ -25,8 +25,8 @@ public class OnlyBasicResourceRecordSets {
     return new AllProfileResourceRecordSetApi.Factory() {
 
       @Override
-      public AllProfileResourceRecordSetApi create(String idOrName) {
-        return new OnlyBasicResourceRecordSetApi(factory.create(idOrName));
+      public AllProfileResourceRecordSetApi create(String id) {
+        return new OnlyBasicResourceRecordSetApi(factory.create(id));
       }
 
     };

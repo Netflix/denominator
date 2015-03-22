@@ -14,12 +14,12 @@ public interface AllProfileResourceRecordSetApi extends QualifiedResourceRecordS
    *
    * @param name {@link ResourceRecordSet#name() name} of the rrset
    * @param type {@link ResourceRecordSet#type() type} of the rrset
-   * @throws IllegalArgumentException if the zone {@code idOrName} is not found.
+   * @throws IllegalArgumentException if the zone is not found.
    */
   void deleteByNameAndType(String name, String type);
 
   static interface Factory {
 
-    AllProfileResourceRecordSetApi create(String idOrName);
+    AllProfileResourceRecordSetApi create(String id);
   }
 }

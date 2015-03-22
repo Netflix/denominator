@@ -16,6 +16,7 @@ class ListHostedZonesResponseHandler extends DefaultHandler
   private final StringBuilder currentText = new StringBuilder();
   private final ZoneList zones = new ZoneList();
   private String name;
+  private String qualifier;
   private String id;
 
   @Override
@@ -29,8 +30,10 @@ class ListHostedZonesResponseHandler extends DefaultHandler
       this.name = currentText.toString().trim();
     } else if (qName.equals("Id")) {
       id = currentText.toString().trim().replace("/hostedzone/", "");
+    } else if (qName.equals("CallerReference")) {
+      qualifier = currentText.toString().trim();
     } else if (qName.equals("HostedZone")) {
-      zones.add(Zone.create(this.name, id));
+      zones.add(Zone.create(this.name, qualifier, id));
       this.name = this.id = null;
     } else if (qName.equals("NextMarker")) {
       zones.next = currentText.toString().trim();
