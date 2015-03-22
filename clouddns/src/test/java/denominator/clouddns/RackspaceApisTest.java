@@ -13,6 +13,7 @@ import denominator.clouddns.RackspaceApis.CloudDNS;
 import denominator.clouddns.RackspaceApis.CloudIdentity;
 import denominator.clouddns.RackspaceApis.Job;
 import denominator.clouddns.RackspaceApis.TokenIdAndPublicURL;
+import denominator.model.Zone;
 import feign.Feign;
 
 import static denominator.assertj.ModelAssertions.assertThat;
@@ -74,12 +75,12 @@ public class RackspaceApisTest {
   }
 
   @Test
-  public void domainIdsByNamePresent() throws Exception {
+  public void domainsByNamePresent() throws Exception {
     server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
-    assertThat(mockApi().domainIdsByName("denominator.io"))
-        .containsOnly(1234);
+    assertThat(mockApi().domainsByName("denominator.io"))
+        .containsOnly(Zone.create("denominator.io", "1234"));
 
     server.assertAuthRequest();
     server.assertRequest()

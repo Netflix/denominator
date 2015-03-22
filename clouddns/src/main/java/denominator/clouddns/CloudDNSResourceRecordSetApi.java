@@ -181,10 +181,8 @@ class CloudDNSResourceRecordSetApi implements denominator.ResourceRecordSetApi {
     }
 
     @Override
-    public ResourceRecordSetApi create(String name) {
-      ListWithNext<Integer> matching = api.domainIdsByName(name);
-      checkArgument(!matching.isEmpty(), "zone %s does not exist", name);
-      return new CloudDNSResourceRecordSetApi(api, matching.get(0));
+    public ResourceRecordSetApi create(String id) {
+      return new CloudDNSResourceRecordSetApi(api, Integer.parseInt(id));
     }
   }
 }
