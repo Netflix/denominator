@@ -51,7 +51,7 @@ class RackspaceApis {
      * aren't permitted in the create api.
      */
     @RequestLine("GET /domains?name={name}")
-    ListWithNext<Integer> domainIdsByName(@Param("name") String name);
+    ListWithNext<Zone> domainsByName(@Param("name") String name);
 
     @RequestLine("GET")
     ListWithNext<Zone> domains(URI href);

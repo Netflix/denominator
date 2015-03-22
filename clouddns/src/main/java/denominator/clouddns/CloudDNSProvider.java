@@ -15,7 +15,6 @@ import denominator.CheckConnection;
 import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
-import denominator.clouddns.RackspaceAdapters.DomainIdListAdapter;
 import denominator.clouddns.RackspaceAdapters.DomainListAdapter;
 import denominator.clouddns.RackspaceAdapters.JobIdAndStatusAdapter;
 import denominator.clouddns.RackspaceAdapters.RecordListAdapter;
@@ -142,7 +141,6 @@ public class CloudDNSProvider extends BasicProvider {
                        new KeystoneAccessAdapter("rax:dns"),
                        new JobIdAndStatusAdapter(),
                        new DomainListAdapter(),
-                       new DomainIdListAdapter(),
                        new RecordListAdapter()))
           )
           .build();
