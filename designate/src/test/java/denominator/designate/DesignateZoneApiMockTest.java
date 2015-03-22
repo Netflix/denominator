@@ -11,6 +11,7 @@ import denominator.ZoneApi;
 import denominator.model.Zone;
 
 import static denominator.assertj.ModelAssertions.assertThat;
+import static denominator.designate.DesignateTest.domainId;
 import static denominator.designate.DesignateTest.domainsResponse;
 
 public class DesignateZoneApiMockTest {
@@ -27,7 +28,8 @@ public class DesignateZoneApiMockTest {
     Iterator<Zone> domains = api.iterator();
 
     assertThat(domains.next())
-        .hasName("denominator.io.");
+        .hasName("denominator.io.")
+        .hasId(domainId);
 
     server.assertAuthRequest();
     server.assertRequest().hasPath("/v1/domains");
