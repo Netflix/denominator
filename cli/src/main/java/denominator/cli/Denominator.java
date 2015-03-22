@@ -28,7 +28,6 @@ import org.yaml.snakeyaml.Yaml;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -63,6 +62,7 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
 import denominator.model.Zone;
+import denominator.model.Zone.Identification;
 import feign.Logger;
 import feign.Logger.Level;
 import io.airlift.airline.Cli;
@@ -172,20 +172,13 @@ public class Denominator {
     return new LogModule(logLevel);
   }
 
-  static String idOrName(DNSApiManager mgr, String zoneIdOrName) {
-    if (!InternetDomainName.isValid(zoneIdOrName) || !InternetDomainName.from(zoneIdOrName)
-        .hasParent()) {
+  static String id(DNSApiManager mgr, String zoneIdOrName) {
+    if (mgr.provider().zoneIdentification() == Identification.NAME) {
       return zoneIdOrName;
-    } else if (InternetDomainName.isValid(zoneIdOrName) && mgr.provider()
-        .supportsDuplicateZoneNames()) {
-      List<Zone> currentZones = new ArrayList<Zone>();
-      for (Zone zone : mgr.api().zones()) {
-        if (zoneIdOrName.equals(zone.name())) {
-          return zone.id();
-        }
-        currentZones.add(zone);
-      }
-      checkArgument(false, "zone %s not found in %s", zoneIdOrName, currentZones);
+    } else if (zoneIdOrName.indexOf('.') != -1 && InternetDomainName.isValid(zoneIdOrName)) {
+      Iterator<Zone> result = mgr.api().zones().iterateByName(zoneIdOrName);
+      checkArgument(result.hasNext(), "zone %s not found", zoneIdOrName);
+      return result.next().id();
     }
     return zoneIdOrName;
   }
@@ -202,24 +195,25 @@ public class Denominator {
   @Command(name = "providers", description = "List the providers and their metadata ")
   public static class ListProviders implements Runnable {
 
-    final static String table = "%-10s %-51s %-14s %-14s %s%n";
+    final static String table = "%-10s %-51s %-9s %-14s %s%n";
 
     public static String providerAndCredentialsTable() {
       StringBuilder builder = new StringBuilder();
 
       builder.append(
-          format(table, "provider", "url", "duplicateZones", "credentialType", "credentialArgs"));
+          format(table, "provider", "url", "zoneIds", "credentialType", "credentialArgs"));
       for (Provider provider : ImmutableSortedSet
           .copyOf(Ordering.usingToString(), Providers.list())) {
         if (provider.credentialTypeToParameterNames().isEmpty()) {
           builder.append(format("%-10s %-51s %-14s %n", provider.name(), provider.url(),
-                                provider.supportsDuplicateZoneNames()));
+                                provider.zoneIdentification().toString().toLowerCase()));
         }
         for (Entry<String, Collection<String>> entry : provider.credentialTypeToParameterNames()
             .entrySet()) {
           String parameters = Joiner.on(' ').join(entry.getValue());
           builder.append(format(table, provider.name(), provider.url(),
-                                provider.supportsDuplicateZoneNames(), entry.getKey(), parameters));
+                                provider.zoneIdentification().toString().toLowerCase(),
+                                entry.getKey(), parameters));
         }
       }
       return builder.toString();
@@ -378,20 +372,32 @@ public class Denominator {
     protected abstract Iterator<String> doRun(DNSApiManager mgr);
   }
 
-  @Command(name = "list", description = "Lists the zones present in this provider.  If the second column is present, it is the zone id.")
+  @Command(name = "list", description = "Lists the zones present in this provider.  If more than one column is present, the last is the zone id.")
   public static class ZoneList extends DenominatorCommand {
 
-    public Iterator<String> doRun(DNSApiManager mgr) {
-      return Iterators.transform(mgr.api().zones().iterator(), new Function<Zone, String>() {
+    @Option(type = OptionType.COMMAND, name = {"-n",
+                                               "--name"}, description = "name of the zone. ex. denominator.io.")
+    public String name;
+
+    public Iterator<String> doRun(final DNSApiManager mgr) {
+      Iterator<Zone> zones =
+          name == null ? mgr.api().zones().iterator() : mgr.api().zones().iterateByName(name);
+      return Iterators.transform(zones, new Function<Zone, String>() {
 
         @Override
         public String apply(Zone input) {
-          if (input.id() != null) {
-            return input.name() + " " + input.id();
+          Identification zoneId = mgr.provider().zoneIdentification();
+          switch (zoneId) {
+            case NAME:
+              return input.name();
+            case OPAQUE:
+              return format("%-36s %s", input.name(), input.id());
+            case QUALIFIED:
+              return format("%-36s %-19s %s", input.name(), input.qualifier(), input.id());
+            default:
+              throw new UnsupportedOperationException("unsupported zone identification: " + zoneId);
           }
-          return input.name();
         }
-
       });
     }
   }

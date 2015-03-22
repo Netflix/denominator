@@ -121,6 +121,11 @@ public class DynamicCredentialsProviderExampleTest {
       return Arrays.asList(Zone.create(cup.customer), Zone.create(cup.username),
                            Zone.create(cup.password)).iterator();
     }
+
+    @Override
+    public Iterator<Zone> iterateByName(String name) {
+      throw new UnsupportedOperationException();
+    }
   }
 
   final static class DynamicCredentialsProvider extends BasicProvider {
@@ -190,8 +195,8 @@ public class DynamicCredentialsProviderExampleTest {
           final DNSApi mock = Denominator.create("mock").api();
 
           @Override
-          public ResourceRecordSetApi create(String idOrName) {
-            return mock.basicRecordSetsInZone(idOrName);
+          public ResourceRecordSetApi create(String id) {
+            return mock.basicRecordSetsInZone(id);
           }
         };
       }

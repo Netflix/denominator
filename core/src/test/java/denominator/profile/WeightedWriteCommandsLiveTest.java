@@ -115,13 +115,13 @@ public class WeightedWriteCommandsLiveTest {
 
   // TODO
   private AllProfileResourceRecordSetApi allApi(Zone zone) {
-    return manager.api().recordSetsInZone(zone.idOrName());
+    return manager.api().recordSetsInZone(zone.id());
   }
 
   private WeightedResourceRecordSetApi weightedApi(Zone zone) {
     WeightedResourceRecordSetApi
         weightedOption =
-        manager.api().weightedRecordSetsInZone(zone.idOrName());
+        manager.api().weightedRecordSetsInZone(zone.id());
     assumeTrue("weighted not available or not available in zone " + zone, weightedOption != null);
     return weightedOption;
   }

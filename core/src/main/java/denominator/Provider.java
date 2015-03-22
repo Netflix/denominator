@@ -6,6 +6,7 @@ import java.util.Set;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
+import denominator.model.Zone.Identification;
 
 /**
  * Metadata about a provider of DNS services.
@@ -45,6 +46,13 @@ public interface Provider {
   String url();
 
   /**
+   * Metadata about zone identifiers and uniqueness.
+   *
+   * @since 4.5
+   */
+  Identification zoneIdentification();
+
+  /**
    * The set of basic {@link ResourceRecordSet#type() record types} that are supported by {@link
    * ResourceRecordSetApi} commands. <br> For example:
    *
@@ -65,19 +73,15 @@ public interface Provider {
    *   "weighted" : ["A", "AAAA", "CNAME"] }
    * </pre>
    *
-   * @see denominator.model.profile
+   * <p/> Well known record types are in the {@code denominator.model.profile} package.
    */
   Map<String, Collection<String>> profileToRecordTypes();
 
   /**
-   * Certain providers support multiple zones with the same {@link Zone#name name}. These are served
-   * by different name servers and used to provide different internal vs external views, environment
-   * testing or smoother zone transfers for the same name.
-   *
-   * @return true when {@link Zone#id() zone id} is present and {@link Zone#idOrName()} returns the
-   * {@link Zone#id() zone id}. If false, {@link Zone#idOrName()} will returns {@link Zone#name zone
-   * name}.
+   * @deprecated Use {@link #zoneIdentification()}. {@link denominator.model.Zone.Identification#QUALIFIED
+   * Qualified} indicates duplicate zones are supported. This will be removed in version 5.
    */
+  @Deprecated
   boolean supportsDuplicateZoneNames();
 
   /**

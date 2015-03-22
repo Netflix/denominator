@@ -17,6 +17,9 @@ interface Route53 {
   @RequestLine("GET /2012-12-12/hostedzone?marker={marker}")
   ZoneList listHostedZones(@Param("marker") String marker);
 
+  @RequestLine("GET /2013-04-01/hostedzonesbyname?dnsname={dnsname}")
+  ZoneList listHostedZonesByName(@Param("dnsname") String dnsname);
+
   @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset")
   ResourceRecordSetList listResourceRecordSets(@Param("zoneId") String zoneId);
 

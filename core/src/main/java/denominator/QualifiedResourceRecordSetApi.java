@@ -25,7 +25,7 @@ public interface QualifiedResourceRecordSetApi extends ReadOnlyResourceRecordSet
    *
    * @param rrset contains the {@code rdata} elements ensure exist. If {@link
    *              ResourceRecordSet#ttl() ttl} is not present, zone default is used.
-   * @throws IllegalArgumentException if the zone {@code idOrName} is not found.
+   * @throws IllegalArgumentException if the zone is not found.
    */
   void put(ResourceRecordSet<?> rrset);
 
@@ -37,7 +37,7 @@ public interface QualifiedResourceRecordSetApi extends ReadOnlyResourceRecordSet
    * @param name      {@link ResourceRecordSet#name() name} of the rrset
    * @param type      {@link ResourceRecordSet#type() type} of the rrset
    * @param qualifier {@link ResourceRecordSet#qualifier() qualifier} of the rrset
-   * @throws IllegalArgumentException if the zone {@code idOrName} is not found.
+   * @throws IllegalArgumentException if the zone is not found.
    */
   void deleteByNameTypeAndQualifier(String name, String type, String qualifier);
 
@@ -46,6 +46,6 @@ public interface QualifiedResourceRecordSetApi extends ReadOnlyResourceRecordSet
     /**
      * @return null if this feature isn't supported on the provider.
      */
-    QualifiedResourceRecordSetApi create(String idOrName);
+    QualifiedResourceRecordSetApi create(String id);
   }
 }

@@ -11,7 +11,7 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
    * lazy when possible.
    *
    * @return iterator which is lazy where possible
-   * @throws IllegalArgumentException if the zone {@code idOrName} is not found.
+   * @throws IllegalArgumentException if the zone is not found.
    */
   @Override
   Iterator<ResourceRecordSet<?>> iterator();
@@ -20,7 +20,7 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
    * a listing of all resource record sets which have the specified name.
    *
    * @return iterator which is lazy where possible, empty if there are no records with that name.
-   * @throws IllegalArgumentException if the zone {@code idOrName} is not found.
+   * @throws IllegalArgumentException if the zone is not found.
    * @since 1.3
    */
   Iterator<ResourceRecordSet<?>> iterateByName(String name);
@@ -31,7 +31,7 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
    * @param name {@link ResourceRecordSet#name() name} of the rrset
    * @param type {@link ResourceRecordSet#type() type} of the rrset
    * @return null unless a resource record exists with the same {@code name} and {@code type}
-   * @throws IllegalArgumentException if the zone {@code idOrName} is not found.
+   * @throws IllegalArgumentException if the zone is not found.
    */
   ResourceRecordSet<?> getByNameAndType(String name, String type);
 
@@ -48,7 +48,7 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
    *
    * @param rrset contains the {@code rdata} elements ensure exist. If {@link
    *              ResourceRecordSet#ttl() ttl} is not present, zone default is used.
-   * @throws IllegalArgumentException if the zone {@code idOrName} is not found
+   * @throws IllegalArgumentException if the zone is not found
    * @since 1.3
    */
   void put(ResourceRecordSet<?> rrset);
@@ -59,12 +59,12 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
    *
    * @param name {@link ResourceRecordSet#name() name} of the rrset
    * @param type {@link ResourceRecordSet#type() type} of the rrset
-   * @throws IllegalArgumentException if the zone {@code idOrName} is not found.
+   * @throws IllegalArgumentException if the zone is not found.
    */
   void deleteByNameAndType(String name, String type);
 
   static interface Factory {
 
-    ResourceRecordSetApi create(String idOrName);
+    ResourceRecordSetApi create(String id);
   }
 }

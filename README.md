@@ -111,7 +111,7 @@ DNSApiManager manager = Denominator.create("ultradns", credentials(username, pas
 The credentials are variable length, as certain providers require more that 2 parts. The above returns an instance of `DNSApiManager` where apis such as `ZoneApis` are found.  Here's how to list zones: 
 ```java
 for (Zone zone : manager.api().zones()) {
-  for (ResourceRecordSet<?> rrs : manager.api().recordSetsInZone(zone.idOrName())) {
+  for (ResourceRecordSet<?> rrs : manager.api().recordSetsInZone(zone.id())) {
     processRRS(rrs);
   }
 }

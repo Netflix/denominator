@@ -65,61 +65,75 @@ public class ResourceRecordSetsTest {
         }
       })).build();
 
+  @Test
   public void nameEqualToReturnsFalseOnNull() {
     assertFalse(nameEqualTo(aRRS.name()).apply(null));
   }
 
+  @Test
   public void nameEqualToReturnsFalseOnDifferentName() {
     assertFalse(nameEqualTo("www.foo.com").apply(aRRS));
   }
 
+  @Test
   public void nameEqualToReturnsTrueOnSameName() {
     assertTrue(nameEqualTo(aRRS.name()).apply(aRRS));
   }
 
+  @Test
   public void typeEqualToReturnsFalseOnNull() {
     assertFalse(nameAndTypeEqualTo(aRRS.name(), aRRS.type()).apply(null));
   }
 
+  @Test
   public void typeEqualToReturnsFalseOnDifferentType() {
     assertFalse(nameAndTypeEqualTo(aRRS.name(), "TXT").apply(aRRS));
   }
 
+  @Test
   public void typeEqualToReturnsTrueOnSameType() {
     assertTrue(nameAndTypeEqualTo(aRRS.name(), aRRS.type()).apply(aRRS));
   }
 
+  @Test
   public void containsRecordReturnsFalseOnNull() {
     assertFalse(ResourceRecordSets.containsRecord(aRRS.records().get(0)).apply(null));
   }
 
+  @Test
   public void containsRecordReturnsFalseWhenRDataDifferent() {
     assertFalse(ResourceRecordSets.containsRecord(AData.create("198.51.100.1")).apply(aRRS));
   }
 
+  @Test
   public void containsRecordReturnsTrueWhenRDataEqual() {
     assertTrue(ResourceRecordSets.containsRecord(AData.create("192.0.2.1")).apply(aRRS));
   }
 
+  @Test
   public void containsRecordReturnsTrueWhenRDataEqualButDifferentType() {
     Map<String, String> record = new LinkedHashMap<String, String>();
     record.put("address", "192.0.2.1");
     assertTrue(ResourceRecordSets.containsRecord(record).apply(aRRS));
   }
 
+  @Test
   public void qualifierEqualToReturnsFalseOnNull() {
     assertFalse(
         nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), geoRRS.qualifier()).apply(null));
   }
 
+  @Test
   public void qualifierEqualToReturnsFalseOnDifferentQualifier() {
     assertFalse(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), "TXT").apply(geoRRS));
   }
 
+  @Test
   public void qualifierEqualToReturnsFalseOnAbsentQualifier() {
     assertFalse(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), "TXT").apply(aRRS));
   }
 
+  @Test
   public void qualifierEqualToReturnsTrueOnSameQualifier() {
     assertTrue(nameTypeAndQualifierEqualTo(geoRRS.name(), geoRRS.type(), geoRRS.qualifier())
                    .apply(geoRRS));

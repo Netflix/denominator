@@ -27,6 +27,11 @@ interface UltraDNS {
   @Body("<v01:getZonesOfAccount><accountId>{accountId}</accountId><zoneType>all</zoneType></v01:getZonesOfAccount>")
   List<Zone> getZonesOfAccount(@Param("accountId") String accountId);
 
+  /** Returns the account id of the zone. */
+  @RequestLine("POST")
+  @Body("<v01:getZoneInfo><zoneName>{zoneName}</zoneName></v01:getZoneInfo>")
+  String getZoneInfo(@Param("zoneName") String idOrName);
+
   @RequestLine("POST")
   @Body("<v01:getResourceRecordsOfZone><zoneName>{zoneName}</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone>")
   List<Record> getResourceRecordsOfZone(@Param("zoneName") String zoneName);

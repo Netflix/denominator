@@ -125,12 +125,12 @@ public final class DynECTGeoResourceRecordSetApi implements GeoResourceRecordSet
     }
 
     @Override
-    public GeoResourceRecordSetApi create(String idOrName) {
-      checkNotNull(idOrName, "idOrName was null");
+    public GeoResourceRecordSetApi create(String name) {
+      checkNotNull(name, "name was null");
       if (!hasAllGeoPermissions.get()) {
         return null;
       }
-      return new DynECTGeoResourceRecordSetApi(regions, api, idOrName);
+      return new DynECTGeoResourceRecordSetApi(regions, api, name);
     }
   }
 

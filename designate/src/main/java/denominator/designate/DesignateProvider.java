@@ -25,6 +25,7 @@ import denominator.config.WeightedUnsupported;
 import denominator.designate.DesignateAdapters.DomainListAdapter;
 import denominator.designate.DesignateAdapters.RecordAdapter;
 import denominator.designate.DesignateAdapters.RecordListAdapter;
+import denominator.model.Zone.Identification;
 import feign.Feign;
 import feign.Logger;
 import feign.Target.EmptyTarget;
@@ -49,6 +50,11 @@ public class DesignateProvider extends BasicProvider {
   @Override
   public String url() {
     return url;
+  }
+
+  @Override
+  public Identification zoneIdentification() {
+    return Identification.OPAQUE;
   }
 
   // http://docs.hpcloud.com/api/dns/#create_record-jumplink-span

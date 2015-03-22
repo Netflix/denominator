@@ -112,8 +112,8 @@ public class MockProvider extends BasicProvider {
     ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory() {
       return new denominator.ResourceRecordSetApi.Factory() {
         @Override
-        public ResourceRecordSetApi create(String idOrName) {
-          return new MockResourceRecordSetApi(data, idOrName);
+        public ResourceRecordSetApi create(String name) {
+          return new MockResourceRecordSetApi(data, name);
         }
       };
     }
@@ -123,8 +123,8 @@ public class MockProvider extends BasicProvider {
     AllProfileResourceRecordSetApi.Factory provideAllProfileResourceRecordSetApiFactory() {
       return new denominator.AllProfileResourceRecordSetApi.Factory() {
         @Override
-        public AllProfileResourceRecordSetApi create(String idOrName) {
-          return new MockAllProfileResourceRecordSetApi(data, idOrName, notNull());
+        public AllProfileResourceRecordSetApi create(String name) {
+          return new MockAllProfileResourceRecordSetApi(data, name, notNull());
         }
       };
     }
@@ -133,8 +133,8 @@ public class MockProvider extends BasicProvider {
     GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory() {
       return new GeoResourceRecordSetApi.Factory() {
         @Override
-        public GeoResourceRecordSetApi create(String idOrName) {
-          return new MockGeoResourceRecordSetApi(data, idOrName, supportedRegions);
+        public GeoResourceRecordSetApi create(String name) {
+          return new MockGeoResourceRecordSetApi(data, name, supportedRegions);
         }
       };
     }
@@ -143,8 +143,8 @@ public class MockProvider extends BasicProvider {
     WeightedResourceRecordSetApi.Factory provideWeightedResourceRecordSetApiFactory() {
       return new WeightedResourceRecordSetApi.Factory() {
         @Override
-        public WeightedResourceRecordSetApi create(String idOrName) {
-          return new MockWeightedResourceRecordSetApi(data, idOrName, supportedWeights);
+        public WeightedResourceRecordSetApi create(String name) {
+          return new MockWeightedResourceRecordSetApi(data, name, supportedWeights);
         }
       };
     }

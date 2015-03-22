@@ -36,17 +36,17 @@ public class ConcatBasicAndQualifiedResourceRecordSets {
     return new AllProfileResourceRecordSetApi.Factory() {
 
       @Override
-      public AllProfileResourceRecordSetApi create(String idOrName) {
+      public AllProfileResourceRecordSetApi create(String id) {
         Set<QualifiedResourceRecordSetApi>
             qualifiedApis =
             new LinkedHashSet<QualifiedResourceRecordSetApi>();
         for (Factory entry : factories) {
-          QualifiedResourceRecordSetApi api = entry.create(idOrName);
+          QualifiedResourceRecordSetApi api = entry.create(id);
           if (api != null) {
             qualifiedApis.add(api);
           }
         }
-        return new ConcatBasicAndGeoResourceRecordSetApi(factory.create(idOrName), qualifiedApis);
+        return new ConcatBasicAndGeoResourceRecordSetApi(factory.create(id), qualifiedApis);
       }
     };
   }
