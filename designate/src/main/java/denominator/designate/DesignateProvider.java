@@ -23,7 +23,6 @@ import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
 import denominator.designate.DesignateAdapters.DomainListAdapter;
-import denominator.designate.DesignateAdapters.DomainNameToIdAdapter;
 import denominator.designate.DesignateAdapters.RecordAdapter;
 import denominator.designate.DesignateAdapters.RecordListAdapter;
 import feign.Feign;
@@ -140,7 +139,6 @@ public class DesignateProvider extends BasicProvider {
                        new KeystoneV2AccessAdapter(),
                        recordAdapter,
                        new DomainListAdapter(),
-                       new DomainNameToIdAdapter(),
                        new RecordListAdapter()))
           )
           .build();
