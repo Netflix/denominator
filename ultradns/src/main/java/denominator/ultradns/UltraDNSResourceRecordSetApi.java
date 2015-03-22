@@ -153,9 +153,8 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
     }
 
     @Override
-    public ResourceRecordSetApi create(String idOrName) {
-      return new UltraDNSResourceRecordSetApi(api, idOrName,
-                                              new UltraDNSRoundRobinPoolApi(api, idOrName));
+    public ResourceRecordSetApi create(String name) {
+      return new UltraDNSResourceRecordSetApi(api, name, new UltraDNSRoundRobinPoolApi(api, name));
     }
   }
 }

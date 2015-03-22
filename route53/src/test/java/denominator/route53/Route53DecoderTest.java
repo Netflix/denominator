@@ -53,10 +53,12 @@ public class Route53DecoderTest {
 
     assertThat(result.get(0))
         .hasName("example.com.")
+        .hasQualifier("a_unique_reference")
         .hasId("Z21DW1QVGID6NG");
 
     assertThat(result.get(1))
         .hasName("example2.com.")
+        .hasQualifier("a_unique_reference2")
         .hasId("Z2682N5HXP0BZ4");
 
     assertThat(result.next).isEqualTo("Z333333YYYYYYY");

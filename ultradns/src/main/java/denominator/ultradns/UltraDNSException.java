@@ -9,6 +9,10 @@ class UltraDNSException extends FeignException {
    */
   static final int SYSTEM_ERROR = 9999;
   /**
+   * Zone does not exist in the system.
+   */
+  static final int ZONE_NOT_FOUND = 1801;
+  /**
    * No resource record with GUID found in the system.
    */
   static final int RESOURCE_RECORD_NOT_FOUND = 2103;

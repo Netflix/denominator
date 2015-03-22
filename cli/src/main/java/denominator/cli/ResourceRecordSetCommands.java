@@ -33,7 +33,7 @@ import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
-import static denominator.cli.Denominator.idOrName;
+import static denominator.cli.Denominator.id;
 import static denominator.common.Util.join;
 import static java.lang.String.format;
 
@@ -74,7 +74,7 @@ class ResourceRecordSetCommands {
 
     public Iterator<String> doRun(DNSApiManager mgr) {
       Iterator<ResourceRecordSet<?>> iterator;
-      String zoneId = idOrName(mgr, zoneIdOrName);
+      String zoneId = id(mgr, zoneIdOrName);
       if (type != null) {
         iterator = mgr.api().recordSetsInZone(zoneId).iterateByNameAndType(name, type);
       } else if (name != null) {
@@ -103,7 +103,7 @@ class ResourceRecordSetCommands {
 
     public Iterator<String> doRun(DNSApiManager mgr) {
       ResourceRecordSet<?> rrs;
-      String zoneId = idOrName(mgr, zoneIdOrName);
+      String zoneId = id(mgr, zoneIdOrName);
       if (qualifier != null) {
         rrs = mgr.api().recordSetsInZone(zoneId).getByNameTypeAndQualifier(name, type, qualifier);
       } else {
@@ -142,7 +142,7 @@ class ResourceRecordSetCommands {
 
         @Override
         public String next() {
-          ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
+          ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(id(mgr, zoneIdOrName));
           ResourceRecordSet<?> rrs = api.getByNameAndType(name, type);
           if (rrs != null && rrs.ttl() != null && rrs.ttl().intValue() != ttl) {
             api.put(ResourceRecordSet.builder()
@@ -295,7 +295,7 @@ class ResourceRecordSetCommands {
 
         @Override
         public String next() {
-          ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
+          ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(id(mgr, zoneIdOrName));
           ResourceRecordSet<?> rrset = api.getByNameAndType(name, type);
           if (rrset != null) {
             Set<Map<String, Object>> data = new LinkedHashSet<Map<String, Object>>(rrset.records());
@@ -350,7 +350,7 @@ class ResourceRecordSetCommands {
 
         @Override
         public String next() {
-          mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName)).put(toAdd);
+          mgr.api().basicRecordSetsInZone(id(mgr, zoneIdOrName)).put(toAdd);
           done = true;
           return ";; ok";
         }
@@ -382,7 +382,7 @@ class ResourceRecordSetCommands {
 
         @Override
         public String next() {
-          ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName));
+          ResourceRecordSetApi api = mgr.api().basicRecordSetsInZone(id(mgr, zoneIdOrName));
           ResourceRecordSet<?> rrset = api.getByNameAndType(name, type);
           if (rrset != null) {
             Set<Map<String, Object>> data = new LinkedHashSet<Map<String, Object>>(rrset.records());
@@ -433,7 +433,7 @@ class ResourceRecordSetCommands {
 
         @Override
         public String next() {
-          mgr.api().basicRecordSetsInZone(idOrName(mgr, zoneIdOrName))
+          mgr.api().basicRecordSetsInZone(id(mgr, zoneIdOrName))
               .deleteByNameAndType(name, type);
           done = true;
           return ";; ok";

@@ -32,7 +32,7 @@ import static com.google.common.collect.Iterators.concat;
 import static com.google.common.collect.Iterators.forArray;
 import static com.google.common.collect.Iterators.singletonIterator;
 import static com.google.common.collect.Iterators.transform;
-import static denominator.cli.Denominator.idOrName;
+import static denominator.cli.Denominator.id;
 import static denominator.cli.Denominator.json;
 import static denominator.common.Util.join;
 import static denominator.model.profile.Geos.withAdditionalRegions;
@@ -99,7 +99,7 @@ class GeoResourceRecordSetCommands {
     @Override
     protected Iterator<String> doRun(DNSApiManager mgr) {
       return FluentIterable
-          .from(mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).supportedRegions()
+          .from(mgr.api().geoRecordSetsInZone(id(mgr, zoneIdOrName)).supportedRegions()
                     .entrySet())
           .transform(new Function<Map.Entry<String, Collection<String>>, String>() {
             @Override
@@ -125,13 +125,13 @@ class GeoResourceRecordSetCommands {
       Iterator<ResourceRecordSet<?>> iterator;
       if (name != null && type != null) {
         iterator =
-            mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName))
+            mgr.api().geoRecordSetsInZone(id(mgr, zoneIdOrName))
                 .iterateByNameAndType(name, type);
       }
       if (name != null) {
-        iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterateByName(name);
+        iterator = mgr.api().geoRecordSetsInZone(id(mgr, zoneIdOrName)).iterateByName(name);
       } else {
-        iterator = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName)).iterator();
+        iterator = mgr.api().geoRecordSetsInZone(id(mgr, zoneIdOrName)).iterator();
       }
       return transform(iterator, GeoResourceRecordSetToString.INSTANCE);
     }
@@ -153,7 +153,7 @@ class GeoResourceRecordSetCommands {
     public String group;
 
     public Iterator<String> doRun(DNSApiManager mgr) {
-      GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName));
+      GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(id(mgr, zoneIdOrName));
       ResourceRecordSet<?> rrs = api.getByNameTypeAndQualifier(name, type, group);
       return rrs != null ? singletonIterator(GeoResourceRecordSetToString.INSTANCE.apply(rrs))
                          : singletonIterator("");
@@ -193,7 +193,7 @@ class GeoResourceRecordSetCommands {
 
         @Override
         public String next() {
-          GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(idOrName(mgr, zoneIdOrName));
+          GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(id(mgr, zoneIdOrName));
           ResourceRecordSet<?> rrs = api.getByNameTypeAndQualifier(name, type, group);
           if (rrs != null && 
               (rrs.ttl() == null || (rrs.ttl() != null && rrs.ttl().intValue() != ttl))) {
@@ -248,7 +248,7 @@ class GeoResourceRecordSetCommands {
     public Iterator<String> doRun(final DNSApiManager mgr) {
       checkArgument(!regions.isEmpty(), "specify regions to apply");
       // resolve into a concrete zone id or name.
-      zoneIdOrName = idOrName(mgr, zoneIdOrName);
+      zoneIdOrName = id(mgr, zoneIdOrName);
       final GeoResourceRecordSetApi api = mgr.api().geoRecordSetsInZone(zoneIdOrName);
       checkArgument(api != null, "geo api not available on provider %s, zone %s", mgr.provider(),
                     zoneIdOrName);

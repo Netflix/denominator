@@ -12,6 +12,7 @@ import dagger.ObjectGraph;
 import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
+import denominator.model.Zone.Identification;
 
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
@@ -29,7 +30,7 @@ public class DesignateProviderTest {
   @Test
   public void testDesignateMetadata() {
     assertThat(PROVIDER.name()).isEqualTo("designate");
-    assertThat(PROVIDER.supportsDuplicateZoneNames()).isFalse();
+    assertThat(PROVIDER.zoneIdentification()).isEqualTo(Identification.OPAQUE);
     assertThat(PROVIDER.credentialTypeToParameterNames())
         .containsEntry("password", Arrays.asList("tenantId", "username", "password"));
   }

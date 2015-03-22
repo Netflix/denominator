@@ -18,7 +18,7 @@ public class WeightedUnsupported {
   WeightedResourceRecordSetApi.Factory provideWeightedResourceRecordSetApiFactory() {
     return new WeightedResourceRecordSetApi.Factory() {
       @Override
-      public WeightedResourceRecordSetApi create(String idOrName) {
+      public WeightedResourceRecordSetApi create(String id) {
         return null;
       }
     };

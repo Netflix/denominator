@@ -50,4 +50,33 @@ public class DynECTZoneApiMockTest {
     server.assertSessionRequest();
     server.assertRequest().hasPath("/Zone");
   }
+
+  @Test
+  public void iteratorByNameWhenPresent() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(
+        "{\"status\": \"success\", \"data\": {\"zone_type\": \"Primary\", \"serial_style\": \"increment\", \"serial\": 1, \"zone\": \"denominator.io\"}, \"job_id\": 1536811990, \"msgs\": [{\"INFO\": \"get: Your zone, denominator.io\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}"));
+
+    ZoneApi api = server.connect().api().zones();
+
+    assertThat(api.iterateByName("denominator.io."))
+        .contains(Zone.create("denominator.io."));
+
+    server.assertSessionRequest();
+    server.assertRequest().hasPath("/Zone/denominator.io.");
+  }
+
+  @Test
+  public void iteratorByNameWhenAbsent() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setResponseCode(404).setBody(
+        "{\"status\": \"failure\", \"data\": {}, \"job_id\": 1534838771, \"msgs\": [{\"INFO\": \"zone: No such zone\", \"SOURCE\": \"API-B\", \"ERR_CD\": \"NOT_FOUND\", \"LVL\": \"ERROR\"}]}"));
+
+    ZoneApi api = server.connect().api().zones();
+
+    assertThat(api.iterateByName("denominator.io.")).isEmpty();
+
+    server.assertSessionRequest();
+    server.assertRequest().hasPath("/Zone/denominator.io.");
+  }
 }

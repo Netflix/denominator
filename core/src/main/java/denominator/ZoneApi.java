@@ -12,4 +12,13 @@ public interface ZoneApi extends Iterable<Zone> {
    */
   @Override
   Iterator<Zone> iterator();
+
+  /**
+   * Returns a potentially empty iterator of zones with the supplied {@link Zone#name()}. This can
+   * only have multiple results when {@link Provider#zoneIdentification() zone identification} is
+   * {@link denominator.model.Zone.Identification#QUALIFIED qualified}.
+   *
+   * @since 4.5
+   */
+  Iterator<Zone> iterateByName(String name);
 }

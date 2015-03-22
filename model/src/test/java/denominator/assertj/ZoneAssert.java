@@ -25,9 +25,15 @@ public class ZoneAssert extends AbstractAssert<ZoneAssert, Zone> {
     return this;
   }
 
-  public ZoneAssert hasNullId() {
+  public ZoneAssert hasQualifier(String expected) {
     isNotNull();
-    objects.assertNull(info, actual.id());
+    objects.assertEqual(info, actual.qualifier(), expected);
+    return this;
+  }
+
+  public ZoneAssert hasNoQualifier() {
+    isNotNull();
+    objects.assertNull(info, actual.qualifier());
     return this;
   }
 }
