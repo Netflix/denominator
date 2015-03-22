@@ -7,10 +7,8 @@ import com.google.gson.stream.JsonWriter;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 import denominator.designate.Designate.Record;
 import denominator.model.Zone;
@@ -80,48 +78,6 @@ class DesignateAdapters {
     }
   }
 
-  static class DomainNameToIdAdapter extends TypeAdapter<Map<String, String>> {
-
-    @Override
-    public Map<String, String> read(JsonReader reader) throws IOException {
-      Map<String, String> result = new LinkedHashMap<String, String>();
-      reader.beginObject();
-      while (reader.hasNext()) {
-        String nextName = reader.nextName();
-        if ("domains".equals(nextName)) {
-          reader.beginArray();
-          while (reader.hasNext()) {
-            reader.beginObject();
-            String name = null;
-            String id = null;
-            while (reader.hasNext()) {
-              nextName = reader.nextName();
-              if (nextName.equals("name")) {
-                name = reader.nextString();
-              } else if (nextName.equals("id")) {
-                id = reader.nextString();
-              } else {
-                reader.skipValue();
-              }
-            }
-            result.put(name, id);
-            reader.endObject();
-          }
-          reader.endArray();
-        } else {
-          reader.skipValue();
-        }
-      }
-      reader.endObject();
-      return result;
-    }
-
-    @Override
-    public void write(JsonWriter out, Map<String, String> value) throws IOException {
-      throw new UnsupportedOperationException();
-    }
-  }
-
   static class DomainListAdapter extends ListAdapter<Zone> {
 
     @Override
@@ -131,14 +87,18 @@ class DesignateAdapters {
 
     protected Zone build(JsonReader reader) throws IOException {
       String name = null;
+      String id = null;
       while (reader.hasNext()) {
-        if (reader.nextName().equals("name")) {
+        String key = reader.nextName();
+        if (key.equals("name")) {
           name = reader.nextString();
+        } else if (key.equals("id")) {
+          id = reader.nextString();
         } else {
           reader.skipValue();
         }
       }
-      return Zone.create(name);
+      return Zone.create(name, id);
     }
   }
 

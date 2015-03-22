@@ -117,11 +117,8 @@ class DesignateResourceRecordSetApi implements denominator.ResourceRecordSetApi 
     }
 
     @Override
-    public ResourceRecordSetApi create(String name) {
-      checkNotNull(name, "name");
-      String id = api.domainIdsByName().get(name);
-      checkArgument(id != null, "zone %s does not exist", name);
-      return new DesignateResourceRecordSetApi(api, id);
+    public ResourceRecordSetApi create(String id) {
+      return new DesignateResourceRecordSetApi(api, checkNotNull(id, "id"));
     }
   }
 }
