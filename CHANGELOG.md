@@ -1,4 +1,10 @@
 ### Version 4.5
+* Adds `ZoneApi.iterateByName()` to support lookups
+* Adds `-n` parameter to CLI zone list
+* Refines zone identifiers and handling of zones with the same name
+  * Adds `Zone.qualifier()` in support duplicate zones
+  * Deprecates `supportsDuplicateZoneNames()` in favor of `Provider.zoneIdentification()` in `NAME`, `OPAQUE` and `QUALIFIED`
+  * Deprecates `Zone.idOrName()` as `Zone.id()` cannot be null
 * Documents third-party provider process
 * Publishes model and core test jars
 * Adds example server

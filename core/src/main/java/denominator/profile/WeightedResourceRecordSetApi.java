@@ -24,6 +24,6 @@ public interface WeightedResourceRecordSetApi extends QualifiedResourceRecordSet
      * @return null if this feature isn't supported on the provider.
      */
     @Override
-    WeightedResourceRecordSetApi create(String idOrName);
+    WeightedResourceRecordSetApi create(String id);
   }
 }

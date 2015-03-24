@@ -60,4 +60,9 @@ class CloudDNSZoneApi implements denominator.ZoneApi {
       }
     };
   }
+
+  @Override
+  public Iterator<Zone> iterateByName(String name) {
+    return api.domainsByName(name).iterator();
+  }
 }

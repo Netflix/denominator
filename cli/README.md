@@ -84,20 +84,21 @@ Different providers connect to different urls and need different credentials.  F
 
 ```bash
 $ denominator providers
-provider   url                                                 duplicateZones credentialType credentialArgs
-mock       mem:mock                                            false
-clouddns   https://identity.api.rackspacecloud.com/v2.0/       true           apiKey         username apiKey
-designate  http://localhost:5000/v2.0                          true           password       tenantId username password
-dynect     https://api2.dynect.net/REST                        false          password       customer username password
-route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey
-route53    https://route53.amazonaws.com                       true           session        accessKey secretKey sessionToken
-ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 false          password       username password
+provider   url                                                 zoneIds   credentialType credentialArgs
+clouddns   https://identity.api.rackspacecloud.com/v2.0        opaque    password       username password
+clouddns   https://identity.api.rackspacecloud.com/v2.0        opaque    apiKey         username apiKey
+designate  http://localhost:5000/v2.0                          opaque    password       tenantId username password
+dynect     https://api2.dynect.net/REST                        name      password       customer username password
+mock       mem:mock                                            name           
+route53    https://route53.amazonaws.com                       qualified accessKey      accessKey secretKey
+route53    https://route53.amazonaws.com                       qualified session        accessKey secretKey sessionToken
+ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 name      password       username password
 ```
 
-The first field says the type, if any.  If there's no type listed, it needs no credentials.  If there is a type listed, the following fields are credential args.  Say for example, you were using `ultradns`.  
+If the credentialType column is blank it needs no credentials.  Otherwise, credentialArgs describes what you need to pass.  Say for example, you were using `ultradns`.  
 
 ```
-ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01  password       username password
+ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 name      password       username password
 ```
 This says the provider `ultradns` connects by default to `https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01` and supports `password` authentication, which needs two `-c` parameters: `username` and `password`.  To put it together, you'd specify the following to do a zone list:
 ```bash
@@ -108,8 +109,11 @@ If you need to connect to an alternate url, pass the `-u` parameter:
 ./denominator -p ultradns -u https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01-BETA -c myusername -c mypassword zone list
 ```
 
+The `zoneIds` column indicates how the provider addresses zones. For example, `name` means you simply
+pass the zone name (like `denominator.io.`) to commands that need it. This topic is further described in the `Zone Identifiers` section to follow.
+
 ### Zone
-`zone list` returns the zones names in your account.  Ex.
+`zone list` returns the zones in your account.  Ex.
 ```bash
 $ denominator -p ultradns -c my_user -c my_password zone list
 --snip--
@@ -123,6 +127,23 @@ netflix.com.
 $ denominator -p ultradns -c my_user -c my_password record --zone netflix.com. list
 --snip--
 email.netflix.com.                                 A     3600   69.53.237.168
+--snip--
+```
+
+### Zone Identifiers
+When the provider doesn't use name-based zone identification, the last column zone list is the `id`.
+This can be used to disambiguate zones with the same name, or to improve performance by eliminating a network call.
+If you wish to use a zone's identifier, simply pass it instead of the zone name in record commands.
+
+```bash
+$ denominator -p route53 -c my_access_key -c my_secret_key zone list -n denominator.io.
+[Route53#listHostedZonesByName] ---> GET https://route53.amazonaws.com/2013-04-01/hostedzonesbyname?dnsname=denominator.io. HTTP/1.1
+[Route53#listHostedZonesByName] <--- HTTP/1.1 200 OK (678ms)
+denominator.io.                      63CEB242-9E3E-327D-9351-2EFD02493E18 Z2ZEEJCUZCVG56
+denominator.io.                      022DFF2F-2E0B-F0A2-A581-19339A7BA1F1 Z3OQLQGABCU3T
+$ denominator -p route53 -c my_access_key -c my_secret_key record -z Z3OQLQGABCU3T list
+--snip--
+denominator.io.                                   NS                         172800 ns-1312.awsdns-36.org.
 --snip--
 ```
 

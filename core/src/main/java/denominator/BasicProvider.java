@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import denominator.model.Zone.Identification;
+
 import static denominator.common.Preconditions.checkArgument;
 import static java.util.Arrays.asList;
 
@@ -50,6 +52,11 @@ public abstract class BasicProvider implements Provider {
   }
 
   @Override
+  public Identification zoneIdentification() {
+    return Identification.NAME;
+  }
+
+  @Override
   public Set<String> basicRecordTypes() {
     Set<String> result = new LinkedHashSet<String>();
     result.addAll(asList("A", "AAAA", "CERT", "CNAME", "MX", "NAPTR", "NS", "PTR", "SOA", "SPF",
@@ -67,7 +74,7 @@ public abstract class BasicProvider implements Provider {
 
   @Override
   public boolean supportsDuplicateZoneNames() {
-    return false;
+    return zoneIdentification() == Identification.QUALIFIED;
   }
 
   @Override

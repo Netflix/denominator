@@ -143,9 +143,9 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     }
 
     @Override
-    public ResourceRecordSetApi create(String idOrName) {
-      checkNotNull(idOrName, "idOrName was null");
-      return new DynECTResourceRecordSetApi(api, idOrName);
+    public ResourceRecordSetApi create(String name) {
+      checkNotNull(name, "name was null");
+      return new DynECTResourceRecordSetApi(api, name);
     }
   }
 }

@@ -40,6 +40,6 @@ public interface GeoResourceRecordSetApi extends QualifiedResourceRecordSetApi {
      * @return null if this feature isn't supported on the provider.
      */
     @Override
-    GeoResourceRecordSetApi create(String idOrName);
+    GeoResourceRecordSetApi create(String id);
   }
 }

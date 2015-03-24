@@ -80,11 +80,11 @@ public class WriteCommandsLiveTest {
 
   // TODO
   private AllProfileResourceRecordSetApi allApi(Zone zone) {
-    return manager.api().recordSetsInZone(zone.idOrName());
+    return manager.api().recordSetsInZone(zone.id());
   }
 
   private ResourceRecordSetApi rrsApi(Zone zone) {
-    return manager.api().basicRecordSetsInZone(zone.idOrName());
+    return manager.api().basicRecordSetsInZone(zone.id());
   }
 
   private void assumeRRSetAbsent(Zone zone, String name, String type) {

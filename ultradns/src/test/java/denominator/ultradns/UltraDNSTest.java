@@ -100,6 +100,16 @@ public class UltraDNSTest {
   }
 
   @Test
+  public void getZoneInfo() throws Exception {
+    server.enqueue(
+        new MockResponse().setBody(format(getZoneInfoResponseTemplate, "AAAAAAAAAAAAAAAA")));
+
+    assertThat(mockApi().getZoneInfo("denominator.io.")).isEqualTo("AAAAAAAAAAAAAAAA");
+
+    server.assertSoapBody(getZoneInfo);
+  }
+
+  @Test
   public void zonesOfAccountPresent() throws Exception {
     server.enqueue(new MockResponse().setBody(getZonesOfAccountResponsePresent));
 
@@ -736,6 +746,16 @@ public class UltraDNSTest {
                                                    + getZonesOfAccountResponseFooter;
   static String getZonesOfAccountResponseAbsent =
       getZonesOfAccountResponseHeader + getZonesOfAccountResponseFooter;
+  static String getZoneInfo =
+      "<v01:getZoneInfo><zoneName>denominator.io.</zoneName></v01:getZoneInfo>";
+  static String getZoneInfoResponseTemplate =
+      "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
+      + "  <soap:Body>\n"
+      + "    <v01:getZoneInfoResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
+      + "      <UltraZone zoneId=\"030336B101C860A2\" owner=\"010336B101C85FD3\" accountId=\"%s\" zoneType=\"1\" zoneName=\"denominator.io.\"/>\n"
+      + "    </v01:getZoneInfoResponse>\n"
+      + "  </soap:Body>\n"
+      + "</soap:Envelope>";
   static String
       getResourceRecordsOfZone =
       "<v01:getResourceRecordsOfZone><zoneName>denominator.io.</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone>";

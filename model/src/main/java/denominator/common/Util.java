@@ -11,6 +11,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import denominator.model.rdata.AAAAData;
 import denominator.model.rdata.AData;
@@ -25,6 +26,7 @@ import denominator.model.rdata.SPFData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.SSHFPData;
 import denominator.model.rdata.TXTData;
+
 import static denominator.common.Preconditions.checkNotNull;
 
 /**
@@ -98,6 +100,51 @@ public class Util {
   public static <T> T nextOrNull(Iterator<T> it) {
     return it.hasNext() ? it.next() : null;
   }
+
+  public static <T> Iterator<T> singletonIterator(final T nullableValue) {
+    if (nullableValue == null) {
+      return (Iterator<T>) EMPTY_ITERATOR;
+    }
+    return new Iterator<T>() {
+      boolean done;
+
+      @Override
+      public boolean hasNext() {
+        return !done;
+      }
+
+      @Override
+      public T next() {
+        if (done) {
+          throw new NoSuchElementException();
+        }
+        done = true;
+        return nullableValue;
+      }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException("remove");
+      }
+    };
+  }
+
+  private static final Iterator<Object> EMPTY_ITERATOR = new Iterator<Object>() {
+    @Override
+    public boolean hasNext() {
+      return false;
+    }
+
+    @Override
+    public Object next() {
+      throw new NoSuchElementException();
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException("remove");
+    }
+  };
 
   public static <T> PeekingIterator<T> peekingIterator(final Iterator<T> iterator) {
     checkNotNull(iterator, "iterator");

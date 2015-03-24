@@ -22,6 +22,8 @@ import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.config.GeoUnsupported;
 import denominator.config.NothingToClose;
+import denominator.model.Zone;
+import denominator.model.Zone.Identification;
 import denominator.profile.WeightedResourceRecordSetApi;
 import denominator.route53.Route53ErrorDecoder.Messages;
 import denominator.route53.Route53ErrorDecoder.Route53Error;
@@ -48,6 +50,11 @@ public class Route53Provider extends BasicProvider {
   @Override
   public String url() {
     return url;
+  }
+
+  @Override
+  public Identification zoneIdentification() {
+    return Identification.QUALIFIED;
   }
 
   // http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
