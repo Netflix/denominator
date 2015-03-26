@@ -31,7 +31,7 @@ import denominator.ultradns.UltraDNSContentHandlers.NetworkStatusHandler;
 import denominator.ultradns.UltraDNSContentHandlers.RRPoolListHandler;
 import denominator.ultradns.UltraDNSContentHandlers.RecordListHandler;
 import denominator.ultradns.UltraDNSContentHandlers.RegionTableHandler;
-import denominator.ultradns.UltraDNSContentHandlers.ZoneListHandler;
+import denominator.ultradns.UltraDNSContentHandlers.ZoneNamesHandler;
 import denominator.ultradns.UltraDNSErrorDecoder.UltraDNSError;
 import feign.Feign;
 import feign.Logger;
@@ -191,7 +191,7 @@ public class UltraDNSProvider extends BasicProvider {
       return SAXDecoder.builder()
           .registerContentHandler(NetworkStatusHandler.class)
           .registerContentHandler(IDHandler.class)
-          .registerContentHandler(ZoneListHandler.class)
+          .registerContentHandler(ZoneNamesHandler.class)
           .registerContentHandler(RecordListHandler.class)
           .registerContentHandler(DirectionalRecordListHandler.class)
           .registerContentHandler(DirectionalPoolListHandler.class)

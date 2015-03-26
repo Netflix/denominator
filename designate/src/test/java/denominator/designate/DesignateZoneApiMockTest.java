@@ -5,8 +5,6 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.Iterator;
-
 import denominator.ZoneApi;
 import denominator.model.Zone;
 
@@ -25,11 +23,11 @@ public class DesignateZoneApiMockTest {
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
     ZoneApi api = server.connect().api().zones();
-    Iterator<Zone> domains = api.iterator();
 
-    assertThat(domains.next())
-        .hasName("denominator.io.")
-        .hasId(domainId);
+    assertThat(api.iterator()).containsExactly(
+        Zone.builder().name("denominator.io.").id(domainId).email("admin@denominator.io").ttl(3600)
+            .build()
+    );
 
     server.assertAuthRequest();
     server.assertRequest().hasPath("/v1/domains");
@@ -54,8 +52,10 @@ public class DesignateZoneApiMockTest {
 
     ZoneApi api = server.connect().api().zones();
 
-    assertThat(api.iterateByName("denominator.io."))
-        .contains(Zone.create("denominator.io.", domainId));
+    assertThat(api.iterateByName("denominator.io.")).containsExactly(
+        Zone.builder().name("denominator.io.").id(domainId).email("admin@denominator.io").ttl(3600)
+            .build()
+    );
 
     server.assertAuthRequest();
     server.assertRequest().hasPath("/v1/domains");

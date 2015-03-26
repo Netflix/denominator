@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import denominator.model.Zone;
 import feign.Body;
 import feign.Headers;
 import feign.Param;
@@ -25,12 +24,7 @@ interface UltraDNS {
 
   @RequestLine("POST")
   @Body("<v01:getZonesOfAccount><accountId>{accountId}</accountId><zoneType>all</zoneType></v01:getZonesOfAccount>")
-  List<Zone> getZonesOfAccount(@Param("accountId") String accountId);
-
-  /** Returns the account id of the zone. */
-  @RequestLine("POST")
-  @Body("<v01:getZoneInfo><zoneName>{zoneName}</zoneName></v01:getZoneInfo>")
-  String getZoneInfo(@Param("zoneName") String idOrName);
+  List<String> getZonesOfAccount(@Param("accountId") String accountId);
 
   @RequestLine("POST")
   @Body("<v01:getResourceRecordsOfZone><zoneName>{zoneName}</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone>")
@@ -142,11 +136,11 @@ interface UltraDNS {
   @Body("<v01:deleteDirectionalPool><transactionID /><dirPoolID>{dirPoolID}</dirPoolID><retainRecordID /></v01:deleteDirectionalPool>")
   void deleteDirectionalPool(@Param("dirPoolID") String dirPoolID);
 
-  static enum NetworkStatus {
+  enum NetworkStatus {
     GOOD, FAILED;
   }
 
-  static class Record {
+  class Record {
 
     String id;
     Long created;
@@ -156,7 +150,7 @@ interface UltraDNS {
     List<String> rdata = new ArrayList<String>();
   }
 
-  static class NameAndType {
+  class NameAndType {
 
     String name;
     String type;
@@ -184,13 +178,13 @@ interface UltraDNS {
     }
   }
 
-  static class DirectionalGroup {
+  class DirectionalGroup {
 
     String name;
     Map<String, Collection<String>> regionToTerritories = new TreeMap<String, Collection<String>>();
   }
 
-  static class DirectionalRecord extends Record {
+  class DirectionalRecord extends Record {
 
     String geoGroupId;
     String geoGroupName;

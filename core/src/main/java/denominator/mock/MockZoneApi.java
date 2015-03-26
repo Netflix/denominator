@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import denominator.model.ResourceRecordSet;
@@ -11,7 +12,9 @@ import denominator.model.Zone;
 import denominator.model.rdata.SOAData;
 
 import static denominator.common.Preconditions.checkArgument;
+import static denominator.common.Preconditions.checkState;
 import static denominator.common.Util.filter;
+import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 import static denominator.model.ResourceRecordSets.ns;
 import static denominator.model.Zones.nameEqualTo;
 
@@ -34,15 +37,14 @@ final class MockZoneApi implements denominator.ZoneApi {
 
   public void create(String name) {
     checkArgument(!data.containsKey(name), "zone %s already exists", name);
-    Collection<ResourceRecordSet<?>>
-        zone =
+    Collection<ResourceRecordSet<?>> zone =
         new ConcurrentSkipListSet<ResourceRecordSet<?>>(TO_STRING);
     zone.add(ResourceRecordSet.builder()
                  .type("SOA")
                  .name(name)
                  .ttl(3600)
                  .add(SOAData.builder().mname("ns1." + name).rname("admin." + name)
-                          .serial(1).refresh(3600).retry(600).expire(604800).minimum(60).build())
+                          .serial(1).refresh(3600).retry(600).expire(604800).minimum(86400).build())
                  .build());
     zone.add(ns(name, 86400, "ns1." + name));
     data.put(name, zone);
@@ -50,7 +52,8 @@ final class MockZoneApi implements denominator.ZoneApi {
 
   @Override
   public Iterator<Zone> iterator() {
-    final Iterator<String> delegate = data.keySet().iterator();
+    final Iterator<Entry<String, Collection<ResourceRecordSet<?>>>>
+        delegate = data.entrySet().iterator();
     return new Iterator<Zone>() {
       @Override
       public boolean hasNext() {
@@ -59,7 +62,19 @@ final class MockZoneApi implements denominator.ZoneApi {
 
       @Override
       public Zone next() {
-        return Zone.create(delegate.next());
+        Entry<String, Collection<ResourceRecordSet<?>>> next = delegate.next();
+        String name = next.getKey();
+        Iterator<ResourceRecordSet<?>> soa =
+            filter(next.getValue().iterator(), nameAndTypeEqualTo(name, "SOA"));
+
+        checkState(soa.hasNext(), "SOA record for zone %s was not present", name);
+
+        SOAData soaData = (SOAData) soa.next().records().get(0);
+        return Zone.builder()
+            .name(name)
+            .id(name)
+            .ttl(soaData.minimum())
+            .email(soaData.rname()).build();
       }
 
       @Override

@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 
 import denominator.dynect.DynECT.Data;
 import denominator.dynect.DynECT.Record;
-import denominator.model.Zone;
 import feign.RetryableException;
 
 import static denominator.common.Preconditions.checkState;
@@ -57,25 +56,12 @@ class DynECTAdapters {
     }
   }
 
-  static class ZonesAdapter extends DataAdapter<List<Zone>> {
-
-    @Override
-    public List<Zone> build(JsonReader reader) throws IOException {
-      JsonArray data = new JsonParser().parse(reader).getAsJsonArray();
-      List<Zone> zones = new ArrayList<Zone>();
-      for (String name : toFirstGroup("/REST.*/([^/]+)/?$", data)) {
-        zones.add(Zone.create(name));
-      }
-      return zones;
-    }
-  }
-
-  static class RecordIdsAdapter extends DataAdapter<List<String>> {
+  static class ZoneNamesAdapter extends DataAdapter<List<String>> {
 
     @Override
     public List<String> build(JsonReader reader) throws IOException {
       JsonArray data = new JsonParser().parse(reader).getAsJsonArray();
-      return toFirstGroup("/REST/([a-zA-Z]+Record/[^\"]+/[^\"]+/[0-9]+)", data);
+      return toFirstGroup("/REST.*/([^/]+)/?$", data);
     }
   }
 
@@ -83,8 +69,7 @@ class DynECTAdapters {
 
     @Override
     public Iterator<Record> build(JsonReader reader) throws IOException {
-      JsonArray data;
-      data = new JsonParser().parse(reader).getAsJsonArray();
+      JsonArray data = new JsonParser().parse(reader).getAsJsonArray();
       List<Record> records = new ArrayList<Record>();
       for (JsonElement datum : data) {
         records.add(ToRecord.INSTANCE.apply(datum));
@@ -130,9 +115,5 @@ class DynECTAdapters {
     public void write(JsonWriter out, Data<X> value) throws IOException {
       throw new UnsupportedOperationException();
     }
-  }
-
-  private DynECTAdapters() {
-    // no instances.
   }
 }

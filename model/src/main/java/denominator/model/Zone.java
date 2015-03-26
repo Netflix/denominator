@@ -1,5 +1,8 @@
 package denominator.model;
 
+import denominator.model.rdata.SOAData;
+
+import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.equal;
 
@@ -50,49 +53,23 @@ public class Zone {
   private final String name;
   private final String qualifier;
   private final String id;
+  private final String email;
+  private final int ttl;
 
-  Zone(String name, String qualifier, String id) {
+  Zone(String name, String qualifier, String id, String email, int ttl) {
     this.name = checkNotNull(name, "name");
     this.qualifier = qualifier;
-    this.id = checkNotNull(id, "id");
-  }
-
-  /**
-   * Represent a zone without a {@link #qualifier() qualifier} when its {@link #id() id} is its
-   * name.
-   *
-   * @param name corresponds to {@link #name()} and {@link #id()}
-   */
-  public static Zone create(String name) {
-    return new Zone(name, null, name);
-  }
-
-  /**
-   * Represent a zone without a {@link #qualifier() qualifier}.
-   *
-   * @param name corresponds to {@link #name()}
-   * @param id   corresponds to {@link #id()}
-   */
-  public static Zone create(String name, String id) {
-    return new Zone(name, null, id);
-  }
-
-  /**
-   * Represent a zone with a {@link #qualifier() qualifier}.
-   *
-   * @param name      corresponds to {@link #name()}
-   * @param qualifier corresponds to {@link #qualifier()}
-   * @param id        corresponds to {@link #id()}
-   *
-   * @since 4.5                  
-   */
-  public static Zone create(String name, String qualifier, String id) {
-    return new Zone(name, qualifier, id);
+    this.id = id;
+    this.email = checkNotNull(email, "email of %s", name);
+    checkArgument(ttl >= 0, "Invalid ttl value: %s, must be 0-%s", ttl, Integer.MAX_VALUE);
+    this.ttl = ttl;
   }
 
   /**
    * The origin or starting point for the zone in the DNS tree. Usually includes a trailing dot, ex.
    * "{@code netflix.com.}"
+   *
+   * @see denominator.model.rdata.SOAData#mname()
    */
   public String name() {
     return name;
@@ -110,16 +87,39 @@ public class Zone {
   }
 
   /**
-   * The potentially transient and opaque string that uniquely identifies the zone.
+   * The potentially transient and opaque string that uniquely identifies the zone. This may be null
+   * when used as an input object.
    *
    * <p/>Note that this is not used in {@link #hashCode()} or {@link #equals(Object)}, as it may
    * change over time.
    *
    * @return identifier based on {@code denominator.Provider#zoneIdentification()}.
    * @see denominator.model.Zone.Identification
+   * @since 4.5
    */
   public String id() {
     return id;
+  }
+
+  /**
+   * Email contact for the zone. The {@literal @} in the email will be converted to a {@literal .}
+   * in the {@link denominator.model.rdata.SOAData#rname() SOA rname field}.
+   *
+   * @see denominator.model.rdata.SOAData#rname()
+   */
+  public String email() {
+    return email;
+  }
+
+  /**
+   * Default cache expiration of all resource records that don't declare an {@link
+   * denominator.model.Zone#ttl() override}.
+   *
+   * @see denominator.model.rdata.SOAData#minimum()
+   * @since 4.5
+   */
+  public int ttl() {
+    return ttl;
   }
 
   /**
@@ -135,8 +135,10 @@ public class Zone {
   public boolean equals(Object obj) {
     if (obj instanceof Zone) {
       Zone other = (Zone) obj;
-      return equal(name(), other.name())
-             && equal(qualifier(), other.qualifier());
+      return name().equals(other.name())
+             && equal(qualifier(), other.qualifier())
+             && email().equals(other.email())
+             && ttl() == other.ttl();
     }
     return false;
   }
@@ -146,6 +148,8 @@ public class Zone {
     int result = 17;
     result = 31 * result + name().hashCode();
     result = 31 * result + (qualifier() != null ? qualifier().hashCode() : 0);
+    result = 31 * result + email().hashCode();
+    result = 31 * result + ttl();
     return result;
   }
 
@@ -160,7 +164,97 @@ public class Zone {
     if (!name().equals(id())) {
       builder.append(", ").append("id=").append(id());
     }
+    builder.append(", ").append("email=").append(email());
+    builder.append(", ").append("ttl=").append(ttl());
     builder.append("]");
     return builder.toString();
+  }
+
+  /**
+   * Represent a zone without a {@link #qualifier() qualifier} when its {@link #id() id} is its
+   * name.
+   *
+   * @param name corresponds to {@link #name()} and {@link #id()}
+   * @deprecated Use {@link #builder()}. This will be removed in version 5.
+   */
+  @Deprecated
+  public static Zone create(String name) {
+    return create(name, name);
+  }
+
+  /**
+   * Represent a zone without a {@link #qualifier() qualifier}.
+   *
+   * @param name corresponds to {@link #name()}
+   * @param id   corresponds to {@link #id()}
+   * @deprecated Use {@link #builder()}. This will be removed in version 5.
+   */
+  @Deprecated
+  public static Zone create(String name, String id) {
+    return new Zone(name, null, id, "fake@" + name, 86400);
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  /**
+   * @since 4.5
+   */
+  public static final class Builder {
+
+    private String name;
+    private String qualifier;
+    private String id;
+    private int ttl = 86400;
+    private String email;
+
+    /**
+     * @see Zone#name()
+     */
+    public Builder name(String name) {
+      this.name = name;
+      return this;
+    }
+
+    /**
+     * @see Zone#qualifier()
+     */
+    public Builder qualifier(String qualifier) {
+      this.qualifier = qualifier;
+      return this;
+    }
+
+    /**
+     * Can be null for input objects.
+     *
+     * @see Zone#id()
+     */
+    public Builder id(String id) {
+      this.id = id;
+      return this;
+    }
+
+    /**
+     * @see Zone#email()
+     */
+    public Builder email(String email) {
+      this.email = email;
+      return this;
+    }
+
+    /**
+     * Overrides default of {@code 86400}.
+     *
+     * @see Zone#ttl()
+     */
+    public Builder ttl(Integer ttl) {
+      this.ttl = ttl;
+      return this;
+    }
+
+    public Zone build() {
+      return new Zone(name, qualifier, id, email, ttl);
+    }
   }
 }

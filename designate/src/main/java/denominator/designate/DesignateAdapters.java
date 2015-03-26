@@ -86,19 +86,22 @@ class DesignateAdapters {
     }
 
     protected Zone build(JsonReader reader) throws IOException {
-      String name = null;
-      String id = null;
+      Zone.Builder result = new Zone.Builder();
       while (reader.hasNext()) {
-        String key = reader.nextName();
-        if (key.equals("name")) {
-          name = reader.nextString();
-        } else if (key.equals("id")) {
-          id = reader.nextString();
+        String nextName = reader.nextName();
+        if (nextName.equals("name")) {
+          result.name(reader.nextString());
+        } else if (nextName.equals("id")) {
+          result.id(reader.nextString());
+        } else if (nextName.equals("email")) {
+          result.email(reader.nextString());
+        } else if (nextName.equals("ttl")) {
+          result.ttl(reader.nextInt());
         } else {
           reader.skipValue();
         }
       }
-      return Zone.create(name, id);
+      return result.build();
     }
   }
 

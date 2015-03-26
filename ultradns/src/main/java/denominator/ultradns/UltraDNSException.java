@@ -27,6 +27,10 @@ class UltraDNSException extends FeignException {
    */
   static final int DIRECTIONALPOOL_NOT_FOUND = 2142;
   /**
+   * Invalid zone name
+   */
+  static final int INVALID_ZONE_NAME = 2507;
+  /**
    * Directional Pool Record does not exist in the system
    */
   static final int DIRECTIONALPOOL_RECORD_NOT_FOUND = 2705;

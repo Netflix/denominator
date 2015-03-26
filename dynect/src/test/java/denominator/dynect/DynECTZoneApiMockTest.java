@@ -5,8 +5,6 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.Iterator;
-
 import denominator.ZoneApi;
 import denominator.model.Zone;
 
@@ -23,20 +21,20 @@ public class DynECTZoneApiMockTest {
   public void iteratorWhenPresent() throws Exception {
     server.enqueueSessionResponse();
     server.enqueue(new MockResponse().setBody(zones));
+    server.enqueue(new MockResponse().setBody(
+        "{\"status\": \"success\", \"data\": [{\"zone\": \"denominator.io\", \"ttl\": 3600, \"fqdn\": \"denominator.io\", \"record_type\": \"SOA\", \"rdata\": {\"rname\": \"fake@denominator.io.\", \"retry\": 600, \"mname\": \"ns1.p21.dynect.net.\", \"minimum\": 1800, \"refresh\": 3600, \"expire\": 604800, \"serial\": 478}, \"record_id\": 154671809, \"serial_style\": \"increment\"}], \"job_id\": 1548708326, \"msgs\": [{\"INFO\": \"detail: Found 1 record\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}"
+    ));
 
     ZoneApi api = server.connect().api().zones();
-    Iterator<Zone> domains = api.iterator();
 
-    assertThat(domains.next())
-        .hasName("0.0.0.0.d.6.e.0.0.a.2.ip6.arpa");
-    assertThat(domains.next())
-        .hasName("126.12.44.in-addr.arpa");
-    assertThat(domains.next())
-        .hasName("denominator.io");
-    assertThat(domains).isEmpty();
+    assertThat(api.iterator()).containsExactly(
+        Zone.builder().name("denominator.io").id("denominator.io.").email("fake@denominator.io.")
+            .ttl(1800).build()
+    );
 
     server.assertSessionRequest();
     server.assertRequest().hasPath("/Zone");
+    server.assertRequest().hasPath("/SOARecord/denominator.io/denominator.io?detail=Y");
   }
 
   @Test
@@ -55,15 +53,18 @@ public class DynECTZoneApiMockTest {
   public void iteratorByNameWhenPresent() throws Exception {
     server.enqueueSessionResponse();
     server.enqueue(new MockResponse().setBody(
-        "{\"status\": \"success\", \"data\": {\"zone_type\": \"Primary\", \"serial_style\": \"increment\", \"serial\": 1, \"zone\": \"denominator.io\"}, \"job_id\": 1536811990, \"msgs\": [{\"INFO\": \"get: Your zone, denominator.io\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}"));
+        "{\"status\": \"success\", \"data\": [{\"zone\": \"denominator.io\", \"ttl\": 3600, \"fqdn\": \"denominator.io\", \"record_type\": \"SOA\", \"rdata\": {\"rname\": \"fake@denominator.io.\", \"retry\": 600, \"mname\": \"ns1.p21.dynect.net.\", \"minimum\": 1800, \"refresh\": 3600, \"expire\": 604800, \"serial\": 478}, \"record_id\": 154671809, \"serial_style\": \"increment\"}], \"job_id\": 1548708326, \"msgs\": [{\"INFO\": \"detail: Found 1 record\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}"
+    ));
 
     ZoneApi api = server.connect().api().zones();
 
-    assertThat(api.iterateByName("denominator.io."))
-        .contains(Zone.create("denominator.io."));
+    assertThat(api.iterateByName("denominator.io.")).containsExactly(
+        Zone.builder().name("denominator.io.").id("denominator.io.").email("fake@denominator.io.")
+            .ttl(1800).build()
+    );
 
     server.assertSessionRequest();
-    server.assertRequest().hasPath("/Zone/denominator.io.");
+    server.assertRequest().hasPath("/SOARecord/denominator.io./denominator.io.?detail=Y");
   }
 
   @Test
@@ -77,6 +78,6 @@ public class DynECTZoneApiMockTest {
     assertThat(api.iterateByName("denominator.io.")).isEmpty();
 
     server.assertSessionRequest();
-    server.assertRequest().hasPath("/Zone/denominator.io.");
+    server.assertRequest().hasPath("/SOARecord/denominator.io./denominator.io.?detail=Y");
   }
 }
