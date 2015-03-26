@@ -25,7 +25,7 @@ class RackspaceApis {
   }
 
   @Headers("Content-Type: application/json")
-  static interface CloudIdentity {
+  interface CloudIdentity {
 
     @RequestLine("POST /tokens")
     @Body("%7B\"auth\":%7B\"RAX-KSKEY:apiKeyCredentials\":%7B\"username\":\"{username}\",\"apiKey\":\"{apiKey}\"%7D%7D%7D")
@@ -38,7 +38,7 @@ class RackspaceApis {
                                      @Param("password") String password);
   }
 
-  static interface CloudDNS {
+  interface CloudDNS {
 
     @RequestLine("GET /limits")
     Map<String, Object> limits();
@@ -58,6 +58,9 @@ class RackspaceApis {
 
     @RequestLine("GET /domains")
     ListWithNext<Zone> domains();
+
+    @RequestLine("GET /domains/{domainId}?showRecords=false&showSubdomains=false")
+    Zone domain(@Param("domainId") String id);
 
     @RequestLine("GET")
     ListWithNext<Record> records(URI href);

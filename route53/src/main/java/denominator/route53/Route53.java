@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import denominator.model.ResourceRecordSet;
-import denominator.model.Zone;
 import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
@@ -12,13 +11,13 @@ import feign.RequestLine;
 interface Route53 {
 
   @RequestLine("GET /2012-12-12/hostedzone")
-  ZoneList listHostedZones();
+  HostedZoneList listHostedZones();
 
   @RequestLine("GET /2012-12-12/hostedzone?marker={marker}")
-  ZoneList listHostedZones(@Param("marker") String marker);
+  HostedZoneList listHostedZones(@Param("marker") String marker);
 
   @RequestLine("GET /2013-04-01/hostedzonesbyname?dnsname={dnsname}")
-  ZoneList listHostedZonesByName(@Param("dnsname") String dnsname);
+  HostedZoneList listHostedZonesByName(@Param("dnsname") String dnsname);
 
   @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset")
   ResourceRecordSetList listResourceRecordSets(@Param("zoneId") String zoneId);
@@ -44,15 +43,19 @@ interface Route53 {
                                 List<ActionOnResourceRecordSet> changes)
       throws InvalidChangeBatchException;
 
-  static class ZoneList extends ArrayList<Zone> {
+  class HostedZone {
 
-    private static final long serialVersionUID = 1L;
-    String next;
+    String id;
+    String name;
+    String callerReference;
   }
 
-  static class ResourceRecordSetList extends ArrayList<ResourceRecordSet<?>> {
+  class HostedZoneList extends ArrayList<HostedZone> {
 
-    private static final long serialVersionUID = 1L;
+    public String next;
+  }
+
+  class ResourceRecordSetList extends ArrayList<ResourceRecordSet<?>> {
     NextRecord next;
 
     static class NextRecord {
@@ -67,7 +70,7 @@ interface Route53 {
     }
   }
 
-  static class ActionOnResourceRecordSet {
+  class ActionOnResourceRecordSet {
 
     final String action;
     final ResourceRecordSet<?> rrs;

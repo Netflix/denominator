@@ -7,6 +7,7 @@ import org.junit.runners.Parameterized.Parameter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.UUID;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
@@ -27,15 +28,20 @@ public class ReadOnlyLiveTest {
     Zone zone = zones.next();
     switch (manager.provider().zoneIdentification()) {
       case NAME:
-        assertThat(zone).hasNoQualifier().hasId(zone.name());
+        assertThat(zone).hasNoQualifier()
+            .hasId(zone.name());
         break;
       case OPAQUE:
         assertThat(zone).hasNoQualifier();
-        assertThat(zone.id()).isNotEqualTo(zone.name());
+        assertThat(zone.id())
+            .isNotNull()
+            .isNotEqualTo(zone.name());
         break;
       case QUALIFIED:
         assertThat(zone.qualifier()).isNotNull();
-        assertThat(zone.id()).isNotEqualTo(zone.name());
+        assertThat(zone.id())
+            .isNotNull()
+            .isNotEqualTo(zone.name());
         break;
       default:
         throw new AssertionError("unknown zone identification");
@@ -52,7 +58,7 @@ public class ReadOnlyLiveTest {
 
   @Test
   public void iterateZonesByNameWhenNotFound() {
-    assertThat(manager.api().zones().iterateByName("ARGHH")).isEmpty();
+    assertThat(manager.api().zones().iterateByName("yesdenominatornodenominator.com")).isEmpty();
   }
 
   @Test

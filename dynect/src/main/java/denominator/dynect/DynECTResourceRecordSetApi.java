@@ -113,23 +113,14 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
   }
 
   @Override
-  public void deleteByNameAndType(final String name, final String type) {
-    Iterator<String> existingRecords = emptyIteratorOn404(new Iterable<String>() {
-      public Iterator<String> iterator() {
-        return api.recordIdsInZoneByNameAndType(zone, name, type).data.iterator();
-      }
-    });
-
-    if (!existingRecords.hasNext()) {
-      return;
-    }
-    boolean shouldPublish = false;
-    while (existingRecords.hasNext()) {
-      shouldPublish = true;
-      api.scheduleDeleteRecord(existingRecords.next());
-    }
-    if (shouldPublish) {
+  public void deleteByNameAndType(String name, String type) {
+    try {
+      api.scheduleDeleteRecordsInZoneByNameAndType(zone, name, type);
       api.publish(zone);
+    } catch (FeignException e) {
+      if (e.getMessage().indexOf("NOT_FOUND") == -1) {
+        throw e;
+      }
     }
   }
 

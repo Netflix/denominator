@@ -25,8 +25,7 @@ public class CloudDNSProviderDynamicUpdateMockTest {
   public void dynamicEndpointUpdates() throws Exception {
     final AtomicReference<String> url = new AtomicReference<String>(server.url());
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setResponseCode(404).setBody(
-        "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
+    server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
 
     DNSApi api = Denominator.create(new CloudDNSProvider() {
       @Override
@@ -54,8 +53,7 @@ public class CloudDNSProviderDynamicUpdateMockTest {
   @Test
   public void dynamicCredentialUpdates() throws Exception {
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setResponseCode(404).setBody(
-        "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
+    server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
 
     AtomicReference<Credentials>
         dynamicCredentials =
@@ -74,8 +72,7 @@ public class CloudDNSProviderDynamicUpdateMockTest {
 
     server.credentials("jclouds-bob", "comeon");
     server.enqueueAuthResponse();
-    server.enqueue(new MockResponse().setResponseCode(404).setBody(
-        "{\"message\":\"Not Found\",\"code\":404,\"details\":\"\"}"));
+    server.enqueue(new MockResponse().setBody("{ \"domains\": [] }"));
 
     api.zones().iterator();
 
