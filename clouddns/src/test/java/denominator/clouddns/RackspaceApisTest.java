@@ -79,8 +79,10 @@ public class RackspaceApisTest {
     server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
-    assertThat(mockApi().domainsByName("denominator.io"))
-        .containsOnly(Zone.create("denominator.io", "1234"));
+    assertThat(mockApi().domainsByName("denominator.io")).containsExactly(
+        Zone.builder().name("denominator.io").id("1234").email("admin@denominator.io").ttl(86400)
+            .build()
+    );
 
     server.assertAuthRequest();
     server.assertRequest()
@@ -140,7 +142,7 @@ public class RackspaceApisTest {
     server.enqueue(new MockResponse().setBody(mxRecordInitialResponse));
 
     Job job = mockApi().createRecordWithPriority(domainId, "www.denominator.io", "MX",
-                                                            1800, "mail.denominator.io", 10);
+                                                 1800, "mail.denominator.io", 10);
 
     assertThat(job.id).isEqualTo("0ade2b3b-07e4-4e68-821a-fcce4f5406f3");
     assertThat(job.status).isEqualTo("RUNNING");
@@ -237,7 +239,7 @@ public class RackspaceApisTest {
     };
     return feign.newInstance(
         new CloudDNSTarget(provider,
-                            new InvalidatableAuthProvider(provider, cloudIdentity, credentials)));
+                           new InvalidatableAuthProvider(provider, cloudIdentity, credentials)));
   }
 
   static String limitsResponse = "{\n"
@@ -278,6 +280,9 @@ public class RackspaceApisTest {
   static String
       domainsResponse =
       "{\"domains\":[{\"name\":\"denominator.io\",\"id\":1234,\"accountId\":123123,\"emailAddress\":\"admin@denominator.io\",\"updated\":\"2013-09-02T19:46:56.000+0000\",\"created\":\"2013-09-02T19:45:51.000+0000\"}],\"totalEntries\":1}";
+  static String
+      domainResponse =
+      "{\"name\":\"denominator.io\",\"id\":1234,\"accountId\":123123,\"ttl\": 3600,\"emailAddress\":\"admin@denominator.io\"}";
   // NOTE records are allowed to be out of order by type
   static String
       recordsResponse =

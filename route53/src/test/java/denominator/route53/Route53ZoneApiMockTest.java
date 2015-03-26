@@ -33,6 +33,25 @@ public class Route53ZoneApiMockTest {
         + "    </HostedZone>\n"
         + "  </HostedZones>\n"
         + "</ListHostedZonesResponse>"));
+    server.enqueue(new MockResponse().setBody(
+        "<?xml version=\"1.0\"?>\n"
+        + "<ListResourceRecordSetsResponse xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
+        + "  <ResourceRecordSets>\n"
+        + "    <ResourceRecordSet>\n"
+        + "      <Name>denominator.io.</Name>\n"
+        + "      <Type>SOA</Type>\n"
+        + "      <TTL>900</TTL>\n"
+        + "      <ResourceRecords>\n"
+        + "        <ResourceRecord>\n"
+        + "          <Value>ns-273.awsdns-34.com. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400</Value>\n"
+        + "        </ResourceRecord>\n"
+        + "      </ResourceRecords>\n"
+        + "    </ResourceRecordSet>\n"
+        + "  </ResourceRecordSets>\n"
+        + "  <IsTruncated>false</IsTruncated>\n"
+        + "  <MaxItems>100</MaxItems>\n"
+        + "</ListResourceRecordSetsResponse>"
+    ));
 
     ZoneApi api = server.connect().api().zones();
     Iterator<Zone> domains = api.iterator();
@@ -40,11 +59,16 @@ public class Route53ZoneApiMockTest {
     assertThat(domains.next())
         .hasName("denominator.io.")
         .hasQualifier("denomination")
-        .hasId("Z1PA6795UKMFR9");
+        .hasId("Z1PA6795UKMFR9")
+        .hasEmail("awsdns-hostmaster.amazon.com.")
+        .hasTtl(86400);
 
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/2012-12-12/hostedzone");
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/2012-12-12/hostedzone/Z1PA6795UKMFR9/rrset?name=denominator.io.&type=SOA");
   }
 
   @Test
@@ -88,16 +112,62 @@ public class Route53ZoneApiMockTest {
         + "  <IsTruncated>false</IsTruncated>\n"
         + "  <MaxItems>100</MaxItems>\n"
         + "</ListHostedZonesByNameResponse>"));
+    server.enqueue(new MockResponse().setBody(
+        "<?xml version=\"1.0\"?>\n"
+        + "<ListResourceRecordSetsResponse xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
+        + "  <ResourceRecordSets>\n"
+        + "    <ResourceRecordSet>\n"
+        + "      <Name>denominator.io.</Name>\n"
+        + "      <Type>SOA</Type>\n"
+        + "      <TTL>900</TTL>\n"
+        + "      <ResourceRecords>\n"
+        + "        <ResourceRecord>\n"
+        + "          <Value>ns-273.awsdns-34.com. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400</Value>\n"
+        + "        </ResourceRecord>\n"
+        + "      </ResourceRecords>\n"
+        + "    </ResourceRecordSet>\n"
+        + "  </ResourceRecordSets>\n"
+        + "  <IsTruncated>false</IsTruncated>\n"
+        + "  <MaxItems>100</MaxItems>\n"
+        + "</ListResourceRecordSetsResponse>"
+    ));
+    server.enqueue(new MockResponse().setBody(
+        "<?xml version=\"1.0\"?>\n"
+        + "<ListResourceRecordSetsResponse xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\">\n"
+        + "  <ResourceRecordSets>\n"
+        + "    <ResourceRecordSet>\n"
+        + "      <Name>denominator.io.</Name>\n"
+        + "      <Type>SOA</Type>\n"
+        + "      <TTL>900</TTL>\n"
+        + "      <ResourceRecords>\n"
+        + "        <ResourceRecord>\n"
+        + "          <Value>ns-273.awsdns-35.com. awsdns-hostmaster.amazon.com. 1 7200 900 1209600 86400</Value>\n"
+        + "        </ResourceRecord>\n"
+        + "      </ResourceRecords>\n"
+        + "    </ResourceRecordSet>\n"
+        + "  </ResourceRecordSets>\n"
+        + "  <IsTruncated>false</IsTruncated>\n"
+        + "  <MaxItems>100</MaxItems>\n"
+        + "</ListResourceRecordSetsResponse>"
+    ));
 
     ZoneApi api = server.connect().api().zones();
     assertThat(api.iterateByName("denominator.io.")).containsExactly(
-        Zone.create("denominator.io.", "Foo", "Z2ZEEJCUZCVG56"),
-        Zone.create("denominator.io.", "Bar", "Z3OQLQGABCU3T")
+        Zone.builder().name("denominator.io.").qualifier("Foo").id("Z2ZEEJCUZCVG56")
+            .email("awsdns-hostmaster.amazon.com.").ttl(86400).build(),
+        Zone.builder().name("denominator.io.").qualifier("Bar").id("Z3OQLQGABCU3T")
+            .email("awsdns-hostmaster.amazon.com.").ttl(86400).build()
     );
 
     server.assertRequest()
         .hasMethod("GET")
         .hasPath("/2013-04-01/hostedzonesbyname?dnsname=denominator.io.");
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/2012-12-12/hostedzone/Z2ZEEJCUZCVG56/rrset?name=denominator.io.&type=SOA");
+    server.assertRequest()
+        .hasMethod("GET")
+        .hasPath("/2012-12-12/hostedzone/Z3OQLQGABCU3T/rrset?name=denominator.io.&type=SOA");
   }
 
   /**

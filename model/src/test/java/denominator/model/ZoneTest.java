@@ -15,7 +15,11 @@ public class ZoneTest {
   public void factoryMethodsWork() {
     Zone name = Zone.create("denominator.io.");
     Zone id = Zone.create("denominator.io.", "ABCD");
-    Zone qualifier = Zone.create("denominator.io.", "Test-Zone", "ABCD");
+    Zone qualifier = Zone.builder()
+        .name("denominator.io.")
+        .qualifier("Test-Zone")
+        .id("ABCD")
+        .email("fake@denominator.io.").build();
 
     assertThat(name)
         .hasName("denominator.io.")
@@ -28,7 +32,7 @@ public class ZoneTest {
     assertThat(name.hashCode())
         .isEqualTo(id.hashCode())
         .isNotEqualTo(qualifier.hashCode());
-    assertThat(name.toString()).isEqualTo("Zone [name=denominator.io.]");
+    assertThat(name.toString()).isEqualTo("Zone [name=denominator.io., email=fake@denominator.io., ttl=86400]");
 
     assertThat(id)
         .hasName("denominator.io.")
@@ -42,7 +46,7 @@ public class ZoneTest {
         .isEqualTo(name.hashCode())
         .isNotEqualTo(qualifier.hashCode());
 
-    assertThat(id.toString()).isEqualTo("Zone [name=denominator.io., id=ABCD]");
+    assertThat(id.toString()).isEqualTo("Zone [name=denominator.io., id=ABCD, email=fake@denominator.io., ttl=86400]");
 
     assertThat(qualifier)
         .hasName("denominator.io.")
@@ -57,7 +61,7 @@ public class ZoneTest {
         .isNotEqualTo(id.hashCode());
 
     assertThat(qualifier.toString())
-        .isEqualTo("Zone [name=denominator.io., qualifier=Test-Zone, id=ABCD]");
+        .isEqualTo("Zone [name=denominator.io., qualifier=Test-Zone, id=ABCD, email=fake@denominator.io., ttl=86400]");
   }
 
   @Test
@@ -65,14 +69,6 @@ public class ZoneTest {
     thrown.expect(NullPointerException.class);
     thrown.expectMessage("name");
 
-    new Zone(null, null, "id");
-  }
-
-  @Test
-  public void nullIdNPEMessage() {
-    thrown.expect(NullPointerException.class);
-    thrown.expectMessage("id");
-
-    new Zone("name", null, null);
+    Zone.builder().build();
   }
 }

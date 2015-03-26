@@ -24,10 +24,9 @@ import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
 import denominator.config.NothingToClose;
 import denominator.config.WeightedUnsupported;
 import denominator.dynect.DynECTAdapters.NothingForbiddenAdapter;
-import denominator.dynect.DynECTAdapters.RecordIdsAdapter;
 import denominator.dynect.DynECTAdapters.RecordsByNameAndTypeAdapter;
 import denominator.dynect.DynECTAdapters.TokenAdapter;
-import denominator.dynect.DynECTAdapters.ZonesAdapter;
+import denominator.dynect.DynECTAdapters.ZoneNamesAdapter;
 import denominator.dynect.InvalidatableTokenProvider.Session;
 import denominator.profile.GeoResourceRecordSetApi;
 import feign.Feign;
@@ -178,8 +177,7 @@ public class DynECTProvider extends BasicProvider {
                        new TokenAdapter(),
                        new NothingForbiddenAdapter(),
                        new ResourceRecordSetsAdapter(),
-                       new ZonesAdapter(),
-                       new RecordIdsAdapter(),
+                       new ZoneNamesAdapter(),
                        new RecordsByNameAndTypeAdapter()))
           )
           .errorDecoder(errorDecoder)

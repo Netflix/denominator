@@ -15,14 +15,11 @@ import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
 
-@Headers({"API-Version: 3.5.0", "Content-Type: application/json"})
+@Headers({"API-Version: 3.5.10", "Content-Type: application/json"})
 public interface DynECT {
 
   @RequestLine("GET /Zone")
-  Data<List<Zone>> zones();
-
-  @RequestLine("GET /Zone/{name}")
-  void getZone(@Param("name") String name);
+  Data<List<String>> zones();;
 
   @RequestLine("PUT /Zone/{zone}")
   @Body("{\"publish\":true}")
@@ -47,11 +44,6 @@ public interface DynECT {
                                                                  @Param("fqdn") String fqdn,
                                                                  @Param("type") String type);
 
-  @RequestLine("GET /{type}Record/{zone}/{fqdn}")
-  Data<List<String>> recordIdsInZoneByNameAndType(@Param("zone") String zone,
-                                                  @Param("fqdn") String fqdn,
-                                                  @Param("type") String type);
-
   @RequestLine("GET /{type}Record/{zone}/{fqdn}?detail=Y")
   Data<Iterator<Record>> recordsInZoneByNameAndType(@Param("zone") String zone,
                                                     @Param("fqdn") String fqdn,
@@ -59,11 +51,16 @@ public interface DynECT {
 
   @RequestLine("POST /{type}Record/{zone}/{fqdn}")
   void scheduleCreateRecord(@Param("zone") String zone, @Param("fqdn") String fqdn,
-                            @Param("type") String type,
-                            @Param("ttl") int ttl, @Param("rdata") Map<String, Object> rdata);
+                            @Param("type") String type, @Param("ttl") int ttl,
+                            @Param("rdata") Map<String, Object> rdata);
 
   @RequestLine("DELETE /{recordId}")
   void scheduleDeleteRecord(@Param("recordId") String recordId);
+
+  @RequestLine("DELETE /{type}Record/{zone}/{fqdn}")
+  void scheduleDeleteRecordsInZoneByNameAndType(@Param("zone") String zone,
+                                                @Param("fqdn") String fqdn,
+                                                @Param("type") String type);
 
   /**
    * DynECT json includes an envelope called "data", which makes it difficult.

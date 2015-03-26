@@ -40,8 +40,7 @@ class MockAllProfileResourceRecordSetApi implements denominator.AllProfileResour
 
   @Override
   public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
-    Collection<ResourceRecordSet<?>> records = records();
-    return filter(records.iterator(), and(nameEqualTo(name), filter));
+    return filter(records().iterator(), and(nameEqualTo(name), filter));
   }
 
   protected void put(Filter<ResourceRecordSet<?>> valid, ResourceRecordSet<?> rrset) {
@@ -67,8 +66,7 @@ class MockAllProfileResourceRecordSetApi implements denominator.AllProfileResour
 
   @Override
   public Iterator<ResourceRecordSet<?>> iterateByNameAndType(String name, String type) {
-    Collection<ResourceRecordSet<?>> records = records();
-    return filter(records.iterator(), and(nameAndTypeEqualTo(name, type), filter));
+    return filter(records().iterator(), and(nameAndTypeEqualTo(name, type), filter));
   }
 
   @Override

@@ -2,8 +2,8 @@ package denominator.route53;
 
 import org.xml.sax.helpers.DefaultHandler;
 
-import denominator.model.Zone;
-import denominator.route53.Route53.ZoneList;
+import denominator.route53.Route53.HostedZone;
+import denominator.route53.Route53.HostedZoneList;
 import feign.sax.SAXDecoder.ContentHandlerWithResult;
 
 /**
@@ -11,30 +11,28 @@ import feign.sax.SAXDecoder.ContentHandlerWithResult;
  * >docs</a>
  */
 class ListHostedZonesResponseHandler extends DefaultHandler
-    implements ContentHandlerWithResult<ZoneList> {
+    implements ContentHandlerWithResult<HostedZoneList> {
 
   private final StringBuilder currentText = new StringBuilder();
-  private final ZoneList zones = new ZoneList();
-  private String name;
-  private String qualifier;
-  private String id;
+  private final HostedZoneList zones = new HostedZoneList();
+  private HostedZone zone = new HostedZone();
 
   @Override
-  public ZoneList result() {
+  public HostedZoneList result() {
     return zones;
   }
 
   @Override
   public void endElement(String uri, String name, String qName) {
     if (qName.equals("Name")) {
-      this.name = currentText.toString().trim();
+      zone.name = currentText.toString().trim();
     } else if (qName.equals("Id")) {
-      id = currentText.toString().trim().replace("/hostedzone/", "");
+      zone.id = currentText.toString().trim().replace("/hostedzone/", "");
     } else if (qName.equals("CallerReference")) {
-      qualifier = currentText.toString().trim();
+      zone.callerReference = currentText.toString().trim();
     } else if (qName.equals("HostedZone")) {
-      zones.add(Zone.create(this.name, qualifier, id));
-      this.name = this.id = null;
+      zones.add(zone);
+      zone = new HostedZone();
     } else if (qName.equals("NextMarker")) {
       zones.next = currentText.toString().trim();
     }

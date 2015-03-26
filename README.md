@@ -27,8 +27,9 @@ Advanced usage, including ec2 hooks are covered in the [readme](https://github.c
 
 If you just want to fool around, you can use the `mock` provider.
 ```bash
+# first column is the zone id, which isn't always its name!
 $ denominator -p mock zone list
-denominator.io.
+denominator.io.          denominator.io.                                          admin.denominator.io.                86400
 $ denominator -p mock record -z denominator.io. list
 denominator.io.                                    SOA   3600   ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 60
 denominator.io.                                    NS    86400  ns1.denominator.io.

@@ -1,13 +1,16 @@
 package denominator.ultradns;
 
 import java.util.Iterator;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Provider;
 
 import denominator.model.Zone;
+import denominator.ultradns.UltraDNS.Record;
 
+import static denominator.common.Preconditions.checkState;
 import static denominator.common.Util.singletonIterator;
 
 public final class UltraDNSZoneApi implements denominator.ZoneApi {
@@ -26,21 +29,42 @@ public final class UltraDNSZoneApi implements denominator.ZoneApi {
    */
   @Override
   public Iterator<Zone> iterator() {
-    return api.getZonesOfAccount(account.get()).iterator();
+    final Iterator<String> delegate = api.getZonesOfAccount(account.get()).iterator();
+    return new Iterator<Zone>() {
+      @Override
+      public boolean hasNext() {
+        return delegate.hasNext();
+      }
+
+      @Override
+      public Zone next() {
+        return fromSOA(delegate.next());
+      }
+    };
   }
 
   @Override
   public Iterator<Zone> iterateByName(String name) {
     Zone zone = null;
     try {
-      if (api.getZoneInfo(name).equals(account.get())) {
-        zone = Zone.create(name);
-      }
+      zone = fromSOA(name);
     } catch (UltraDNSException e) {
-      if (e.code() != UltraDNSException.ZONE_NOT_FOUND) {
+      if (e.code() != UltraDNSException.INVALID_ZONE_NAME) {
         throw e;
       }
     }
     return singletonIterator(zone);
+  }
+
+  private Zone fromSOA(String name) {
+    List<Record> soa = api.getResourceRecordsOfDNameByType(name, name, 6);
+    checkState(!soa.isEmpty(), "SOA record for zone %s was not present", name);
+    List<String> rdata = soa.get(0).rdata;
+    return Zone.builder()
+        .name(name)
+        .id(name)
+        .email(rdata.get(1))
+        .ttl(Integer.valueOf(rdata.get(6)))
+        .build();
   }
 }
