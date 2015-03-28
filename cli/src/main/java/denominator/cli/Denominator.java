@@ -372,7 +372,7 @@ public class Denominator {
     protected abstract Iterator<String> doRun(DNSApiManager mgr);
   }
 
-  @Command(name = "list", description = "Lists the zones present in this provider.  If more than one column is present, the last is the zone id.")
+  @Command(name = "list", description = "Lists the zones present in this provider.  The zone id is the first column.")
   public static class ZoneList extends DenominatorCommand {
 
     @Option(type = OptionType.COMMAND, name = {"-n",
@@ -383,20 +383,11 @@ public class Denominator {
       Iterator<Zone> zones =
           name == null ? mgr.api().zones().iterator() : mgr.api().zones().iterateByName(name);
       return Iterators.transform(zones, new Function<Zone, String>() {
-
         @Override
         public String apply(Zone input) {
-          Identification zoneId = mgr.provider().zoneIdentification();
-          switch (zoneId) {
-            case NAME:
-              return input.name();
-            case OPAQUE:
-              return format("%-36s %s", input.name(), input.id());
-            case QUALIFIED:
-              return format("%-36s %-19s %s", input.name(), input.qualifier(), input.id());
-            default:
-              throw new UnsupportedOperationException("unsupported zone identification: " + zoneId);
-          }
+          return format("%-24s %-36s %-19s %-36s %d", input.id(), input.name(),
+                        input.qualifier() != null ? input.qualifier() : "", input.email(),
+                        input.ttl());
         }
       });
     }

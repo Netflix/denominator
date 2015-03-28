@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
-import denominator.model.Zone;
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
 import denominator.ultradns.UltraDNS.NameAndType;
@@ -143,20 +142,20 @@ class UltraDNSContentHandlers {
     }
   }
 
-  static class ZoneListHandler extends DefaultHandler
-      implements ContentHandlerWithResult<List<Zone>> {
+  static class ZoneNamesHandler extends DefaultHandler
+      implements ContentHandlerWithResult<List<String>> {
 
-    private final List<Zone> zones = new ArrayList<Zone>();
+    private final List<String> zones = new ArrayList<String>();
 
     @Override
-    public List<Zone> result() {
+    public List<String> result() {
       return zones;
     }
 
     @Override
     public void startElement(String uri, String localName, String qName, Attributes attrs) {
       if (attrs.getValue("zoneName") != null) {
-        zones.add(Zone.create(attrs.getValue("zoneName")));
+        zones.add(attrs.getValue("zoneName"));
       }
     }
   }

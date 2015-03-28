@@ -9,13 +9,14 @@ import java.util.Collections;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.NSData;
 import denominator.model.rdata.SOAData;
+import denominator.route53.Route53.HostedZoneList;
 import denominator.route53.Route53.ResourceRecordSetList;
-import denominator.route53.Route53.ZoneList;
 import feign.Response;
 import feign.codec.Decoder;
 
 import static denominator.assertj.ModelAssertions.assertThat;
 import static feign.Util.UTF_8;
+import static org.assertj.core.api.Assertions.tuple;
 
 public class Route53DecoderTest {
 
@@ -23,7 +24,7 @@ public class Route53DecoderTest {
 
   @Test
   public void decodeZoneListWithNext() throws Exception {
-    ZoneList result = (ZoneList) decoder.decode(response(
+    HostedZoneList result = (HostedZoneList) decoder.decode(response(
         "<ListHostedZonesResponse xmlns=\"https://route53.amazonaws.com/doc/2012-02-29/\">\n"
         + "  <HostedZones>\n"
         + "    <HostedZone>\n"
@@ -49,17 +50,12 @@ public class Route53DecoderTest {
         + "  <IsTruncated>true</IsTruncated>\n"
         + "  <NextMarker>Z333333YYYYYYY</NextMarker>\n"
         + "  <MaxItems>10</MaxItems>\n"
-        + "</ListHostedZonesResponse>"), ZoneList.class);
+        + "</ListHostedZonesResponse>"), HostedZoneList.class);
 
-    assertThat(result.get(0))
-        .hasName("example.com.")
-        .hasQualifier("a_unique_reference")
-        .hasId("Z21DW1QVGID6NG");
-
-    assertThat(result.get(1))
-        .hasName("example2.com.")
-        .hasQualifier("a_unique_reference2")
-        .hasId("Z2682N5HXP0BZ4");
+    assertThat(result).extracting("name", "callerReference", "id").containsExactly(
+        tuple("example.com.", "a_unique_reference", "Z21DW1QVGID6NG"),
+        tuple("example2.com.", "a_unique_reference2", "Z2682N5HXP0BZ4")
+    );
 
     assertThat(result.next).isEqualTo("Z333333YYYYYYY");
   }

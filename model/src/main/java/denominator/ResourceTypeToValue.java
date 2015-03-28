@@ -56,7 +56,7 @@ public class ResourceTypeToValue {
    * >iana types</a>.
    */
   // enum only to look and format prettier than fluent bimap builder calls
-  static enum ResourceTypes {
+  enum ResourceTypes {
     /**
      * a host address
      */
@@ -139,7 +139,7 @@ public class ResourceTypeToValue {
 
     private final int value;
 
-    private ResourceTypes(int value) {
+    ResourceTypes(int value) {
       this.value = value;
     }
   }

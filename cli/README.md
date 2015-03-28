@@ -72,8 +72,9 @@ denominator will print out a help statement, but here's the gist.
 
 If you just want to fool around, you can use the `mock` provider.
 ```bash
+# first column is the zone id, which isn't always its name!
 $ denominator -p mock zone list
-denominator.io.
+denominator.io.          denominator.io.                                          admin.denominator.io.                86400
 $ denominator -p mock -z denominator.io. record list
 denominator.io.                                    SOA   3600   ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 60
 denominator.io.                                    NS    86400  ns1.denominator.io.
@@ -130,18 +131,16 @@ email.netflix.com.                                 A     3600   69.53.237.168
 --snip--
 ```
 
-### Zone Identifiers
-When the provider doesn't use name-based zone identification, the last column zone list is the `id`.
-This can be used to disambiguate zones with the same name, or to improve performance by eliminating a network call.
-If you wish to use a zone's identifier, simply pass it instead of the zone name in record commands.
+### Zone ID
+The first column in the zone list is the `id`. This can be used to disambiguate zones with the same
+name, or to improve performance by eliminating a network call. If you wish to use a zone's
+identifier, simply pass it instead of the zone name in record commands.
 
 ```bash
-$ denominator -p route53 -c my_access_key -c my_secret_key zone list -n denominator.io.
-[Route53#listHostedZonesByName] ---> GET https://route53.amazonaws.com/2013-04-01/hostedzonesbyname?dnsname=denominator.io. HTTP/1.1
-[Route53#listHostedZonesByName] <--- HTTP/1.1 200 OK (678ms)
-denominator.io.                      63CEB242-9E3E-327D-9351-2EFD02493E18 Z2ZEEJCUZCVG56
-denominator.io.                      022DFF2F-2E0B-F0A2-A581-19339A7BA1F1 Z3OQLQGABCU3T
-$ denominator -p route53 -c my_access_key -c my_secret_key record -z Z3OQLQGABCU3T list
+$ denominator -q -p route53 -c my_access_key -c my_secret_key zone list -n denominator.io.
+Z2ZEEJCUZCVG56           denominator.io.                      63CEB242-9E3E-327D-9351-2EFD02493E18 awsdns-hostmaster.amazon.com.        86400
+Z3OQLQGABCU3T            denominator.io.                      022DFF2F-2E0B-F0A2-A581-19339A7BA1F1 awsdns-hostmaster.amazon.com.        86400
+$ denominator -q -p route53 -c my_access_key -c my_secret_key record -z Z3OQLQGABCU3T list
 --snip--
 denominator.io.                                   NS                         172800 ns-1312.awsdns-36.org.
 --snip--

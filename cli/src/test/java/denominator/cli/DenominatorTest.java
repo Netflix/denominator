@@ -74,7 +74,9 @@ public class DenominatorTest {
 
   @Test // denominator -p mock zone list
   public void testZoneList() {
-    assertThat(new ZoneList().doRun(mgr)).containsExactly("denominator.io.");
+    assertThat(new ZoneList().doRun(mgr)).containsExactly(
+        "denominator.io.          denominator.io.                                          admin.denominator.io.                86400"
+    );
   }
 
   @Test // denominator -p mock zone list -n denominator.com.
@@ -224,7 +226,7 @@ public class DenominatorTest {
     assertThat(command.doRun(mgr)).containsExactly(
         "a.denominator.io.                                 A      alazona             null  192.0.2.1",
         "denominator.io.                                   NS                         86400 ns1.denominator.io.",
-        "denominator.io.                                   SOA                        3600  ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 60",
+        "denominator.io.                                   SOA                        3600  ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 86400",
         "server1.denominator.io.                           CERT                       3600  12345 1 1 B33F",
         "server1.denominator.io.                           SRV                        3600  0 1 80 www.denominator.io.",
         "www.geo.denominator.io.                           CNAME  alazona             86400 a.denominator.io.",

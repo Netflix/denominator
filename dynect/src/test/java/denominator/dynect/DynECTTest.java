@@ -5,12 +5,10 @@ import com.squareup.okhttp.mockwebserver.MockResponse;
 import org.junit.Rule;
 import org.junit.Test;
 
-import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 
 import denominator.Credentials;
 import denominator.dynect.InvalidatableTokenProvider.Session;
-import denominator.model.Zone;
 import feign.Feign;
 
 import static denominator.assertj.ModelAssertions.assertThat;
@@ -52,10 +50,8 @@ public class DynECTTest {
   public void zonesWhenPresent() throws Exception {
     server.enqueue(new MockResponse().setBody(zones));
 
-    Iterator<Zone> iterator = mockApi().zones().data.iterator();
-    iterator.next();
-    iterator.next();
-    assertThat(iterator.next()).hasName("denominator.io");
+    assertThat(mockApi().zones().data)
+        .containsExactly("denominator.io");
 
     server.assertRequest().hasMethod("GET").hasPath("/Zone");
   }
@@ -239,7 +235,7 @@ public class DynECTTest {
                                    + "}";
   static String
       zones =
-      "{\"status\": \"success\", \"data\": [\"/REST/Zone/0.0.0.0.d.6.e.0.0.a.2.ip6.arpa/\", \"/REST/Zone/126.12.44.in-addr.arpa/\", \"/REST/Zone/denominator.io/\"], \"job_id\": 260657587, \"msgs\": [{\"INFO\": \"get: Your 3 zones\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
+      "{\"status\": \"success\", \"data\": [\"/REST/Zone/denominator.io/\"], \"job_id\": 260657587, \"msgs\": [{\"INFO\": \"get: Your 1 zone\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";
   static String
       noZones =
       "{\"status\": \"success\", \"data\": [], \"job_id\": 260657587, \"msgs\": [{\"INFO\": \"get: Your 0 zones\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO\"}]}";

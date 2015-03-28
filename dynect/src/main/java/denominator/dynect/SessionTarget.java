@@ -34,7 +34,7 @@ class SessionTarget implements Target<Session> {
 
   @Override
   public Request apply(RequestTemplate input) {
-    input.header("API-Version", "3.5.2");
+    input.header("API-Version", "3.5.10");
     input.header("Content-Type", "application/json");
     input.insert(0, url());
     return input.request();

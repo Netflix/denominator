@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 
 import denominator.Credentials;
-import denominator.model.Zone;
 import denominator.ultradns.UltraDNS.DirectionalGroup;
 import denominator.ultradns.UltraDNS.DirectionalRecord;
 import denominator.ultradns.UltraDNS.NameAndType;
@@ -24,6 +23,7 @@ import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.ultradns.UltraDNSException.DIRECTIONALPOOL_NOT_FOUND;
 import static denominator.ultradns.UltraDNSException.DIRECTIONALPOOL_RECORD_NOT_FOUND;
 import static denominator.ultradns.UltraDNSException.GROUP_NOT_FOUND;
+import static denominator.ultradns.UltraDNSException.INVALID_ZONE_NAME;
 import static denominator.ultradns.UltraDNSException.POOL_ALREADY_EXISTS;
 import static denominator.ultradns.UltraDNSException.POOL_NOT_FOUND;
 import static denominator.ultradns.UltraDNSException.POOL_RECORD_ALREADY_EXISTS;
@@ -100,23 +100,11 @@ public class UltraDNSTest {
   }
 
   @Test
-  public void getZoneInfo() throws Exception {
-    server.enqueue(
-        new MockResponse().setBody(format(getZoneInfoResponseTemplate, "AAAAAAAAAAAAAAAA")));
-
-    assertThat(mockApi().getZoneInfo("denominator.io.")).isEqualTo("AAAAAAAAAAAAAAAA");
-
-    server.assertSoapBody(getZoneInfo);
-  }
-
-  @Test
   public void zonesOfAccountPresent() throws Exception {
     server.enqueue(new MockResponse().setBody(getZonesOfAccountResponsePresent));
 
-    List<Zone> zones = mockApi().getZonesOfAccount("AAAAAAAAAAAAAAAA");
-
-    assertThat(zones.get(0)).hasName("denominator.io.");
-    assertThat(zones.get(1)).hasName("0.1.2.3.4.5.6.7.ip6.arpa.");
+    assertThat(mockApi().getZonesOfAccount("AAAAAAAAAAAAAAAA"))
+        .containsExactly("denominator.io.");
 
     server.assertSoapBody(getZonesOfAccount);
   }
@@ -186,6 +174,16 @@ public class UltraDNSTest {
         .isEmpty();
 
     server.assertSoapBody(getResourceRecordsOfDNameByType);
+  }
+
+  @Test
+  public void recordsInZoneByNameAndTypeInvalidZone() throws Exception {
+    thrown.expect(UltraDNSException.class);
+    thrown.expectMessage("2507: Invalid zone name.");
+
+    server.enqueueError(INVALID_ZONE_NAME, "Invalid zone name.");
+
+    mockApi().getResourceRecordsOfDNameByType("ARGHH", "ARGHH", 6);
   }
 
   @Test
@@ -742,20 +740,9 @@ public class UltraDNSTest {
                                                   + "</soap:Envelope>";
   static String getZonesOfAccountResponsePresent = getZonesOfAccountResponseHeader
                                                    + "        <ns2:UltraZone zoneName=\"denominator.io.\" zoneType=\"1\" accountId=\"AAAAAAAAAAAAAAAA\" owner=\"EEEEEEEEEEEEEEE\" zoneId=\"0000000000000001\" dnssecStatus=\"UNSIGNED\"/>\n"
-                                                   + "        <ns2:UltraZone zoneName=\"0.1.2.3.4.5.6.7.ip6.arpa.\" zoneType=\"1\" accountId=\"AAAAAAAAAAAAAAAA\" owner=\"EEEEEEEEEEEEEEEE\" zoneId=\"0000000000000002\" dnssecStatus=\"UNSIGNED\"/>\n"
                                                    + getZonesOfAccountResponseFooter;
   static String getZonesOfAccountResponseAbsent =
       getZonesOfAccountResponseHeader + getZonesOfAccountResponseFooter;
-  static String getZoneInfo =
-      "<v01:getZoneInfo><zoneName>denominator.io.</zoneName></v01:getZoneInfo>";
-  static String getZoneInfoResponseTemplate =
-      "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n"
-      + "  <soap:Body>\n"
-      + "    <v01:getZoneInfoResponse xmlns:ns1=\"http://webservice.api.ultra.neustar.com/v01/\">\n"
-      + "      <UltraZone zoneId=\"030336B101C860A2\" owner=\"010336B101C85FD3\" accountId=\"%s\" zoneType=\"1\" zoneName=\"denominator.io.\"/>\n"
-      + "    </v01:getZoneInfoResponse>\n"
-      + "  </soap:Body>\n"
-      + "</soap:Envelope>";
   static String
       getResourceRecordsOfZone =
       "<v01:getResourceRecordsOfZone><zoneName>denominator.io.</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone>";

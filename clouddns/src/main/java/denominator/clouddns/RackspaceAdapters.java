@@ -66,19 +66,22 @@ class RackspaceAdapters {
     }
 
     protected Zone build(JsonReader reader) throws IOException {
-      String name = null;
-      String id = null;
+      Zone.Builder result = new Zone.Builder();
       while (reader.hasNext()) {
         String nextName = reader.nextName();
         if (nextName.equals("name")) {
-          name = reader.nextString();
+          result.name(reader.nextString());
         } else if (nextName.equals("id")) {
-          id = reader.nextString();
+          result.id(reader.nextString());
+        } else if (nextName.equals("emailAddress")) {
+          result.email(reader.nextString());
+        } else if (nextName.equals("ttl")) {
+          result.ttl(reader.nextInt());
         } else {
           reader.skipValue();
         }
       }
-      return Zone.create(name, id);
+      return result.build();
     }
   }
 
