@@ -58,7 +58,7 @@ class GeoResourceRecordSetCommands {
     }
   }
 
-  static enum GeoResourceRecordSetToString implements Function<ResourceRecordSet<?>, String> {
+  enum GeoResourceRecordSetToString implements Function<ResourceRecordSet<?>, String> {
     INSTANCE;
 
     @Override

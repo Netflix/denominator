@@ -12,7 +12,6 @@ import dagger.ObjectGraph;
 import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
-import denominator.model.Zone.Identification;
 
 import static denominator.CredentialsConfiguration.anonymous;
 import static denominator.CredentialsConfiguration.credentials;
@@ -31,7 +30,7 @@ public class Route53ProviderTest {
   @Test
   public void testRoute53Metadata() {
     assertThat(PROVIDER.name()).isEqualTo("route53");
-    assertThat(PROVIDER.zoneIdentification()).isEqualTo(Identification.QUALIFIED);
+    assertThat(PROVIDER.supportsDuplicateZoneNames()).isTrue();
     assertThat(PROVIDER.credentialTypeToParameterNames())
         .containsEntry("accessKey", Arrays.asList("accessKey", "secretKey"))
         .containsEntry("session", Arrays.asList("accessKey", "secretKey", "sessionToken"));

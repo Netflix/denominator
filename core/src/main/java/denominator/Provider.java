@@ -6,7 +6,6 @@ import java.util.Set;
 
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
-import denominator.model.Zone.Identification;
 
 /**
  * Metadata about a provider of DNS services.
@@ -46,13 +45,6 @@ public interface Provider {
   String url();
 
   /**
-   * Metadata about zone identifiers and uniqueness.
-   *
-   * @since 4.5
-   */
-  Identification zoneIdentification();
-
-  /**
    * The set of basic {@link ResourceRecordSet#type() record types} that are supported by {@link
    * ResourceRecordSetApi} commands. <br> For example:
    *
@@ -78,10 +70,8 @@ public interface Provider {
   Map<String, Collection<String>> profileToRecordTypes();
 
   /**
-   * @deprecated Use {@link #zoneIdentification()}. {@link denominator.model.Zone.Identification#QUALIFIED
-   * Qualified} indicates duplicate zones are supported. This will be removed in version 5.
+   * Zones have {@link Zone#qualifier()} set, as duplicate zones can exist with the same name.
    */
-  @Deprecated
   boolean supportsDuplicateZoneNames();
 
   /**

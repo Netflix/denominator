@@ -12,7 +12,6 @@ import dagger.ObjectGraph;
 import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.Provider;
-import denominator.model.Zone.Identification;
 
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
@@ -30,7 +29,7 @@ public class DynECTProviderTest {
   @Test
   public void testDynECTMetadata() {
     assertThat(PROVIDER.name()).isEqualTo("dynect");
-    assertThat(PROVIDER.zoneIdentification()).isEqualTo(Identification.NAME);
+    assertThat(PROVIDER.supportsDuplicateZoneNames()).isFalse();
     assertThat(PROVIDER.credentialTypeToParameterNames())
         .containsEntry("password", Arrays.asList("customer", "username", "password"));
   }
