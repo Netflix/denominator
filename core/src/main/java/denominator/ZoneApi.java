@@ -15,8 +15,7 @@ public interface ZoneApi extends Iterable<Zone> {
 
   /**
    * Returns a potentially empty iterator of zones with the supplied {@link Zone#name()}. This can
-   * only have multiple results when {@link Provider#zoneIdentification() zone identification} is
-   * {@link denominator.model.Zone.Identification#QUALIFIED qualified}.
+   * only have multiple results when {@link Provider#supportsDuplicateZoneNames()}.
    *
    * @since 4.5
    */

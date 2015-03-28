@@ -60,15 +60,15 @@ public class DenominatorTest {
   public void listsAllProvidersWithCredentials() {
     assertThat(ListProviders.providerAndCredentialsTable())
         .isEqualTo(Util.join('\n',
-                             "provider   url                                                 zoneIds   credentialType credentialArgs",
-                             "clouddns   https://identity.api.rackspacecloud.com/v2.0        opaque    password       username password",
-                             "clouddns   https://identity.api.rackspacecloud.com/v2.0        opaque    apiKey         username apiKey",
-                             "designate  http://localhost:5000/v2.0                          opaque    password       tenantId username password",
-                             "dynect     https://api2.dynect.net/REST                        name      password       customer username password",
-                             "mock       mem:mock                                            name           ",
-                             "route53    https://route53.amazonaws.com                       qualified accessKey      accessKey secretKey",
-                             "route53    https://route53.amazonaws.com                       qualified session        accessKey secretKey sessionToken",
-                             "ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 name      password       username password",
+                             "provider   url                                                 duplicateZones credentialType credentialArgs",
+                             "clouddns   https://identity.api.rackspacecloud.com/v2.0        false          password       username password",
+                             "clouddns   https://identity.api.rackspacecloud.com/v2.0        false          apiKey         username apiKey",
+                             "designate  http://localhost:5000/v2.0                          false          password       tenantId username password",
+                             "dynect     https://api2.dynect.net/REST                        false          password       customer username password",
+                             "mock       mem:mock                                            false          ",
+                             "route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey",
+                             "route53    https://route53.amazonaws.com                       true           session        accessKey secretKey sessionToken",
+                             "ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 false          password       username password",
                              ""));
   }
 

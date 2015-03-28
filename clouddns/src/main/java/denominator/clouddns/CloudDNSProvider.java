@@ -24,8 +24,6 @@ import denominator.config.GeoUnsupported;
 import denominator.config.NothingToClose;
 import denominator.config.OnlyBasicResourceRecordSets;
 import denominator.config.WeightedUnsupported;
-import denominator.model.Zone;
-import denominator.model.Zone.Identification;
 import feign.Feign;
 import feign.Logger;
 import feign.Target.EmptyTarget;
@@ -50,11 +48,6 @@ public class CloudDNSProvider extends BasicProvider {
   @Override
   public String url() {
     return url;
-  }
-
-  @Override
-  public Identification zoneIdentification() {
-    return Identification.OPAQUE;
   }
 
   // http://docs.rackspace.com/cdns/api/v1.0/cdns-devguide/content/supported_record_types.htm

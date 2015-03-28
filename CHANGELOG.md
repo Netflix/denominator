@@ -3,10 +3,8 @@
 * Adds email and ttl to CLI zone list output
 * Adds `ZoneApi.iterateByName()` to support lookups
 * Adds `-n` parameter to CLI zone list
-* Refines zone identifiers and handling of zones with the same name
-  * Adds `Zone.qualifier()` in support duplicate zones
-  * Deprecates `supportsDuplicateZoneNames()` in favor of `Provider.zoneIdentification()` in `NAME`, `OPAQUE` and `QUALIFIED`
-  * Deprecates `Zone.idOrName()` as `Zone.id()` cannot be null
+* `supportsDuplicateZoneNames()` means `Zone.qualifier()` is present
+* Deprecates `Zone.idOrName()` as `Zone.id()` cannot be null
 * Documents third-party provider process
 * Adds example server
 * Enforces source compatibility with animal-sniffer
