@@ -33,6 +33,11 @@ public final class DynECTZoneApi implements denominator.ZoneApi {
       public Zone next() {
         return fromSOA(delegate.next());
       }
+
+      @Override
+      public void remove() {
+        throw new UnsupportedOperationException();
+      }
     };
   }
 
