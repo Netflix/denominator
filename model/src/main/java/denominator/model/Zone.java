@@ -1,7 +1,5 @@
 package denominator.model;
 
-import denominator.model.rdata.SOAData;
-
 import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.equal;
@@ -13,42 +11,6 @@ import static denominator.common.Util.equal;
  * @since 1.2 See <a href="http://www.ietf.org/rfc/rfc1035.txt">RFC 1035</a>
  */
 public class Zone {
-
-  /**
-   * Metadata about how zones are identified within the scope of a connection to a provider.
-   *
-   * <p/>For example {@link denominator.model.Zone.Identification#NAME} means you can safely assume
-   * a zone's id is its name.
-   *
-   * <pre>
-   * String zoneId;
-   * if (mgr.provider().zoneIdentification() == NAME) {
-   *    zoneId = zoneName;
-   * } else {
-   *    zoneId = mgr.api().zones().iterateByName(zoneName).next().id();
-   * }
-   * </pre>
-   *
-   * @since 4.5
-   */
-  public enum Identification {
-    /**
-     * Only one zone allowed with the same name, and it is {@link Zone#id() identified} by {@link
-     * Zone#name() name}.
-     */
-    NAME,
-    /**
-     * Only one zone allowed with the same name, but its {@link Zone#id() identifier} is opaque.
-     * <p/> Note that a zone with the name name may have different identifiers over time.
-     */
-    OPAQUE,
-    /**
-     * Multiple zones are allowed with the same name, and each have a {@link Zone#qualifier()
-     * user-defined qualifier}. Each zone's {@link Zone#id() identifier} is opaque. <p/> Note that a
-     * zone with the name name may have different identifiers over time.
-     */
-    QUALIFIED;
-  }
 
   private final String name;
   private final String qualifier;
@@ -77,7 +39,7 @@ public class Zone {
 
   /**
    * A user-defined unique string that differentiates zones with the same name. Only supported when
-   * the {@code denominator.Provider#zoneIdentification()} is {@link denominator.model.Zone.Identification#QUALIFIED}.
+   * the {@code denominator.Provider#supportsDuplicateZoneNames()}.
    *
    * @return qualifier or null if the provider doesn't support multiple zones with the same name.
    * @since 4.5
@@ -93,8 +55,6 @@ public class Zone {
    * <p/>Note that this is not used in {@link #hashCode()} or {@link #equals(Object)}, as it may
    * change over time.
    *
-   * @return identifier based on {@code denominator.Provider#zoneIdentification()}.
-   * @see denominator.model.Zone.Identification
    * @since 4.5
    */
   public String id() {

@@ -3,7 +3,6 @@ package denominator.mock;
 import org.junit.Test;
 
 import denominator.Provider;
-import denominator.model.Zone.Identification;
 
 import static denominator.Denominator.create;
 import static denominator.Providers.list;
@@ -16,7 +15,7 @@ public class MockProviderTest {
   @Test
   public void testMockMetadata() {
     assertThat(PROVIDER.name()).isEqualTo("mock");
-    assertThat(PROVIDER.zoneIdentification()).isEqualTo(Identification.NAME);
+    assertThat(PROVIDER.supportsDuplicateZoneNames()).isFalse();
     assertThat(PROVIDER.credentialTypeToParameterNames()).isEmpty();
   }
 

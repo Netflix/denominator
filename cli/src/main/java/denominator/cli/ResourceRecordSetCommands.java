@@ -39,7 +39,7 @@ import static java.lang.String.format;
 
 class ResourceRecordSetCommands {
 
-  static enum ResourceRecordSetToString implements Function<ResourceRecordSet<?>, String> {
+  enum ResourceRecordSetToString implements Function<ResourceRecordSet<?>, String> {
     INSTANCE;
 
     @Override
@@ -433,8 +433,7 @@ class ResourceRecordSetCommands {
 
         @Override
         public String next() {
-          mgr.api().basicRecordSetsInZone(id(mgr, zoneIdOrName))
-              .deleteByNameAndType(name, type);
+          mgr.api().basicRecordSetsInZone(id(mgr, zoneIdOrName)).deleteByNameAndType(name, type);
           done = true;
           return ";; ok";
         }

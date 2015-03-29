@@ -12,7 +12,6 @@ import com.google.common.collect.ImmutableSortedSet;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
 import com.google.common.io.Files;
-import com.google.common.net.InternetDomainName;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.InstanceCreator;
@@ -61,8 +60,9 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
+import denominator.dynect.DynECTProvider;
 import denominator.model.Zone;
-import denominator.model.Zone.Identification;
+import denominator.ultradns.UltraDNSProvider;
 import feign.Logger;
 import feign.Logger.Level;
 import io.airlift.airline.Cli;
@@ -173,14 +173,17 @@ public class Denominator {
   }
 
   static String id(DNSApiManager mgr, String zoneIdOrName) {
-    if (mgr.provider().zoneIdentification() == Identification.NAME) {
+    if (zoneIdOrName.indexOf('.') == -1) { // Assume that ids don't have dots in them!
       return zoneIdOrName;
-    } else if (zoneIdOrName.indexOf('.') != -1 && InternetDomainName.isValid(zoneIdOrName)) {
-      Iterator<Zone> result = mgr.api().zones().iterateByName(zoneIdOrName);
-      checkArgument(result.hasNext(), "zone %s not found", zoneIdOrName);
-      return result.next().id();
     }
-    return zoneIdOrName;
+    // Special-case providers known to use zone names as ids, as this usually saves 1-200ms of
+    // lookups. We can later introduce a flag or other means to help third-party providers.
+    if (mgr.provider() instanceof UltraDNSProvider || mgr.provider() instanceof DynECTProvider) {
+      return zoneIdOrName;
+    }
+    Iterator<Zone> result = mgr.api().zones().iterateByName(zoneIdOrName);
+    checkArgument(result.hasNext(), "zone %s not found", zoneIdOrName);
+    return result.next().id();
   }
 
   @Command(name = "version", description = "output the version of denominator and java runtime in use")
@@ -195,25 +198,22 @@ public class Denominator {
   @Command(name = "providers", description = "List the providers and their metadata ")
   public static class ListProviders implements Runnable {
 
-    final static String table = "%-10s %-51s %-9s %-14s %s%n";
+    final static String table = "%-10s %-51s %-14s %-14s %s%n";
 
     public static String providerAndCredentialsTable() {
       StringBuilder builder = new StringBuilder();
 
-      builder.append(
-          format(table, "provider", "url", "zoneIds", "credentialType", "credentialArgs"));
-      for (Provider provider : ImmutableSortedSet
-          .copyOf(Ordering.usingToString(), Providers.list())) {
-        if (provider.credentialTypeToParameterNames().isEmpty()) {
-          builder.append(format("%-10s %-51s %-14s %n", provider.name(), provider.url(),
-                                provider.zoneIdentification().toString().toLowerCase()));
+      builder.append(format(
+          table, "provider", "url", "duplicateZones", "credentialType", "credentialArgs"));
+      for (Provider p : ImmutableSortedSet.copyOf(Ordering.usingToString(), Providers.list())) {
+        if (p.credentialTypeToParameterNames().isEmpty()) {
+          builder.append(
+              format("%-10s %-51s %-14s %n", p.name(), p.url(), p.supportsDuplicateZoneNames()));
         }
-        for (Entry<String, Collection<String>> entry : provider.credentialTypeToParameterNames()
-            .entrySet()) {
-          String parameters = Joiner.on(' ').join(entry.getValue());
-          builder.append(format(table, provider.name(), provider.url(),
-                                provider.zoneIdentification().toString().toLowerCase(),
-                                entry.getKey(), parameters));
+        for (Entry<String, Collection<String>> e : p.credentialTypeToParameterNames().entrySet()) {
+          String params = Joiner.on(' ').join(e.getValue());
+          builder.append(format(
+              table, p.name(), p.url(), p.supportsDuplicateZoneNames(), e.getKey(), params));
         }
       }
       return builder.toString();

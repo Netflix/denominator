@@ -85,15 +85,14 @@ Different providers connect to different urls and need different credentials.  F
 
 ```bash
 $ denominator providers
-provider   url                                                 zoneIds   credentialType credentialArgs
-clouddns   https://identity.api.rackspacecloud.com/v2.0        opaque    password       username password
-clouddns   https://identity.api.rackspacecloud.com/v2.0        opaque    apiKey         username apiKey
-designate  http://localhost:5000/v2.0                          opaque    password       tenantId username password
-dynect     https://api2.dynect.net/REST                        name      password       customer username password
-mock       mem:mock                                            name           
-route53    https://route53.amazonaws.com                       qualified accessKey      accessKey secretKey
-route53    https://route53.amazonaws.com                       qualified session        accessKey secretKey sessionToken
-ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 name      password       username password
+provider   url                                                 duplicateZones credentialType credentialArgs
+mock       mem:mock                                            false
+clouddns   https://identity.api.rackspacecloud.com/v2.0/       true           apiKey         username apiKey
+designate  http://localhost:5000/v2.0                          true           password       tenantId username password
+dynect     https://api2.dynect.net/REST                        false          password       customer username password
+route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey
+route53    https://route53.amazonaws.com                       true           session        accessKey secretKey sessionToken
+ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 false          password       username password
 ```
 
 If the credentialType column is blank it needs no credentials.  Otherwise, credentialArgs describes what you need to pass.  Say for example, you were using `ultradns`.  
@@ -110,8 +109,7 @@ If you need to connect to an alternate url, pass the `-u` parameter:
 ./denominator -p ultradns -u https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01-BETA -c myusername -c mypassword zone list
 ```
 
-The `zoneIds` column indicates how the provider addresses zones. For example, `name` means you simply
-pass the zone name (like `denominator.io.`) to commands that need it. This topic is further described in the `Zone Identifiers` section to follow.
+The `duplicateZones` column indicates that zone list output will include a qualifier, which differentiates zones with the same name.
 
 ### Zone
 `zone list` returns the zones in your account.  Ex.
@@ -131,7 +129,7 @@ email.netflix.com.                                 A     3600   69.53.237.168
 --snip--
 ```
 
-### Zone ID
+### Zone Id
 The first column in the zone list is the `id`. This can be used to disambiguate zones with the same
 name, or to improve performance by eliminating a network call. If you wish to use a zone's
 identifier, simply pass it instead of the zone name in record commands.
