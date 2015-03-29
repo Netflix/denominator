@@ -28,8 +28,6 @@ class ListHostedZonesResponseHandler extends DefaultHandler
       zone.name = currentText.toString().trim();
     } else if (qName.equals("Id")) {
       zone.id = currentText.toString().trim().replace("/hostedzone/", "");
-    } else if (qName.equals("CallerReference")) {
-      zone.callerReference = currentText.toString().trim();
     } else if (qName.equals("HostedZone")) {
       zones.add(zone);
       zone = new HostedZone();
