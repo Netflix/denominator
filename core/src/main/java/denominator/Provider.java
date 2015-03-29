@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.Set;
 
 import denominator.model.ResourceRecordSet;
-import denominator.model.Zone;
 
 /**
  * Metadata about a provider of DNS services.
@@ -70,7 +69,7 @@ public interface Provider {
   Map<String, Collection<String>> profileToRecordTypes();
 
   /**
-   * Zones have {@link Zone#qualifier()} set, as duplicate zones can exist with the same name.
+   * Duplicate zones can exist with the same name.
    */
   boolean supportsDuplicateZoneNames();
 

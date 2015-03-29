@@ -58,7 +58,6 @@ public class Route53ZoneApiMockTest {
 
     assertThat(domains.next())
         .hasName("denominator.io.")
-        .hasQualifier("denomination")
         .hasId("Z1PA6795UKMFR9")
         .hasEmail("awsdns-hostmaster.amazon.com.")
         .hasTtl(86400);
@@ -153,9 +152,9 @@ public class Route53ZoneApiMockTest {
 
     ZoneApi api = server.connect().api().zones();
     assertThat(api.iterateByName("denominator.io.")).containsExactly(
-        Zone.builder().name("denominator.io.").qualifier("Foo").id("Z2ZEEJCUZCVG56")
+        Zone.builder().name("denominator.io.").id("Z2ZEEJCUZCVG56")
             .email("awsdns-hostmaster.amazon.com.").ttl(86400).build(),
-        Zone.builder().name("denominator.io.").qualifier("Bar").id("Z3OQLQGABCU3T")
+        Zone.builder().name("denominator.io.").id("Z3OQLQGABCU3T")
             .email("awsdns-hostmaster.amazon.com.").ttl(86400).build()
     );
 

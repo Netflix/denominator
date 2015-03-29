@@ -51,7 +51,6 @@ public final class Route53ZoneApi implements denominator.ZoneApi {
     SOAData soaData = (SOAData) soa.get(0).records().get(0);
     return Zone.builder()
         .name(next.name)
-        .qualifier(next.callerReference)
         .id(next.id)
         .ttl(soaData.minimum())
         .email(soaData.rname()).build();

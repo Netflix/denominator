@@ -28,7 +28,7 @@ public class DynECTZoneApiMockTest {
     ZoneApi api = server.connect().api().zones();
 
     assertThat(api.iterator()).containsExactly(
-        Zone.builder().name("denominator.io").id("denominator.io.").email("fake@denominator.io.")
+        Zone.builder().name("denominator.io").id("denominator.io").email("fake@denominator.io.")
             .ttl(1800).build()
     );
 

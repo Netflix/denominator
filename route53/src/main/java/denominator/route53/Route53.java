@@ -47,7 +47,6 @@ interface Route53 {
 
     String id;
     String name;
-    String callerReference;
   }
 
   class HostedZoneList extends ArrayList<HostedZone> {
