@@ -4,7 +4,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -27,6 +26,7 @@ import static denominator.CredentialsConfiguration.anonymous;
 import static denominator.CredentialsConfiguration.checkValidForProvider;
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Denominator.create;
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DynamicCredentialsProviderExampleTest {
@@ -68,9 +68,9 @@ public class DynamicCredentialsProviderExampleTest {
     DNSApiManager mgr = create(new DynamicCredentialsProvider());
     ZoneApi zones = mgr.api().zones();
     assertThat(zones.iterator())
-        .containsExactly(Zone.builder().name("acme").qualifier("wily").email("coyote").build());
+        .containsExactly(Zone.builder().name("acme").email("coyote").build());
     assertThat(zones.iterator())
-        .containsExactly(Zone.builder().name("acme").qualifier("road").email("runner").build());
+        .containsExactly(Zone.builder().name("acme").email("runner").build());
 
     // now, if the supplier doesn't supply a set of credentials, we should
     // get a correct message
@@ -118,9 +118,7 @@ public class DynamicCredentialsProviderExampleTest {
       CustomerUsernamePassword cup = creds.get();
       // normally, the credentials object would be used to invoke a remote
       // command. in this case, we don't and say we did :)
-      return Arrays.asList(
-          Zone.builder().name(cup.customer).qualifier(cup.username).email(cup.password).build())
-          .iterator();
+      return asList(Zone.builder().name(cup.customer).email(cup.password).build()).iterator();
     }
 
     @Override
@@ -145,7 +143,7 @@ public class DynamicCredentialsProviderExampleTest {
     @Override
     public Map<String, Collection<String>> credentialTypeToParameterNames() {
       Map<String, Collection<String>> options = new LinkedHashMap<String, Collection<String>>();
-      options.put("username", Arrays.asList("customer", "username", "password"));
+      options.put("username", asList("customer", "username", "password"));
       return options;
     }
 
@@ -158,9 +156,9 @@ public class DynamicCredentialsProviderExampleTest {
     static class Module {
 
       final AtomicInteger credentialIndex = new AtomicInteger();
-      final List<List<String>> credentials = Arrays.asList(
-          Arrays.asList("acme", "wily", "coyote"),
-          Arrays.asList("acme", "road", "runner")
+      final List<List<String>> credentials = asList(
+          asList("acme", "wily", "coyote"),
+          asList("acme", "road", "runner")
       );
 
       /**

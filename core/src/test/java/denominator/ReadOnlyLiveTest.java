@@ -26,12 +26,9 @@ public class ReadOnlyLiveTest {
     assumeTrue("No zones to test", zones.hasNext());
     Zone zone = zones.next();
     if (manager.provider().supportsDuplicateZoneNames()) {
-      assertThat(zone.qualifier()).isNotNull();
       assertThat(zone.id())
           .isNotNull()
           .isNotEqualTo(zone.name());
-    } else {
-      assertThat(zone).hasNoQualifier();
     }
   }
 

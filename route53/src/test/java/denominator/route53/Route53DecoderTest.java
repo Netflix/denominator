@@ -52,9 +52,9 @@ public class Route53DecoderTest {
         + "  <MaxItems>10</MaxItems>\n"
         + "</ListHostedZonesResponse>"), HostedZoneList.class);
 
-    assertThat(result).extracting("name", "callerReference", "id").containsExactly(
-        tuple("example.com.", "a_unique_reference", "Z21DW1QVGID6NG"),
-        tuple("example2.com.", "a_unique_reference2", "Z2682N5HXP0BZ4")
+    assertThat(result).extracting("name", "id").containsExactly(
+        tuple("example.com.", "Z21DW1QVGID6NG"),
+        tuple("example2.com.", "Z2682N5HXP0BZ4")
     );
 
     assertThat(result.next).isEqualTo("Z333333YYYYYYY");
