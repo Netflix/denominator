@@ -49,11 +49,7 @@ public final class Route53ZoneApi implements denominator.ZoneApi {
     checkState(!soa.isEmpty(), "SOA record for zone %s %s was not present", next.id, next.name);
 
     SOAData soaData = (SOAData) soa.get(0).records().get(0);
-    return Zone.builder()
-        .name(next.name)
-        .id(next.id)
-        .ttl(soaData.minimum())
-        .email(soaData.rname()).build();
+    return Zone.create(next.name, next.id, soaData.rname());
   }
 
   /**

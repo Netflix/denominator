@@ -67,8 +67,7 @@ public class DesignateTest {
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
     assertThat(mockApi().domains()).containsExactly(
-        Zone.builder().name("denominator.io.").id(domainId).email("admin@denominator.io").ttl(3600)
-            .build()
+        Zone.create("denominator.io.", domainId, "admin@denominator.io")
     );
 
     server.assertAuthRequest();

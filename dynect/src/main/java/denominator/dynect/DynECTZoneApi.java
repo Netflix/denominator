@@ -59,10 +59,6 @@ public final class DynECTZoneApi implements denominator.ZoneApi {
     checkState(soa.hasNext(), "SOA record for zone %s was not present", name);
 
     SOAData soaData = (SOAData) soa.next().records().get(0);
-    return Zone.builder()
-        .name(name)
-        .id(name)
-        .ttl(soaData.minimum())
-        .email(soaData.rname()).build();
+    return Zone.create(name, name, soaData.rname());
   }
 }

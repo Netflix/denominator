@@ -80,8 +80,7 @@ public class RackspaceApisTest {
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
     assertThat(mockApi().domainsByName("denominator.io")).containsExactly(
-        Zone.builder().name("denominator.io").id("1234").email("admin@denominator.io").ttl(86400)
-            .build()
+        Zone.create("denominator.io", "1234", "admin@denominator.io")
     );
 
     server.assertAuthRequest();
@@ -280,9 +279,6 @@ public class RackspaceApisTest {
   static String
       domainsResponse =
       "{\"domains\":[{\"name\":\"denominator.io\",\"id\":1234,\"accountId\":123123,\"emailAddress\":\"admin@denominator.io\",\"updated\":\"2013-09-02T19:46:56.000+0000\",\"created\":\"2013-09-02T19:45:51.000+0000\"}],\"totalEntries\":1}";
-  static String
-      domainResponse =
-      "{\"name\":\"denominator.io\",\"id\":1234,\"accountId\":123123,\"ttl\": 3600,\"emailAddress\":\"admin@denominator.io\"}";
   // NOTE records are allowed to be out of order by type
   static String
       recordsResponse =

@@ -25,8 +25,7 @@ public class DesignateZoneApiMockTest {
     ZoneApi api = server.connect().api().zones();
 
     assertThat(api.iterator()).containsExactly(
-        Zone.builder().name("denominator.io.").id(domainId).email("admin@denominator.io").ttl(3600)
-            .build()
+        Zone.create("denominator.io.", domainId, "admin@denominator.io")
     );
 
     server.assertAuthRequest();
@@ -53,8 +52,7 @@ public class DesignateZoneApiMockTest {
     ZoneApi api = server.connect().api().zones();
 
     assertThat(api.iterateByName("denominator.io.")).containsExactly(
-        Zone.builder().name("denominator.io.").id(domainId).email("admin@denominator.io").ttl(3600)
-            .build()
+        Zone.create("denominator.io.", domainId, "admin@denominator.io")
     );
 
     server.assertAuthRequest();
