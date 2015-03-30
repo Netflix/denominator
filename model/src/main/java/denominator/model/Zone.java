@@ -1,6 +1,5 @@
 package denominator.model;
 
-import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.equal;
 
@@ -15,14 +14,11 @@ public class Zone {
   private final String name;
   private final String id;
   private final String email;
-  private final int ttl;
 
-  Zone(String name, String id, String email, int ttl) {
+  Zone(String name, String id, String email) {
     this.name = checkNotNull(name, "name");
     this.id = id;
     this.email = checkNotNull(email, "email of %s", name);
-    checkArgument(ttl >= 0, "Invalid ttl value: %s, must be 0-%s", ttl, Integer.MAX_VALUE);
-    this.ttl = ttl;
   }
 
   /**
@@ -56,17 +52,6 @@ public class Zone {
   }
 
   /**
-   * Default cache expiration of all resource records that don't declare an {@link
-   * denominator.model.Zone#ttl() override}.
-   *
-   * @see denominator.model.rdata.SOAData#minimum()
-   * @since 4.5
-   */
-  public int ttl() {
-    return ttl;
-  }
-
-  /**
    * @deprecated only use {@link #id()} when performing operations against a zone. This will be
    * removed in version 5.
    */
@@ -81,8 +66,7 @@ public class Zone {
       Zone other = (Zone) obj;
       return name().equals(other.name())
              && equal(id(), other.id())
-             && email().equals(other.email())
-             && ttl() == other.ttl();
+             && email().equals(other.email());
     }
     return false;
   }
@@ -93,7 +77,6 @@ public class Zone {
     result = 31 * result + name().hashCode();
     result = 31 * result + (id() != null ? id().hashCode() : 0);
     result = 31 * result + email().hashCode();
-    result = 31 * result + ttl();
     return result;
   }
 
@@ -106,7 +89,6 @@ public class Zone {
       builder.append(", ").append("id=").append(id());
     }
     builder.append(", ").append("email=").append(email());
-    builder.append(", ").append("ttl=").append(ttl());
     builder.append("]");
     return builder.toString();
   }
@@ -115,7 +97,7 @@ public class Zone {
    * Represent a zone when its {@link #id() id} is its name.
    *
    * @param name corresponds to {@link #name()} and {@link #id()}
-   * @deprecated Use {@link #builder()}. This will be removed in version 5.
+   * @deprecated Use {@link #create(String, String, String)}. This will be removed in version 5.
    */
   @Deprecated
   public static Zone create(String name) {
@@ -123,69 +105,25 @@ public class Zone {
   }
 
   /**
-   * Represent a zone with a fake email and defaul ttl of 86400.
+   * Represent a zone with a fake email.
    *
    * @param name corresponds to {@link #name()}
-   * @param id   corresponds to {@link #id()}
-   * @deprecated Use {@link #builder()}. This will be removed in version 5.
+   * @param id   nullable, corresponds to {@link #id()}
+   * @deprecated Use {@link #create(String, String, String)}. This will be removed in version 5.
    */
   @Deprecated
   public static Zone create(String name, String id) {
-    return new Zone(name, id, "fake@" + name, 86400);
-  }
-
-  public static Builder builder() {
-    return new Builder();
+    return new Zone(name, id, "fake@" + name);
   }
 
   /**
-   * @since 4.5
+   * Represent a zone with a fake email.
+   *
+   * @param name  corresponds to {@link #name()}
+   * @param id    nullable, corresponds to {@link #id()}
+   * @param email corresponds to {@link #email()}
    */
-  public static final class Builder {
-
-    private String name;
-    private String id;
-    private int ttl = 86400;
-    private String email;
-
-    /**
-     * @see Zone#name()
-     */
-    public Builder name(String name) {
-      this.name = name;
-      return this;
-    }
-
-    /**
-     * Can be null for input objects.
-     *
-     * @see Zone#id()
-     */
-    public Builder id(String id) {
-      this.id = id;
-      return this;
-    }
-
-    /**
-     * @see Zone#email()
-     */
-    public Builder email(String email) {
-      this.email = email;
-      return this;
-    }
-
-    /**
-     * Overrides default of {@code 86400}.
-     *
-     * @see Zone#ttl()
-     */
-    public Builder ttl(Integer ttl) {
-      this.ttl = ttl;
-      return this;
-    }
-
-    public Zone build() {
-      return new Zone(name, id, email, ttl);
-    }
+  public static Zone create(String name, String id, String email) {
+    return new Zone(name, id, email);
   }
 }

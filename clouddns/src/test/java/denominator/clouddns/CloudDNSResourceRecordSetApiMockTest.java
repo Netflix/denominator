@@ -13,7 +13,7 @@ import denominator.model.rdata.AData;
 
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.clouddns.RackspaceApisTest.domainId;
-import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
 public class CloudDNSResourceRecordSetApiMockTest {
