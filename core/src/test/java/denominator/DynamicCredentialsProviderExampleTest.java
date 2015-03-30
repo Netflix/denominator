@@ -68,9 +68,9 @@ public class DynamicCredentialsProviderExampleTest {
     DNSApiManager mgr = create(new DynamicCredentialsProvider());
     ZoneApi zones = mgr.api().zones();
     assertThat(zones.iterator())
-        .containsExactly(Zone.builder().name("acme").email("coyote").build());
+        .containsExactly(Zone.create("acme", "wily", "coyote"));
     assertThat(zones.iterator())
-        .containsExactly(Zone.builder().name("acme").email("runner").build());
+        .containsExactly(Zone.create("acme", "road", "runner"));
 
     // now, if the supplier doesn't supply a set of credentials, we should
     // get a correct message
@@ -118,7 +118,7 @@ public class DynamicCredentialsProviderExampleTest {
       CustomerUsernamePassword cup = creds.get();
       // normally, the credentials object would be used to invoke a remote
       // command. in this case, we don't and say we did :)
-      return asList(Zone.builder().name(cup.customer).email(cup.password).build()).iterator();
+      return asList(Zone.create(cup.customer, cup.username, cup.password)).iterator();
     }
 
     @Override

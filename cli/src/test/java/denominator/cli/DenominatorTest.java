@@ -75,7 +75,7 @@ public class DenominatorTest {
   @Test // denominator -p mock zone list
   public void testZoneList() {
     assertThat(new ZoneList().doRun(mgr)).containsExactly(
-        "denominator.io.          denominator.io.                      admin.denominator.io.                86400"
+        "denominator.io.          denominator.io.                      admin.denominator.io."
     );
   }
 

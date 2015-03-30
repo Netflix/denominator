@@ -53,9 +53,6 @@ class RackspaceApis {
     @RequestLine("GET /domains?name={name}")
     ListWithNext<Zone> domainsByName(@Param("name") String name);
 
-    @RequestLine("GET")
-    ListWithNext<Zone> domains(URI href);
-
     @RequestLine("GET /domains")
     ListWithNext<Zone> domains();
 
