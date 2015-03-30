@@ -19,12 +19,6 @@ public class ZoneAssert extends AbstractAssert<ZoneAssert, Zone> {
     return this;
   }
 
-  public ZoneAssert hasQualifier(String expected) {
-    isNotNull();
-    objects.assertEqual(info, actual.qualifier(), expected);
-    return this;
-  }
-
   public ZoneAssert hasId(String expected) {
     isNotNull();
     objects.assertEqual(info, actual.id(), expected);
@@ -40,12 +34,6 @@ public class ZoneAssert extends AbstractAssert<ZoneAssert, Zone> {
   public ZoneAssert hasTtl(Integer expected) {
     isNotNull();
     objects.assertEqual(info, actual.ttl(), expected);
-    return this;
-  }
-
-  public ZoneAssert hasNoQualifier() {
-    isNotNull();
-    objects.assertNull(info, actual.qualifier());
     return this;
   }
 }

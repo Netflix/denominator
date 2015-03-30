@@ -13,14 +13,12 @@ import static denominator.common.Util.equal;
 public class Zone {
 
   private final String name;
-  private final String qualifier;
   private final String id;
   private final String email;
   private final int ttl;
 
-  Zone(String name, String qualifier, String id, String email, int ttl) {
+  Zone(String name, String id, String email, int ttl) {
     this.name = checkNotNull(name, "name");
-    this.qualifier = qualifier;
     this.id = id;
     this.email = checkNotNull(email, "email of %s", name);
     checkArgument(ttl >= 0, "Invalid ttl value: %s, must be 0-%s", ttl, Integer.MAX_VALUE);
@@ -38,22 +36,8 @@ public class Zone {
   }
 
   /**
-   * A user-defined unique string that differentiates zones with the same name. Only supported when
-   * the {@code denominator.Provider#supportsDuplicateZoneNames()}.
-   *
-   * @return qualifier or null if the provider doesn't support multiple zones with the same name.
-   * @since 4.5
-   */
-  public String qualifier() {
-    return qualifier;
-  }
-
-  /**
    * The potentially transient and opaque string that uniquely identifies the zone. This may be null
    * when used as an input object.
-   *
-   * <p/>Note that this is not used in {@link #hashCode()} or {@link #equals(Object)}, as it may
-   * change over time.
    *
    * @since 4.5
    */
@@ -96,7 +80,7 @@ public class Zone {
     if (obj instanceof Zone) {
       Zone other = (Zone) obj;
       return name().equals(other.name())
-             && equal(qualifier(), other.qualifier())
+             && equal(id(), other.id())
              && email().equals(other.email())
              && ttl() == other.ttl();
     }
@@ -107,7 +91,7 @@ public class Zone {
   public int hashCode() {
     int result = 17;
     result = 31 * result + name().hashCode();
-    result = 31 * result + (qualifier() != null ? qualifier().hashCode() : 0);
+    result = 31 * result + (id() != null ? id().hashCode() : 0);
     result = 31 * result + email().hashCode();
     result = 31 * result + ttl();
     return result;
@@ -118,9 +102,6 @@ public class Zone {
     StringBuilder builder = new StringBuilder();
     builder.append("Zone [");
     builder.append("name=").append(name());
-    if (qualifier() != null) {
-      builder.append(", ").append("qualifier=").append(qualifier());
-    }
     if (!name().equals(id())) {
       builder.append(", ").append("id=").append(id());
     }
@@ -131,8 +112,7 @@ public class Zone {
   }
 
   /**
-   * Represent a zone without a {@link #qualifier() qualifier} when its {@link #id() id} is its
-   * name.
+   * Represent a zone when its {@link #id() id} is its name.
    *
    * @param name corresponds to {@link #name()} and {@link #id()}
    * @deprecated Use {@link #builder()}. This will be removed in version 5.
@@ -143,7 +123,7 @@ public class Zone {
   }
 
   /**
-   * Represent a zone without a {@link #qualifier() qualifier}.
+   * Represent a zone with a fake email and defaul ttl of 86400.
    *
    * @param name corresponds to {@link #name()}
    * @param id   corresponds to {@link #id()}
@@ -151,7 +131,7 @@ public class Zone {
    */
   @Deprecated
   public static Zone create(String name, String id) {
-    return new Zone(name, null, id, "fake@" + name, 86400);
+    return new Zone(name, id, "fake@" + name, 86400);
   }
 
   public static Builder builder() {
@@ -164,7 +144,6 @@ public class Zone {
   public static final class Builder {
 
     private String name;
-    private String qualifier;
     private String id;
     private int ttl = 86400;
     private String email;
@@ -174,14 +153,6 @@ public class Zone {
      */
     public Builder name(String name) {
       this.name = name;
-      return this;
-    }
-
-    /**
-     * @see Zone#qualifier()
-     */
-    public Builder qualifier(String qualifier) {
-      this.qualifier = qualifier;
       return this;
     }
 
@@ -214,7 +185,7 @@ public class Zone {
     }
 
     public Zone build() {
-      return new Zone(name, qualifier, id, email, ttl);
+      return new Zone(name, id, email, ttl);
     }
   }
 }
