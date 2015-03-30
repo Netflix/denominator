@@ -1,6 +1,5 @@
 ### Version 4.5
-* Adds `Zone.email()`, `Zone.ttl()` and `Zone.builder()`
-* Adds email and ttl to CLI zone list output
+* Adds `Zone.email()` and displays it in CLI zone list output
 * Adds `ZoneApi.iterateByName()` to support lookups
 * Adds `-n` parameter to CLI zone list
 * Deprecates `Zone.idOrName()` as `Zone.id()` cannot be null

@@ -30,10 +30,4 @@ public class ZoneAssert extends AbstractAssert<ZoneAssert, Zone> {
     objects.assertEqual(info, actual.email(), expected);
     return this;
   }
-
-  public ZoneAssert hasTtl(Integer expected) {
-    isNotNull();
-    objects.assertEqual(info, actual.ttl(), expected);
-    return this;
-  }
 }
