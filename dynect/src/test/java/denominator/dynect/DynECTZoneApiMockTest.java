@@ -28,7 +28,7 @@ public class DynECTZoneApiMockTest {
     ZoneApi api = server.connect().api().zones();
 
     assertThat(api.iterator()).containsExactly(
-        Zone.create("denominator.io", "denominator.io","fake@denominator.io.")
+        Zone.create("denominator.io", "denominator.io", 3600, "fake@denominator.io.")
     );
 
     server.assertSessionRequest();
@@ -58,7 +58,7 @@ public class DynECTZoneApiMockTest {
     ZoneApi api = server.connect().api().zones();
 
     assertThat(api.iterateByName("denominator.io.")).containsExactly(
-        Zone.create("denominator.io.", "denominator.io.", "fake@denominator.io.")
+        Zone.create("denominator.io.", "denominator.io.", 3600, "fake@denominator.io.")
     );
 
     server.assertSessionRequest();

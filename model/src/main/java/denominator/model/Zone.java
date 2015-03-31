@@ -1,5 +1,6 @@
 package denominator.model;
 
+import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.equal;
 
@@ -11,14 +12,27 @@ import static denominator.common.Util.equal;
  */
 public class Zone {
 
-  private final String name;
   private final String id;
+  private final String name;
+  private final int ttl;
   private final String email;
 
-  Zone(String name, String id, String email) {
-    this.name = checkNotNull(name, "name");
+  Zone(String id, String name, int ttl, String email) {
     this.id = id;
+    this.name = checkNotNull(name, "name");
     this.email = checkNotNull(email, "email of %s", name);
+    checkArgument(ttl >= 0, "Invalid ttl value: %s, must be 0-%s", ttl, Integer.MAX_VALUE);
+    this.ttl = ttl;
+  }
+
+  /**
+   * The potentially transient and opaque string that uniquely identifies the zone. This may be null
+   * when used as an input object.
+   *
+   * @since 4.5
+   */
+  public String id() {
+    return id;
   }
 
   /**
@@ -32,13 +46,16 @@ public class Zone {
   }
 
   /**
-   * The potentially transient and opaque string that uniquely identifies the zone. This may be null
-   * when used as an input object.
+   * The {@link ResourceRecordSet#ttl() ttl} of the zone's {@link denominator.model.rdata.SOAData
+   * SOA} record.
+   *
+   * <p/>Caution: Eventhough some providers use this as a default ttl for new records, this is not
+   * always the case.
    *
    * @since 4.5
    */
-  public String id() {
-    return id;
+  public int ttl() {
+    return ttl;
   }
 
   /**
@@ -64,8 +81,9 @@ public class Zone {
   public boolean equals(Object obj) {
     if (obj instanceof Zone) {
       Zone other = (Zone) obj;
-      return name().equals(other.name())
-             && equal(id(), other.id())
+      return equal(id(), other.id())
+             && name().equals(other.name())
+             && ttl() == other.ttl()
              && email().equals(other.email());
     }
     return false;
@@ -74,8 +92,9 @@ public class Zone {
   @Override
   public int hashCode() {
     int result = 17;
-    result = 31 * result + name().hashCode();
     result = 31 * result + (id() != null ? id().hashCode() : 0);
+    result = 31 * result + name().hashCode();
+    result = 31 * result + ttl();
     result = 31 * result + email().hashCode();
     return result;
   }
@@ -84,10 +103,11 @@ public class Zone {
   public String toString() {
     StringBuilder builder = new StringBuilder();
     builder.append("Zone [");
-    builder.append("name=").append(name());
     if (!name().equals(id())) {
-      builder.append(", ").append("id=").append(id());
+      builder.append("id=").append(id()).append(", ");
     }
+    builder.append("name=").append(name());
+    builder.append(", ").append("ttl=").append(ttl());
     builder.append(", ").append("email=").append(email());
     builder.append("]");
     return builder.toString();
@@ -97,7 +117,8 @@ public class Zone {
    * Represent a zone when its {@link #id() id} is its name.
    *
    * @param name corresponds to {@link #name()} and {@link #id()}
-   * @deprecated Use {@link #create(String, String, String)}. This will be removed in version 5.
+   * @deprecated Use {@link #create(String, String, int, String)}. This will be removed in version
+   * 5.
    */
   @Deprecated
   public static Zone create(String name) {
@@ -105,25 +126,25 @@ public class Zone {
   }
 
   /**
-   * Represent a zone with a fake email.
+   * Represent a zone with a fake email and a TTL of 86400.
    *
    * @param name corresponds to {@link #name()}
    * @param id   nullable, corresponds to {@link #id()}
-   * @deprecated Use {@link #create(String, String, String)}. This will be removed in version 5.
+   * @deprecated Use {@link #create(String, String, int, String)}. This will be removed in version
+   * 5.
    */
   @Deprecated
   public static Zone create(String name, String id) {
-    return new Zone(name, id, "fake@" + name);
+    return new Zone(id, name, 86400, "fake@" + name);
   }
 
   /**
-   * Represent a zone with a fake email.
-   *
-   * @param name  corresponds to {@link #name()}
    * @param id    nullable, corresponds to {@link #id()}
+   * @param name  corresponds to {@link #name()}
+   * @param ttl   corresponds to {@link #ttl()}
    * @param email corresponds to {@link #email()}
    */
-  public static Zone create(String name, String id, String email) {
-    return new Zone(name, id, email);
+  public static Zone create(String id, String name, int ttl, String email) {
+    return new Zone(id, name, ttl, email);
   }
 }

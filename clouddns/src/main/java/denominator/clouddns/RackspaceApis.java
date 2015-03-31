@@ -53,11 +53,11 @@ class RackspaceApis {
     @RequestLine("GET /domains?name={name}")
     ListWithNext<Zone> domainsByName(@Param("name") String name);
 
+    @RequestLine("GET")
+    ListWithNext<Zone> domains(URI href);
+
     @RequestLine("GET /domains")
     ListWithNext<Zone> domains();
-
-    @RequestLine("GET /domains/{domainId}?showRecords=false&showSubdomains=false")
-    Zone domain(@Param("domainId") String id);
 
     @RequestLine("GET")
     ListWithNext<Record> records(URI href);

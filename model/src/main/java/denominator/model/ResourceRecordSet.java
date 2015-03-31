@@ -86,8 +86,12 @@ public class ResourceRecordSet<D extends Map<String, Object>> {
   }
 
   /**
-   * the time interval that the resource record may be cached. Zero implies it is not cached. Absent
-   * means default for the zone.
+   * Indicates the time interval that the resource record may be cached. Zero implies it is not
+   * cached. Absent means use whatever the default is.
+   *
+   * <p/>Caution: The concept of a default TTL varies per provider. Some providers use the SOA's
+   * ttl, others an account default by record type, and others are hard-coded. It is best to always
+   * pass ttl explicitly.
    *
    * @return ttl or null.
    * @since 1.3

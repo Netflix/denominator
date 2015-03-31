@@ -21,7 +21,7 @@ public class ReadOnlyLiveTest {
   public DNSApiManager manager;
 
   @Test
-  public void zoneIdentification() {
+  public void supportsDuplicateZoneNames() {
     Iterator<Zone> zones = manager.api().zones().iterator();
     assumeTrue("No zones to test", zones.hasNext());
     Zone zone = zones.next();
@@ -38,6 +38,21 @@ public class ReadOnlyLiveTest {
     assumeTrue("No zones to test", zones.hasNext());
     Zone zone = zones.next();
     assertThat(manager.api().zones().iterateByName(zone.name())).contains(zone);
+  }
+
+  @Test
+  public void zoneTtlIsEqualToSOATtl() {
+    Iterator<Zone> zones = manager.api().zones().iterator();
+    assumeTrue("No zones to test", zones.hasNext());
+    Zone zone = zones.next();
+    ResourceRecordSet<?>
+        soa =
+        manager.api().basicRecordSetsInZone(zone.id()).getByNameAndType(zone.name(), "SOA");
+    assumeTrue("SOA records aren't exposed", soa != null);
+
+    assertThat(zone.ttl())
+        .overridingErrorMessage("zone %s should have the same ttl as soa %s", zone, soa)
+        .isEqualTo(soa.ttl());
   }
 
   @Test

@@ -6,11 +6,9 @@ import java.util.Map;
 import denominator.clouddns.RackspaceApis.CloudDNS;
 import denominator.clouddns.RackspaceApis.Job;
 import denominator.clouddns.RackspaceApis.Record;
-import denominator.model.rdata.AAAAData;
-import denominator.model.rdata.AData;
-import denominator.model.rdata.CNAMEData;
+import denominator.common.Util;
 import denominator.model.rdata.MXData;
-import denominator.model.rdata.NSData;
+import denominator.model.rdata.SOAData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.TXTData;
 import feign.RetryableException;
@@ -39,17 +37,14 @@ final class CloudDNSFunctions {
     }
   }
 
+  /**
+   * Special-cases priority field and the strange and incomplete SOA record.
+   */
   static Map<String, Object> toRDataMap(Record record) {
-    if ("A".equals(record.type)) {
-      return AData.create(record.data());
-    } else if ("AAAA".equals(record.type)) {
-      return AAAAData.create(record.data());
-    } else if ("CNAME".equals(record.type)) {
-      return CNAMEData.create(record.data());
-    } else if ("MX".equals(record.type)) {
+    if ("MX".equals(record.type)) {
       return MXData.create(record.priority, record.data());
-    } else if ("NS".equals(record.type)) {
-      return NSData.create(record.data());
+    } else if ("TXT".equals(record.type)) {
+      return TXTData.create(record.data());
     } else if ("SRV".equals(record.type)) {
       List<String> rdata = split(' ', record.data());
       return SRVData.builder()
@@ -57,10 +52,17 @@ final class CloudDNSFunctions {
           .weight(Integer.valueOf(rdata.get(0)))
           .port(Integer.valueOf(rdata.get(1)))
           .target(rdata.get(2)).build();
-    } else if ("TXT".equals(record.type)) {
-      return TXTData.create(record.data());
+    } else if ("SOA".equals(record.type)) {
+      List<String> threeParts = split(' ', record.data());
+      return SOAData.builder()
+          .mname(threeParts.get(0))
+          .rname(threeParts.get(1))
+          .serial(Integer.valueOf(threeParts.get(2)))
+          .refresh(record.ttl)
+          .retry(record.ttl)
+          .expire(record.ttl).minimum(record.ttl).build();
     } else {
-      throw new UnsupportedOperationException("record type not yet supported" + record);
+      return Util.toMap(record.type, record.data());
     }
   }
 
