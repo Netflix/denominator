@@ -62,8 +62,9 @@ public final class UltraDNSZoneApi implements denominator.ZoneApi {
   }
 
   private Zone fromSOA(String name) {
-    List<Record> soa = api.getResourceRecordsOfDNameByType(name, name, 6);
-    checkState(!soa.isEmpty(), "SOA record for zone %s was not present", name);
-    return Zone.create(name, name, soa.get(0).rdata.get(1));
+    List<Record> soas = api.getResourceRecordsOfDNameByType(name, name, 6);
+    checkState(!soas.isEmpty(), "SOA record for zone %s was not present", name);
+    Record soa = soas.get(0);
+    return Zone.create(name, name, soa.ttl, soa.rdata.get(1));
   }
 }

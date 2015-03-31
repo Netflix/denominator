@@ -32,7 +32,7 @@ public class UltraDNSZoneApiMockTest {
     ZoneApi api = server.connect().api().zones();
 
     assertThat(api.iterator()).containsExactly(
-        Zone.create("denominator.io.", "denominator.io.", "adrianc.netflix.com.")
+        Zone.create("denominator.io.", "denominator.io.", 86400, "adrianc.netflix.com.")
     );
 
     server.assertSoapBody(getAccountsListOfUser);
@@ -61,7 +61,7 @@ public class UltraDNSZoneApiMockTest {
     ZoneApi api = server.connect().api().zones();
 
     assertThat(api.iterateByName("denominator.io.")).containsExactly(
-        Zone.create("denominator.io.", "denominator.io.", "adrianc.netflix.com.")
+        Zone.create("denominator.io.", "denominator.io.", 86400, "adrianc.netflix.com.")
     );
 
     server.assertSoapBody(getResourceRecordsOfDNameByType);

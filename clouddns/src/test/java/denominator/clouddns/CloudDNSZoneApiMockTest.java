@@ -10,6 +10,7 @@ import denominator.model.Zone;
 
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.clouddns.RackspaceApisTest.domainsResponse;
+import static denominator.clouddns.RackspaceApisTest.soaResponse;
 
 public class CloudDNSZoneApiMockTest {
 
@@ -20,15 +21,18 @@ public class CloudDNSZoneApiMockTest {
   public void iteratorWhenPresent() throws Exception {
     server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(domainsResponse));
+    server.enqueue(new MockResponse().setBody(soaResponse));
 
     ZoneApi api = server.connect().api().zones();
 
     assertThat(api.iterator()).containsExactly(
-        Zone.create("denominator.io", "1234", "admin@denominator.io")
+        Zone.create("1234", "denominator.io", 3600, "admin@denominator.io")
     );
 
     server.assertAuthRequest();
     server.assertRequest().hasPath("/v1.0/123123/domains");
+    server.assertRequest()
+        .hasPath("/v1.0/123123/domains/1234/records?name=denominator.io&type=SOA");
   }
 
   @Test
@@ -47,15 +51,18 @@ public class CloudDNSZoneApiMockTest {
   public void iteratorByNameWhenPresent() throws Exception {
     server.enqueueAuthResponse();
     server.enqueue(new MockResponse().setBody(domainsResponse));
+    server.enqueue(new MockResponse().setBody(soaResponse));
 
     ZoneApi api = server.connect().api().zones();
 
     assertThat(api.iterateByName("denominator.io")).containsExactly(
-        Zone.create("denominator.io", "1234", "admin@denominator.io")
+        Zone.create("1234", "denominator.io", 3600, "admin@denominator.io")
     );
 
     server.assertAuthRequest();
     server.assertRequest().hasPath("/v1.0/123123/domains?name=denominator.io");
+    server.assertRequest()
+        .hasPath("/v1.0/123123/domains/1234/records?name=denominator.io&type=SOA");
   }
 
   @Test

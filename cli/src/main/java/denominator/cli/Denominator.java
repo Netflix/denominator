@@ -385,7 +385,8 @@ public class Denominator {
       return Iterators.transform(zones, new Function<Zone, String>() {
         @Override
         public String apply(Zone input) {
-          return format("%-24s %-36s %s", input.id(), input.name(), input.email());
+          return format("%-24s %-36s %-36s %d", input.id(), input.name(), input.email(),
+                        input.ttl());
         }
       });
     }

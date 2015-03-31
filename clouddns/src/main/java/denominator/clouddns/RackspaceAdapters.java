@@ -69,17 +69,17 @@ class RackspaceAdapters {
       String name = null, id = null, email = null;
       while (reader.hasNext()) {
         String nextName = reader.nextName();
-        if (nextName.equals("name")) {
-          name = reader.nextString();
-        } else if (nextName.equals("id")) {
+        if (nextName.equals("id")) {
           id = reader.nextString();
+        } else if (nextName.equals("name")) {
+          name = reader.nextString();
         } else if (nextName.equals("emailAddress")) {
           email = reader.nextString();
         } else {
           reader.skipValue();
         }
       }
-      return Zone.create(name, id, email);
+      return Zone.create(id, name, /* CloudDNS doesn't return ttl in the list api. */ 0, email);
     }
   }
 

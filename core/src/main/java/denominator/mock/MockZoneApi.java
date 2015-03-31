@@ -42,7 +42,7 @@ final class MockZoneApi implements denominator.ZoneApi {
     zone.add(ResourceRecordSet.builder()
                  .type("SOA")
                  .name(name)
-                 .ttl(3600)
+                 .ttl(86400)
                  .add(SOAData.builder().mname("ns1." + name).rname("admin." + name)
                           .serial(1).refresh(3600).retry(600).expire(604800).minimum(86400).build())
                  .build());
@@ -64,13 +64,13 @@ final class MockZoneApi implements denominator.ZoneApi {
       public Zone next() {
         Entry<String, Collection<ResourceRecordSet<?>>> next = delegate.next();
         String name = next.getKey();
-        Iterator<ResourceRecordSet<?>> soa =
+        Iterator<ResourceRecordSet<?>> soas =
             filter(next.getValue().iterator(), nameAndTypeEqualTo(name, "SOA"));
 
-        checkState(soa.hasNext(), "SOA record for zone %s was not present", name);
-
-        SOAData soaData = (SOAData) soa.next().records().get(0);
-        return Zone.create(name, name, soaData.rname());
+        checkState(soas.hasNext(), "SOA record for zone %s was not present", name);
+        ResourceRecordSet<SOAData> soa = (ResourceRecordSet<SOAData>) soas.next();
+        SOAData soaData = soa.records().get(0);
+        return Zone.create(name, name, soa.ttl(), soaData.rname());
       }
 
       @Override
