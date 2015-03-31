@@ -3,6 +3,7 @@ package denominator.route53;
 import java.util.Iterator;
 
 import denominator.common.PeekingIterator;
+import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 import denominator.model.rdata.SOAData;
 import denominator.route53.Route53.HostedZone;
@@ -45,11 +46,11 @@ public final class Route53ZoneApi implements denominator.ZoneApi {
   }
 
   private Zone zipWithSOA(HostedZone next) {
-    ResourceRecordSetList soa = api.listResourceRecordSets(next.id, next.name, "SOA");
-    checkState(!soa.isEmpty(), "SOA record for zone %s %s was not present", next.id, next.name);
-
-    SOAData soaData = (SOAData) soa.get(0).records().get(0);
-    return Zone.create(next.name, next.id, soaData.rname());
+    ResourceRecordSetList soas = api.listResourceRecordSets(next.id, next.name, "SOA");
+    checkState(!soas.isEmpty(), "SOA record for zone %s %s was not present", next.id, next.name);
+    ResourceRecordSet<SOAData> soa = (ResourceRecordSet<SOAData>) soas.get(0);
+    SOAData soaData = soa.records().get(0);
+    return Zone.create(next.id, next.name, soa.ttl(), soaData.rname());
   }
 
   /**

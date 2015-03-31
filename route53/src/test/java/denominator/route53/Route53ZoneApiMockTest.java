@@ -56,10 +56,9 @@ public class Route53ZoneApiMockTest {
     ZoneApi api = server.connect().api().zones();
     Iterator<Zone> domains = api.iterator();
 
-    assertThat(domains.next())
-        .hasName("denominator.io.")
-        .hasId("Z1PA6795UKMFR9")
-        .hasEmail("awsdns-hostmaster.amazon.com.");
+    assertThat(domains).containsExactly(
+        Zone.create("Z1PA6795UKMFR9", "denominator.io.", 900, "awsdns-hostmaster.amazon.com.")
+    );
 
     server.assertRequest()
         .hasMethod("GET")
@@ -151,8 +150,8 @@ public class Route53ZoneApiMockTest {
 
     ZoneApi api = server.connect().api().zones();
     assertThat(api.iterateByName("denominator.io.")).containsExactly(
-        Zone.create("denominator.io.", "Z2ZEEJCUZCVG56", "awsdns-hostmaster.amazon.com."),
-        Zone.create("denominator.io.", "Z3OQLQGABCU3T", "awsdns-hostmaster.amazon.com.")
+        Zone.create("Z2ZEEJCUZCVG56", "denominator.io.", 900, "awsdns-hostmaster.amazon.com."),
+        Zone.create("Z3OQLQGABCU3T", "denominator.io.", 900, "awsdns-hostmaster.amazon.com.")
     );
 
     server.assertRequest()

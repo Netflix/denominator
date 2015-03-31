@@ -15,11 +15,13 @@ public class ZoneTest {
   public void factoryMethodsWork() {
     Zone name = Zone.create("denominator.io.");
     Zone id = Zone.create("denominator.io.", "ABCD");
-    Zone email = Zone.create("denominator.io.", "ABCD", "admin@foo.com");
+    Zone email = Zone.create("ABCD", "denominator.io.", 1800, "admin@foo.com");
 
     assertThat(name)
-        .hasName("denominator.io.")
         .hasId("denominator.io.")
+        .hasName("denominator.io.")
+        .hasTtl(86400)
+        .hasEmail("fake@denominator.io.")
         .isEqualTo(name)
         .isNotEqualTo(id)
         .isNotEqualTo(email);
@@ -28,11 +30,13 @@ public class ZoneTest {
         .isNotEqualTo(id.hashCode())
         .isNotEqualTo(email.hashCode());
     assertThat(name.toString())
-        .isEqualTo("Zone [name=denominator.io., email=fake@denominator.io.]");
+        .isEqualTo("Zone [name=denominator.io., ttl=86400, email=fake@denominator.io.]");
 
     assertThat(id)
-        .hasName("denominator.io.")
         .hasId("ABCD")
+        .hasName("denominator.io.")
+        .hasTtl(86400)
+        .hasEmail("fake@denominator.io.")
         .isEqualTo(id)
         .isNotEqualTo(name)
         .isNotEqualTo(email);
@@ -42,11 +46,12 @@ public class ZoneTest {
         .isNotEqualTo(email.hashCode());
 
     assertThat(id.toString()).isEqualTo(
-        "Zone [name=denominator.io., id=ABCD, email=fake@denominator.io.]");
+        "Zone [id=ABCD, name=denominator.io., ttl=86400, email=fake@denominator.io.]");
 
     assertThat(email)
-        .hasName("denominator.io.")
         .hasId("ABCD")
+        .hasName("denominator.io.")
+        .hasTtl(1800)
         .hasEmail("admin@foo.com")
         .isEqualTo(email)
         .isNotEqualTo(name)
@@ -57,7 +62,7 @@ public class ZoneTest {
         .isNotEqualTo(id.hashCode());
 
     assertThat(email.toString()).isEqualTo(
-        "Zone [name=denominator.io., id=ABCD, email=admin@foo.com]");
+        "Zone [id=ABCD, name=denominator.io., ttl=1800, email=admin@foo.com]");
   }
 
   @Test
@@ -73,6 +78,14 @@ public class ZoneTest {
     thrown.expect(NullPointerException.class);
     thrown.expectMessage("email");
 
-    Zone.create("name", null, null);
+    Zone.create(null, "name", 1800, null);
+  }
+
+  @Test
+  public void negativeTtl() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("Invalid ttl value: -1, must be 0-2147483647");
+
+    Zone.create("ABCD", "denominator.io.", -1, "admin@foo.com");
   }
 }

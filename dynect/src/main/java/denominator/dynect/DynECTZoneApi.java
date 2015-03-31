@@ -55,10 +55,10 @@ public final class DynECTZoneApi implements denominator.ZoneApi {
   }
 
   private Zone fromSOA(String name) {
-    Iterator<ResourceRecordSet<?>> soa = api.rrsetsInZoneByNameAndType(name, name, "SOA").data;
-    checkState(soa.hasNext(), "SOA record for zone %s was not present", name);
-
-    SOAData soaData = (SOAData) soa.next().records().get(0);
-    return Zone.create(name, name, soaData.rname());
+    Iterator<ResourceRecordSet<?>> soas = api.rrsetsInZoneByNameAndType(name, name, "SOA").data;
+    checkState(soas.hasNext(), "SOA record for zone %s was not present", name);
+    ResourceRecordSet<SOAData> soa = (ResourceRecordSet<SOAData>) soas.next();
+    SOAData soaData = soa.records().get(0);
+    return Zone.create(name, name, soa.ttl(), soaData.rname());
   }
 }
