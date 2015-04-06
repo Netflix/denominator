@@ -22,34 +22,44 @@ public interface DenominatorDApi {
   @RequestLine("GET /zones")
   List<Zone> zones();
 
-  @RequestLine("GET /zones/{zoneIdOrName}/recordsets")
-  List<ResourceRecordSet<?>> recordSets(@Param("zoneIdOrName") String zoneIdOrName);
+  @RequestLine("GET /zones?name={name}")
+  List<Zone> zonesByName(@Param("name") String name);
 
-  @RequestLine("GET /zones/{zoneIdOrName}/recordsets?name={name}")
-  List<ResourceRecordSet<?>> recordSetsByName(@Param("zoneIdOrName") String zoneIdOrName,
+  @RequestLine("PUT /zones")
+  @Headers("Content-Type: application/json")
+  Response putZone(Zone update);
+
+  @RequestLine("DELETE /zones/{zoneId}")
+  void deleteZone(@Param("zoneId") String zoneId);
+
+  @RequestLine("GET /zones/{zoneId}/recordsets")
+  List<ResourceRecordSet<?>> recordSets(@Param("zoneId") String zoneId);
+
+  @RequestLine("GET /zones/{zoneId}/recordsets?name={name}")
+  List<ResourceRecordSet<?>> recordSetsByName(@Param("zoneId") String zoneId,
                                               @Param("name") String name);
 
-  @RequestLine("GET /zones/{zoneIdOrName}/recordsets?name={name}&type={type}")
-  List<ResourceRecordSet<?>> recordSetsByNameAndType(@Param("zoneIdOrName") String zoneIdOrName,
+  @RequestLine("GET /zones/{zoneId}/recordsets?name={name}&type={type}")
+  List<ResourceRecordSet<?>> recordSetsByNameAndType(@Param("zoneId") String zoneId,
                                                      @Param("name") String name,
                                                      @Param("type") String type);
 
-  @RequestLine("GET /zones/{zoneIdOrName}/recordsets?name={name}&type={type}&qualifier={qualifier}")
+  @RequestLine("GET /zones/{zoneId}/recordsets?name={name}&type={type}&qualifier={qualifier}")
   List<ResourceRecordSet<?>> recordsetsByNameAndTypeAndQualifier(
-      @Param("zoneIdOrName") String zoneIdOrName, @Param("name") String name,
+      @Param("zoneId") String zoneId, @Param("name") String name,
       @Param("type") String type, @Param("qualifier") String qualifier);
 
-  @RequestLine("PUT /zones/{zoneIdOrName}/recordsets?name={name}")
+  @RequestLine("PUT /zones/{zoneId}/recordsets?name={name}")
   @Headers("Content-Type: application/json")
-  void putRecordSet(@Param("zoneIdOrName") String zoneIdOrName, ResourceRecordSet<?> update);
+  void putRecordSet(@Param("zoneId") String zoneId, ResourceRecordSet<?> update);
 
-  @RequestLine("DELETE /zones/{zoneIdOrName}/recordsets?name={name}&type={type}")
-  void deleteRecordSetByNameAndType(@Param("zoneIdOrName") String zoneIdOrName,
+  @RequestLine("DELETE /zones/{zoneId}/recordsets?name={name}&type={type}")
+  void deleteRecordSetByNameAndType(@Param("zoneId") String zoneId,
                                     @Param("name") String name,
                                     @Param("type") String type);
 
-  @RequestLine("DELETE /zones/{zoneIdOrName}/recordsets?name={name}&type={type}&qualifier={qualifier}")
-  void deleteRecordSetByNameTypeAndQualifier(@Param("zoneIdOrName") String zoneIdOrName,
+  @RequestLine("DELETE /zones/{zoneId}/recordsets?name={name}&type={type}&qualifier={qualifier}")
+  void deleteRecordSetByNameTypeAndQualifier(@Param("zoneId") String zoneId,
                                              @Param("name") String name,
                                              @Param("type") String type,
                                              @Param("qualifier") String qualifier);

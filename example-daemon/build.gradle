@@ -5,13 +5,13 @@ repositories { mavenLocal()
                mavenCentral() }
 
 dependencies {
-  compile     'com.netflix.denominator:denominator-core:4.4.2'
-  compile     'com.netflix.denominator:denominator-dynect:4.4.2'
-  compile     'com.netflix.denominator:denominator-ultradns:4.4.2'
-  compile     'com.netflix.denominator:denominator-route53:4.4.2'
-  compile     'com.netflix.denominator:denominator-clouddns:4.4.2'
+  compile     'com.netflix.denominator:denominator-core:4.5.0'
+  compile     'com.netflix.denominator:denominator-dynect:4.5.0'
+  compile     'com.netflix.denominator:denominator-ultradns:4.5.0'
+  compile     'com.netflix.denominator:denominator-route53:4.5.0'
+  compile     'com.netflix.denominator:denominator-clouddns:4.5.0'
   compile     'com.netflix.feign:feign-core:8.1.0'
-  compile    ('com.squareup.okhttp:mockwebserver:2.2.0') {
+  compile    ('com.squareup.okhttp:mockwebserver:2.3.0') {
     exclude group: 'org.bouncycastle'
   }
   compile     'com.google.code.gson:gson:2.2.4'

@@ -58,29 +58,59 @@ $ curl -f http://localhost:8080/healthcheck
 
 ### Zones
 
-#### GET /zones
+#### GET /zones?name={name}
 Returns a possibly empty array of your zones.
 
-Ex. for clouds like ultradns, you'll only see the zone name.
+Ex. for clouds like ultradns, you'll see the zone name is its `id`.
 ```bash
 $ curl http://localhost:8080/zones
 [
   {
-    "name": "denominator.io."
+    "id": "denominator.io.",
+    "name": "denominator.io.",
+    "ttl": 86400,
+    "email": "nil@denominator.io."
+  },
+  {
+    "id": "myzone.com.",
+    "name": "myzone.com.",
+    "ttl": 86400,
+    "email": "test@foo.com"
   }
 ]
 ```
 
-Ex. for clouds like route53, zones are not unique by name, so you'll see an `id`.
+Ex. for clouds like route53, zones are not identified by name, so you'll see an `id`.
 
 ```bash
 $ curl http://localhost:8080/zones
 [
   {
     "name": "myzone.com.",
-    "id": "ABCDEFGHIJK"
+    "id": "ABCDEFGHIJK",
+    "ttl": 86400,
+    "email": "nil@denominator.io."
   }
 ]
+```
+
+#### PUT /zones
+Adds or replaces a record set and returns `201` with the path to the zone in the `Location` header.
+
+Ex. to add or replace a zone.
+```bash
+$ curl -v -X PUT http://localhost:8080/zones -d'{
+  "name": "myzone.com.",
+  "ttl": 86400,
+  "email": "test@foo.com"
+}'
+```
+
+#### DELETE /zones/{zoneId}
+Deletes a zone if present and returns `204`.
+
+```bash
+$ curl -X DELETE 'http://localhost:8080/zones/ABCDEFGHIJK'
 ```
 
 ### Record Sets
@@ -88,7 +118,7 @@ All record set commands require the zone specified as a path parameter.  This is
 or when there is no id, it is the name.
 
 ```
-/zones/{zoneIdOrName}/recordsets
+/zones/{zoneId}/recordsets
 ```
 
 **Pay attention to trailing dots!**
@@ -105,7 +135,7 @@ Where for clouds like route53, you'd use the id.
 /zones/Z1V14BIB35Q8HU/recordsets
 ```
 
-#### GET /zones/{zoneIdOrName}/recordsets?name={name}&type={type}&qualifier={qualifier}
+#### GET /zones/{zoneId}/recordsets?name={name}&type={type}&qualifier={qualifier}
 Returns a possibly empty array of your record sets.
 
 Supported Query params:
@@ -167,7 +197,7 @@ $ curl 'http://localhost:8080/zones/denominator.io./recordsets?name=www2.geo.den
 ]
 ```
 
-#### PUT /zones/{zoneIdOrName}/recordsets
+#### PUT /zones/{zoneId}/recordsets
 Adds or replaces a record set and returns `204`.
 
 Ex. to add or replace an MX record.
@@ -184,7 +214,7 @@ $ curl -X PUT http://localhost:8080/zones/Z3I0BTR7N27QRM/recordsets -d'{
 }'
 ```
 
-#### DELETE /zones/{zoneIdOrName}/recordsets?name={name}&type={type}&qualifier={qualifier}
+#### DELETE /zones/{zoneId}/recordsets?name={name}&type={type}&qualifier={qualifier}
 Deletes a record set if present and returns `204`.
 
 Supported Query params:

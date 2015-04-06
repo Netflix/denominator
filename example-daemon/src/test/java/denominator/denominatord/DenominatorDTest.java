@@ -17,13 +17,18 @@ import denominator.DNSApiManager;
 import denominator.Denominator;
 import denominator.mock.MockProvider;
 import denominator.model.ResourceRecordSet;
+import denominator.model.Zone;
 import denominator.model.profile.Geo;
+import denominator.model.profile.Weighted;
+import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import feign.Feign;
 import feign.FeignException;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
 
+import static denominator.model.ResourceRecordSets.a;
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class DenominatorDTest {
@@ -45,7 +50,7 @@ public class DenominatorDTest {
 
   @AfterClass
   public static void stop() throws IOException {
-    server.stop();
+    server.shutdown();
   }
 
   @Test
@@ -56,8 +61,43 @@ public class DenominatorDTest {
   @Test
   public void zones() {
     assertThat(client.zones())
-        .isNotEmpty()
         .containsAll(mock.api().zones());
+  }
+
+  @Test
+  public void zonesByName() {
+    assertThat(client.zonesByName("denominator.io."))
+        .containsAll(toList(mock.api().zones().iterateByName("denominator.io.")));
+  }
+
+  @Test
+  public void putZone_new() {
+    Zone zone = Zone.create(null, "putzone_new.denominator.io.", 86400, "nil@denominator.io");
+    String id =
+        client.putZone(zone).headers().get("Location").iterator().next().replace("/zones/", "");
+    assertThat(mock.api().zones().iterateByName(zone.name()))
+        .containsExactly(Zone.create(id, zone.name(), zone.ttl(), zone.email()));
+  }
+
+  @Test
+  public void putZone_update() {
+    Zone zone = Zone.create(null, "putzone_update.denominator.io.", 86400, "nil@denominator.io");
+    String id = mock.api().zones().put(zone);
+
+    Zone update = Zone.create(id, zone.name(), 300, "test@denominator.io");
+    client.putZone(update);
+    assertThat(mock.api().zones().iterateByName(zone.name()))
+        .containsExactly(update);
+  }
+
+  @Test
+  public void deleteZone() {
+    Zone zone = Zone.create(null, "zonetest.denominator.io.", 86400, "nil@denominator.io");
+    String id = mock.api().zones().put(zone);
+
+    client.deleteZone(id);
+    assertThat(mock.api().zones().iterateByName(zone.name()))
+        .isEmpty();
   }
 
   @Test
@@ -76,10 +116,12 @@ public class DenominatorDTest {
 
   @Test
   public void recordSetsByName() {
-    assertThat(client.recordSetsByName("denominator.io.", "www.denominator.io."))
-        .isNotEmpty()
-        .containsAll(toList(
-            mock.api().recordSetsInZone("denominator.io.").iterateByName("www.denominator.io.")));
+    ResourceRecordSet<AData> a =
+        a("www.denominator.io.", asList("192.0.2.1", "198.51.100.1", "203.0.113.1"));
+    mock.api().basicRecordSetsInZone("denominator.io.").put(a);
+
+    assertThat(client.recordSetsByName("denominator.io.", a.name()))
+        .containsExactly(a);
   }
 
   @Test
@@ -90,7 +132,6 @@ public class DenominatorDTest {
   @Test
   public void recordSetsByNameAndType() {
     assertThat(client.recordSetsByNameAndType("denominator.io.", "denominator.io.", "NS"))
-        .isNotEmpty()
         .containsAll(toList(mock.api().recordSetsInZone("denominator.io.")
                                 .iterateByNameAndType("denominator.io.", "NS")));
   }
@@ -102,13 +143,20 @@ public class DenominatorDTest {
 
   @Test
   public void recordSetsByNameTypeAndQualifier() {
+    ResourceRecordSet<CNAMEData> weighted = ResourceRecordSet.<CNAMEData>builder()
+        .name("www.weighted.denominator.io.")
+        .type("A")
+        .qualifier("EU-West")
+        .add(CNAMEData.create("www.denominator.io."))
+        .weighted(Weighted.create(10))
+        .build();
+
+    mock.api().weightedRecordSetsInZone("denominator.io.").put(weighted);
+
     assertThat(client.recordsetsByNameAndTypeAndQualifier("denominator.io.",
-                                                          "www.weighted.denominator.io.", "CNAME",
-                                                          "EU-West"))
-        .isNotEmpty()
-        .containsOnly(mock.api().recordSetsInZone("denominator.io.")
-                          .getByNameTypeAndQualifier("www.weighted.denominator.io.", "CNAME",
-                                                     "EU-West"));
+                                                          weighted.name(), weighted.type(),
+                                                          weighted.qualifier()))
+        .containsOnly(weighted);
   }
 
   @Test
@@ -165,8 +213,8 @@ public class DenominatorDTest {
         .containsOnly(recordSet);
   }
 
-  static List<ResourceRecordSet<?>> toList(Iterator<ResourceRecordSet<?>> iterator) {
-    List<ResourceRecordSet<?>> inMock = new ArrayList<ResourceRecordSet<?>>();
+  static <T> List<T> toList(Iterator<T> iterator) {
+    List<T> inMock = new ArrayList<T>();
     while (iterator.hasNext()) {
       inMock.add(iterator.next());
     }
