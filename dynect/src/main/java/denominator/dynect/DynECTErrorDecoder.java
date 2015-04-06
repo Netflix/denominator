@@ -5,6 +5,7 @@ import com.google.gson.stream.JsonToken;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -15,6 +16,8 @@ import feign.FeignException;
 import feign.Response;
 import feign.RetryableException;
 import feign.codec.ErrorDecoder;
+
+import static java.lang.System.currentTimeMillis;
 
 class DynECTErrorDecoder implements ErrorDecoder {
 
@@ -66,15 +69,20 @@ class DynECTErrorDecoder implements ErrorDecoder {
       }
       reader.endObject();
       reader.close();
+      DynECTException cause = new DynECTException(status, messages);
       if ("incomplete".equals(status)) {
-        return new RetryableException(messages.toString(), null);
+        return new RetryableException(messages.toString(), cause, null);
       } else if (!messages.isEmpty()) {
         for (Message message : messages) {
           if ("token: This session already has a job running".equals(message.info())) {
-            throw new RetryableException(messages.toString(), null);
+            return new RetryableException(messages.toString(), cause, null);
+          } else if ("zone: Operation blocked by current task".equals(message.info())) {
+            // Tasks are not exposed so the only thing we can do is wait a relatively long time.
+            Date retryAfter = new Date(currentTimeMillis() + 1000);
+            return new RetryableException(messages.toString(), cause, retryAfter);
           } else if ("login: IP address does not match current session".equals(message.info())) {
             sessionValid.set(false);
-            return new RetryableException(messages.toString(), null);
+            return new RetryableException(messages.toString(), cause, null);
           }
         }
       }

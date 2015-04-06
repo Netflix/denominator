@@ -84,7 +84,7 @@ public class RackspaceApisTest {
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
     assertThat(mockApi().domainsByName("denominator.io")).containsExactly(
-        Zone.create("1234", "denominator.io", 0, "admin@denominator.io")
+        Zone.create("1234", "denominator.io", 0, "nil@denominator.io")
     );
 
     server.assertAuthRequest();
@@ -282,10 +282,10 @@ public class RackspaceApisTest {
   static int domainId = 1234;
   static String
       domainsResponse =
-      "{\"domains\":[{\"name\":\"denominator.io\",\"id\":1234,\"accountId\":123123,\"emailAddress\":\"admin@denominator.io\",\"updated\":\"2013-09-02T19:46:56.000+0000\",\"created\":\"2013-09-02T19:45:51.000+0000\"}],\"totalEntries\":1}";
+      "{\"domains\":[{\"name\":\"denominator.io\",\"id\":1234,\"accountId\":123123,\"emailAddress\":\"nil@denominator.io\",\"updated\":\"2013-09-02T19:46:56.000+0000\",\"created\":\"2013-09-02T19:45:51.000+0000\"}],\"totalEntries\":1}";
   static String
       soaResponse =
-      "{\"records\":[{\"name\":\"denominator.io\",\"id\":\"SOA-4612221\",\"type\":\"SOA\",\"data\":\"ns.rackspace.com admin@denominator.io 1427817447\",\"ttl\":3600}]}";
+      "{\"records\":[{\"name\":\"denominator.io\",\"id\":\"SOA-4612221\",\"type\":\"SOA\",\"data\":\"ns.rackspace.com nil@denominator.io 1427817447\",\"ttl\":3601}]}";
   // NOTE records are allowed to be out of order by type
   static String
       recordsResponse =

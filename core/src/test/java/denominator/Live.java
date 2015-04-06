@@ -19,6 +19,8 @@ import java.util.List;
 import denominator.model.ResourceRecordSet;
 import denominator.model.Zone;
 
+import static java.util.Arrays.asList;
+
 public class Live extends Suite {
 
   /**
@@ -83,17 +85,26 @@ public class Live extends Suite {
 
     @Override
     protected List<Runner> createRunners(Class<?> klass) throws InitializationError {
+      // Special case the only test for zone mutation
+      if (ZoneWriteCommandsLiveTest.class.isAssignableFrom(klass)) {
+        String zoneToCreate = graph.deleteTestZone();
+        TestWithParameters test = new TestWithParameters("[" + zoneToCreate + "]", getTestClass(),
+                                                         asList(graph.manager(), zoneToCreate));
+        return Collections.<Runner>singletonList(new BlockJUnit4ClassRunnerWithParameters(test));
+      }
       String profile = klass.isAnnotationPresent(Profile.class) ?
                        klass.getAnnotation(Profile.class).value() : "basic";
-      Zone zone = graph.zoneIfPresent();
+      List<Runner> result = new ArrayList<Runner>();
+
       List<ResourceRecordSet<?>>
           rrsets =
           profile.equals("basic") ? graph.basicRecordSets(klass)
                                   : graph.recordSetsForProfile(klass, profile);
-      List<Runner> result = new ArrayList<Runner>();
+
+      Zone zone = graph.createZoneIfAbsent();
       for (ResourceRecordSet<?> rrs : rrsets) {
         TestWithParameters test = new TestWithParameters("[" + rrs + "]", getTestClass(),
-                                                         Arrays.asList(graph.manager(), zone, rrs));
+                                                         asList(graph.manager(), zone, rrs));
         result.add(new BlockJUnit4ClassRunnerWithParameters(test));
       }
       return Collections.unmodifiableList(result);

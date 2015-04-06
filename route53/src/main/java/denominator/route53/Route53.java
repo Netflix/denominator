@@ -4,11 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 import denominator.model.ResourceRecordSet;
+import feign.Body;
 import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
 
 interface Route53 {
+
+  @RequestLine("GET /2012-12-12/hostedzone/{zoneId}")
+  NameAndCount getHostedZone(@Param("zoneId") String zoneId);
 
   @RequestLine("GET /2012-12-12/hostedzone")
   HostedZoneList listHostedZones();
@@ -18,6 +22,14 @@ interface Route53 {
 
   @RequestLine("GET /2013-04-01/hostedzonesbyname?dnsname={dnsname}")
   HostedZoneList listHostedZonesByName(@Param("dnsname") String dnsname);
+
+  @RequestLine("POST /2012-12-12/hostedzone")
+  @Headers("Content-Type: application/xml")
+  @Body("<CreateHostedZoneRequest xmlns=\"https://route53.amazonaws.com/doc/2012-12-12/\"><Name>{name}</Name><CallerReference>{reference}</CallerReference></CreateHostedZoneRequest>")
+  HostedZoneList createHostedZone(@Param("name") String name, @Param("reference") String reference);
+
+  @RequestLine("DELETE /2012-12-12/hostedzone/{zoneId}")
+  HostedZoneList deleteHostedZone(@Param("zoneId") String zoneId);
 
   @RequestLine("GET /2012-12-12/hostedzone/{zoneId}/rrset")
   ResourceRecordSetList listResourceRecordSets(@Param("zoneId") String zoneId);
@@ -43,8 +55,13 @@ interface Route53 {
                                 List<ActionOnResourceRecordSet> changes)
       throws InvalidChangeBatchException;
 
-  class HostedZone {
 
+  class NameAndCount {
+    String name;
+    int resourceRecordSetCount;
+  }
+
+  class HostedZone {
     String id;
     String name;
   }

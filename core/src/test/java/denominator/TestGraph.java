@@ -2,6 +2,7 @@ package denominator;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import static denominator.model.ResourceRecordSets.txt;
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
 import static java.util.Arrays.asList;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 public class TestGraph {
@@ -55,21 +57,28 @@ public class TestGraph {
     return manager;
   }
 
-  Zone zoneIfPresent() {
+  Zone createZoneIfAbsent() {
     assumeTrue("manager not initialized", manager() != null);
     assumeTrue("zone not specified", zoneName != null);
 
-    Zone result = null;
-    List<Zone> currentZones = new ArrayList<Zone>();
-    for (Zone zone : manager().api().zones()) {
-      if (zoneName.equals(zone.name())) {
-        result = zone;
-        break;
-      }
-      currentZones.add(zone);
+    Iterator<Zone> zonesWithName = manager().api().zones().iterateByName(zoneName);
+    if (zonesWithName.hasNext()) {
+      return zonesWithName.next();
     }
-    assumeTrue(format("zone %s not found in %s", zoneName, currentZones), result != null);
-    return result;
+    String id = manager().api().zones().put(Zone.create(null, zoneName, 86400, "test@" + zoneName));
+    return Zone.create(id, zoneName, 86400, "test@" + zoneName);
+  }
+
+  String deleteTestZone() {
+    assumeTrue("manager not initialized", manager() != null);
+    assumeTrue("zone not specified", zoneName != null);
+    String zoneToCreate = "zonetest." + zoneName;
+
+    Iterator<Zone> zonesWithName = manager().api().zones().iterateByName(zoneToCreate);
+    while (zonesWithName.hasNext()) {
+      manager().api().zones().delete(zonesWithName.next().id());
+    }
+    return zoneToCreate;
   }
 
   List<ResourceRecordSet<?>> basicRecordSets(Class<?> testClass) {

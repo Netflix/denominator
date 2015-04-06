@@ -27,6 +27,17 @@ interface UltraDNS {
   List<String> getZonesOfAccount(@Param("accountId") String accountId);
 
   @RequestLine("POST")
+  @Body("<v01:createPrimaryZone><transactionID/><accountId>{accountId}</accountId><zoneName>{zoneName}</zoneName><forceImport>false</forceImport></v01:createPrimaryZone>")
+  void createPrimaryZone(@Param("accountId") String accountId, @Param("zoneName") String zoneName);
+
+  /**
+   * @throws UltraDNSException with code {@link UltraDNSException#ZONE_NOT_FOUND}.
+   */
+  @RequestLine("POST")
+  @Body("<v01:deleteZone><transactionID /><zoneName>{zoneName}</zoneName></v01:deleteZone>")
+  void deleteZone(@Param("zoneName") String zoneName);
+
+  @RequestLine("POST")
   @Body("<v01:getResourceRecordsOfZone><zoneName>{zoneName}</zoneName><rrType>0</rrType></v01:getResourceRecordsOfZone>")
   List<Record> getResourceRecordsOfZone(@Param("zoneName") String zoneName);
 

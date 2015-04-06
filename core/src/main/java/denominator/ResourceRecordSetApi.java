@@ -63,7 +63,7 @@ public interface ResourceRecordSetApi extends Iterable<ResourceRecordSet<?>> {
    */
   void deleteByNameAndType(String name, String type);
 
-  static interface Factory {
+  interface Factory {
 
     ResourceRecordSetApi create(String id);
   }

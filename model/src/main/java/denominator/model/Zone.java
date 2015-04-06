@@ -39,7 +39,7 @@ public class Zone {
    * The origin or starting point for the zone in the DNS tree. Usually includes a trailing dot, ex.
    * "{@code netflix.com.}"
    *
-   * @see denominator.model.rdata.SOAData#mname()
+   * <p/> The name of a zone cannot be changed.
    */
   public String name() {
     return name;
@@ -135,7 +135,7 @@ public class Zone {
    */
   @Deprecated
   public static Zone create(String name, String id) {
-    return new Zone(id, name, 86400, "fake@" + name);
+    return new Zone(id, name, 86400, "nil@" + name);
   }
 
   /**
