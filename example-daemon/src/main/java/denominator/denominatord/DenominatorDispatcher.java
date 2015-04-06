@@ -11,12 +11,12 @@ import static denominator.denominatord.RecordSetDispatcher.RECORDSET_PATTERN;
 public class DenominatorDispatcher extends Dispatcher {
 
   private final DNSApiManager mgr;
-  private final JsonCodec codec;
+  private final Dispatcher zones;
   private final Dispatcher recordSets;
 
   DenominatorDispatcher(DNSApiManager mgr, JsonCodec codec) {
     this.mgr = mgr;
-    this.codec = codec;
+    this.zones = new ZoneDispatcher(mgr.api().zones(), codec);
     this.recordSets = new RecordSetDispatcher(mgr, codec);
   }
 
@@ -28,13 +28,10 @@ public class DenominatorDispatcher extends Dispatcher {
           return new MockResponse().setResponseCode(405);
         }
         return new MockResponse().setResponseCode(mgr.checkConnection() ? 200 : 503);
-      } else if ("/zones".equals(request.getPath())) {
-        if (!request.getMethod().equals("GET")) {
-          return new MockResponse().setResponseCode(405);
-        }
-        return codec.toJsonArray(mgr.api().zones().iterator());
       } else if (RECORDSET_PATTERN.matcher(request.getPath()).matches()) {
         return recordSets.dispatch(request);
+      } else if (request.getPath() != null && request.getPath().startsWith("/zones")) {
+        return zones.dispatch(request);
       } else {
         return new MockResponse().setResponseCode(404);
       }
