@@ -13,6 +13,10 @@ class UltraDNSException extends FeignException {
    */
   static final int ZONE_NOT_FOUND = 1801;
   /**
+   * Zone already exists in the system.
+   */
+  static final int ZONE_ALREADY_EXISTS = 1802;
+  /**
    * No resource record with GUID found in the system.
    */
   static final int RESOURCE_RECORD_NOT_FOUND = 2103;

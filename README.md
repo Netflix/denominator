@@ -2,15 +2,15 @@
 
 # Portable control of DNS clouds
 
-Denominator is a portable Java library for manipulating DNS clouds.  Denominator has pluggable back-ends, including AWS Route53, Neustar Ultra, DynECT, Rackspace Cloud DNS, OpenStack Designate, and a mock for testing.  We also ship a command line version so it's easy for anyone to try it out.  Denominator currently supports basic zone and record features, as well GEO (aka Directional) profiles.  See [Netflix Tech Blog](http://techblog.netflix.com/2013/03/denominator-multi-vendor-interface-for.html) for an introduction.
+Denominator is a portable Java library for manipulating DNS clouds. Denominator has pluggable back-ends, including AWS Route53, Neustar Ultra, DynECT, Rackspace Cloud DNS, OpenStack Designate, and a mock for testing. We also ship a command line version so it's easy for anyone to try it out. Denominator currently supports basic zone and record features, as well GEO (aka Directional) profiles. See [Netflix Tech Blog](http://techblog.netflix.com/2013/03/denominator-multi-vendor-interface-for.html) for an introduction.
 
 [![Build Status](https://netflixoss.ci.cloudbees.com/job/denominator-master/badge/icon)](https://netflixoss.ci.cloudbees.com/job/denominator-master/)
 
 ## Command line
-For your convenience, the denominator cli is a [single executable file](http://skife.org/java/unix/2011/06/20/really_executable_jars.html).  Under the hood, the cli uses [airline](https://github.com/airlift/airline) to look and feel like dig or git.
+For your convenience, the denominator cli is a [single executable file](http://skife.org/java/unix/2011/06/20/really_executable_jars.html). Under the hood, the cli uses [airline](https://github.com/airlift/airline) to look and feel like dig or git.
 
 ## Android
-There's no official android client, yet.  However, we do have an [Android Example](https://github.com/Netflix/denominator/tree/master/example-android) you can try out.
+There's no official android client, yet. However, we do have an [Android Example](https://github.com/Netflix/denominator/tree/master/example-android) you can try out.
 
 ### Binaries
 If you are using OSX, [Homebrew](http://mxcl.github.io/homebrew/) has a built-in installer for denominator.
@@ -23,7 +23,7 @@ Here's how to get denominator-cli `4.4.2` from [bintray](https://bintray.com/pkg
 
 ### Getting Started
 
-Advanced usage, including ec2 hooks are covered in the [readme](https://github.com/Netflix/denominator/tree/master/cli).  Here's a quick start for the impatient.
+Advanced usage, including ec2 hooks are covered in the [readme](https://github.com/Netflix/denominator/tree/master/cli). Here's a quick start for the impatient.
 
 If you just want to fool around, you can use the `mock` provider.
 ```bash
@@ -35,7 +35,7 @@ denominator.io.                                    SOA   3600   ns1.denominator.
 denominator.io.                                    NS    86400  ns1.denominator.io.
 ```
 
-Different providers connect to different urls and need different credentials.  First step is to run `./denominator providers` to see how many `-c` args you need and what values they should have:
+Different providers connect to different urls and need different credentials. First step is to run `./denominator providers` to see how many `-c` args you need and what values they should have:
 
 ```bash
 $ denominator providers
@@ -64,13 +64,13 @@ email.netflix.com.                                 A     3600   192.0.2.1
 
 ## Code
 
-Denominator exposes a portable [model](https://github.com/Netflix/denominator/wiki/Models) implemented by pluggable `Provider`s such as `route53`, `ultradns`, `dynect`, `clouddns`, or `mock`.  Under the covers, providers are [Dagger](http://square.github.com/dagger/) modules.  Except for the mock, all current providers bind to http requests via [feign](https://github.com/Netflix/feign), which keeps the distribution light.
+Denominator exposes a portable [model](https://github.com/Netflix/denominator/wiki/Models) implemented by pluggable `Provider`s such as `route53`, `ultradns`, `dynect`, `clouddns`, or `mock`. Under the covers, providers are [Dagger](http://square.github.com/dagger/) modules. Except for the mock, all current providers bind to http requests via [feign](https://github.com/Netflix/feign), which keeps the distribution light.
 
 ### Binaries
 
 The current version of denominator is `4.4.2`
 
-Denominator can be resolved as maven dependencies, or equivalent in lein, gradle, etc.  Here are the coordinates, noting you only need to list the providers you use.
+Denominator can be resolved as maven dependencies, or equivalent in lein, gradle, etc. Here are the coordinates, noting you only need to list the providers you use.
 ```xml
 <dependencies>
   <dependency>
@@ -109,7 +109,7 @@ import static denominator.CredentialsConfiguration.credentials;
 ...
 DNSApiManager manager = Denominator.create("ultradns", credentials(username, password)); // manager is closeable, so please close it!
 ```
-The credentials are variable length, as certain providers require more that 2 parts. The above returns an instance of `DNSApiManager` where apis such as `ZoneApis` are found.  Here's how to list zones: 
+The credentials are variable length, as certain providers require more that 2 parts. The above returns an instance of `DNSApiManager` where apis such as `ZoneApis` are found. Here's how to list zones: 
 ```java
 for (Zone zone : manager.api().zones()) {
   for (ResourceRecordSet<?> rrs : manager.api().recordSetsInZone(zone.id())) {
@@ -123,7 +123,7 @@ If you are running unit tests, or don't have a cloud account yet, you can use mo
 DNSApiManager manager = Denominator.create("mock");
 ```
 
-The Denominator [model](https://github.com/Netflix/denominator/wiki/Model) is based on the `ResourceRecordSet` concept.  A `ResourceRecordSet` is simply a group of records who share the same name and type.  For example all address (`A`) records for the name `www.netflix.com.` are aggregated into the same `ResourceRecordSet`.  The values of each record in a set are type-specific.  These data types are implemented as map-backed interfaces.  This affords both the strong typing of java and extensibility and versatility of maps.
+The Denominator [model](https://github.com/Netflix/denominator/wiki/Model) is based on the `ResourceRecordSet` concept. A `ResourceRecordSet` is simply a group of records who share the same name and type. For example all address (`A`) records for the name `www.netflix.com.` are aggregated into the same `ResourceRecordSet`. The values of each record in a set are type-specific. These data types are implemented as map-backed interfaces. This affords both the strong typing of java and extensibility and versatility of maps.
 
 For example, the following are identical:
 ```java
@@ -131,8 +131,10 @@ mxData.getPreference();
 mxData.get("preference");
 ```
 
+Resource record sets live in a Zone, which is roughly analogous to a domain. Zones can be created on-demand and deleted.
+
 ### Use via Dagger
-Some users may wish to use Denominator as a Dagger library.  Here's one way to achieve that:
+Some users may wish to use Denominator as a Dagger library. Here's one way to achieve that:
 ```java
 import static denominator.CredentialsConfiguration.credentials;
 import static denominator.Dagger.provider;

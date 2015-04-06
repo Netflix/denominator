@@ -188,7 +188,7 @@ public final class SOAData extends NumbersAreUnsignedIntsLinkedHashMap {
 
     public SOAData.Builder from(SOAData in) {
       return this.mname(in.mname()).rname(in.rname()).serial(in.serial()).refresh(in.refresh())
-          .expire(in.expire()).minimum(in.minimum());
+          .retry(in.retry()).expire(in.expire()).minimum(in.minimum());
     }
   }
 }

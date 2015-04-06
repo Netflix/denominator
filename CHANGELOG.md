@@ -1,4 +1,6 @@
 ### Version 4.5
+* Adds `ZoneApi.put()` and `ZoneApi.delete()`
+* Adds zone add, update and delete to the CLI
 * Adds `Zone.email()` and `Zone.ttl()` and displays them in CLI zone list output
 * Adds `ZoneApi.iterateByName()` to support lookups
 * Adds `-n` parameter to CLI zone list

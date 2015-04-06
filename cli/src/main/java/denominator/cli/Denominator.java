@@ -2,14 +2,12 @@ package denominator.cli;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Charsets;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableSortedSet;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Ordering;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -60,6 +58,10 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
+import denominator.cli.ZoneCommands.ZoneAdd;
+import denominator.cli.ZoneCommands.ZoneDelete;
+import denominator.cli.ZoneCommands.ZoneList;
+import denominator.cli.ZoneCommands.ZoneUpdate;
 import denominator.dynect.DynECTProvider;
 import denominator.model.Zone;
 import denominator.ultradns.UltraDNSProvider;
@@ -120,7 +122,10 @@ public class Denominator {
     builder.withGroup("zone")
         .withDescription("manage zones")
         .withDefaultCommand(ZoneList.class)
-        .withCommand(ZoneList.class);
+        .withCommand(ZoneList.class)
+        .withCommand(ZoneAdd.class)
+        .withCommand(ZoneUpdate.class)
+        .withCommand(ZoneDelete.class);
 
     builder.withGroup("record")
         .withDescription("manage resource record sets in a zone")
@@ -176,14 +181,18 @@ public class Denominator {
     if (zoneIdOrName.indexOf('.') == -1) { // Assume that ids don't have dots in them!
       return zoneIdOrName;
     }
-    // Special-case providers known to use zone names as ids, as this usually saves 1-200ms of
-    // lookups. We can later introduce a flag or other means to help third-party providers.
-    if (mgr.provider() instanceof UltraDNSProvider || mgr.provider() instanceof DynECTProvider) {
+    if (zoneNameIsId(mgr.provider())) {
       return zoneIdOrName;
     }
     Iterator<Zone> result = mgr.api().zones().iterateByName(zoneIdOrName);
     checkArgument(result.hasNext(), "zone %s not found", zoneIdOrName);
     return result.next().id();
+  }
+
+  // Special-case providers known to use zone names as ids, as this usually saves 1-200ms of
+  // lookups. We can later introduce a flag or other means to help third-party providers.
+  static boolean zoneNameIsId(Provider provider) {
+    return provider instanceof UltraDNSProvider || provider instanceof DynECTProvider;
   }
 
   @Command(name = "version", description = "output the version of denominator and java runtime in use")
@@ -370,26 +379,6 @@ public class Denominator {
      * return a lazy iterator where possible to improve the perceived responsiveness of the cli
      */
     protected abstract Iterator<String> doRun(DNSApiManager mgr);
-  }
-
-  @Command(name = "list", description = "Lists the zones present in this provider.  The zone id is the first column.")
-  public static class ZoneList extends DenominatorCommand {
-
-    @Option(type = OptionType.COMMAND, name = {"-n",
-                                               "--name"}, description = "name of the zone. ex. denominator.io.")
-    public String name;
-
-    public Iterator<String> doRun(final DNSApiManager mgr) {
-      Iterator<Zone> zones =
-          name == null ? mgr.api().zones().iterator() : mgr.api().zones().iterateByName(name);
-      return Iterators.transform(zones, new Function<Zone, String>() {
-        @Override
-        public String apply(Zone input) {
-          return format("%-24s %-36s %-36s %d", input.id(), input.name(), input.email(),
-                        input.ttl());
-        }
-      });
-    }
   }
 
   @dagger.Module(overrides = true, library = true)
