@@ -20,7 +20,6 @@ import denominator.Credentials.MapCredentials;
 import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.cli.Denominator.ListProviders;
-import denominator.cli.Denominator.ZoneList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoRegionList;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordAddRegions;
 import denominator.cli.GeoResourceRecordSetCommands.GeoResourceRecordSetApplyTTL;
@@ -34,9 +33,14 @@ import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetGet;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetList;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetRemove;
 import denominator.cli.ResourceRecordSetCommands.ResourceRecordSetReplace;
+import denominator.cli.ZoneCommands.ZoneAdd;
+import denominator.cli.ZoneCommands.ZoneDelete;
+import denominator.cli.ZoneCommands.ZoneList;
+import denominator.cli.ZoneCommands.ZoneUpdate;
 import denominator.common.Util;
 import denominator.mock.MockProvider;
 import denominator.model.ResourceRecordSet;
+import denominator.model.Zone;
 import denominator.model.profile.Geo;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
@@ -75,7 +79,7 @@ public class DenominatorTest {
   @Test // denominator -p mock zone list
   public void testZoneList() {
     assertThat(new ZoneList().doRun(mgr)).containsExactly(
-        "denominator.io.          denominator.io.                      admin.denominator.io.                86400"
+        "denominator.io.          denominator.io.                      nil@denominator.io.                  86400"
     );
   }
 
@@ -195,6 +199,134 @@ public class DenominatorTest {
     zoneList.run();
   }
 
+  @Test
+  // denominator -p mock zone add -n denominator.io. -e nil@denominator.io
+  public void testZoneAdd() {
+    ZoneAdd command = new ZoneAdd();
+    command.name = "denominator.io.";
+    command.email = "nil@denominator.io";
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; adding zone denominator.io. with ttl 86400 and email nil@denominator.io",
+        "denominator.io.",
+        ";; ok");
+
+    assertThat(mgr.api().zones().iterateByName(command.name))
+        .contains(Zone.create(command.name, command.name, command.ttl, command.email));
+  }
+
+  @Test
+  // denominator -p mock zone add -n denominator.io. -t 3601 -e nil@denominator.io
+  public void testZoneAdd_ttl() {
+    ZoneAdd command = new ZoneAdd();
+    command.name = "denominator.io.";
+    command.ttl = 3601;
+    command.email = "nil@denominator.io";
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; adding zone denominator.io. with ttl 3601 and email nil@denominator.io",
+        "denominator.io.",
+        ";; ok");
+
+    assertThat(mgr.api().zones().iterateByName(command.name))
+        .contains(Zone.create(command.name, command.name, command.ttl, command.email));
+  }
+
+  @Test
+  // denominator -p mock zone update -i denominator.io. -e nil@denominator.io
+  public void testZoneUpdate_email() {
+    ZoneUpdate command = new ZoneUpdate();
+    command.id = "denominator.io.";
+    command.email = "nil@denominator.io";
+
+    Zone before = mgr.api().zones().iterateByName(command.id).next();
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; updating zone denominator.io. with email nil@denominator.io",
+        ";; ok");
+
+    assertThat(mgr.api().zones().iterateByName(before.name()))
+        .contains(Zone.create(before.id(), before.name(), before.ttl(), command.email));
+  }
+
+  @Test
+  // denominator -p mock zone update -i denominator.io. -t 3601
+  public void testZoneUpdate_ttl() {
+    ZoneUpdate command = new ZoneUpdate();
+    command.id = "denominator.io.";
+    command.ttl = 3601;
+
+    Zone before = mgr.api().zones().iterateByName(command.id).next();
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; updating zone denominator.io. with ttl 3601",
+        ";; ok");
+
+    assertThat(mgr.api().zones().iterateByName(before.name()))
+        .contains(Zone.create(before.id(), before.name(), command.ttl, before.email()));
+  }
+
+  @Test
+  // denominator -p mock zone update -i denominator.io. -t 3601 -e nil@denominator.io
+  public void testZoneUpdate_ttlAndEmail() {
+    ZoneUpdate command = new ZoneUpdate();
+    command.id = "denominator.io.";
+    command.ttl = 3601;
+    command.email = "nil@denominator.io";
+
+    Zone before = mgr.api().zones().iterateByName(command.id).next();
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; updating zone denominator.io. with ttl 3601 and email nil@denominator.io",
+        ";; ok");
+
+    assertThat(mgr.api().zones().iterateByName(before.name()))
+        .contains(Zone.create(before.id(), before.name(), command.ttl, command.email));
+  }
+
+  @Test
+  // denominator -p mock zone update -i denominator.io. -t 3601 -e nil@denominator.io
+  public void testZoneUpdate_noop() {
+    Zone before = mgr.api().zones().iterateByName("denominator.io.").next();
+
+    ZoneUpdate command = new ZoneUpdate();
+    command.id = before.id();
+    command.ttl = before.ttl();
+    command.email = before.email();
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; ok");
+
+    assertThat(mgr.api().zones().iterateByName(before.name()))
+        .contains(before);
+  }
+
+  @Test
+  // denominator -p mock zone update -i denominator.com. -e nil@denominator.io
+  public void testZoneUpdate_doesntExist() {
+    thrown.expect(IllegalArgumentException.class);
+    thrown.expectMessage("zone denominator.com. not found");
+
+    ZoneUpdate command = new ZoneUpdate();
+    command.id = "denominator.com.";
+    command.email = "nil@denominator.io";
+
+    command.doRun(mgr);
+  }
+
+  @Test
+  // denominator -p mock zone delete -i denominator.io.
+  public void testZoneDelete() {
+    ZoneDelete command = new ZoneDelete();
+    command.id = "denominator.io.";
+
+    assertThat(command.doRun(mgr)).containsExactly(
+        ";; deleting zone denominator.io.",
+        ";; ok");
+
+    assertThat(mgr.api().zones()).isEmpty();
+  }
+
   @Test // denominator -C test-config.yml -p route53 -c user pass -n blah1 zone list
   public void testConfigArgWithCliOverride() {
     ZoneList zoneList = new ZoneList() {
@@ -226,7 +358,7 @@ public class DenominatorTest {
     assertThat(command.doRun(mgr)).containsExactly(
         "a.denominator.io.                                 A      alazona             null  192.0.2.1",
         "denominator.io.                                   NS                         86400 ns1.denominator.io.",
-        "denominator.io.                                   SOA                        86400 ns1.denominator.io. admin.denominator.io. 1 3600 600 604800 86400",
+        "denominator.io.                                   SOA                        86400 ns1.denominator.io. nil@denominator.io. 1 3600 600 604800 86400",
         "server1.denominator.io.                           CERT                       3600  12345 1 1 B33F",
         "server1.denominator.io.                           SRV                        3600  0 1 80 www.denominator.io.",
         "www.geo.denominator.io.                           CNAME  alazona             86400 a.denominator.io.",
@@ -555,7 +687,7 @@ public class DenominatorTest {
     command.zoneIdOrName = "denominator.io.";
     command.name = "cbp.nccp.us-east-1.dynprod.netflix.net.";
     command.type = "A";
-    command.aliasHostedZoneId = "denominator.com.";
+    command.aliasHostedZoneId = "denominator.io.";
     command.aliasDNSName = "cbp.nccp.us-west-2.dynprod.netflix.net.";
     command.doRun(mgr);
   }
@@ -816,7 +948,8 @@ public class DenominatorTest {
     command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    command.regions = "{\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}";
+    command.regions =
+        "{\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}";
 
     AllProfileResourceRecordSetApi api = mgr.api().recordSetsInZone(command.zoneIdOrName);
     ResourceRecordSet<?>
@@ -870,7 +1003,8 @@ public class DenominatorTest {
     command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    command.regions = "{\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"], \"United States\":[\"MD\"]}";
+    command.regions =
+        "{\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"], \"United States\":[\"MD\"]}";
 
     AllProfileResourceRecordSetApi api = mgr.api().recordSetsInZone(command.zoneIdOrName);
     ResourceRecordSet<?>
@@ -899,7 +1033,8 @@ public class DenominatorTest {
     command.name = "a.denominator.io.";
     command.type = "A";
     command.group = "alazona";
-    command.regions = "{\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}";
+    command.regions =
+        "{\"Mexico\":[\"AG\",\"CM\",\"CP\",\"CH\",\"CA\",\"CL\",\"DU\",\"GJ\",\"GR\",\"HI\",\"JA\",\"MX\",\"MC\",\"MR\",\"NA\",\"OA\",\"PU\",\"QE\",\"SI\",\"SO\",\"TB\",\"TM\",\"TL\",\"VE\",\"YU\",\"ZA\"]}";
     command.validateRegions = true;
     command.dryRun = true;
 
@@ -1050,6 +1185,7 @@ public class DenominatorTest {
   }
 
   private String[] mexicanStates(GeoResourceRecordAddRegions command) {
-    return mgr.api().geoRecordSetsInZone(command.zoneIdOrName).supportedRegions().get("Mexico").toArray(new String[]{});
+    return mgr.api().geoRecordSetsInZone(command.zoneIdOrName).supportedRegions().get("Mexico")
+        .toArray(new String[]{});
   }
 }

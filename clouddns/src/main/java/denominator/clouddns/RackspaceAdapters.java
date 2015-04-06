@@ -28,7 +28,7 @@ class RackspaceAdapters {
     return Comparator.class.cast(TO_STRING_COMPARATOR);
   }
 
-  static class JobIdAndStatusAdapter extends TypeAdapter<Job> {
+  static class JobAdapter extends TypeAdapter<Job> {
 
     @Override
     public void write(JsonWriter out, Job value) throws IOException {
@@ -40,13 +40,62 @@ class RackspaceAdapters {
       Job job = new Job();
 
       reader.beginObject();
-
       while (reader.hasNext()) {
         String key = reader.nextName();
         if (key.equals("jobId")) {
           job.id = reader.nextString();
+          // Hunt for an id in the response
+          //   * response.*[0].id
+        } else if (key.equals("response")) {
+          reader.beginObject();
+          while (reader.hasNext()) {
+            reader.nextName(); // skip name
+            reader.beginArray();
+            reader.beginObject();
+            while (reader.hasNext()) {
+              key = reader.nextName();
+              if (key.equals("id")) {
+                job.resultId = reader.nextString();
+              } else {
+                reader.skipValue();
+              }
+            }
+            reader.endObject();
+            reader.endArray();
+          }
+          reader.endObject();
         } else if (key.equals("status")) {
           job.status = reader.nextString();
+          // There are two places to find a useful error message
+          //   * error.failedItems.faults[0].details <- on delete
+          //   * error.details <- on create
+        } else if (key.equals("error")) {
+          reader.beginObject();
+          while (reader.hasNext()) {
+            key = reader.nextName();
+            if (key.equals("failedItems")) {
+              reader.beginObject();
+              reader.nextName();
+              reader.beginArray();
+              reader.beginObject();
+              while (reader.hasNext()) {
+                key = reader.nextName();
+                if (key.equals("details")) {
+                  job.errorDetails = reader.nextString();
+                } else {
+                  reader.skipValue();
+                }
+              }
+              reader.endObject();
+              reader.endArray();
+              reader.endObject();
+            } else if (key.equals("details") && job.errorDetails == null) {
+              job.errorDetails = reader.nextString();
+            } else {
+              reader.skipValue();
+            }
+          }
+          reader.endObject();
         } else {
           reader.skipValue();
         }

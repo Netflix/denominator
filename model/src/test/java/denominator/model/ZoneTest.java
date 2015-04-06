@@ -21,7 +21,7 @@ public class ZoneTest {
         .hasId("denominator.io.")
         .hasName("denominator.io.")
         .hasTtl(86400)
-        .hasEmail("fake@denominator.io.")
+        .hasEmail("nil@denominator.io")
         .isEqualTo(name)
         .isNotEqualTo(id)
         .isNotEqualTo(email);
@@ -30,13 +30,13 @@ public class ZoneTest {
         .isNotEqualTo(id.hashCode())
         .isNotEqualTo(email.hashCode());
     assertThat(name.toString())
-        .isEqualTo("Zone [name=denominator.io., ttl=86400, email=fake@denominator.io.]");
+        .isEqualTo("Zone [name=denominator.io., ttl=86400, email=nil@denominator.io.]");
 
     assertThat(id)
         .hasId("ABCD")
         .hasName("denominator.io.")
         .hasTtl(86400)
-        .hasEmail("fake@denominator.io.")
+        .hasEmail("nil@denominator.io")
         .isEqualTo(id)
         .isNotEqualTo(name)
         .isNotEqualTo(email);
@@ -46,7 +46,7 @@ public class ZoneTest {
         .isNotEqualTo(email.hashCode());
 
     assertThat(id.toString()).isEqualTo(
-        "Zone [id=ABCD, name=denominator.io., ttl=86400, email=fake@denominator.io.]");
+        "Zone [id=ABCD, name=denominator.io., ttl=86400, email=nil@denominator.io.]");
 
     assertThat(email)
         .hasId("ABCD")

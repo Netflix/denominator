@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import denominator.model.Zone;
+import feign.Body;
 import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
@@ -16,6 +17,21 @@ public interface Designate {
 
   @RequestLine("GET /domains")
   List<Zone> domains();
+
+  @RequestLine("POST /domains")
+  @Body("%7B\"name\":\"{name}\",\"ttl\":{ttl},\"email\":\"{email}\"%7D")
+  @Headers("Content-Type: application/json")
+  Zone createDomain(@Param("name") String name, @Param("email") String email,
+                    @Param("ttl") int ttl);
+
+  @RequestLine("PUT /domains/{id}")
+  @Body("%7B\"id\":\"{id}\",\"name\":\"{name}\",\"ttl\":{ttl},\"email\":\"{email}\"%7D")
+  @Headers("Content-Type: application/json")
+  Zone updateDomain(@Param("id") String id, @Param("name") String name,
+                    @Param("email") String email, @Param("ttl") int ttl);
+
+  @RequestLine("DELETE /domains/{domainId}")
+  void deleteDomain(@Param("domainId") String domainId);
 
   @RequestLine("GET /domains/{domainId}/records")
   List<Record> records(@Param("domainId") String domainId);
@@ -32,7 +48,7 @@ public interface Designate {
   @RequestLine("DELETE /domains/{domainId}/records/{recordId}")
   void deleteRecord(@Param("domainId") String domainId, @Param("recordId") String recordId);
 
-  static class Record {
+  class Record {
 
     String id;
     String name;

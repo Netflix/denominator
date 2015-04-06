@@ -67,7 +67,7 @@ public class DesignateTest {
     server.enqueue(new MockResponse().setBody(domainsResponse));
 
     assertThat(mockApi().domains()).containsExactly(
-        Zone.create(domainId, "denominator.io.", 3600, "admin@denominator.io")
+        Zone.create(domainId, "denominator.io.", 3601, "nil@denominator.io")
     );
 
     server.assertAuthRequest();
@@ -285,17 +285,19 @@ public class DesignateTest {
   }
 
   static String domainId = "62ac4caf-6108-4b74-b6fe-460967db32a7";
+  static String domainResponse = "{\n"
+                         + "  \"created_at\": \"2015-04-05T15:48:53.271013\",\n"
+                         + "  \"description\": null,\n"
+                         + "  \"email\": \"nil@denominator.io\",\n"
+                         + format("  \"id\": \"%s\",\n", domainId)
+                         + "  \"name\": \"denominator.io.\",\n"
+                         + "  \"serial\": 1428248933,\n"
+                         + "  \"ttl\": 3601,\n"
+                         + "  \"updated_at\": null\n"
+                         + "}\n";
   static String domainsResponse = "{\n"
                                   + "  \"domains\": [\n"
-                                  + "    {\n"
-                                  + "      \"name\": \"denominator.io.\",\n"
-                                  + "      \"created_at\": \"2013-07-07T17:55:21.000000\",\n"
-                                  + "      \"updated_at\": null,\n"
-                                  + "      \"email\": \"admin@denominator.io\",\n"
-                                  + "      \"ttl\": 3600,\n"
-                                  + "      \"serial\": 1373219721,\n"
-                                  + format("      \"id\": \"%s\"\n", domainId)
-                                  + "    }\n"
+                                  + domainResponse
                                   + "  ]\n"
                                   + "}";
   // NOTE records are allowed to be out of order by type

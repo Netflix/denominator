@@ -16,7 +16,7 @@ import denominator.DNSApiManager;
 import denominator.ResourceRecordSetApi;
 import denominator.ZoneApi;
 import denominator.clouddns.RackspaceAdapters.DomainListAdapter;
-import denominator.clouddns.RackspaceAdapters.JobIdAndStatusAdapter;
+import denominator.clouddns.RackspaceAdapters.JobAdapter;
 import denominator.clouddns.RackspaceAdapters.RecordListAdapter;
 import denominator.clouddns.RackspaceApis.CloudDNS;
 import denominator.clouddns.RackspaceApis.CloudIdentity;
@@ -139,7 +139,7 @@ public class CloudDNSProvider extends BasicProvider {
           .encoder(new GsonEncoder())
           .decoder(new GsonDecoder(Arrays.asList(
                        new KeystoneAccessAdapter("rax:dns"),
-                       new JobIdAndStatusAdapter(),
+                       new JobAdapter(),
                        new DomainListAdapter(),
                        new RecordListAdapter()))
           )

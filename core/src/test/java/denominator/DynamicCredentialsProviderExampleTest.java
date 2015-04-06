@@ -125,6 +125,16 @@ public class DynamicCredentialsProviderExampleTest {
     public Iterator<Zone> iterateByName(String name) {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public String put(Zone zone) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void delete(String idOrName) {
+      throw new UnsupportedOperationException();
+    }
   }
 
   final static class DynamicCredentialsProvider extends BasicProvider {
