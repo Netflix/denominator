@@ -124,20 +124,14 @@ public class ReadOnlyLiveTest {
 
   // TODO
   private void checkGetByNameTypeAndQualifierConsistent(Zone zone, ResourceRecordSet<?> rrs) {
-    ResourceRecordSet<?>
-        byNameTypeAndQualifier =
-        allApi(zone).getByNameTypeAndQualifier(rrs.name(), rrs.type(),
-                                               rrs.qualifier());
-    assertThat(byNameTypeAndQualifier)
+    assertThat(allApi(zone).getByNameTypeAndQualifier(rrs.name(), rrs.type(), rrs.qualifier()))
         .describedAs("could not lookup by name, type, and qualifier: " + rrs)
         .isEqualTo(rrs);
   }
 
   private void checkIterateByNameAndTypeConsistent(Zone zone, ResourceRecordSet<?> rrs) {
-    Iterator<ResourceRecordSet<?>>
-        byNameAndType = allApi(zone).iterateByNameAndType(rrs.name(), rrs.type());
-    assertThat(byNameAndType)
-        .describedAs(rrs + " not found in list by name and type: " + byNameAndType)
+    assertThat(allApi(zone).iterateByNameAndType(rrs.name(), rrs.type()))
+        .describedAs(rrs + " not found in list by name and type: " + zone)
         .contains(rrs);
   }
 

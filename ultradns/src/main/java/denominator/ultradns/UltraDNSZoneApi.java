@@ -54,11 +54,40 @@ public final class UltraDNSZoneApi implements denominator.ZoneApi {
     try {
       zone = fromSOA(name);
     } catch (UltraDNSException e) {
-      if (e.code() != UltraDNSException.INVALID_ZONE_NAME) {
+      if (e.code() != UltraDNSException.ZONE_NOT_FOUND
+          && e.code() != UltraDNSException.INVALID_ZONE_NAME) {
         throw e;
       }
     }
     return singletonIterator(zone);
+  }
+
+  @Override
+  public String put(Zone zone) {
+    try {
+      api.createPrimaryZone(account.get(), zone.name());
+    } catch (UltraDNSException e) {
+      if (e.code() != UltraDNSException.ZONE_ALREADY_EXISTS) {
+        throw e;
+      }
+    }
+    Record soa = api.getResourceRecordsOfDNameByType(zone.name(), zone.name(), 6).get(0);
+    soa.ttl = zone.ttl();
+    soa.rdata.set(1, zone.email());
+    soa.rdata.set(6, String.valueOf(zone.ttl()));
+    api.updateResourceRecord(soa, zone.name());
+    return zone.name();
+  }
+
+  @Override
+  public void delete(String name) {
+    try {
+      api.deleteZone(name);
+    } catch (UltraDNSException e) {
+      if (e.code() != UltraDNSException.ZONE_NOT_FOUND) {
+        throw e;
+      }
+    }
   }
 
   private Zone fromSOA(String name) {

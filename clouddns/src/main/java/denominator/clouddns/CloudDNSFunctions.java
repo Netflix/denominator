@@ -19,7 +19,10 @@ import static java.lang.String.format;
 
 final class CloudDNSFunctions {
 
-  static void awaitComplete(CloudDNS api, Job job) {
+  /**
+   * Returns the ID of the object created or null.
+   */
+  static String awaitComplete(CloudDNS api, Job job) {
     RetryableException retryableException = new RetryableException(
         format("Job %s did not complete. Check your logs.", job.id), null);
     Retryer retryer = new Retryer.Default(500, 1000, 30);
@@ -28,9 +31,10 @@ final class CloudDNSFunctions {
       job = api.getStatus(job.id);
 
       if ("COMPLETED".equals(job.status)) {
-        break;
+        return job.resultId;
       } else if ("ERROR".equals(job.status)) {
-        throw retryableException;
+        throw new IllegalStateException(
+            format("Job %s failed with error: %s", job.id, job.errorDetails));
       }
 
       retryer.continueOrPropagate(retryableException);

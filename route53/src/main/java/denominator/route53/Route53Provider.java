@@ -174,6 +174,7 @@ public class Route53Provider extends BasicProvider {
 
     static Decoder decoder() {
       return SAXDecoder.builder()
+          .registerContentHandler(GetHostedZoneResponseHandler.class)
           .registerContentHandler(ListHostedZonesResponseHandler.class)
           .registerContentHandler(ListResourceRecordSetsResponseHandler.class)
           .registerContentHandler(Messages.class)

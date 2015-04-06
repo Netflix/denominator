@@ -18,7 +18,9 @@ import denominator.model.ResourceRecordSet;
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.dynect.DynECTTest.noneWithName;
 import static denominator.dynect.DynECTTest.noneWithNameAndType;
+import static denominator.dynect.DynECTTest.serviceNS;
 import static denominator.model.ResourceRecordSets.a;
+import static denominator.model.ResourceRecordSets.ns;
 
 public class DynECTResourceRecordSetApiMockTest {
 
@@ -154,6 +156,37 @@ public class DynECTResourceRecordSetApiMockTest {
     server.assertRequest()
         .hasMethod("DELETE")
         .hasPath("/ARecord/denominator.io/www.denominator.io/1");
+    server.assertRequest()
+        .hasMethod("PUT")
+        .hasPath("/Zone/denominator.io")
+        .hasBody("{\"publish\":true}");
+  }
+
+  /**
+   * DynECT errors if you try to delete a service record.
+   */
+  @Test
+  public void putDoesntDeleteServiceNSRecord() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(serviceNS));
+    server.enqueue(new MockResponse().setBody(success));
+    server.enqueue(new MockResponse().setBody(success));
+
+    ResourceRecordSetApi api = server.connect().api().basicRecordSetsInZone("denominator.io");
+    api.put(ns("denominator.io", 3600, "ns1.denominator.io."));
+
+    server.assertSessionRequest();
+    server.assertRequest().hasMethod("GET")
+        .hasPath("/NSRecord/denominator.io/denominator.io?detail=Y");
+    server.assertRequest()
+        .hasMethod("POST")
+        .hasPath("/NSRecord/denominator.io/denominator.io")
+        .hasBody("{\n"
+                 + "  \"ttl\": 3600,\n"
+                 + "  \"rdata\": {\n"
+                 + "    \"nsdname\": \"ns1.denominator.io.\"\n"
+                 + "  }\n"
+                 + "}");
     server.assertRequest()
         .hasMethod("PUT")
         .hasPath("/Zone/denominator.io")

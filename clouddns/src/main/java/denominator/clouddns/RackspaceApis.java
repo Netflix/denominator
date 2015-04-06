@@ -46,6 +46,20 @@ class RackspaceApis {
     @RequestLine("GET /status/{jobId}?showDetails=true")
     Job getStatus(@Param("jobId") String jobId);
 
+    @RequestLine("POST /domains")
+    @Body("%7B\"domains\":[%7B\"name\":\"{name}\",\"emailAddress\":\"{email}\",\"ttl\":{ttl}%7D]%7D")
+    @Headers("Content-Type: application/json")
+    Job createDomain(@Param("name") String name, @Param("email") String email,
+                     @Param("ttl") int ttl);
+
+    @RequestLine("PUT /domains")
+    @Body("%7B\"domains\":[%7B\"id\":\"{id}\",\"emailAddress\":\"{email}\",\"ttl\":{ttl}%7D]%7D")
+    @Headers("Content-Type: application/json")
+    Job updateDomain(@Param("id") String id, @Param("email") String email, @Param("ttl") int ttl);
+
+    @RequestLine("DELETE /domains/{id}")
+    Job deleteDomain(@Param("id") String id);
+
     /**
      * Note this doesn't make sense to return anything except one or none, as duplicate domains
      * aren't permitted in the create api.
@@ -109,6 +123,8 @@ class RackspaceApis {
 
     String id;
     String status;
+    String errorDetails;
+    String resultId;
   }
 
   static class Record {

@@ -1,12 +1,12 @@
 package denominator.dynect;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import denominator.dynect.DynECT.Record;
 import denominator.model.rdata.AAAAData;
@@ -85,6 +85,8 @@ enum ToRecord {
     JsonObject current = element.getAsJsonObject();
     Record record = new Record();
     record.id = current.get("record_id").getAsLong();
+    record.serviceClass =
+        current.has("service_class") ? current.get("service_class").getAsString() : null;
     record.name = current.get("fqdn").getAsString();
     record.type = current.get("record_type").getAsString();
     record.ttl = current.get("ttl").getAsInt();

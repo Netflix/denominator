@@ -9,6 +9,7 @@ import denominator.clouddns.RackspaceApis.ListWithNext;
 import denominator.clouddns.RackspaceApis.Record;
 import denominator.model.Zone;
 
+import static denominator.clouddns.CloudDNSFunctions.awaitComplete;
 import static denominator.common.Util.singletonIterator;
 
 class CloudDNSZoneApi implements denominator.ZoneApi {
@@ -71,6 +72,38 @@ class CloudDNSZoneApi implements denominator.ZoneApi {
     @Override
     public void remove() {
       throw new UnsupportedOperationException();
+    }
+  }
+
+  @Override
+  public String put(Zone zone) {
+    if (zone.id() != null) {
+      return updateZone(zone.id(), zone);
+    }
+    try {
+      return awaitComplete(api, api.createDomain(zone.name(), zone.email(), zone.ttl()));
+    } catch (IllegalStateException e) {
+      if (e.getMessage().indexOf("already exists") == -1) {
+        throw e;
+      }
+      String id = api.domainsByName(zone.name()).get(0).id();
+      return updateZone(id, zone);
+    }
+  }
+
+  private String updateZone(String id, Zone zone) {
+    awaitComplete(api, api.updateDomain(id, zone.email(), zone.ttl()));
+    return id;
+  }
+
+  @Override
+  public void delete(String id) {
+    try {
+      awaitComplete(api, api.deleteDomain(id));
+    } catch (IllegalStateException e) {
+      if (e.getMessage().indexOf("ObjectNotFoundException") == -1) {
+        throw e;
+      }
     }
   }
 }

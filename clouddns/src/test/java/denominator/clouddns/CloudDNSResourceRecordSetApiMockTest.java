@@ -163,13 +163,13 @@ public class CloudDNSResourceRecordSetApiMockTest {
     assertThat(api.getByNameAndType("denominator.io", "SOA"))
         .hasName("denominator.io")
         .hasType("SOA")
-        .hasTtl(3600)
+        .hasTtl(3601)
         .containsExactlyRecords(SOAData.builder()
                                     .mname("ns.rackspace.com")
-                                    .rname("admin@denominator.io")
+                                    .rname("nil@denominator.io")
                                     .serial(1427817447)
-                                    .refresh(3600).retry(3600)
-                                    .expire(3600).minimum(3600).build());
+                                    .refresh(3601).retry(3601)
+                                    .expire(3601).minimum(3601).build());
 
     server.assertAuthRequest();
     server.assertRequest()

@@ -12,10 +12,12 @@ import denominator.model.rdata.MXData;
 import denominator.model.rdata.NAPTRData;
 import denominator.model.rdata.NSData;
 import denominator.model.rdata.PTRData;
+import denominator.model.rdata.SOAData;
 import denominator.model.rdata.SPFData;
 import denominator.model.rdata.SRVData;
 import denominator.model.rdata.SSHFPData;
 import denominator.model.rdata.TXTData;
+
 import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 
@@ -141,6 +143,20 @@ public class ResourceRecordSets {
         return "alwaysVisible()";
       }
     };
+  }
+
+  /**
+   * Returns an updated SOA rrset, with an incremented serial number and the specified parameters.
+   */
+  public static ResourceRecordSet<SOAData> soa(ResourceRecordSet<?> soa, String email, int ttl) {
+    SOAData soaData = (SOAData) soa.records().get(0);
+    soaData = soaData.toBuilder().serial(soaData.serial() + 1).rname(email).build();
+    return ResourceRecordSet.<SOAData>builder()
+        .name(soa.name())
+        .type("SOA")
+        .ttl(ttl)
+        .add(soaData)
+        .build();
   }
 
   /**

@@ -92,7 +92,10 @@ public final class DynECTResourceRecordSetApi implements denominator.ResourceRec
     boolean shouldPublish = false;
     while (existingRecords.hasNext()) {
       Record existing = existingRecords.next();
-      if (recordsLeftToCreate.contains(existing.rdata) && ttlToApply == existing.ttl) {
+      if ((recordsLeftToCreate.contains(existing.rdata) && ttlToApply == existing.ttl)
+          // Cannot delete service NS records
+          || (rrset.type().equals("NS") && "Primary".equals(existing.serviceClass))
+          ) {
         recordsLeftToCreate.remove(existing.rdata);
         continue;
       }
