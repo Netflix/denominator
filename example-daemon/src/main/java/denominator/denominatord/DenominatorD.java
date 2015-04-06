@@ -36,15 +36,15 @@ public class DenominatorD {
   }
 
   public int start() throws IOException {
-    server.play();
+    server.start();
     return server.getPort();
   }
 
   public void start(int port) throws IOException {
-    server.play(port);
+    server.start(port);
   }
 
-  public void stop() throws IOException {
+  public void shutdown() throws IOException {
     server.shutdown();
   }
 

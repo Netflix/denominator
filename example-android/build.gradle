@@ -30,9 +30,9 @@ repositories { mavenLocal()
 
 dependencies {
     compile 'com.android.support:support-v4:19.0.0'
-    compile 'com.netflix.denominator:denominator-core:4.4.2'
+    compile 'com.netflix.denominator:denominator-core:4.5.0'
     // swap this out to use a different provider
-    compile 'com.netflix.denominator:denominator-ultradns:4.4.2'
+    compile 'com.netflix.denominator:denominator-ultradns:4.5.0'
     // TODO: find a way to have this in compile classpath, but not in apk
     compile 'com.squareup.dagger:dagger-compiler:1.2.2'
     compile 'com.squareup:tape:1.2.3'
