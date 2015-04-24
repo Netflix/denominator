@@ -7,6 +7,8 @@ import org.junit.rules.ExpectedException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -200,6 +202,29 @@ public class DenominatorTest {
   }
 
   @Test
+  public void testParseCertAndPrivateKeyInCredentials() {
+    ZoneList zoneList = new ZoneList() {
+      @Override
+      public Iterator<String> doRun(DNSApiManager mgr) {
+        assertThat(configPath).isEqualTo(getTestConfigPath("test-config-cert.yml"));
+        Map mapCredentials = Map.class.cast(credentials);
+
+        assertThat(((X509Certificate) mapCredentials.get("x509Certificate")).getSubjectDN().getName())
+            .containsIgnoringCase("C=US,ST=California,O=NetflixOSS,OU=Denominator,CN=Denominator");
+
+        PrivateKey privateKey = (PrivateKey) mapCredentials.get("privateKey");
+        assertThat(privateKey.getAlgorithm()).isEqualToIgnoringCase("RSA");
+        assertThat(privateKey.getFormat()).isEqualToIgnoringCase("PKCS#8");
+
+        return Collections.<String>emptyList().iterator();
+      }
+    };
+    zoneList.providerConfigurationName = "blah";
+    zoneList.configPath = getTestConfigPath("test-config-cert.yml");
+    zoneList.run();
+  }
+
+  @Test
   // denominator -p mock zone add -n denominator.io. -e nil@denominator.io
   public void testZoneAdd() {
     ZoneAdd command = new ZoneAdd();
@@ -346,8 +371,39 @@ public class DenominatorTest {
     zoneList.run();
   }
 
+  @Test
+  public void testParseCertAndPrivateKeyInCLICredentials() throws IOException {
+    ZoneList zoneList = new ZoneList() {
+      @Override
+      public Iterator<String> doRun(DNSApiManager mgr) {
+        ListCredentials listCredentials = (ListCredentials) credentials;
+
+        assertThat(((X509Certificate) listCredentials.get(0)).getSubjectDN().getName())
+            .containsIgnoringCase("C=US,ST=California,O=NetflixOSS,OU=Denominator,CN=Denominator");
+
+        PrivateKey privateKey = (PrivateKey) listCredentials.get(1);
+        assertThat(privateKey.getAlgorithm()).isEqualToIgnoringCase("RSA");
+        assertThat(privateKey.getFormat()).isEqualToIgnoringCase("PKCS#8");
+
+        return Collections.<String>emptyList().iterator();
+      }
+    };
+    zoneList.providerConfigurationName = "blah";
+    zoneList.providerName = "mock";
+    Map configFromYaml = zoneList.getConfigFromYaml(
+        zoneList.getFileContentsFromPath(getTestConfigPath("test-config-cert.yml")));
+    Map credentials = Map.class.cast(configFromYaml.get("credentials"));
+    zoneList.credentialArgs = asList(credentials.get("x509Certificate").toString(),
+        credentials.get("privateKey").toString());
+    zoneList.run();
+  }
+
   private String getTestConfigPath() {
-    URL res = getClass().getClassLoader().getResource("test-config.yml");
+    return getTestConfigPath("test-config.yml");
+  }
+
+  private String getTestConfigPath(String fileName) {
+    URL res = getClass().getClassLoader().getResource(fileName);
     return res != null ? res.getFile() : null;
   }
 
