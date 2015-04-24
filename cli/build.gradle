@@ -38,7 +38,13 @@ task fatJar(dependsOn: classes, type: Jar) {
   doFirst {
     // Delay evaluation until the compile configuration is ready
     from {
-      configurations.compile.collect { zipTree(it).matching { exclude "**/${providerFile}" } }
+      configurations.compile.collect { zipTree(it).matching {
+          exclude "**/${providerFile}"
+          // remove all signature files
+          exclude "META-INF/*.SF"
+          exclude "META-INF/*.DSA"
+          exclude "META-INF/*.RSA"
+      } }
     }
   }
 

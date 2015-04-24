@@ -207,14 +207,12 @@ public class DenominatorTest {
       @Override
       public Iterator<String> doRun(DNSApiManager mgr) {
         assertThat(configPath).isEqualTo(getTestConfigPath("test-config-cert.yml"));
-        final Map mapCredentials = Map.class.cast(credentials);
+        Map mapCredentials = Map.class.cast(credentials);
 
-        assertThat(mapCredentials.get("x509Certificate")).isInstanceOf(X509Certificate.class);
         assertThat(((X509Certificate) mapCredentials.get("x509Certificate")).getSubjectDN().getName())
             .containsIgnoringCase("C=US,ST=California,O=NetflixOSS,OU=Denominator,CN=Denominator");
 
-        assertThat(mapCredentials.get("privateKey")).isInstanceOf(PrivateKey.class);
-        final PrivateKey privateKey = (PrivateKey) mapCredentials.get("privateKey");
+        PrivateKey privateKey = (PrivateKey) mapCredentials.get("privateKey");
         assertThat(privateKey.getAlgorithm()).isEqualToIgnoringCase("RSA");
         assertThat(privateKey.getFormat()).isEqualToIgnoringCase("PKCS#8");
 
@@ -378,15 +376,12 @@ public class DenominatorTest {
     ZoneList zoneList = new ZoneList() {
       @Override
       public Iterator<String> doRun(DNSApiManager mgr) {
-        assertThat(credentials).isInstanceOf(ListCredentials.class);
-        final ListCredentials listCredentials = (ListCredentials) credentials;
+        ListCredentials listCredentials = (ListCredentials) credentials;
 
-        assertThat(listCredentials.get(0)).isInstanceOf(X509Certificate.class);
         assertThat(((X509Certificate) listCredentials.get(0)).getSubjectDN().getName())
             .containsIgnoringCase("C=US,ST=California,O=NetflixOSS,OU=Denominator,CN=Denominator");
 
-        assertThat(listCredentials.get(1)).isInstanceOf(PrivateKey.class);
-        final PrivateKey privateKey = (PrivateKey) listCredentials.get(1);
+        PrivateKey privateKey = (PrivateKey) listCredentials.get(1);
         assertThat(privateKey.getAlgorithm()).isEqualToIgnoringCase("RSA");
         assertThat(privateKey.getFormat()).isEqualToIgnoringCase("PKCS#8");
 
@@ -397,7 +392,7 @@ public class DenominatorTest {
     zoneList.providerName = "mock";
     Map configFromYaml = zoneList.getConfigFromYaml(
         zoneList.getFileContentsFromPath(getTestConfigPath("test-config-cert.yml")));
-    final Map credentials = Map.class.cast(configFromYaml.get("credentials"));
+    Map credentials = Map.class.cast(configFromYaml.get("credentials"));
     zoneList.credentialArgs = asList(credentials.get("x509Certificate").toString(),
         credentials.get("privateKey").toString());
     zoneList.run();

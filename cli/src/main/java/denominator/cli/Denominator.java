@@ -3,6 +3,7 @@ package denominator.cli;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
@@ -45,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.annotation.Nullable;
 import javax.inject.Singleton;
 
 import dagger.ObjectGraph;
@@ -275,12 +275,12 @@ public class Denominator {
     @SuppressWarnings("unchecked")
     public void run() {
       if (providerName != null && credentialArgs != null) {
-        credentials = ListCredentials.from(Lists.transform(credentialArgs, attemptToTransformCredentials));
+        credentials = ListCredentials.from(Lists.transform(credentialArgs, decodeAnyPems));
       } else if (providerConfigurationName != null) {
         Map<?, ?> configFromFile = getConfigFromFile();
         if (configFromFile != null) {
-          credentials = MapCredentials.from(Maps.transformValues(Map.class.cast(configFromFile.get("credentials")),
-              attemptToTransformCredentials));
+          credentials = MapCredentials.from(
+              Maps.transformValues(Map.class.cast(configFromFile.get("credentials")), decodeAnyPems));
           providerName = configFromFile.get("provider").toString();
           if (configFromFile.containsKey("url")) {
             url = configFromFile.get("url").toString();
@@ -323,42 +323,42 @@ public class Denominator {
       }
     }
 
-    private Function<Object, Object> attemptToTransformCredentials = new Function<Object, Object>() {
-      @Nullable
+    private static final Function<Object, Object> maybeDecodeX509Pem = new Function<Object, Object>() {
       @Override
-      public Object apply(@Nullable Object input) {
-        input = attemptExtractX509Certificate(input);
-        return attemptExtractPrivateKey(input);
+      public Object apply(Object input) {
+        if (input instanceof String && input.toString().contains("BEGIN CERTIFICATE")) {
+          try {
+            X509CertParser x509CertParser = new X509CertParser();
+            x509CertParser.engineInit(new ByteArrayInputStream(input.toString().getBytes()));
+            return x509CertParser.engineRead();
+          } catch (Exception ex) {
+            return input;
+          }
+        }
+        return input;
       }
     };
 
-    private Object attemptExtractX509Certificate(Object value) {
-      if (value != null && value instanceof String && value.toString().contains("BEGIN CERTIFICATE")) {
-        try {
-          X509CertParser x509CertParser = new X509CertParser();
-          x509CertParser.engineInit(new ByteArrayInputStream(value.toString().getBytes()));
-          return x509CertParser.engineRead();
-        } catch (Exception ex) {
-          return value;
+    private static final Function<Object, Object> maybeDecodePrivateKeyPem = new Function<Object, Object>() {
+      @Override
+      public Object apply(Object input) {
+        if (input instanceof String && input.toString().contains("BEGIN RSA PRIVATE KEY")) {
+          try {
+            PEMKeyPair pemKeyPair = (PEMKeyPair) new PEMParser(new StringReader(input.toString())).readObject();
+            PrivateKeyInfo privateKeyInfo = pemKeyPair.getPrivateKeyInfo();
+            KeyFactory keyFact = KeyFactory.getInstance(
+                privateKeyInfo.getPrivateKeyAlgorithm().getAlgorithm().getId(), new BouncyCastleProvider());
+            return keyFact.generatePrivate(new PKCS8EncodedKeySpec(privateKeyInfo.getEncoded()));
+          } catch (Exception ex) {
+            return input;
+          }
         }
+        return input;
       }
-      return value;
-    }
+    };
 
-    private Object attemptExtractPrivateKey(Object value) {
-      if (value != null && value instanceof String && value.toString().contains("BEGIN RSA PRIVATE KEY")) {
-        try {
-          final PEMKeyPair pemKeyPair = (PEMKeyPair) new PEMParser(new StringReader(value.toString())).readObject();
-          final PrivateKeyInfo privateKeyInfo = pemKeyPair.getPrivateKeyInfo();
-          KeyFactory keyFact = KeyFactory.getInstance(
-              privateKeyInfo.getPrivateKeyAlgorithm().getAlgorithm().getId(), new BouncyCastleProvider());
-          return keyFact.generatePrivate(new PKCS8EncodedKeySpec(privateKeyInfo.getEncoded()));
-        } catch (Exception ex) {
-          return value;
-        }
-      }
-      return value;
-    }
+    private static final Function<Object, Object> decodeAnyPems =
+        Functions.compose(maybeDecodeX509Pem, maybeDecodePrivateKeyPem);
 
     /**
      * Load configuration for given providerConfigurationName from a YAML configuration file.
