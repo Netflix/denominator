@@ -1,3 +1,6 @@
+### Version 4.6
+* Decode any x509 cert or private key in CLI credentials
+
 ### Version 4.5
 * Adds `ZoneApi.put()` and `ZoneApi.delete()`
 * Adds zone add, update and delete to the CLI
