@@ -2,12 +2,15 @@ package denominator.cli;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Charsets;
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
 import com.google.common.collect.ImmutableSortedSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Ordering;
 import com.google.common.io.Files;
 import com.google.gson.Gson;
@@ -20,11 +23,20 @@ import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.provider.X509CertParser;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.StringReader;
 import java.lang.reflect.Type;
+import java.security.KeyFactory;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -33,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.annotation.Nullable;
 import javax.inject.Singleton;
 
 import dagger.ObjectGraph;
@@ -262,11 +275,12 @@ public class Denominator {
     @SuppressWarnings("unchecked")
     public void run() {
       if (providerName != null && credentialArgs != null) {
-        credentials = ListCredentials.from(credentialArgs);
+        credentials = ListCredentials.from(Lists.transform(credentialArgs, attemptToTransformCredentials));
       } else if (providerConfigurationName != null) {
         Map<?, ?> configFromFile = getConfigFromFile();
         if (configFromFile != null) {
-          credentials = MapCredentials.from(Map.class.cast(configFromFile.get("credentials")));
+          credentials = MapCredentials.from(Maps.transformValues(Map.class.cast(configFromFile.get("credentials")),
+              attemptToTransformCredentials));
           providerName = configFromFile.get("provider").toString();
           if (configFromFile.containsKey("url")) {
             url = configFromFile.get("url").toString();
@@ -307,6 +321,43 @@ public class Denominator {
           }
         }
       }
+    }
+
+    private Function<Object, Object> attemptToTransformCredentials = new Function<Object, Object>() {
+      @Nullable
+      @Override
+      public Object apply(@Nullable Object input) {
+        input = attemptExtractX509Certificate(input);
+        return attemptExtractPrivateKey(input);
+      }
+    };
+
+    private Object attemptExtractX509Certificate(Object value) {
+      if (value != null && value instanceof String && value.toString().contains("BEGIN CERTIFICATE")) {
+        try {
+          X509CertParser x509CertParser = new X509CertParser();
+          x509CertParser.engineInit(new ByteArrayInputStream(value.toString().getBytes()));
+          return x509CertParser.engineRead();
+        } catch (Exception ex) {
+          return value;
+        }
+      }
+      return value;
+    }
+
+    private Object attemptExtractPrivateKey(Object value) {
+      if (value != null && value instanceof String && value.toString().contains("BEGIN RSA PRIVATE KEY")) {
+        try {
+          final PEMKeyPair pemKeyPair = (PEMKeyPair) new PEMParser(new StringReader(value.toString())).readObject();
+          final PrivateKeyInfo privateKeyInfo = pemKeyPair.getPrivateKeyInfo();
+          KeyFactory keyFact = KeyFactory.getInstance(
+              privateKeyInfo.getPrivateKeyAlgorithm().getAlgorithm().getId(), new BouncyCastleProvider());
+          return keyFact.generatePrivate(new PKCS8EncodedKeySpec(privateKeyInfo.getEncoded()));
+        } catch (Exception ex) {
+          return value;
+        }
+      }
+      return value;
     }
 
     /**
