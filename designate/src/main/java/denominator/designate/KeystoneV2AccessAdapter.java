@@ -22,7 +22,7 @@ class KeystoneV2AccessAdapter extends TypeAdapter<TokenIdAndPublicURL> {
 
   @Override
   public TokenIdAndPublicURL read(JsonReader in) throws IOException {
-    JsonObject access = null;
+    JsonObject access;
     try {
       access = new JsonParser().parse(in).getAsJsonObject().get("access").getAsJsonObject();
     } catch (JsonIOException e) {

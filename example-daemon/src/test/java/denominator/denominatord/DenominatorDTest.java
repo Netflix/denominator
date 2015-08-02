@@ -46,6 +46,25 @@ public class DenominatorDTest {
         .encoder(new GsonEncoder())
         .decoder(new GsonDecoder())
         .target(DenominatorDApi.class, "http://localhost:" + port);
+
+    mock.api().basicRecordSetsInZone("denominator.io.").put(ResourceRecordSet.<AData>builder()
+        .name("www.denominator.io.")
+        .type("A")
+        .add(AData.create("192.0.2.1")).build());
+
+    mock.api().weightedRecordSetsInZone("denominator.io.").put(ResourceRecordSet.<CNAMEData>builder()
+        .name("www.weighted.denominator.io.")
+        .type("CNAME")
+        .qualifier("EU-West")
+        .weighted(Weighted.create(1))
+        .add(CNAMEData.create("www1.denominator.io.")).build());
+
+    mock.api().weightedRecordSetsInZone("denominator.io.").put(ResourceRecordSet.<CNAMEData>builder()
+        .name("www.weighted.denominator.io.")
+        .type("CNAME")
+        .qualifier("US-West")
+        .weighted(Weighted.create(1))
+        .add(CNAMEData.create("www2.denominator.io.")).build());
   }
 
   @AfterClass

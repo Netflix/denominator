@@ -11,11 +11,11 @@ test {
 
 dependencies {
   compile      project(':denominator-core')
-  compile     'com.netflix.feign:feign-core:8.1.0'
-  compile     'com.netflix.feign:feign-sax:8.1.0'
+  compile     'com.netflix.feign:feign-core:8.7.0'
+  compile     'com.netflix.feign:feign-sax:8.7.0'
   testCompile  project(':denominator-model').sourceSets.test.output
   testCompile  project(':denominator-core').sourceSets.test.output
   testCompile 'junit:junit:4.12'
-  testCompile 'org.assertj:assertj-core:1.7.1'
-  testCompile 'com.squareup.okhttp:mockwebserver:2.2.0'
+  testCompile 'org.assertj:assertj-core:1.7.1' // last version supporting JDK 7
+  testCompile 'com.squareup.okhttp:mockwebserver:2.4.0'
 }

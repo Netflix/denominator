@@ -20,8 +20,8 @@ import static denominator.common.Util.nextOrNull;
 import static denominator.common.Util.peekingIterator;
 import static denominator.common.Util.slurp;
 import static denominator.common.Util.split;
-import static junit.framework.Assert.assertFalse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class UtilTest {
