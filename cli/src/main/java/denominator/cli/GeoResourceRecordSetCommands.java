@@ -127,8 +127,7 @@ class GeoResourceRecordSetCommands {
         iterator =
             mgr.api().geoRecordSetsInZone(id(mgr, zoneIdOrName))
                 .iterateByNameAndType(name, type);
-      }
-      if (name != null) {
+      } else if (name != null) {
         iterator = mgr.api().geoRecordSetsInZone(id(mgr, zoneIdOrName)).iterateByName(name);
       } else {
         iterator = mgr.api().geoRecordSetsInZone(id(mgr, zoneIdOrName)).iterator();
