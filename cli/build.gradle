@@ -20,8 +20,8 @@ dependencies {
   testCompile  project(':denominator-model').sourceSets.test.output
   testCompile  project(':denominator-core').sourceSets.test.output
   testCompile 'junit:junit:4.12'
-  testCompile 'com.squareup.okhttp:mockwebserver:2.2.0'
-  testCompile 'org.assertj:assertj-core:1.7.1'
+  testCompile 'com.squareup.okhttp:mockwebserver:2.4.0'
+  testCompile 'org.assertj:assertj-core:1.7.1' // last version supporting JDK 7
 }
 
 // create a self-contained jar that is executable

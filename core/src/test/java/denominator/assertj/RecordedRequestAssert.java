@@ -30,14 +30,14 @@ public final class RecordedRequestAssert
 
   public RecordedRequestAssert hasBody(String utf8Expected) {
     isNotNull();
-    objects.assertEqual(info, actual.getUtf8Body(), utf8Expected);
+    objects.assertEqual(info, actual.getBody().readUtf8(), utf8Expected);
     return this;
   }
 
   public RecordedRequestAssert hasXMLBody(String utf8Expected) {
     isNotNull();
     hasHeaderContaining("Content-Type", "application/xml");
-    strings.assertXmlEqualsTo(info, actual.getUtf8Body(), utf8Expected);
+    strings.assertXmlEqualsTo(info, actual.getBody().readUtf8(), utf8Expected);
     return this;
   }
 

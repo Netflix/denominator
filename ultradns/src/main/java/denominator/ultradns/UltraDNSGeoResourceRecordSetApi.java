@@ -208,7 +208,7 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
     if (!recordsLeftToCreate.isEmpty()) {
       // shotgun create
-      String poolId = null;
+      String poolId;
       try {
         String type = rrset.type();
         if ("CNAME".equals(type)) {

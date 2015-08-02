@@ -1,5 +1,6 @@
 ### Version 4.6
 * Decode any x509 cert or private key in CLI credentials
+* Updates to Feign 8.7 and MockWebServer 2.4
 
 ### Version 4.5
 * Adds `ZoneApi.put()` and `ZoneApi.delete()`
