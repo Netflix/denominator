@@ -23,31 +23,6 @@ import com.google.gson.internal.bind.MapTypeAdapterFactory;
 import com.google.gson.reflect.TypeToken;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-
-import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.provider.X509CertParser;
-import org.bouncycastle.openssl.PEMKeyPair;
-import org.bouncycastle.openssl.PEMParser;
-import org.yaml.snakeyaml.Yaml;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.StringReader;
-import java.lang.reflect.Type;
-import java.security.KeyFactory;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.inject.Singleton;
-
 import dagger.ObjectGraph;
 import dagger.Provides;
 import denominator.Credentials;
@@ -86,6 +61,30 @@ import io.airlift.airline.Command;
 import io.airlift.airline.Help;
 import io.airlift.airline.Option;
 import io.airlift.airline.OptionType;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.provider.X509CertParser;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.yaml.snakeyaml.Yaml;
+
+import javax.inject.Singleton;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.lang.reflect.Type;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.security.KeyFactory;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static denominator.CredentialsConfiguration.credentials;
@@ -274,6 +273,8 @@ public class Denominator {
 
     @SuppressWarnings("unchecked")
     public void run() {
+      setProxyFromEnv();
+
       if (providerName != null && credentialArgs != null) {
         credentials = ListCredentials.from(Lists.transform(credentialArgs, decodeAnyPems));
       } else if (providerConfigurationName != null) {
@@ -422,6 +423,30 @@ public class Denominator {
         }
         if (!credentialMap.isEmpty()) {
           credentials = MapCredentials.from(credentialMap);
+        }
+      }
+    }
+
+    static void setProxyFromEnv() {
+      setProtocolProxyFromEnv("http", System.getenv("HTTP_PROXY"));
+      setProtocolProxyFromEnv("https", System.getenv("HTTPS_PROXY"));
+    }
+
+    static void setProtocolProxyFromEnv(String proto, String envProxy) {
+      if (envProxy != null && !envProxy.isEmpty()) {
+        try {
+          URL proxyUrl = new URL(envProxy);
+
+          String proxyHost = System.getProperty(proto + ".proxyHost");
+          if ((proxyHost == null || proxyHost.isEmpty())) {
+            System.setProperty(proto + ".proxyHost", proxyUrl.getHost());
+            System.setProperty(proto + ".proxyPort",
+                Integer.toString(
+                    proxyUrl.getPort() == -1 ? proxyUrl.getDefaultPort() : proxyUrl.getPort()));
+          }
+        } catch (MalformedURLException e) {
+          System.err.println("invalid " + proto + " proxy configuration: " + e.getMessage());
+          System.exit(1);
         }
       }
     }
