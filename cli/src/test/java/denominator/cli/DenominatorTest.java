@@ -1,21 +1,5 @@
 package denominator.cli;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import java.io.IOException;
-import java.net.URL;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.Credentials.ListCredentials;
 import denominator.Credentials.MapCredentials;
@@ -47,6 +31,25 @@ import denominator.model.profile.Geo;
 import denominator.model.rdata.AData;
 import denominator.model.rdata.CNAMEData;
 import denominator.route53.AliasTarget;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.contrib.java.lang.system.Assertion;
+import org.junit.contrib.java.lang.system.ExpectedSystemExit;
+import org.junit.contrib.java.lang.system.RestoreSystemProperties;
+import org.junit.contrib.java.lang.system.SystemErrRule;
+import org.junit.rules.ExpectedException;
+
+import java.io.IOException;
+import java.net.URL;
+import java.security.PrivateKey;
+import java.security.cert.X509Certificate;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
 
 import static denominator.assertj.ModelAssertions.assertThat;
 import static denominator.model.ResourceRecordSets.a;
@@ -55,10 +58,22 @@ import static denominator.model.ResourceRecordSets.srv;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.fail;
 
+
 public class DenominatorTest {
 
   @Rule
   public final ExpectedException thrown = ExpectedException.none();
+
+  @Rule
+  public final RestoreSystemProperties restoreSystemProperties = new RestoreSystemProperties();
+
+  // Use this to make sure the message logged
+  @Rule
+  public final SystemErrRule systemErrRule = new SystemErrRule().enableLog();
+
+  // use this to test exit occurred on malformed
+  @Rule
+  public final ExpectedSystemExit exit = ExpectedSystemExit.none();
 
   DNSApiManager mgr = denominator.Denominator.create(new MockProvider());
 
@@ -1198,6 +1213,60 @@ public class DenominatorTest {
     assertThat(mgr.api().recordSetsInZone(command.zoneIdOrName)
                    .getByNameTypeAndQualifier(command.name, command.type, command.group))
         .isEqualTo(old);
+  }
+
+  @Test
+  public void testProxySettingsWithPort() {
+    Denominator.DenominatorCommand.setProtocolProxyFromEnv("http", "http://localhost:7878");
+    Denominator.DenominatorCommand.setProtocolProxyFromEnv("https", "https://10.0.0.1:8989");
+    assertThat(System.getProperty("http.proxyHost")).isEqualTo("localhost");
+    assertThat(System.getProperty("http.proxyPort")).isEqualTo("7878");
+    assertThat(System.getProperty("https.proxyHost")).isEqualTo("10.0.0.1");
+    assertThat(System.getProperty("https.proxyPort")).isEqualTo("8989");
+  }
+
+  @Test
+  public void testProxySettingsWithDefaultPorts() {
+    Denominator.DenominatorCommand.setProtocolProxyFromEnv("http", "http://localhost");
+    Denominator.DenominatorCommand.setProtocolProxyFromEnv("https", "https://10.0.0.1");
+    assertThat(System.getProperty("http.proxyHost")).isEqualTo("localhost");
+    assertThat(System.getProperty("http.proxyPort")).isEqualTo("80");
+    assertThat(System.getProperty("https.proxyHost")).isEqualTo("10.0.0.1");
+    assertThat(System.getProperty("https.proxyPort")).isEqualTo("443");
+  }
+
+  @Test
+  public void testProxySettingsFromProperties() {
+    System.setProperty("http.proxyHost", "192.168.0.1");
+    System.setProperty("https.proxyHost", "192.168.0.2");
+
+    Denominator.DenominatorCommand.setProtocolProxyFromEnv("http", "http://localhost");
+    Denominator.DenominatorCommand.setProtocolProxyFromEnv("https", "https://10.0.0.1");
+
+    assertThat(System.getProperty("http.proxyHost")).isEqualTo("192.168.0.1");
+    assertThat(System.getProperty("http.proxyPort")).isNull();
+    assertThat(System.getProperty("https.proxyHost")).isEqualTo("192.168.0.2");
+    assertThat(System.getProperty("https.proxyPort")).isNull();
+  }
+
+  @Test
+  public void testInvalidEnvProxySettings() {
+    exit.expectSystemExitWithStatus(1);
+    exit.checkAssertionAfterwards(new Assertion() {
+      @Override
+      public void checkAssertion() throws Exception {
+        assertThat(System.getProperty("http.proxyHost")).isEqualTo("localhost");
+        assertThat(System.getProperty("http.proxyPort")).isEqualTo("80");
+        assertThat(System.getProperty("https.proxyHost")).isNull();
+        assertThat(System.getProperty("https.proxyPort")).isNull();
+        assertThat(systemErrRule.getLog())
+            .isEqualToIgnoringCase(
+                "invalid https proxy configuration: no protocol: 10.0.0.1:8443\n");
+      }
+    });
+
+    Denominator.DenominatorCommand.setProtocolProxyFromEnv("http", "http://localhost");
+    Denominator.DenominatorCommand.setProtocolProxyFromEnv("https", "10.0.0.1:8443");
   }
 
   @Before
