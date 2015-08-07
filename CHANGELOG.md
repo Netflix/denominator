@@ -1,3 +1,6 @@
+### Version 4.7
+* CLI supports `HTTP_PROXY` and `HTTPS_PROXY` environment variables
+
 ### Version 4.6
 * Decode any x509 cert or private key in CLI credentials
 * Updates to Feign 8.7 and MockWebServer 2.4
