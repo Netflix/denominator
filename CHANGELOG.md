@@ -1,9 +1,7 @@
-### Version 4.8
-* Fixes TXT record with spaces
-* Updates to feign 8.10.0
-
 ### Version 4.7
 * CLI supports `HTTP_PROXY` and `HTTPS_PROXY` environment variables
+* Fixes TXT record with spaces
+* Updates to feign 8.10.0
 
 ### Version 4.6
 * Decode any x509 cert or private key in CLI credentials
