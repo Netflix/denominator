@@ -1,7 +1,7 @@
 package denominator.route53;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -18,7 +18,7 @@ import static denominator.assertj.MockWebServerAssertions.assertThat;
 public class InstanceProfileCredentialsProviderTest {
 
   @Rule
-  public MockWebServerRule server = new MockWebServerRule();
+  public MockWebServer server = new MockWebServer();
 
   @Test
   public void whenInstanceProfileCredentialsInMetadataServiceReturnMapCredentials()

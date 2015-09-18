@@ -1,7 +1,7 @@
 package denominator.dynect;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -21,7 +21,7 @@ import static java.lang.String.format;
 
 final class MockDynECTServer extends DynECTProvider implements TestRule {
 
-  private final MockWebServerRule delegate = new MockWebServerRule();
+  private final MockWebServer delegate = new MockWebServer();
   private final String token = "FFFFFFFFFF";
   private String customer = "jclouds";
   private String username = "joe";
@@ -93,7 +93,7 @@ final class MockDynECTServer extends DynECTProvider implements TestRule {
   }
 
   void shutdown() throws IOException {
-    delegate.get().shutdown();
+    delegate.shutdown();
   }
 
   @Override
