@@ -278,8 +278,7 @@ class ResourceRecordSetCommands {
         builder.ttl(ttl);
       }
       final ResourceRecordSet<Map<String, Object>> toAdd = builder.build();
-      String
-          cmd =
+      String cmd =
           format(";; in zone %s adding to rrset %s %s values: %s", zoneIdOrName, name, type,
                  join(',', toAdd.records()));
       if (ttl != -1) {

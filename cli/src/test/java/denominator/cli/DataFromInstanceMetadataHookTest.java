@@ -1,7 +1,7 @@
 package denominator.cli;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -18,7 +18,7 @@ import static denominator.assertj.MockWebServerAssertions.assertThat;
 public class DataFromInstanceMetadataHookTest {
 
   @Rule
-  public final MockWebServerRule server = new MockWebServerRule();
+  public final MockWebServer server = new MockWebServer();
   @Rule
   public final ExpectedException thrown = ExpectedException.none();
 

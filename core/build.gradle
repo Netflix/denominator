@@ -17,7 +17,7 @@ dependencies {
   compile      project(':denominator-model')
   testCompile 'junit:junit:4.12'
   testCompile 'org.assertj:assertj-core:1.7.1' // last version supporting JDK 7
-  testCompile 'com.squareup.okhttp:mockwebserver:2.4.0'
-  testCompile 'com.netflix.feign:feign-core:8.7.1'
+  testCompile 'com.squareup.okhttp:mockwebserver:2.5.0'
+  testCompile 'com.netflix.feign:feign-core:8.10.0'
   testCompile  project(':denominator-model').sourceSets.test.output
 }

@@ -9,8 +9,8 @@ sourceCompatibility = 1.6
 dependencies {
   compile      project(':denominator-core')
   compile     'io.airlift:airline:0.7'
-  compile     'org.yaml:snakeyaml:1.15'
-  compile     'org.bouncycastle:bcpkix-jdk15on:1.50'
+  compile     'org.yaml:snakeyaml:1.16'
+  compile     'org.bouncycastle:bcpkix-jdk15on:1.51'
   // TODO: the following should really only be in the fatJar
   compile      project(':denominator-dynect')
   compile      project(':denominator-ultradns')
@@ -20,9 +20,9 @@ dependencies {
   testCompile  project(':denominator-model').sourceSets.test.output
   testCompile  project(':denominator-core').sourceSets.test.output
   testCompile 'junit:junit:4.12'
-  testCompile 'com.squareup.okhttp:mockwebserver:2.4.0'
+  testCompile 'com.squareup.okhttp:mockwebserver:2.5.0'
   testCompile 'org.assertj:assertj-core:1.7.1' // last version supporting JDK 7
-  testCompile 'com.github.stefanbirkner:system-rules:1.12.0'
+  testCompile 'com.github.stefanbirkner:system-rules:1.12.1'
 }
 
 // create a self-contained jar that is executable

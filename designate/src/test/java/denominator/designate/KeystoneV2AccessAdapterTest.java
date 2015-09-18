@@ -3,7 +3,7 @@ package denominator.designate;
 import com.google.gson.TypeAdapter;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -21,7 +21,7 @@ import static org.junit.Assert.assertNull;
 public class KeystoneV2AccessAdapterTest {
 
   @Rule
-  public final MockWebServerRule server = new MockWebServerRule();
+  public final MockWebServer server = new MockWebServer();
 
   KeystoneV2 client = Feign.builder()
       .decoder(

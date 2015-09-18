@@ -1,4 +1,7 @@
 ### Version 4.7
+* Updates to feign 8.10.0
+
+### Version 4.7
 * CLI supports `HTTP_PROXY` and `HTTPS_PROXY` environment variables
 
 ### Version 4.6

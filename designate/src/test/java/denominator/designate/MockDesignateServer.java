@@ -1,7 +1,7 @@
 package denominator.designate;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -21,7 +21,7 @@ import static java.lang.String.format;
 
 final class MockDesignateServer extends DesignateProvider implements TestRule {
 
-  private final MockWebServerRule delegate = new MockWebServerRule();
+  private final MockWebServer delegate = new MockWebServer();
   private final String tokenId = "b84f4a37-5126-4603-9521-ccd0665fbde1";
   private String tenantId = "123123";
   private String username = "joe";
@@ -108,7 +108,7 @@ final class MockDesignateServer extends DesignateProvider implements TestRule {
   }
 
   void shutdown() throws IOException {
-    delegate.get().shutdown();
+    delegate.shutdown();
   }
 
   @Override

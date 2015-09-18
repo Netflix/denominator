@@ -1,7 +1,7 @@
 package denominator.route53;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -20,7 +20,7 @@ import static denominator.assertj.MockWebServerAssertions.assertThat;
 
 final class MockRoute53Server extends Route53Provider implements TestRule {
 
-  private final MockWebServerRule delegate = new MockWebServerRule();
+  private final MockWebServer delegate = new MockWebServer();
   private String accessKey = "accessKey";
   private String secretKey = "secretKey";
   private String token = null;
@@ -59,7 +59,7 @@ final class MockRoute53Server extends Route53Provider implements TestRule {
   }
 
   void shutdown() throws IOException {
-    delegate.get().shutdown();
+    delegate.shutdown();
   }
 
   @Override

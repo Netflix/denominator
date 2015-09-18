@@ -1,7 +1,7 @@
 package denominator.ultradns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
-import com.squareup.okhttp.mockwebserver.rule.MockWebServerRule;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -41,7 +41,7 @@ final class MockUltraDNSServer extends UltraDNSProvider implements TestRule {
       + "    </soap:Body>\n"
       + "</soap:Envelope>";
 
-  private final MockWebServerRule delegate = new MockWebServerRule();
+  private final MockWebServer delegate = new MockWebServer();
   private String username;
   private String password;
   private String soapTemplate;
@@ -87,7 +87,7 @@ final class MockUltraDNSServer extends UltraDNSProvider implements TestRule {
   }
 
   void shutdown() throws IOException {
-    delegate.get().shutdown();
+    delegate.shutdown();
   }
 
   @Override
