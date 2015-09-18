@@ -1,4 +1,5 @@
-### Version 4.7
+### Version 4.8
+* Fixes TXT record with spaces
 * Updates to feign 8.10.0
 
 ### Version 4.7
