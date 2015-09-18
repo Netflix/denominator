@@ -240,7 +240,7 @@ public class Util {
   }
 
   public static Map<String, Object> toMap(String type, String rdata) {
-    return toMap(type, Util.split(' ', rdata));
+    return "TXT".equals(type) ? TXTData.create(rdata) : toMap(type, Util.split(' ', rdata));
   }
 
   public static Map<String, Object> toMap(String type, List<String> parts) {
