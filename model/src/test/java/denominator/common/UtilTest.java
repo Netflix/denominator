@@ -1,5 +1,6 @@
 package denominator.common;
 
+import denominator.model.rdata.TXTData;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -163,7 +164,6 @@ public class UtilTest {
                                    public boolean apply(String breakfast) {
                                      return "pancakes".equals(breakfast);
                                    }
-
                                  });
     assertThat(it).containsExactly("pancakes");
   }
@@ -189,5 +189,10 @@ public class UtilTest {
     };
     assertTrue(and(startsWithP, notPoo).apply("pancakes"));
     assertFalse(and(startsWithP, notPoo).apply("poo"));
+  }
+
+  @Test
+  public void toMapDoesntSplitTXT() {
+    assertThat(Util.toMap("TXT", "ONE TWO THREE")).isEqualTo(TXTData.create("ONE TWO THREE"));
   }
 }
