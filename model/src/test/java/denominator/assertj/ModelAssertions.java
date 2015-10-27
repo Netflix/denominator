@@ -7,7 +7,7 @@ import denominator.model.Zone;
 
 public class ModelAssertions extends Assertions {
 
-  public static ResourceRecordSetAssert assertThat(ResourceRecordSet actual) {
+  public static ResourceRecordSetAssert assertThat(ResourceRecordSet<?> actual) {
     return new ResourceRecordSetAssert(actual);
   }
 
