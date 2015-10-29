@@ -1,5 +1,6 @@
 package denominator.verisigndns;
 
+import static denominator.common.Preconditions.checkArgument;
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.equal;
 import static denominator.common.Util.nextOrNull;
@@ -11,13 +12,8 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import static denominator.verisigndns.RecordFilter.filter;
-import static denominator.verisigndns.RecordFilter.in;
-import static denominator.verisigndns.RecordFilter.not;
-import static denominator.verisigndns.RecordFilter.newArrayList;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
-import denominator.model.ResourceRecordSet.Builder;
 import denominator.verisigndns.VerisignDnsEncoder.GetRRList;
 
 final class VerisignDnsAllProfileResourceRecordSetApi implements AllProfileResourceRecordSetApi {
@@ -67,9 +63,29 @@ final class VerisignDnsAllProfileResourceRecordSetApi implements AllProfileResou
     return nextOrNull(new ResourceRecordByNameAndTypeIterator(api, getRRList));
   }
 
+  private <E> List<E> notIn(List<? extends E> a, List<? extends E> b) {
+    List<E> r = new ArrayList<E>();
+
+    for (E i : a) {
+      if (!b.contains(i)) {
+        r.add(i);
+      }
+    }
+
+    return r;
+  }
+
+  private <E> List<E> copy(List<? extends E> a) {
+    List<E> r = new ArrayList<E>();
+
+    r.addAll(a);
+
+    return r;
+  }
+
   @Override
   public void put(ResourceRecordSet<?> rrset) {
-    checkNotNull(rrset, "rrset was null");
+    checkArgument(rrset != null && !rrset.records().isEmpty(), "rrset was empty");
 
     Integer ttlToApply = rrset.ttl() != null ? rrset.ttl() : 86400;
 
@@ -80,50 +96,46 @@ final class VerisignDnsAllProfileResourceRecordSetApi implements AllProfileResou
       oldRRSet = nextOrNull(iterateByNameAndType(rrset.name(), rrset.type()));
     }
 
-    List<Map<String, Object>> newRRData = null;
-    List<Map<String, Object>> oldRRData = null;
+    List<Map<String, Object>> toAdd;
+    List<Map<String, Object>> toDel;
     if (oldRRSet != null) {
-      newRRData = newArrayList(filter(rrset.records(), not(in(oldRRSet.records()))));
-
-      if (newRRData.isEmpty() && !equal(oldRRSet.ttl(), ttlToApply)) {
-        oldRRData = new ArrayList<Map<String, Object>>();
-        oldRRData.addAll(oldRRSet.records());
-      } else if (newRRData.isEmpty() && equal(oldRRSet.ttl(), ttlToApply)) {
-        return;
+      if (equal(oldRRSet.ttl(), ttlToApply)) {
+        toDel = notIn(oldRRSet.records(), rrset.records());
+        toAdd = notIn(rrset.records(), oldRRSet.records());
       } else {
-        List<Map<String, Object>> oldRRDataList =
-            newArrayList(filter(oldRRSet.records(), in(rrset.records())));
-
-        if (!oldRRDataList.isEmpty()) {
-          oldRRData = new ArrayList<Map<String, Object>>();
-          oldRRData.addAll(oldRRDataList);
-          newRRData.addAll(oldRRDataList);
-        }
+        toDel = copy(oldRRSet.records());
+        toAdd = copy(rrset.records());
       }
     } else {
-      newRRData = newArrayList(rrset.records());
+      toDel = null;
+      toAdd = copy(rrset.records());
     }
 
-    Builder<Map<String, Object>> newRRSetBuilder = ResourceRecordSet.builder();
-    if (newRRData != null && !newRRData.isEmpty()) {
-      rrset =
-          newRRSetBuilder.name(rrset.name()).type(rrset.type()).ttl(ttlToApply).addAll(newRRData)
-              .build();
+    if (toAdd.isEmpty() && (toDel == null || toDel.isEmpty())) {
+      return;
     }
 
-    Builder<Map<String, Object>> deleteRRSetBuilder = ResourceRecordSet.builder();
+    if (!toAdd.isEmpty()) {
+      rrset = ResourceRecordSet.builder()
+          .name(rrset.name())
+          .type(rrset.type())
+          .ttl(ttlToApply)
+          .addAll(toAdd)
+          .build();
+    }
+
     ResourceRecordSet<Map<String, Object>> rrsetToBeDeleted = null;
-    if (oldRRData != null) {
-      deleteRRSetBuilder.ttl(oldRRSet.ttl());
-      deleteRRSetBuilder.name(oldRRSet.name());
-      deleteRRSetBuilder.type(oldRRSet.type());
-      deleteRRSetBuilder.addAll(oldRRData);
-      rrsetToBeDeleted = deleteRRSetBuilder.build();
+    if (toDel != null && !toDel.isEmpty()) {
+      rrsetToBeDeleted = ResourceRecordSet.builder()
+        .name(oldRRSet.name())
+        .type(oldRRSet.type())
+        .ttl(oldRRSet.ttl())
+        .addAll(toDel)
+        .build();
     }
 
     api.updateResourceRecords(zoneName, rrset, rrsetToBeDeleted);
   }
-
 
   @Override
   public void deleteByNameAndType(String name, String type) {
