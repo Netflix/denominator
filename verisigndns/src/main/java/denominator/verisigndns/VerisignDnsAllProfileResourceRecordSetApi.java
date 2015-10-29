@@ -1,8 +1,5 @@
 package denominator.verisigndns;
 
-import static com.google.common.base.Predicates.in;
-import static com.google.common.base.Predicates.not;
-import static com.google.common.collect.Iterables.filter;
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.equal;
 import static denominator.common.Util.nextOrNull;
@@ -14,9 +11,10 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-
+import static denominator.verisigndns.RecordFilter.filter;
+import static denominator.verisigndns.RecordFilter.in;
+import static denominator.verisigndns.RecordFilter.not;
+import static denominator.verisigndns.RecordFilter.newArrayList;
 import denominator.AllProfileResourceRecordSetApi;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
@@ -85,7 +83,8 @@ final class VerisignDnsAllProfileResourceRecordSetApi implements AllProfileResou
     List<Map<String, Object>> newRRData = null;
     List<Map<String, Object>> oldRRData = null;
     if (oldRRSet != null) {
-      newRRData = Lists.newArrayList(filter(rrset.records(), not(in(oldRRSet.records()))));
+      newRRData = newArrayList(filter(rrset.records(), not(in(oldRRSet.records()))));
+
       if (newRRData.isEmpty() && !equal(oldRRSet.ttl(), ttlToApply)) {
         oldRRData = new ArrayList<Map<String, Object>>();
         oldRRData.addAll(oldRRSet.records());
@@ -93,7 +92,7 @@ final class VerisignDnsAllProfileResourceRecordSetApi implements AllProfileResou
         return;
       } else {
         List<Map<String, Object>> oldRRDataList =
-            ImmutableList.copyOf(filter(oldRRSet.records(), in(rrset.records())));
+            newArrayList(filter(oldRRSet.records(), in(rrset.records())));
 
         if (!oldRRDataList.isEmpty()) {
           oldRRData = new ArrayList<Map<String, Object>>();
@@ -102,7 +101,7 @@ final class VerisignDnsAllProfileResourceRecordSetApi implements AllProfileResou
         }
       }
     } else {
-      newRRData = ImmutableList.copyOf(rrset.records());
+      newRRData = newArrayList(rrset.records());
     }
 
     Builder<Map<String, Object>> newRRSetBuilder = ResourceRecordSet.builder();
@@ -124,6 +123,7 @@ final class VerisignDnsAllProfileResourceRecordSetApi implements AllProfileResou
 
     api.updateResourceRecords(zoneName, rrset, rrsetToBeDeleted);
   }
+
 
   @Override
   public void deleteByNameAndType(String name, String type) {
