@@ -180,8 +180,10 @@ final class VerisignDnsEncoder implements Encoder {
 
     TagNode bulkUpdateZoneNode = new TagNode(NS_API_2, "bulkUpdateSingleZone");
     bulkUpdateZoneNode.add(NS_API_2, "domainName", zoneName);
-    bulkUpdateZoneNode.add(toRRNode(NS_API_2, "createResourceRecords", rrSet, true));
-    if (oldRRSet != null) {
+    if (!rrSet.records().isEmpty()) {
+      bulkUpdateZoneNode.add(toRRNode(NS_API_2, "createResourceRecords", rrSet, true));
+    }
+    if (oldRRSet != null && !oldRRSet.records().isEmpty()) {
       bulkUpdateZoneNode.add(toRRNode(NS_API_2, "deleteResourceRecords", oldRRSet, false));
     }
 

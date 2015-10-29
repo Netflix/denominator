@@ -115,14 +115,12 @@ final class VerisignDnsAllProfileResourceRecordSetApi implements AllProfileResou
       return;
     }
 
-    if (!toAdd.isEmpty()) {
-      rrset = ResourceRecordSet.builder()
-          .name(rrset.name())
-          .type(rrset.type())
-          .ttl(ttlToApply)
-          .addAll(toAdd)
-          .build();
-    }
+    rrset = ResourceRecordSet.builder()
+        .name(rrset.name())
+        .type(rrset.type())
+        .ttl(ttlToApply)
+        .addAll(toAdd)
+        .build();
 
     ResourceRecordSet<Map<String, Object>> rrsetToBeDeleted = null;
     if (toDel != null && !toDel.isEmpty()) {
