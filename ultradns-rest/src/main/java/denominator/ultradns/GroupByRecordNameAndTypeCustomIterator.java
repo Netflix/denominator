@@ -12,11 +12,11 @@ import denominator.ultradns.model.Record;
 import static denominator.common.Util.peekingIterator;
 import static denominator.common.Util.toMap;
 
-class GroupByRecordNameAndTypeIterator implements Iterator<ResourceRecordSet<?>> {
+class GroupByRecordNameAndTypeCustomIterator implements Iterator<ResourceRecordSet<?>> {
 
   private final PeekingIterator<Record> peekingIterator;
 
-  public GroupByRecordNameAndTypeIterator(Iterator<Record> sortedIterator) {
+  public GroupByRecordNameAndTypeCustomIterator(Iterator<Record> sortedIterator) {
     this.peekingIterator = peekingIterator(sortedIterator);
   }
 

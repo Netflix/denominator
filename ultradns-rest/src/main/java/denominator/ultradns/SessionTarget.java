@@ -1,14 +1,13 @@
 package denominator.ultradns;
 
 import denominator.Provider;
-import denominator.ultradns.InvalidatableTokenProvider.Session;
 import feign.Request;
 import feign.RequestTemplate;
 import feign.Target;
 
 import javax.inject.Inject;
 
-public class SessionTarget implements Target<Session> {
+public class SessionTarget implements Target<InvalidatableTokenProvider.Session> {
     private final Provider provider;
 
     @Inject
@@ -17,8 +16,8 @@ public class SessionTarget implements Target<Session> {
     }
 
     @Override
-    public Class<Session> type() {
-        return Session.class;
+    public Class<InvalidatableTokenProvider.Session> type() {
+        return InvalidatableTokenProvider.Session.class;
     }
 
     @Override

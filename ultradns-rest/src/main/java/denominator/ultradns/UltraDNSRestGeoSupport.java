@@ -8,12 +8,12 @@ import javax.inject.Named;
 import dagger.Module;
 import dagger.Provides;
 
-@Module(injects = UltraDNSGeoResourceRecordSetApi.Factory.class, complete = false)
-public class UltraDNSGeoSupport {
+@Module(injects = UltraDNSRestGeoResourceRecordSetApi.Factory.class, complete = false)
+public class UltraDNSRestGeoSupport {
 
   @Provides
   @Named("geo")
-  Map<String, Collection<String>> regions(UltraDNS api) {
+  Map<String, Collection<String>> regions(UltraDNSRest api) {
     return api.getAvailableRegions();
   }
 }

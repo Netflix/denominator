@@ -7,9 +7,9 @@ import denominator.ultradns.model.Record;
 
 import static denominator.common.Preconditions.checkNotNull;
 
-final class UltraDNSFilters {
+final class UltraDNSRestFilters {
 
-  private UltraDNSFilters() {
+  private UltraDNSRestFilters() {
   }
 
   public static Filter<Record> resourceTypeEqualTo(int typeValue) {
@@ -21,7 +21,7 @@ final class UltraDNSFilters {
   }
 
   /**
-   * @see UltraDNSFilters#resourceTypeEqualTo(int)
+   * @see UltraDNSRestFilters#resourceTypeEqualTo(int)
    */
   private static class ResourceTypeEqualToPredicate implements Filter<Record>, Serializable {
 

@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Provides;
@@ -22,26 +21,13 @@ import denominator.config.ConcatBasicAndQualifiedResourceRecordSets;
 import denominator.config.NothingToClose;
 import denominator.config.WeightedUnsupported;
 import denominator.profile.GeoResourceRecordSetApi;
-import denominator.ultradns.UltraDNS.DirectionalGroup;
-import denominator.ultradns.UltraDNS.DirectionalRecord;
-import denominator.ultradns.UltraDNSContentHandlers.DirectionalGroupHandler;
-import denominator.ultradns.UltraDNSContentHandlers.DirectionalPoolListHandler;
-import denominator.ultradns.UltraDNSContentHandlers.DirectionalRecordListHandler;
-import denominator.ultradns.UltraDNSContentHandlers.IDHandler;
-import denominator.ultradns.UltraDNSContentHandlers.RRPoolListHandler;
-import denominator.ultradns.UltraDNSContentHandlers.RecordListHandler;
-import denominator.ultradns.UltraDNSContentHandlers.RegionTableHandler;
-import denominator.ultradns.UltraDNSContentHandlers.ZoneNamesHandler;
-//import denominator.ultradns.UltraDNSErrorDecoder.UltraDNSError;
-import denominator.ultradns.InvalidatableTokenProvider.Session;
+//import UltraDNSRestErrorDecoder.UltraDNSError;
 import feign.Feign;
 import feign.Logger;
 import feign.Request.Options;
-import feign.codec.Decoder;
 import feign.form.FormEncoder;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
-import feign.sax.SAXDecoder;
 
 import static dagger.Provides.Type.SET;
 
@@ -106,16 +92,11 @@ public class UltraDNSRestProvider extends BasicProvider {
   }
 
   @dagger.Module(injects = DNSApiManager.class, complete = false, includes = {NothingToClose.class,
-          UltraDNSGeoSupport.class,
+          UltraDNSRestGeoSupport.class,
           WeightedUnsupported.class,
           ConcatBasicAndQualifiedResourceRecordSets.class,
           FeignModule.class})
   public static final class Module {
-
-    /*@Provides
-    CheckConnection checkConnection(NetworkStatusReadable checkConnection) {
-      return checkConnection;
-    }*/
 
     @Provides
     CheckConnection checkConnection(InvalidatableTokenProvider checkConnection) {
@@ -125,26 +106,20 @@ public class UltraDNSRestProvider extends BasicProvider {
     @Provides
     @Singleton
     GeoResourceRecordSetApi.Factory provideGeoResourceRecordSetApiFactory(
-            UltraDNSGeoResourceRecordSetApi.Factory in) {
+            UltraDNSRestGeoResourceRecordSetApi.Factory in) {
       return in;
     }
 
     @Provides
     @Singleton
-    ZoneApi provideZoneApi(UltraDNSZoneApi api) {
+    ZoneApi provideZoneApi(UltraDNSRestZoneApi api) {
       return api;
     }
-
-    /*@Provides
-    @Named("accountID")
-    String account(InvalidatableAccountIdSupplier accountId) {
-      return accountId.get();
-    }*/
 
     @Provides
     @Singleton
     ResourceRecordSetApi.Factory provideResourceRecordSetApiFactory(
-            UltraDNSResourceRecordSetApi.Factory factory) {
+            UltraDNSRestResourceRecordSetApi.Factory factory) {
       return factory;
     }
 
@@ -154,20 +129,20 @@ public class UltraDNSRestProvider extends BasicProvider {
     }
   }
 
-  @dagger.Module(injects = UltraDNSResourceRecordSetApi.Factory.class,
-          complete = false // doesn't bind Provider used by UltraDNSTarget
+  @dagger.Module(injects = UltraDNSRestResourceRecordSetApi.Factory.class,
+          complete = false // doesn't bind Provider used by UltraDNSRestTarget
   )
   public static final class FeignModule {
 
     @Provides
     @Singleton
-    Session session(Feign feign, SessionTarget target) {
+    InvalidatableTokenProvider.Session session(Feign feign, SessionTarget target) {
       return feign.newInstance(target);
     }
 
     @Provides
     @Singleton
-    UltraDNS ultraDNS(Feign feign, UltraDNSTarget target) {
+    UltraDNSRest ultraDNS(Feign feign, UltraDNSRestTarget target) {
       return feign.newInstance(target);
     }
 
@@ -189,38 +164,23 @@ public class UltraDNSRestProvider extends BasicProvider {
 
     @Provides
     @Singleton
-    Feign feign(Logger logger, Logger.Level logLevel, UltraDNSErrorDecoder errorDecoder) {
+    Feign feign(Logger logger, Logger.Level logLevel, UltraDNSRestErrorDecoder errorDecoder) {
 
       /**
-       * {@link UltraDNS#updateDirectionalPoolRecord(DirectionalRecord, DirectionalGroup)} and {@link
-       * UltraDNS#addDirectionalPoolRecord(DirectionalRecord, DirectionalGroup, String)} can take up
+       * {@link UltraDNSRest#updateDirectionalPoolRecord(UltraDNSRest.DirectionalRecord, UltraDNSRest.DirectionalGroup)} and {@link
+       * UltraDNSRest#addDirectionalPoolRecord(UltraDNSRest.DirectionalRecord, UltraDNSRest.DirectionalGroup, String)} can take up
        * to 10 minutes to complete.
        */
       Options options = new Options(10 * 1000, 10 * 60 * 1000);
-      Decoder decoder = decoder();
+
       return Feign.builder()
               .logger(logger)
               .logLevel(logLevel)
               .options(options)
-              //.encoder(new UltraDNSFormEncoder())
               .encoder(new GsonEncoder())
               .encoder(new FormEncoder(new GsonEncoder()))
               .decoder(new GsonDecoder())
               .errorDecoder(errorDecoder)
-              .build();
-    }
-
-    static Decoder decoder() {
-      return SAXDecoder.builder()
-              .registerContentHandler(IDHandler.class)
-              .registerContentHandler(ZoneNamesHandler.class)
-              .registerContentHandler(RecordListHandler.class)
-              .registerContentHandler(DirectionalRecordListHandler.class)
-              .registerContentHandler(DirectionalPoolListHandler.class)
-              .registerContentHandler(RRPoolListHandler.class)
-              .registerContentHandler(RegionTableHandler.class)
-              .registerContentHandler(DirectionalGroupHandler.class)
-              //.registerContentHandler(UltraDNSError.class)
               .build();
     }
   }

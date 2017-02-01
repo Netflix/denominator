@@ -10,7 +10,7 @@ import denominator.common.PeekingIterator;
 import denominator.model.ResourceRecordSet;
 import denominator.model.ResourceRecordSet.Builder;
 import denominator.model.profile.Geo;
-import denominator.ultradns.UltraDNS.DirectionalRecord;
+import denominator.ultradns.UltraDNSRest.DirectionalRecord;
 
 import static denominator.common.Util.peekingIterator;
 import static denominator.common.Util.toMap;
@@ -21,14 +21,14 @@ import static denominator.common.Util.toMap;
  * DirectionalPool.RecordType#IPV4} and {@link DirectionalPool.RecordType#IPV6} emit both address
  * ({@code A} or {@code AAAA}) and {@code CNAME} records.
  */
-class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>> {
+class GroupGeoRecordByNameTypeCustomIterator implements Iterator<ResourceRecordSet<?>> {
 
   private final Map<String, Geo> cache = new LinkedHashMap<String, Geo>();
-  private final UltraDNS api;
+  private final UltraDNSRest api;
   private final PeekingIterator<DirectionalRecord> peekingIterator;
 
-  private GroupGeoRecordByNameTypeIterator(UltraDNS api,
-                                           Iterator<DirectionalRecord> sortedIterator) {
+  private GroupGeoRecordByNameTypeCustomIterator(UltraDNSRest api,
+                                                 Iterator<DirectionalRecord> sortedIterator) {
     this.api = api;
     this.peekingIterator = peekingIterator(sortedIterator);
   }
@@ -92,10 +92,10 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
 
   static final class Factory {
 
-    private final UltraDNS api;
+    private final UltraDNSRest api;
 
     @Inject
-    Factory(UltraDNS api) {
+    Factory(UltraDNSRest api) {
       this.api = api;
     }
 
@@ -106,7 +106,7 @@ class GroupGeoRecordByNameTypeIterator implements Iterator<ResourceRecordSet<?>>
      *                       DirectionalRecord#group()}
      */
     Iterator<ResourceRecordSet<?>> create(Iterator<DirectionalRecord> sortedIterator) {
-      return new GroupGeoRecordByNameTypeIterator(api, sortedIterator);
+      return new GroupGeoRecordByNameTypeCustomIterator(api, sortedIterator);
     }
   }
 }

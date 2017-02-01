@@ -9,10 +9,8 @@ import denominator.ZoneApi;
 import denominator.model.Zone;
 
 import static denominator.assertj.ModelAssertions.assertThat;
-import static denominator.ultradns.UltraDNSMockResponse.getAccountsListOfUserResponse;
-import static denominator.ultradns.UltraDNSMockResponse.getMockErrorResponse;
 
-public class UltraDNSZoneApiMockTest {
+public class UltraDNSRestRestZoneApiMockTest {
 
   @Rule
   public final MockUltraDNSRestServer server = new MockUltraDNSRestServer();
@@ -20,7 +18,7 @@ public class UltraDNSZoneApiMockTest {
   @Test
   public void putWhenAbsent() throws Exception {
     server.enqueueSessionResponse();
-    server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
+    server.enqueue(new MockResponse().setBody(UltraDNSMockResponse.getAccountsListOfUserResponse));
     server.enqueue(new MockResponse());
 
     ZoneApi api = server.connect().api().zones();
@@ -41,14 +39,14 @@ public class UltraDNSZoneApiMockTest {
   @Test
   public void putWhenPresent() throws Exception {
     server.enqueueSessionResponse();
-    server.enqueue(new MockResponse().setBody(getAccountsListOfUserResponse));
+    server.enqueue(new MockResponse().setBody(UltraDNSMockResponse.getAccountsListOfUserResponse));
     server.enqueue(new MockResponse());
 
     ZoneApi api = server.connect().api().zones();
     Zone zone = Zone.create(null, "denominator.io.", 3601, "nil@denominator.io");
     assertThat(api.put(zone)).isEqualTo(zone.name());
 
-    server.enqueue(new MockResponse().setResponseCode(400).setBody(getMockErrorResponse("1802", "Zone already exists in the system.")));
+    server.enqueue(new MockResponse().setResponseCode(400).setBody(UltraDNSMockResponse.getMockErrorResponse("1802", "Zone already exists in the system.")));
 
     server.assertSessionRequest();
     server.assertRequest()
@@ -76,7 +74,7 @@ public class UltraDNSZoneApiMockTest {
   @Test
   public void deleteWhenAbsent() throws Exception {
     server.enqueueSessionResponse();
-    server.enqueue(new MockResponse().setResponseCode(404).setBody(getMockErrorResponse("1801", "Zone does not exist in the system.")));
+    server.enqueue(new MockResponse().setResponseCode(404).setBody(UltraDNSMockResponse.getMockErrorResponse("1801", "Zone does not exist in the system.")));
 
     ZoneApi api = server.connect().api().zones();
     api.delete("denominator.io.");

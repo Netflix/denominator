@@ -3,18 +3,18 @@ package denominator.ultradns;
 import java.util.List;
 import java.util.Map;
 
-import denominator.ultradns.UltraDNS.NameAndType;
+import denominator.ultradns.UltraDNSRest.NameAndType;
 
 import static denominator.ResourceTypeToValue.lookup;
 import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Preconditions.checkState;
 
-class UltraDNSRoundRobinPoolApi {
+class UltraDNSRestRoundRobinPoolApi {
 
-  private final UltraDNS api;
+  private final UltraDNSRest api;
   private final String zoneName;
 
-  UltraDNSRoundRobinPoolApi(UltraDNS api, String zoneName) {
+  UltraDNSRestRoundRobinPoolApi(UltraDNSRest api, String zoneName) {
     this.api = api;
     this.zoneName = zoneName;
   }
@@ -36,8 +36,8 @@ class UltraDNSRoundRobinPoolApi {
   private String reuseOrCreatePoolForNameAndType(String name, String type) {
     try {
       return api.addRRLBPool(zoneName, name, lookup(type));
-    } catch (UltraDNSException e) {
-      if (e.code() != UltraDNSException.POOL_ALREADY_EXISTS) {
+    } catch (UltraDNSRestException e) {
+      if (e.code() != UltraDNSRestException.POOL_ALREADY_EXISTS) {
         throw e;
       }
       return getPoolByNameAndType(name, type);
@@ -60,11 +60,11 @@ class UltraDNSRoundRobinPoolApi {
       if (api.getRRPoolRecords(poolId).isEmpty()) {
         try {
           api.deleteLBPool(poolId);
-        } catch (UltraDNSException e) {
+        } catch (UltraDNSRestException e) {
           switch (e.code()) {
             // lost race
-            case UltraDNSException.POOL_NOT_FOUND:
-            case UltraDNSException.RESOURCE_RECORD_NOT_FOUND:
+            case UltraDNSRestException.POOL_NOT_FOUND:
+            case UltraDNSRestException.RESOURCE_RECORD_NOT_FOUND:
               return;
           }
           throw e;

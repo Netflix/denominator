@@ -1,6 +1,7 @@
 package denominator.ultradns.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RRSetList {
@@ -26,9 +27,21 @@ public class RRSetList {
 
     public List<Record> buildRecords(){
         List<Record> records = new ArrayList<Record>();
-
-        for(RRSet rrset : getRrSets()){
-            Record r = new Record();
+        if(getRrSets() != null && !getRrSets().isEmpty()) {
+            for(RRSet rrset : getRrSets()){
+                if(rrset.getRdata() != null && !rrset.getRdata().isEmpty()) {
+                    for(String rData : rrset.getRdata()){
+                        Record r = new Record();
+                        r.setName(rrset.getOwnerName());
+                        r.setTypeCode(rrset.getIntValueOfRRtype());
+                        r.setTtl(rrset.getTtl());
+                        if(rData != null){
+                            r.setRdata(Arrays.asList(rData.split("\\s")));
+                        }
+                        records.add(r);
+                    }
+                }
+            }
         }
         return records;
     }
@@ -63,6 +76,11 @@ public class RRSetList {
 
         public void setRrtype(String rrtype) {
             this.rrtype = rrtype;
+        }
+
+        public int getIntValueOfRRtype() {
+            return Integer.parseInt(rrtype.substring(rrtype.indexOf("(") + 1,
+                    rrtype.indexOf(")")));
         }
 
         public Integer getTtl() {

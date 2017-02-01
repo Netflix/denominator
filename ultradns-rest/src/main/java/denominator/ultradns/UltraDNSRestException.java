@@ -2,7 +2,7 @@ package denominator.ultradns;
 
 import feign.FeignException;
 
-class UltraDNSException extends FeignException {
+class UltraDNSRestException extends FeignException {
 
   /**
    * System Error
@@ -61,7 +61,7 @@ class UltraDNSException extends FeignException {
   private static final long serialVersionUID = 1L;
   private final int code;
 
-  UltraDNSException(String message, int code) {
+  UltraDNSRestException(String message, int code) {
     super(message);
     this.code = code;
   }

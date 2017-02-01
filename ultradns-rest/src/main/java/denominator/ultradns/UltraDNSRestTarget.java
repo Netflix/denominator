@@ -8,24 +8,24 @@ import org.apache.log4j.Logger;
 
 import javax.inject.Inject;
 
-class UltraDNSTarget implements Target<UltraDNS> {
+class UltraDNSRestTarget implements Target<UltraDNSRest> {
 
   private final Provider provider;
   private final InvalidatableTokenProvider lazyToken;
 
   static final String SOAP_TEMPLATE = "<?xml version=\"1.0\"?>\n";
 
-  private static final Logger logger = Logger.getLogger(UltraDNSTarget.class);
+  private static final Logger logger = Logger.getLogger(UltraDNSRestTarget.class);
 
   @Inject
-  UltraDNSTarget(Provider provider, InvalidatableTokenProvider lazyToken) {
+  UltraDNSRestTarget(Provider provider, InvalidatableTokenProvider lazyToken) {
     this.provider = provider;
     this.lazyToken = lazyToken;
   }
 
   @Override
-  public Class<UltraDNS> type() {
-    return UltraDNS.class;
+  public Class<UltraDNSRest> type() {
+    return UltraDNSRest.class;
   }
 
   @Override

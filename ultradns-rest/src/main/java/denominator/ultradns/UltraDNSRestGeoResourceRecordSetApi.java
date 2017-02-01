@@ -15,8 +15,6 @@ import denominator.Provider;
 import denominator.common.Filter;
 import denominator.model.ResourceRecordSet;
 import denominator.profile.GeoResourceRecordSetApi;
-import denominator.ultradns.UltraDNS.DirectionalGroup;
-import denominator.ultradns.UltraDNS.DirectionalRecord;
 
 import static denominator.ResourceTypeToValue.lookup;
 import static denominator.common.Preconditions.checkArgument;
@@ -27,7 +25,7 @@ import static denominator.common.Util.nextOrNull;
 import static denominator.common.Util.toMap;
 import static denominator.model.ResourceRecordSets.nameAndTypeEqualTo;
 
-final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
+final class UltraDNSRestGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
   private static final Filter<ResourceRecordSet<?>> IS_GEO = new Filter<ResourceRecordSet<?>>() {
     @Override
@@ -39,21 +37,21 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
   private final Collection<String> supportedTypes;
   private final Lazy<Map<String, Collection<String>>> regions;
-  private final UltraDNS api;
-  private final GroupGeoRecordByNameTypeIterator.Factory iteratorFactory;
+  private final UltraDNSRest api;
+  private final GroupGeoRecordByNameTypeCustomIterator.Factory iteratorFactory;
   private final String zoneName;
-  private final Filter<DirectionalRecord> isCNAME = new Filter<DirectionalRecord>() {
+  private final Filter<UltraDNSRest.DirectionalRecord> isCNAME = new Filter<UltraDNSRest.DirectionalRecord>() {
     @Override
-    public boolean apply(DirectionalRecord input) {
+    public boolean apply(UltraDNSRest.DirectionalRecord input) {
       return "CNAME".equals(input.type);
     }
   };
 
-  UltraDNSGeoResourceRecordSetApi(Collection<String> supportedTypes,
-                                  Lazy<Map<String, Collection<String>>> regions,
-                                  UltraDNS api,
-                                  GroupGeoRecordByNameTypeIterator.Factory iteratorFactory,
-                                  String zoneName) {
+  UltraDNSRestGeoResourceRecordSetApi(Collection<String> supportedTypes,
+                                      Lazy<Map<String, Collection<String>>> regions,
+                                      UltraDNSRest api,
+                                      GroupGeoRecordByNameTypeCustomIterator.Factory iteratorFactory,
+                                      String zoneName) {
     this.supportedTypes = supportedTypes;
     this.regions = regions;
     this.api = api;
@@ -116,12 +114,12 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     if (!supportedTypes.contains(type)) {
       return null;
     }
-    Iterator<DirectionalRecord> records = recordsByNameTypeAndQualifier(name, type, qualifier);
+    Iterator<UltraDNSRest.DirectionalRecord> records = recordsByNameTypeAndQualifier(name, type, qualifier);
     return nextOrNull(iteratorFactory.create(records));
   }
 
-  private Iterator<DirectionalRecord> recordsByNameTypeAndQualifier(String name, String type,
-                                                                    String qualifier) {
+  private Iterator<UltraDNSRest.DirectionalRecord> recordsByNameTypeAndQualifier(String name, String type,
+                                                                                 String qualifier) {
     if ("CNAME".equals(type)) {
       return filter(
           concat(recordsForNameTypeAndQualifier(name, "A", qualifier),
@@ -131,16 +129,16 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     }
   }
 
-  private Iterator<DirectionalRecord> recordsForNameTypeAndQualifier(String name, String type,
-                                                                     String qualifier) {
+  private Iterator<UltraDNSRest.DirectionalRecord> recordsForNameTypeAndQualifier(String name, String type,
+                                                                                  String qualifier) {
     try {
       return api.getDirectionalDNSRecordsForGroup(zoneName, qualifier, name, dirType(type))
           .iterator();
-    } catch (UltraDNSException e) {
+    } catch (UltraDNSRestException e) {
       switch (e.code()) {
-        case UltraDNSException.GROUP_NOT_FOUND:
-        case UltraDNSException.DIRECTIONALPOOL_NOT_FOUND:
-          return Collections.<DirectionalRecord>emptyList().iterator();
+        case UltraDNSRestException.GROUP_NOT_FOUND:
+        case UltraDNSRestException.DIRECTIONALPOOL_NOT_FOUND:
+          return Collections.<UltraDNSRest.DirectionalRecord>emptyList().iterator();
       }
       throw e;
     }
@@ -158,18 +156,18 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
     String group = rrset.qualifier();
 
     Map<String, Collection<String>> regions = rrset.geo().regions();
-    DirectionalGroup directionalGroup = new DirectionalGroup();
+    UltraDNSRest.DirectionalGroup directionalGroup = new UltraDNSRest.DirectionalGroup();
     directionalGroup.name = group;
     directionalGroup.regionToTerritories = regions;
 
     List<Map<String, Object>>
         recordsLeftToCreate =
         new ArrayList<Map<String, Object>>(rrset.records());
-    Iterator<DirectionalRecord>
+    Iterator<UltraDNSRest.DirectionalRecord>
         iterator =
         recordsByNameTypeAndQualifier(rrset.name(), rrset.type(), group);
     while (iterator.hasNext()) {
-      DirectionalRecord record = iterator.next();
+      UltraDNSRest.DirectionalRecord record = iterator.next();
       Map<String, Object> rdata = toMap(record.type, record.rdata);
       if (recordsLeftToCreate.contains(rdata)) {
         recordsLeftToCreate.remove(rdata);
@@ -187,9 +185,9 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         if (shouldUpdate) {
           try {
             api.updateDirectionalPoolRecord(record, directionalGroup);
-          } catch (UltraDNSException e) {
+          } catch (UltraDNSRestException e) {
             // lost race
-            if (e.code() != UltraDNSException.RESOURCE_RECORD_ALREADY_EXISTS) {
+            if (e.code() != UltraDNSRestException.RESOURCE_RECORD_ALREADY_EXISTS) {
               throw e;
             }
           }
@@ -197,9 +195,9 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
       } else {
         try {
           api.deleteResourceRecord(record.id);
-        } catch (UltraDNSException e) {
+        } catch (UltraDNSRestException e) {
           // lost race
-          if (e.code() != UltraDNSException.RESOURCE_RECORD_NOT_FOUND) {
+          if (e.code() != UltraDNSRestException.RESOURCE_RECORD_NOT_FOUND) {
             throw e;
           }
         }
@@ -215,15 +213,15 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
           type = "A";
         }
         poolId = api.addDirectionalPool(zoneName, rrset.name(), type);
-      } catch (UltraDNSException e) {
+      } catch (UltraDNSRestException e) {
         // lost race
-        if (e.code() == UltraDNSException.POOL_ALREADY_EXISTS) {
+        if (e.code() == UltraDNSRestException.POOL_ALREADY_EXISTS) {
           poolId = api.getDirectionalPoolsOfZone(zoneName).get(rrset.name());
         } else {
           throw e;
         }
       }
-      DirectionalRecord record = new DirectionalRecord();
+      UltraDNSRest.DirectionalRecord record = new UltraDNSRest.DirectionalRecord();
       record.type = rrset.type();
       record.ttl = ttlToApply;
 
@@ -233,9 +231,9 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
         }
         try {
           api.addDirectionalPoolRecord(record, directionalGroup, poolId);
-        } catch (UltraDNSException e) {
+        } catch (UltraDNSRestException e) {
           // lost race
-          if (e.code() != UltraDNSException.POOL_RECORD_ALREADY_EXISTS) {
+          if (e.code() != UltraDNSRestException.POOL_RECORD_ALREADY_EXISTS) {
             throw e;
           }
         }
@@ -255,13 +253,13 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
   @Override
   public void deleteByNameTypeAndQualifier(String name, String type, String qualifier) {
-    Iterator<DirectionalRecord> record = recordsByNameTypeAndQualifier(name, type, qualifier);
+    Iterator<UltraDNSRest.DirectionalRecord> record = recordsByNameTypeAndQualifier(name, type, qualifier);
     while (record.hasNext()) {
       try {
         api.deleteDirectionalPoolRecord(record.next().id);
-      } catch (UltraDNSException e) {
+      } catch (UltraDNSRestException e) {
         // lost race
-        if (e.code() != UltraDNSException.DIRECTIONALPOOL_RECORD_NOT_FOUND) {
+        if (e.code() != UltraDNSRestException.DIRECTIONALPOOL_RECORD_NOT_FOUND) {
           throw e;
         }
       }
@@ -270,11 +268,11 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
   private Iterator<ResourceRecordSet<?>> iteratorForDNameAndDirectionalType(String name,
                                                                             int dirType) {
-    List<DirectionalRecord> list;
+    List<UltraDNSRest.DirectionalRecord> list;
     try {
       list = api.getDirectionalDNSRecordsForHost(zoneName, name, dirType);
-    } catch (UltraDNSException e) {
-      if (e.code() == UltraDNSException.DIRECTIONALPOOL_NOT_FOUND) {
+    } catch (UltraDNSRestException e) {
+      if (e.code() == UltraDNSRestException.DIRECTIONALPOOL_NOT_FOUND) {
         list = Collections.emptyList();
       } else {
         throw e;
@@ -287,13 +285,13 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
 
     private final Collection<String> supportedTypes;
     private final Lazy<Map<String, Collection<String>>> regions;
-    private final UltraDNS api;
-    private final GroupGeoRecordByNameTypeIterator.Factory iteratorFactory;
+    private final UltraDNSRest api;
+    private final GroupGeoRecordByNameTypeCustomIterator.Factory iteratorFactory;
 
     @Inject
     Factory(Provider provider, @Named("geo") Lazy<Map<String, Collection<String>>> regions,
-            UltraDNS api,
-            GroupGeoRecordByNameTypeIterator.Factory iteratorFactory) {
+            UltraDNSRest api,
+            GroupGeoRecordByNameTypeCustomIterator.Factory iteratorFactory) {
       this.supportedTypes = provider.profileToRecordTypes().get("geo");
       this.regions = regions;
       this.api = api;
@@ -306,13 +304,13 @@ final class UltraDNSGeoResourceRecordSetApi implements GeoResourceRecordSetApi {
       // Eager fetch of regions to determine if directional records are supported or not.
       try {
         regions.get();
-      } catch (UltraDNSException e) {
-        if (e.code() == UltraDNSException.DIRECTIONAL_NOT_ENABLED) {
+      } catch (UltraDNSRestException e) {
+        if (e.code() == UltraDNSRestException.DIRECTIONAL_NOT_ENABLED) {
           return null;
         }
         throw e;
       }
-      return new UltraDNSGeoResourceRecordSetApi(supportedTypes, regions, api, iteratorFactory,
+      return new UltraDNSRestGeoResourceRecordSetApi(supportedTypes, regions, api, iteratorFactory,
                                                  name);
     }
   }

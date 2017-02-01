@@ -4,12 +4,12 @@ import javax.inject.Inject;
 
 import denominator.CheckConnection;
 
-class NetworkStatusReadable implements CheckConnection {
+class NetworkConnection implements CheckConnection {
 
-  private final UltraDNS api;
+  private final UltraDNSRest api;
 
   @Inject
-  NetworkStatusReadable(UltraDNS api) {
+  NetworkConnection(UltraDNSRest api) {
     this.api = api;
   }
 
@@ -24,6 +24,6 @@ class NetworkStatusReadable implements CheckConnection {
 
   @Override
   public String toString() {
-    return "NetworkStatusReadable";
+    return "NetworkConnection";
   }
 }

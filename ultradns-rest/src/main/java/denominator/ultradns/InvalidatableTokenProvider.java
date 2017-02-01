@@ -70,7 +70,7 @@ public class InvalidatableTokenProvider implements Provider<String>, CheckConnec
 
         if (needsRefresh(currentTime, currentCreds)) {
             lastCredentialsHashCode = currentCreds.hashCode();
-            logger.info("Logging to UltraDNS using REST - CurrentTimeInMillis: " + currentTime + ", ExpirationMillis: " + expirationMillis);
+            logger.info("Logging to UltraDNSRest using REST - CurrentTimeInMillis: " + currentTime + ", ExpirationMillis: " + expirationMillis);
             TokenResponse t = auth(currentCreds);
             expirationMillis = currentTime + durationMillis;
             token = t.getAccessToken();

@@ -17,15 +17,15 @@ import static denominator.common.Preconditions.checkNotNull;
 import static denominator.common.Util.nextOrNull;
 import static denominator.common.Util.toMap;
 
-final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSetApi {
+final class UltraDNSRestResourceRecordSetApi implements denominator.ResourceRecordSetApi {
 
   private static final int DEFAULT_TTL = 300;
-  private final UltraDNS api;
+  private final UltraDNSRest api;
   private final String zoneName;
-  private final UltraDNSRoundRobinPoolApi roundRobinPoolApi;
+  private final UltraDNSRestRoundRobinPoolApi roundRobinPoolApi;
 
-  UltraDNSResourceRecordSetApi(UltraDNS api, String zoneName,
-                               UltraDNSRoundRobinPoolApi roundRobinPoolApi) {
+  UltraDNSRestResourceRecordSetApi(UltraDNSRest api, String zoneName,
+                                   UltraDNSRestRoundRobinPoolApi roundRobinPoolApi) {
     this.api = api;
     this.zoneName = zoneName;
     this.roundRobinPoolApi = roundRobinPoolApi;
@@ -36,14 +36,14 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
     // this will list all basic or RR pool records.
     // In Progress - Arghya 31/01/17
     Iterator<Record> orderedRecords = api.getResourceRecordsOfZone(zoneName).buildRecords().iterator();
-    return new GroupByRecordNameAndTypeIterator(orderedRecords);
+    return new GroupByRecordNameAndTypeCustomIterator(orderedRecords);
   }
 
   @Override
   public Iterator<ResourceRecordSet<?>> iterateByName(String name) {
     checkNotNull(name, "name");
-    Iterator<Record> ordered = api.getResourceRecordsOfDNameByType(zoneName, name, 0).iterator();
-    return new GroupByRecordNameAndTypeIterator(ordered);
+    Iterator<Record> ordered = api.getResourceRecordsOfDNameByType(zoneName, name, 0).buildRecords().iterator();
+    return new GroupByRecordNameAndTypeCustomIterator(ordered);
   }
 
   @Override
@@ -51,14 +51,14 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
     checkNotNull(name, "name");
     checkNotNull(type, "type");
     Iterator<Record> orderedRecords = recordsByNameAndType(name, type).iterator();
-    return nextOrNull(new GroupByRecordNameAndTypeIterator(orderedRecords));
+    return nextOrNull(new GroupByRecordNameAndTypeCustomIterator(orderedRecords));
   }
 
   private List<Record> recordsByNameAndType(String name, String type) {
     checkNotNull(name, "name");
     checkNotNull(type, "type");
     int typeValue = checkNotNull(lookup(type), "typeValue for %s", type);
-    return api.getResourceRecordsOfDNameByType(zoneName, name, typeValue);
+    return api.getResourceRecordsOfDNameByType(zoneName, name, typeValue).buildRecords();
   }
 
   @Override
@@ -133,9 +133,9 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
   private void remove(String name, String type, String id) {
     try {
       api.deleteResourceRecord(id);
-    } catch (UltraDNSException e) {
+    } catch (UltraDNSRestException e) {
       // lost race
-      if (e.code() != UltraDNSException.RESOURCE_RECORD_NOT_FOUND) {
+      if (e.code() != UltraDNSRestException.RESOURCE_RECORD_NOT_FOUND) {
         throw e;
       }
     }
@@ -146,16 +146,16 @@ final class UltraDNSResourceRecordSetApi implements denominator.ResourceRecordSe
 
   static final class Factory implements denominator.ResourceRecordSetApi.Factory {
 
-    private final UltraDNS api;
+    private final UltraDNSRest api;
 
     @Inject
-    Factory(UltraDNS api) {
+    Factory(UltraDNSRest api) {
       this.api = api;
     }
 
     @Override
     public ResourceRecordSetApi create(String name) {
-      return new UltraDNSResourceRecordSetApi(api, name, new UltraDNSRoundRobinPoolApi(api, name));
+      return new UltraDNSRestResourceRecordSetApi(api, name, new UltraDNSRestRoundRobinPoolApi(api, name));
     }
   }
 }

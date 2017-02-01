@@ -9,7 +9,7 @@ import feign.RequestLine;
 import java.util.*;
 
 @Headers("Content-Type: application/json")
-interface UltraDNS {
+interface UltraDNSRest {
 
   @RequestLine("GET /status")
   NetworkStatus getNeustarNetworkStatus();
@@ -28,7 +28,7 @@ interface UltraDNS {
                          @Param("createType") final String createType);
 
   /**
-   * @throws UltraDNSException with code {@link UltraDNSException#ZONE_NOT_FOUND}.
+   * @throws UltraDNSRestException with code {@link UltraDNSRestException#ZONE_NOT_FOUND}.
    */
   @RequestLine("DELETE /zones/{zoneName}")
   void deleteZone(@Param("zoneName") final String zoneName);
@@ -36,11 +36,10 @@ interface UltraDNS {
   @RequestLine("GET /zones/{zoneName}/rrsets")
   RRSetList getResourceRecordsOfZone(@Param("zoneName") String zoneName);
 
-  @RequestLine("POST")
-  @Body("<v01:getResourceRecordsOfDNameByType><zoneName>{zoneName}</zoneName><hostName>{hostName}</hostName><rrType>{rrType}</rrType></v01:getResourceRecordsOfDNameByType>")
-  List<Record> getResourceRecordsOfDNameByType(@Param("zoneName") String zoneName,
-                                               @Param("hostName") String hostName,
-                                               @Param("rrType") int rrType);
+  @RequestLine("GET /zones/{zoneName}/rrsets/{rrType}/{hostName}")
+  RRSetList getResourceRecordsOfDNameByType(@Param("zoneName") String zoneName,
+                                            @Param("hostName") String hostName,
+                                            @Param("rrType") int rrType);
 
   @RequestLine("POST")
   void createResourceRecord(@Param("resourceRecord") Record create,
@@ -51,7 +50,7 @@ interface UltraDNS {
                             @Param("zoneName") String zoneName);
 
   /**
-   * @throws UltraDNSException with code {@link UltraDNSException#RESOURCE_RECORD_NOT_FOUND} .
+   * @throws UltraDNSRestException with code {@link UltraDNSRestException#RESOURCE_RECORD_NOT_FOUND} .
    */
   @RequestLine("POST")
   @Body("<v01:deleteResourceRecord><transactionID /><guid>{guid}</guid></v01:deleteResourceRecord>")
@@ -82,8 +81,8 @@ interface UltraDNS {
                             @Param("info1Value") String info1Value, @Param("ttl") int ttl);
 
   /**
-   * @throws UltraDNSException with code {@link UltraDNSException#POOL_NOT_FOUND} and {@link
-   *                           UltraDNSException#RESOURCE_RECORD_NOT_FOUND}.
+   * @throws UltraDNSRestException with code {@link UltraDNSRestException#POOL_NOT_FOUND} and {@link
+   *                           UltraDNSRestException#RESOURCE_RECORD_NOT_FOUND}.
    */
   @RequestLine("POST")
   @Body("<v01:deleteLBPool><transactionID /><lbPoolID>{lbPoolID}</lbPoolID><DeleteAll>Yes</DeleteAll><retainRecordId /></v01:deleteLBPool>")
@@ -105,7 +104,7 @@ interface UltraDNS {
                                                            @Param("poolRecordType") int type);
 
   /**
-   * @throws UltraDNSException with code {@link UltraDNSException#POOL_RECORD_ALREADY_EXISTS}.
+   * @throws UltraDNSRestException with code {@link UltraDNSRestException#POOL_RECORD_ALREADY_EXISTS}.
    */
   @RequestLine("POST")
   String addDirectionalPoolRecord(@Param("record") DirectionalRecord toCreate,
@@ -113,7 +112,7 @@ interface UltraDNS {
                                   @Param("poolId") String poolId);
 
   /**
-   * @throws UltraDNSException with code {@link UltraDNSException#RESOURCE_RECORD_ALREADY_EXISTS}.
+   * @throws UltraDNSRestException with code {@link UltraDNSRestException#RESOURCE_RECORD_ALREADY_EXISTS}.
    */
   @RequestLine("POST")
   void updateDirectionalPoolRecord(@Param("record") DirectionalRecord update,

@@ -10,6 +10,20 @@ public class Record {
     public String name;
     public int typeCode;
     public int ttl;
+
+    // Just for logging purpose as of now
+    @Override
+    public String toString() {
+        return "Record{" +
+                "id='" + id + '\'' +
+                ", created=" + created +
+                ", name='" + name + '\'' +
+                ", typeCode=" + typeCode +
+                ", ttl=" + ttl +
+                ", rdata=" + rdata +
+                '}';
+    }
+
     public List<String> rdata = new ArrayList<String>();
 
     public String getId() {
