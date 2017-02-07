@@ -9,6 +9,8 @@ import denominator.ZoneApi;
 import denominator.model.Zone;
 
 import static denominator.assertj.ModelAssertions.assertThat;
+import static denominator.ultradns.UltraDNSMockResponse.GET_RESOURCE_RECORDS_PRESENT;
+import static denominator.ultradns.UltraDNSMockResponse.GET_SOA_RESOURCE_RECORDS;
 
 public class UltraDNSRestRestZoneApiMockTest {
 
@@ -18,7 +20,9 @@ public class UltraDNSRestRestZoneApiMockTest {
   @Test
   public void putWhenAbsent() throws Exception {
     server.enqueueSessionResponse();
-    server.enqueue(new MockResponse().setBody(UltraDNSMockResponse.getAccountsListOfUserResponse));
+    server.enqueue(new MockResponse().setBody(UltraDNSMockResponse.GET_ACCOUNTS_LIST_OF_USER_RESPONSE));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse().setBody(GET_SOA_RESOURCE_RECORDS));
     server.enqueue(new MockResponse());
 
     ZoneApi api = server.connect().api().zones();
@@ -34,12 +38,17 @@ public class UltraDNSRestRestZoneApiMockTest {
             .hasPath("/zones")
             .hasBody("{\"properties\": {\"name\": \"denominator.io.\",\"accountName\": \"npp-rest-test1\",\"type\": \"PRIMARY\"}, " +
                     "\"primaryCreateInfo\": {\"forceImport\": false,\"createType\": \"NEW\"}}");
+    server.assertRequest()
+            .hasMethod("GET")
+            .hasPath("/zones/denominator.io./rrsets/6/denominator.io.");
   }
 
   @Test
   public void putWhenPresent() throws Exception {
     server.enqueueSessionResponse();
-    server.enqueue(new MockResponse().setBody(UltraDNSMockResponse.getAccountsListOfUserResponse));
+    server.enqueue(new MockResponse().setBody(UltraDNSMockResponse.GET_ACCOUNTS_LIST_OF_USER_RESPONSE));
+    server.enqueue(new MockResponse());
+    server.enqueue(new MockResponse().setBody(GET_SOA_RESOURCE_RECORDS));
     server.enqueue(new MockResponse());
 
     ZoneApi api = server.connect().api().zones();
@@ -57,6 +66,9 @@ public class UltraDNSRestRestZoneApiMockTest {
             .hasPath("/zones")
             .hasBody("{\"properties\": {\"name\": \"denominator.io.\",\"accountName\": \"npp-rest-test1\",\"type\": \"PRIMARY\"}, " +
                     "\"primaryCreateInfo\": {\"forceImport\": false,\"createType\": \"NEW\"}}");
+    server.assertRequest()
+            .hasMethod("GET")
+            .hasPath("/zones/denominator.io./rrsets/6/denominator.io.");
   }
 
   @Test
