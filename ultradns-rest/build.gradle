@@ -16,6 +16,7 @@ dependencies {
   compile     'com.netflix.feign:feign-gson:8.18.0'
   compile     'io.github.openfeign.form:feign-form:2.0.5'
   compile     'log4j:log4j:1.2.17'
+  compile     'commons-lang:commons-lang:2.4'
   testCompile  project(':denominator-model').sourceSets.test.output
   testCompile  project(':denominator-core').sourceSets.test.output
   testCompile 'junit:junit:4.12'

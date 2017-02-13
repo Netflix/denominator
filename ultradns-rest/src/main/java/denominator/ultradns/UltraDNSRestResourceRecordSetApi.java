@@ -100,7 +100,7 @@ final class UltraDNSRestResourceRecordSetApi implements denominator.ResourceReco
     } else {
       for (Record record : toUpdate) {
         record.ttl = ttlToApply;
-        api.updateResourceRecord(record, zoneName);
+        api.partialUpdateResourceRecord(zoneName, record.getTypeCode(), name, record.buildRRSet());
       }
     }
   }
@@ -118,7 +118,7 @@ final class UltraDNSRestResourceRecordSetApi implements denominator.ResourceReco
         for (Object rdatum : rdata.values()) {
           record.rdata.add(rdatum.toString());
         }
-        api.createResourceRecord(record, zoneName);
+        api.createResourceRecord(zoneName, record.getTypeCode(), name, record.buildRRSet());
       }
     }
   }

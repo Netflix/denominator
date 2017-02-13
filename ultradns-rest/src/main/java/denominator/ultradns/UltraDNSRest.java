@@ -1,6 +1,12 @@
 package denominator.ultradns;
 
-import denominator.ultradns.model.*;
+import denominator.ultradns.model.RRSet;
+import denominator.ultradns.model.NetworkStatus;
+import denominator.ultradns.model.AccountList;
+import denominator.ultradns.model.ZoneList;
+import denominator.ultradns.model.RRSetList;
+import denominator.ultradns.model.Record;
+
 import feign.Body;
 import feign.Headers;
 import feign.Param;
@@ -41,13 +47,23 @@ interface UltraDNSRest {
                                             @Param("hostName") String hostName,
                                             @Param("rrType") int rrType);
 
-  @RequestLine("POST")
-  void createResourceRecord(@Param("resourceRecord") Record create,
-                            @Param("zoneName") String zoneName);
+  @RequestLine("POST /zones/{zoneName}/rrsets/{rrType}/{hostName}")
+  void createResourceRecord(@Param("zoneName") String zoneName,
+                            @Param("rrType") int rrType,
+                            @Param("hostName") String hostName,
+                            RRSet rrSet);
 
-  @RequestLine("POST")
-  void updateResourceRecord(@Param("resourceRecord") Record update,
-                            @Param("zoneName") String zoneName);
+  @RequestLine("PUT /zones/{zoneName}/rrsets/{rrType}/{hostName}")
+  void updateResourceRecord(@Param("zoneName") String zoneName,
+                            @Param("rrType") int rrType,
+                            @Param("hostName") String hostName,
+                            RRSet rrSet);
+
+  @RequestLine("PATCH /zones/{zoneName}/rrsets/{rrType}/{hostName}")
+  void partialUpdateResourceRecord(@Param("zoneName") String zoneName,
+                            @Param("rrType") int rrType,
+                            @Param("hostName") String hostName,
+                            RRSet rrSet);
 
   /**
    * @throws UltraDNSRestException with code {@link UltraDNSRestException#RESOURCE_RECORD_NOT_FOUND} .

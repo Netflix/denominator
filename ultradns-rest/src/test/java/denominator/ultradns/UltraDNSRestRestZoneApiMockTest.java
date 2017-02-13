@@ -9,7 +9,6 @@ import denominator.ZoneApi;
 import denominator.model.Zone;
 
 import static denominator.assertj.ModelAssertions.assertThat;
-import static denominator.ultradns.UltraDNSMockResponse.GET_RESOURCE_RECORDS_PRESENT;
 import static denominator.ultradns.UltraDNSMockResponse.GET_SOA_RESOURCE_RECORDS;
 
 public class UltraDNSRestRestZoneApiMockTest {

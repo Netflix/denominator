@@ -1,10 +1,15 @@
 package denominator.ultradns;
 
 import denominator.model.Zone;
+import denominator.ultradns.model.AccountList;
+import denominator.ultradns.model.RRSet;
 import denominator.ultradns.model.Record;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -27,7 +32,8 @@ public final class UltraDNSRestZoneApi implements denominator.ZoneApi {
    */
   @Override
   public Iterator<Zone> iterator() {
-    final Iterator<String> delegate = api.getZonesOfAccount(getCurrentAccountName()).getZoneNames().iterator();
+    final Iterator<String> delegate = api.getZonesOfAccount(getCurrentAccountName())
+            .getZoneNames().iterator();
     return new Iterator<Zone>() {
       @Override
       public boolean hasNext() {
@@ -64,26 +70,29 @@ public final class UltraDNSRestZoneApi implements denominator.ZoneApi {
   public String put(Zone zone) {
     try {
       String accountName = getCurrentAccountName();
-      logger.info("Creating zone for: " + accountName + " with name: " + zone.name());
       api.createPrimaryZone(zone.name(), accountName, "PRIMARY", false, "NEW");
     } catch (UltraDNSRestException e) {
       if (e.code() != UltraDNSRestException.ZONE_ALREADY_EXISTS) {
         throw e;
       }
     }
-    Record soa = api.getResourceRecordsOfDNameByType(zone.name(), zone.name(), 6).buildRecords().get(0);
-    soa.ttl = zone.ttl();
-    soa.rdata.set(1, zone.email());
-    soa.rdata.set(6, String.valueOf(zone.ttl()));
-    logger.info(soa.toString());
-    //api.updateResourceRecord(soa, zone.name());
+
+    RRSet soa = api.getResourceRecordsOfDNameByType(zone.name(), zone.name(), 6).getRrSets().get(0);
+    soa.setTtl(zone.ttl());
+    List<String> rDataList = Arrays.asList(soa.getRdata().get(0).split("\\s"));
+    rDataList.set(1, formatEmail(zone.email()));
+    rDataList.set(6, String.valueOf(zone.ttl()));
+    List<String> newRDataList = new ArrayList<String>();
+    newRDataList.add(StringUtils.join(rDataList, " "));
+    soa.setRdata(newRDataList);
+    api.updateResourceRecord(zone.name(), 6, zone.name(), soa);
+
     return zone.name();
   }
 
   @Override
   public void delete(String name) {
     try {
-      logger.info("Deleting Zone with name: " + name);
       api.deleteZone(name);
     } catch (UltraDNSRestException e) {
       if (e.code() != UltraDNSRestException.ZONE_NOT_FOUND) {
@@ -100,6 +109,14 @@ public final class UltraDNSRestZoneApi implements denominator.ZoneApi {
   }
 
   private String getCurrentAccountName(){
-    return api.getAccountsListOfUser().getAccounts().get(0).getAccountName();
+    AccountList accountList = api.getAccountsListOfUser();
+    return accountList.getAccounts()
+            .get(accountList.getAccounts().size() - 1)
+            .getAccountName();
+  }
+
+  private String formatEmail(String email) {
+    String[] values = email.split("@");
+    return values[0].replace(".", "\\.") + "." + values[1] + ".";
   }
 }

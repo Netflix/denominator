@@ -4,11 +4,45 @@ import static java.lang.String.format;
 
 public class UltraDNSMockResponse {
 
-    public static String getNeustarNetworkStatusResponse ="{\n" +
-            "    \"message\": \"Good\"\n"
-            + "}\n";
-
-    public static String getNeustarNetworkStatusFailedResponse ="";
+    public static final String GET_ACCOUNTS_LIST_OF_USER = "{\n" +
+            "    \"resultInfo\": {\n" +
+            "        \"totalCount\": 2,\n" +
+            "        \"offset\": 0,\n" +
+            "        \"returnedCount\": 2\n" +
+            "    },\n" +
+            "    \"accounts\": [\n" +
+            "        {\n" +
+            "            \"accountName\": \"npp-rest-test2\",\n" +
+            "            \"accountHolderUserName\": \"neustarnpptest2\",\n" +
+            "            \"ownerUserName\": \"nppresttest2\",\n" +
+            "            \"numberOfUsers\": 1,\n" +
+            "            \"numberOfGroups\": 3,\n" +
+            "            \"accountType\": \"ORGANIZATION\",\n" +
+            "            \"features\": [\n" +
+            "                \"ADVDIRECTIONAL\",\n" +
+            "                \"DNSSEC\",\n" +
+            "                \"MAILFORWARD\",\n" +
+            "                \"RECURSIVE\",\n" +
+            "                \"REPORTING\",\n" +
+            "                \"WEBFORWARD\"\n" +
+            "            ]\n" +
+            "        },\n" +
+            "        {\n" +
+            "            \"accountName\": \"npp-rest-test2a\",\n" +
+            "            \"accountHolderUserName\": \"neustar eng - npp\",\n" +
+            "            \"ownerUserName\": \"npp-rest-test2a\",\n" +
+            "            \"numberOfUsers\": 2,\n" +
+            "            \"numberOfGroups\": 3,\n" +
+            "            \"accountType\": \"ORGANIZATION\",\n" +
+            "            \"features\": [\n" +
+            "                \"ADVDIRECTIONAL\",\n" +
+            "                \"DNSSEC\",\n" +
+            "                \"MAILFORWARD\",\n" +
+            "                \"WEBFORWARD\"\n" +
+            "            ]\n" +
+            "        }\n" +
+            "    ]\n" +
+            "}";
 
     public static final String GET_ACCOUNTS_LIST_OF_USER_RESPONSE = "{\n" +
             "    \"resultInfo\": {\n"

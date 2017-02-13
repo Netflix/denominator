@@ -2,6 +2,7 @@ package denominator.ultradns;
 
 import com.squareup.okhttp.mockwebserver.MockResponse;
 import denominator.Credentials;
+import denominator.ultradns.model.RRSet;
 import denominator.ultradns.model.RRSetList;
 import feign.Feign;
 import org.junit.Rule;
@@ -9,10 +10,14 @@ import org.junit.Test;
 
 import denominator.ultradns.InvalidatableTokenProvider.Session;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static denominator.ultradns.UltraDNSMockResponse.GET_RESOURCE_RECORDS_ABSENT;
+import static denominator.ultradns.UltraDNSMockResponse.GET_ACCOUNTS_LIST_OF_USER;
 import static denominator.ultradns.UltraDNSMockResponse.GET_RESOURCE_RECORDS_PRESENT;
+import static denominator.ultradns.UltraDNSMockResponse.GET_RESOURCE_RECORDS_ABSENT;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
 
@@ -59,11 +64,6 @@ public class UltraDNSRestTest {
         }, tokenProvider));
     }
 
-    /**
-     * getNeustarNetworkStatus
-     * When NetworkStatus is Good
-     * @throws Exception
-     */
     @Test
     public void networkGood() throws Exception {
         server.enqueueSessionResponse();
@@ -78,11 +78,6 @@ public class UltraDNSRestTest {
                 .hasPath("/status");
     }
 
-    /**
-     * getNeustarNetworkStatus - (-)scenario
-     * When NetworkStatus is Failed
-     * @throws Exception
-     */
     @Test
     public void networkFailed() throws Exception {
         server.enqueueSessionResponse();
@@ -95,6 +90,20 @@ public class UltraDNSRestTest {
         server.assertRequest()
                 .hasMethod("GET")
                 .hasPath("/status");
+    }
+
+    @Test
+    public void testAccountsListOfUser() throws Exception {
+        server.enqueueSessionResponse();
+        server.enqueue(new MockResponse().setBody(GET_ACCOUNTS_LIST_OF_USER));
+        server.enqueue(new MockResponse());
+
+        assertThat(mockApi().getAccountsListOfUser().getAccounts().size()).isEqualTo(2);
+
+        server.assertSessionRequest();
+        server.assertRequest()
+                .hasMethod("GET")
+                .hasPath("/accounts");
     }
 
     @Test
@@ -165,5 +174,49 @@ public class UltraDNSRestTest {
         server.assertRequest()
                 .hasMethod("GET")
                 .hasPath("/zones/denominator.io./rrsets/1/pool_2.denominator.io.");
+    }
+
+    @Test
+    public void createRecordInZone() throws Exception {
+        server.enqueueSessionResponse();
+        server.enqueue(new MockResponse());
+
+        List<String> rdata = new ArrayList<String>();
+        rdata.add("1.1.1.1");
+        rdata.add("2.2.2.2");
+
+        mockApi().createResourceRecord("denominator.io.", 1, "denominator.io.",
+                getSampleRRSet("denominator.io.", "A (1)", "denominator.io.", rdata));
+
+        server.assertSessionRequest();
+        server.assertRequest()
+                .hasMethod("POST")
+                .hasPath("/zones/denominator.io./rrsets/1/denominator.io.");
+    }
+
+    @Test
+    public void updateRecordInZone() throws Exception {
+        server.enqueueSessionResponse();
+        server.enqueue(new MockResponse());
+
+        List<String> rdata = new ArrayList<String>();
+        rdata.add("1.1.1.1");
+        rdata.add("2.2.2.2");
+
+        mockApi().updateResourceRecord("denominator.io.", 1, "denominator.io.",
+                getSampleRRSet("denominator.io.", "A (1)", "denominator.io.", rdata));
+
+        server.assertSessionRequest();
+        server.assertRequest()
+                .hasMethod("PUT")
+                .hasPath("/zones/denominator.io./rrsets/1/denominator.io.");
+    }
+
+    private RRSet getSampleRRSet(String ownerName, String zoneName, String rrtype, List<String> rdata){
+        RRSet rrSet= new RRSet(86400, rdata);
+        rrSet.setOwnerName(ownerName);
+        rrSet.setZoneName(zoneName);
+        rrSet.setRrtype(rrtype);
+        return rrSet;
     }
 }
