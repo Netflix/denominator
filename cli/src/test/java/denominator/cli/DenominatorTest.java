@@ -89,6 +89,7 @@ public class DenominatorTest {
                              "mock       mem:mock                                            false          ",
                              "route53    https://route53.amazonaws.com                       true           accessKey      accessKey secretKey",
                              "route53    https://route53.amazonaws.com                       true           session        accessKey secretKey sessionToken",
+                             "ultradnsrest https://test-restapi.ultradns.com/v2                false          password       username password",
                              "ultradns   https://ultra-api.ultradns.com:8443/UltraDNS_WS/v01 false          password       username password",
                              ""));
   }

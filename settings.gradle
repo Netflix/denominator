@@ -1,6 +1,6 @@
 rootProject.name='denominator'
 
-include 'model', 'core', 'route53', 'ultradns', 'dynect', 'clouddns', 'designate', 'cli'
+include 'model', 'core', 'route53', 'ultradns', 'ultradns-rest', 'dynect', 'clouddns', 'designate', 'cli'
 
 rootProject.children.each { childProject ->
     childProject.name = 'denominator-' + childProject.name
