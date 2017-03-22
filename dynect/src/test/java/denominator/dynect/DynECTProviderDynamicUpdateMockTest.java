@@ -43,6 +43,24 @@ public class DynECTProviderDynamicUpdateMockTest {
   }
 
   @Test
+  public void tokenExpirationInvalidatesAndRetries() throws Exception {
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setResponseCode(400).setBody(
+            "{\"status\": \"failure\", \"data\": {}, \"job_id\": 3462106051, \"msgs\": [{\"INFO\": \"login: Bad or expired credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": \"INVALID_DATA\", \"LVL\": \"ERROR\"}, {\"INFO\": \"login: There was a problem with your credentials\", \"SOURCE\": \"BLL\", \"ERR_CD\": null, \"LVL\": \"INFO]\"}]}"));
+    server.enqueueSessionResponse();
+    server.enqueue(new MockResponse().setBody(noZones));
+
+    DNSApi api = server.connect().api();
+
+    assertThat(api.zones()).isEmpty();
+
+    server.assertSessionRequest();
+    server.assertRequest();
+    server.assertSessionRequest();
+    server.assertRequest();
+  }
+
+  @Test
   public void dynamicEndpointUpdates() throws Exception {
     final AtomicReference<String> url = new AtomicReference<String>(server.url());
     server.enqueueSessionResponse();
