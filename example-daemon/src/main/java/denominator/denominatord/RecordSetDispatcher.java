@@ -23,7 +23,7 @@ import static java.util.Collections.singleton;
 
 public class RecordSetDispatcher extends Dispatcher {
 
-  static final Pattern RECORDSET_PATTERN = Pattern.compile("/zones/([\\.\\w]+)/recordsets(\\?.*)?");
+  static final Pattern RECORDSET_PATTERN = Pattern.compile("/zones/([\\.\\w-]+)/recordsets(\\?.*)?");
 
   private final Logger log = Logger.getLogger(Dispatcher.class.getName());
   private final DNSApiManager mgr;
